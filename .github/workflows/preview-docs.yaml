@@ -48,8 +48,7 @@ jobs:
       - name: Configure MkDocs for PR preview
         run: |
           cp mkdocs.yaml mkdocs-pr.yaml
-          echo "site_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/" >> mkdocs-pr.yaml
-          sed -i 's/^site_url:.*/site_url: https:\/\/${{ github.repository_owner }}.github.io\/${{ github.event.repository.name }}\/pr-${{ github.event.number }}\//' mkdocs-pr.yaml || true
+          sed -i 's|^site_url:.*|site_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/|' mkdocs-pr.yaml
 
       - name: Build with MkDocs (PR Preview)
         run: mkdocs build --clean --verbose --config-file mkdocs-pr.yaml
