@@ -58,6 +58,9 @@ jobs:
   deploy-preview:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages-preview
       url: ${{ steps.deployment.outputs.page_url }}
