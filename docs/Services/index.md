@@ -1,10 +1,10 @@
-# Autoware Services
+# Services
 
 Open AD Kit is a micro-service based project, which means that it is designed to be deployed on a variety of platforms with microservices architecture. Each service is designed to be independent and can be deployed on a variety of platforms.
 
 ![Granular Services](../assets/images/granular-services.png)
 
-## Services
+## Autoware Services
 
 ### Sensing
 

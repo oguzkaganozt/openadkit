@@ -1,8 +1,8 @@
-# Open AD Kit Tools
+# Tools
 
 Open AD Kit provides a set of tools to help you build, deploy, and manage your autonomous driving system. It's a collection of tools for the Autoware ecosystem.
 
-## Tools
+## Main Tools
 
 ### Simulator
 
