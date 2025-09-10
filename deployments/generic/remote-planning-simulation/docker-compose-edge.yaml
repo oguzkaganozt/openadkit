@@ -1,5 +1,5 @@
 services:
-  autoware:
+  autoware-monolithic:
     image: ghcr.io/autowarefoundation/autoware:universe
     volumes:
       - ../mount/kashiwanoha_map:/autoware_map

@@ -1,6 +1,6 @@
 # Open AD Kit: Local Simulation
 
-- **autoware**: Autoware container for development and deployment.
+- **autoware**: Autoware monolithic container for development and deployment.
 - **scenario-simulator**: Simulation container for Autoware scenario testing.
 - **visualizer**: RViz-based remote operation and visualization container for Autoware.
 
