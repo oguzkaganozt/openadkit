@@ -25,9 +25,9 @@
 
     > You can use the `--no-nvidia` flag to skip the installation of the NVIDIA Container Toolkit if you don't have a **NVIDIA GPU**. Otherwise, it's **highly recommended** to install it to utilize CUDA for better performance for sensing and perception tasks.
 
-## Running the Local Planning Simulation Deployment Example
+## Running the Local Planning Simulation Deployment Sample
 
-1. Run the following command to start the local planning simulation deployment example:
+1. Run the following command to start the local planning simulation deployment sample:
 
     ```bash
     docker compose -f deployments/samples/local-planning-simulation/docker-compose.yaml up -d
