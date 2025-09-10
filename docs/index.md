@@ -51,7 +51,7 @@ For more details on the [Deployments](./Deployments/index.md).
 
 ## Supported Platforms
 
-Open AD Kit supports a variety of platforms as core SOAFEE platforms as well as Ubuntu as local development platform.
+Open AD Kit supports a variety of platforms as core SOAFEE platforms as well as Ubuntu as development platform.
 
 ### Core SOAFEE platforms
 
@@ -60,7 +60,7 @@ Open AD Kit supports a variety of platforms as core SOAFEE platforms as well as 
 
 For more details on the [Supported SOAFEE Platforms](./Platforms/index.md).
 
-### Ubuntu as local development platform
+### Ubuntu as development platform
 
 - Ubuntu 22.04, 24.04
 

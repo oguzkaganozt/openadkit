@@ -30,7 +30,7 @@
 1. Run the following command to start the local planning simulation deployment example:
 
     ```bash
-    docker compose -f deployments/generic/local-planning-simulation/docker-compose.yaml up -d
+    docker compose -f deployments/samples/local-planning-simulation/docker-compose.yaml up -d
     ```
 
 2. Visualize the simulation by accessing the following URL in your browser ( It can take a few seconds to visualizer to start ):
@@ -50,5 +50,5 @@
 3. Stop the local planning simulation by running the following command:
 
     ```bash
-    docker compose -f deployments/generic/local-planning-simulation/docker-compose.yaml down
+    docker compose -f deployments/samples/local-planning-simulation/docker-compose.yaml down
     ```
