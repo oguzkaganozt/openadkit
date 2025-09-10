@@ -6,6 +6,8 @@
 - Docker Compose
 - NVIDIA Container Toolkit (Optional but highly recommended)
 
+    > All the above requirements can be installed by running the **setup.sh** script.
+
 ## Installation
 
 1. Clone the repository
@@ -15,14 +17,13 @@
     cd openadkit
     ```
 
-2. Setup the environment by running the following command:
+2. Setup the environment by running the following command ( Skip if you already have the environment setup ):
 
     ```bash
     ./setup.sh
     ```
 
-    !!! note
-        You can use the `--no-nvidia` flag to skip the installation of the NVIDIA Container Toolkit if you don't have a NVIDIA GPU. Otherwise, it's highly recommended to install it to utilize CUDA for better performance for sensing and perception tasks.
+    > You can use the `--no-nvidia` flag to skip the installation of the NVIDIA Container Toolkit if you don't have a **NVIDIA GPU**. Otherwise, it's **highly recommended** to install it to utilize CUDA for better performance for sensing and perception tasks.
 
 ## Running the Local Planning Simulation Deployment Example
 
@@ -40,12 +41,11 @@
 
     Use the default password `openadkit` to access the visualizer.
 
-    !!! info
-        If your machine is on a remote server, you can access the visualizer by using the following URL ( It can take a few seconds to visualizer to start ):
-
-        ```bash
-        http://<your-server-public-ip>:6080/vnc.html
-        ```
+    > If your machine is on a remote server, you can access the visualizer by using the following URL ( It can take a few seconds to visualizer to start ):
+    >
+    > ```bash
+    > http://<your-server-public-ip>:6080/vnc.html
+    > ```
 
 3. Stop the local planning simulation by running the following command:
 
