@@ -55,8 +55,8 @@ Open AD Kit supports a variety of platforms as core SOAFEE platforms as well as 
 
 ### Core SOAFEE platforms
 
-- [EWAOL](./Platforms/index.md)
-- [AutoSD](./Platforms/index.md)
+- [EWAOL](https://ewaol.docs.arm.com/en/kirkstone-dev/)
+- [AutoSD](https://docs.centos.org/automotive-sig-documentation/features-and-concepts/)
 
 For more details on the [Supported SOAFEE Platforms](./Platforms/index.md).
 
