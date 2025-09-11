@@ -3,7 +3,7 @@
 This sample deployment shows how to run the logging simulation deployment sample.
 
 - **autoware**: Autoware monolithic container for development and deployment.
-- **scenario-simulator**: Simulation container for Autoware scenario testing.
+- **rosbag**: Rosbag container for Autoware sensor simulation with rosbag data.
 - **visualizer**: RViz-based remote operation and visualization container for Autoware.
 
 ## Requirements
