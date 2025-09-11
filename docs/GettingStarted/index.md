@@ -1,6 +1,6 @@
 # Getting Started
 
-## Prerequisites
+## Requirements
 
 - Docker Engine
 - Docker Compose
