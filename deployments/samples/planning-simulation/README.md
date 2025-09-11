@@ -10,7 +10,7 @@ This sample deployment shows how to run the planning simulation deployment sampl
 
 In order to run the planning simulation sample deployment, you need to have the planning **sample map**. You can download it by running the following command:
 
-### Autoware Sample Planning Map
+### Sample Planning Map
 
 Download and unpack a sample map that is used in this sample.
 
