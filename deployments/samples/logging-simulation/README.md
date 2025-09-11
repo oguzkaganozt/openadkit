@@ -1,4 +1,4 @@
-# Open AD Kit: Logging Simulation
+# Autoware Logging Simulation
 
 This sample deployment shows how to run the logging simulation deployment sample.
 

@@ -41,7 +41,7 @@ For more details on the [Tools](./Tools/index.md).
 
 ### Deployments
 
-A running instance of an Open AD Kit system is referred to as a **Deployment**. A deployment is a specific combination of Autoware services and tools, configured to work together to achieve a particular task, such as a local planning simulation or a full autonomous driving stack for a specific vehicle.
+A running instance of an Open AD Kit system is referred to as a **Deployment**. A deployment is a specific combination of Autoware services and tools, configured to work together to achieve a particular task, such as a planning simulation or a full autonomous driving stack for a specific vehicle.
 
 Deployments are defined using container orchestration files (e.g., `docker-compose.yaml`). This makes them portable and easy to reproduce across different environments, from a developer's laptop to edge devices in a vehicle. This container-based approach is a cornerstone of the Open AD Kit's cloud-native and platform-agnostic philosophy, aligning with standards like SOAFEE.
 
@@ -78,6 +78,8 @@ Open AD Kit supports **amd64** and **arm64** architectures with the following re
 
 - [ADLink AADP-AVA](https://www.adlinktech.com/products/Computer_on_Modules/COM-HPC-Server-Carrier-and-Starter-Kit/Ampere_Altra_Developer_Platform)
 - [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/) (TBD)
+
+Learn more about the [Proprietary Hardware](./Hardware/index.md).
 
 ### Tested Cloud Hardware
 

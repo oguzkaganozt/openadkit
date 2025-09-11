@@ -1,9 +1,9 @@
 nav:
   - Introduction: ./index.md
   - Getting Started: ./GettingStarted/index.md
+  - Deployments: ./Deployments/index.md
   - Services: ./Services/index.md
   - Tools: ./Tools/index.md
-  - Deployments: ./Deployments/index.md
   - Platforms: ./Platforms/index.md
   - Hardware: ./Hardware/index.md
   - Contributing: ./Contributing/index.md

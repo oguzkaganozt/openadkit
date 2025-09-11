@@ -1,4 +1,4 @@
-# Open AD Kit: Planning Simulation
+# Autoware Planning Simulation
 
 This sample deployment shows how to run the planning simulation deployment sample.
 

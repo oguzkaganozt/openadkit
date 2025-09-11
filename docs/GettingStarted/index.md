@@ -32,30 +32,9 @@
     sudo ./setup.sh --download-artifacts
     ```
 
-## Running the Planning Simulation Deployment Sample
+## Next Steps
 
-1. Run the following command to start the planning simulation deployment sample:
-
-    ```bash
-    docker compose -f deployments/samples/planning-simulation/docker-compose.yaml up -d
-    ```
-
-2. Visualize the simulation by accessing the following URL in your browser ( It can take a few seconds to visualizer to start ):
-
-    ```bash
-    http://localhost:6080/vnc.html
-    ```
-
-    Use the default password `openadkit` to access the visualizer.
-
-    > If your machine is on a remote server, you can access the visualizer by using the following URL ( It can take a few seconds to visualizer to start ):
-    >
-    > ```bash
-    > http://<your-server-public-ip>:6080/vnc.html
-    > ```
-
-3. Stop the planning simulation by running the following command:
-
-    ```bash
-    docker compose -f deployments/samples/planning-simulation/docker-compose.yaml down
-    ```
+- [Running a Deployment Sample](../Deployments/index.md)
+- Learn more about the Open AD Kit components
+  - [Services](../Services/index.md)
+  - [Tools](../Tools/index.md)
