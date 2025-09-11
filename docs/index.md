@@ -51,7 +51,7 @@ For more details on the [Deployments](./Deployments/index.md).
 
 ## Supported Platforms
 
-Open AD Kit supports a variety of platforms as production and development platforms.
+Open AD Kit supports a variety of platforms as **production** and **development** platforms.
 
 ### SOAFEE Production platforms
 
