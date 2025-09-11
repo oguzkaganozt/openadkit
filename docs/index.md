@@ -51,23 +51,30 @@ For more details on the [Deployments](./Deployments/index.md).
 
 ## Supported Platforms
 
-Open AD Kit supports a variety of platforms as core SOAFEE platforms as well as Ubuntu as development platform.
+Open AD Kit supports a variety of platforms as production and development platforms.
 
-### Core SOAFEE platforms
+### SOAFEE Production platforms
 
 - [EWAOL](https://ewaol.docs.arm.com/en/kirkstone-dev/)
 - [AutoSD](https://docs.centos.org/automotive-sig-documentation/features-and-concepts/)
 
 For more details on the [Supported SOAFEE Platforms](./Platforms/index.md).
 
-### Ubuntu as development platform
+### Development platforms
 
 - Ubuntu 22.04, 24.04
 
 ## Supported Hardware
+
+### System Requirements
 
 Open AD Kit supports a **amd64** and **arm64** architectures with below requirements:
 
 - CPU with 8 cores
 - 16GB RAM
 - [Optional] NVIDIA GPU (4GB RAM)
+
+### Tested Hardware
+
+- ADLink AADP-AVA
+- NVIDIA Jetson Orin (TBD)
