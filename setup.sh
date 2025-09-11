@@ -7,15 +7,17 @@ CLR_GREEN="\033[32m"
 CLR_RED="\033[31m"
 CLR_RESET="\033[0m"
 INSTALL_NVIDIA=true
+DOWNLOAD_ARTIFACTS=false
 
 #### Functions ####
 print_help() {
     echo "Setup runtime environment for Autoware Open AD Kit"
     echo "Usage: setup.sh [OPTIONS]"
     echo "Options:"
-    echo "  --help              Display this help message"
-    echo "  -h                  Display this help message"
-    echo "  --no-nvidia         Skip installation of NVIDIA container toolkit"
+    echo "  --help                  Display this help message"
+    echo "  -h                      Display this help message"
+    echo "  --no-nvidia             Skip installation of NVIDIA container toolkit"
+    echo "  --download-artifacts    Download Autoware artifacts"
     echo ""
 }
 
@@ -28,6 +30,10 @@ parse_args() {
                 ;;
             --no-nvidia)
                 INSTALL_NVIDIA=false
+                shift
+                ;;
+            --download-artifacts)
+                DOWNLOAD_ARTIFACTS=true
                 shift
                 ;;
             *)
@@ -98,6 +104,40 @@ install_docker() {
     echo -e "${CLR_GREEN}Please log out and log back in for Docker group changes to take effect.${CLR_RESET}"
 }
 
+download_autoware_artifacts() {
+    echo "Downloading Autoware artifacts..."
+    
+    # Remove apt installed ansible (In Ubuntu 22.04, ansible the version is old)
+    sudo apt-get purge ansible
+
+    # Install pipx
+    sudo apt-get -y update
+    sudo apt-get -y install pipx
+
+    # Add pipx to the system PATH
+    python3 -m pipx ensurepath
+
+    # Install ansible
+    pipx install --include-deps --force "ansible==6.*"
+
+    # Clone Autoware
+    git clone https://github.com/autowarefoundation/autoware.git ~/autoware
+
+    # Get the user home directory from the sudo user
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+
+    # Install Autoware artifacts
+    cd ~/autoware # The root directory of the cloned repository
+    ansible-galaxy collection install -f -r "ansible-galaxy-requirements.yaml"
+    ansible-playbook autoware.dev_env.download_artifacts -e "data_dir=$USER_HOME/autoware_data"
+    chown -R "$SUDO_USER:$SUDO_USER" "$USER_HOME/autoware_data"
+
+    # Remove the cloned Autoware directory
+    rm -rf ~/autoware
+
+    echo -e "${CLR_GREEN}Autoware artifacts downloaded successfully!${CLR_RESET}"
+}
+
 #### Main ####
 parse_args "$@"
 
@@ -105,6 +145,8 @@ if ! sudo -n true 2>/dev/null; then
     echo -e "${CLR_RED}This script requires sudo privileges. Please run with a user that has sudo access.${CLR_RESET}"
     exit 1
 fi
+
+[ "$DOWNLOAD_ARTIFACTS" = true ] && download_autoware_artifacts && exit 0
 
 install_docker
 [ "$INSTALL_NVIDIA" = true ] && install_nvidia_container_toolkit
