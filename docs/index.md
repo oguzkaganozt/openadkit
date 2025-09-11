@@ -74,7 +74,11 @@ Open AD Kit supports a **amd64** and **arm64** architectures with below requirem
 - 16GB RAM
 - [Optional] NVIDIA GPU (4GB RAM)
 
-### Tested Hardware
+### Tested Proprietary Hardware
 
-- ADLink AADP-AVA
-- NVIDIA Jetson Orin (TBD)
+- [ADLink AADP-AVA](https://www.adlinktech.com/products/Computer_on_Modules/COM-HPC-Server-Carrier-and-Starter-Kit/Ampere_Altra_Developer_Platform)
+- [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/) (TBD)
+
+### Tested Cloud Hardware
+
+- AWS EC2 G5.4XLarge (TBD)

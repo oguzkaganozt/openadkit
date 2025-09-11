@@ -10,8 +10,9 @@ nav:
   - Getting Started: ./GettingStarted/index.md
   - Services: ./Services/index.md
   - Tools: ./Tools/index.md
-  - Platforms: ./Platforms/index.md
   - Deployments: ./Deployments/index.md
+  - Platforms: ./Platforms/index.md
+  - Hardware: ./Hardware/index.md
   - Contributing: ./Contributing/index.md
 
 theme:
