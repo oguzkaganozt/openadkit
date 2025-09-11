@@ -17,7 +17,7 @@
     cd openadkit
     ```
 
-2. Setup the environment by running the following command ( Skip if you already have the environment setup ):
+2. Setup the runtime environment by running the following command ( Skip if you already have the environment setup on your platform ):
 
     ```bash
     ./setup.sh

@@ -68,7 +68,7 @@ For more details on the [Supported SOAFEE Platforms](./Platforms/index.md).
 
 ### System Requirements
 
-Open AD Kit supports a **amd64** and **arm64** architectures with below requirements:
+Open AD Kit supports **amd64** and **arm64** architectures with the following requirements:
 
 - CPU with 8 cores
 - 16GB RAM
