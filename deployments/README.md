@@ -1,4 +1,4 @@
-# Open AD Kit: Deployments
+# Open AD Kit Deployments
 
 This directory contains deployment configurations for **Open AD Kit**. Each folder contains a README file with detailed instructions on how to deploy the deployment configuration.
 

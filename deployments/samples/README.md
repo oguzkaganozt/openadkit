@@ -4,10 +4,10 @@ This directory contains sample deployment configurations for **Open AD Kit** to 
 
 ## Monolithic
 
-- [Planning Simulation](./planning-simulation/README.md): Simple monolithic autoware deployment with planning simulation.
+- [Planning Simulation](./planning-simulation/README.md): Simple monolithic autoware deployment that demonstrates the autoware planning functionality with planning simulation.
 
-- [Logging Simulation](./logging-simulation/README.md): Simple monolithic autoware deployment with logging simulation.
+- [Logging Simulation](./logging-simulation/README.md): Simple monolithic autoware deployment that demonstrates the autoware end-to-end functionality with sensor simulation using rosbag.
 
 ## Service-Based
 
-- [Service-Based](./service-based/README.md): Service-based autoware deployment with planning and logging simulation options.
+- [Service-Based](./service-based/README.md): Service-based autoware deployment that demonstrates the autoware end-to-end functionality with granular services using planning and logging simulation options.
