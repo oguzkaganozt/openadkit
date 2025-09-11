@@ -47,7 +47,6 @@ unzip -d ~/autoware_map ~/autoware_map/sample-map-planning.zip
 
 3. After you see the visualizer, you can start to simulate the autonomous driving scenario by following the [planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/#2-set-an-initial-pose-for-the-ego-vehicle) in the Autoware documentation.
 
-
 ## Stop the Deployment
 
 ```bash

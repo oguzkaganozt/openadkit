@@ -36,8 +36,38 @@ unzip -d ~/autoware_map/ ~/autoware_map/sample-rosbag.zip
 
 > **Note**: Due to privacy concerns, the rosbag(Copyright 2020 TIER IV, Inc.) does not contain image data, which will cause: Traffic light recognition functionality cannot be tested with this sample rosbag. Object detection accuracy is decreased.
 
-## To Run
+## Run the Deployment
+
+1. Start the deployment by running the following command:
+
+    ```bash
+    docker-compose -f docker-compose.yaml up -d
+    ```
+
+2. Open a browser to visualize the simulation and navigate to:
+
+    ```bash
+    http://localhost:6080
+    ```
+
+    Use the default password `openadkit` to access the visualizer. **It can take a few seconds to visualizer to start.**
+
+    > If your machine is on a remote server, you can access the visualizer by using the the public IP address:
+    >
+    > ```bash
+    > http://<your-server-public-ip>:6080/vnc.html
+    > ```
+
+3. Logging simulation will start automatically. You can check the logs by running the following command:
+
+    ```bash
+    docker-compose logs -f
+    ```
+
+## Stop the Deployment
+
+Stop the deployment by running the following command:
 
 ```bash
-docker-compose -f docker-compose.yaml up -d
+docker-compose -f docker-compose.yaml down
 ```
