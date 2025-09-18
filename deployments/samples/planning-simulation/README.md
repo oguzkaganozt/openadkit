@@ -1,17 +1,17 @@
 # Autoware Planning Simulation
 
-This sample deployment shows how to run the planning simulation deployment sample.
+This sample deployment shows how to run autoware **planning simulation**.
 
 - **autoware**: Autoware monolithic container for development and deployment.
 - **visualizer**: RViz-based remote operation and visualization container for Autoware.
 
 ## Requirements
 
-In order to run the planning simulation sample deployment, you need to have the planning **sample map**. You can download it by running the following command:
+In order to run the planning simulation, you need to have the planning simulation **sample map**. You can download it by running the following commands:
 
 ### Sample Planning Map
 
-Download and unpack a sample map that is used in this sample.
+Download and unpack a planning simulation sample map that is used in this sample.
 
 - You can also download [the map](https://drive.google.com/file/d/1499_nsbUbIeturZaDj7jhUownh5fvXHd/view?usp=sharing) manually.
 
@@ -44,7 +44,7 @@ unzip -d ~/autoware_map ~/autoware_map/sample-map-planning.zip
     > http://<your-server-ip>:6080/vnc.html
     > ```
 
-3. After you see the visualizer, you should start to simulate the autonomous driving scenario by following the [planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/#2-set-an-initial-pose-for-the-ego-vehicle) in the Autoware documentation.
+3. After you see the visualizer, you can start the autonomous driving simulation by following the [planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/#2-set-an-initial-pose-for-the-ego-vehicle) in the Autoware documentation.
 
 ## Stop the Deployment
 

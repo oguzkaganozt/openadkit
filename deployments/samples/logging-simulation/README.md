@@ -1,6 +1,6 @@
 # Autoware Logging Simulation
 
-This sample deployment shows how to run the logging simulation deployment sample.
+This sample deployment shows how to run autoware **logging simulation**.
 
 - **autoware**: Autoware monolithic container for development and deployment.
 - **rosbag**: Rosbag container for Autoware sensor simulation with rosbag data.
@@ -8,11 +8,11 @@ This sample deployment shows how to run the logging simulation deployment sample
 
 ## Requirements
 
-In order to run the logging simulation sample deployment, you need to have the logging **sample map** and **rosbag**. You can download them by running the following command:
+In order to run the logging simulation, you need to have the logging simulation **sample map** and **rosbag**. You can download them by running the following commands:
 
 ### Sample Logging Map
 
-Download and unpack a sample map that is used in this sample.
+Download and unpack a logging simulation sample map that is used in this sample.
 
 - You can also download [the map](https://drive.google.com/file/d/1499_nsbUbIeturZaDj7jhUownh5fvXHd/view?usp=sharing) manually.
 
@@ -61,7 +61,7 @@ unzip -d ~/autoware_map/ ~/autoware_map/sample-rosbag.zip
 3. To start the logging simulation, you should run the following command to play the rosbag:
 
     ```bash
-    docker compose --profile rosbag up -d
+    docker compose up rosbag -d
     ```
 
 ## Stop the Deployment
