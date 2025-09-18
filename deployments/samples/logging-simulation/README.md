@@ -41,27 +41,27 @@ unzip -d ~/autoware_map/ ~/autoware_map/sample-rosbag.zip
 1. Start the deployment by running the following command:
 
     ```bash
-    docker-compose -f docker-compose.yaml up -d
+    docker compose up -d
     ```
 
 2. Open a browser to visualize the simulation and navigate to:
 
     ```bash
-    http://localhost:6080
+    http://localhost:6080/vnc.html
     ```
 
     Use the default password `openadkit` to access the visualizer. **It can take a few seconds to visualizer to start.**
 
-    > If your machine is on a remote server, you can access the visualizer by using the the public IP address:
+    > If your machine is on a remote server, you can access the visualizer by using its accessible IP address:
     >
     > ```bash
-    > http://<your-server-public-ip>:6080/vnc.html
+    > http://<your-server-ip>:6080/vnc.html
     > ```
 
-3. Logging simulation will start automatically. You can check the logs by running the following command:
+3. To start the logging simulation, you should run the following command to play the rosbag:
 
     ```bash
-    docker-compose logs -f
+    docker compose --profile rosbag up -d
     ```
 
 ## Stop the Deployment
@@ -69,5 +69,5 @@ unzip -d ~/autoware_map/ ~/autoware_map/sample-rosbag.zip
 Stop the deployment by running the following command:
 
 ```bash
-docker-compose -f docker-compose.yaml down
+docker compose --profile rosbag down
 ```
