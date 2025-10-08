@@ -13,6 +13,11 @@ Sample deployment configurations to help you get started. Recommended for **lear
 Demo deployment configurations that are specific to certain **use case scenarios**.
 
 - [Demo Deployments](https://github.com/autowarefoundation/openadkit/tree/main/deployments/demos)
+- [Zenoh-bridge](zenoh-bridge/index.md)
+
+    The `zenoh-bridge` provides the communication backbone for the OpenADKit's distributed architecture. It demonstrates a "Cloud-Edge" deployment model by seamlessly bridging two isolated ROS 2 environments, decoupling compute-intensive components from lightweight visualization tools.
+
+    In this model, the core `autoware` stack runs on an **edge device** (e.g., a vehicle or server), while the `visualizer` can be accessed remotely from a user's machine (the **cloud side**).
 
 ## Platform Deployments
 
