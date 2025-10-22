@@ -66,10 +66,10 @@ Open AD Kit envisions an always connected, complete autonomous driving developme
 
 ```mermaid
 graph LR
-    A[STRUCTURE<br/>Define Open AD Kit workloads and tools]
-    B[MODULARITY<br/>Enable modular Autoware workloads]
-    C[CONFIGURABILITY<br/>Provide configurable workloads for use case]
-    D[ORCHESTRATION<br/>Support workload orchestration]
+    A[Q2/2025<br/>Open AD Kit workloads and tools definition]
+    B[Q3/2025<br/>Modular Autoware workloads]
+    C[Q4/2025<br/>Configurable workloads for use cases]
+    D[Q1/2026<br/>Workload orchestration support]
 
     A --> B --> C --> D;
 
