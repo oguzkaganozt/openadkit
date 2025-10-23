@@ -2,7 +2,7 @@ nav:
   - index.md
   - getting-started
   - deployments
-  - services
+  - workloads
   - tools
   - platforms
   - hardware

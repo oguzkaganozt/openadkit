@@ -34,7 +34,7 @@
 
 ## Next Steps
 
-- [Running a Deployment Sample](../Deployments/index.md)
+- [Running a Deployment Sample](../deployments/)
 - Learn more about the Open AD Kit components
-  - [Services](../Services/index.md)
-  - [Tools](../Tools/index.md)
+  - [Workloads](../workloads/)
+  - [Tools](../tools/)

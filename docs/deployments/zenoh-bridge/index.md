@@ -30,7 +30,7 @@ graph TD
     %% --- Style Definitions ---
     classDef machine fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray:5 5
     classDef network fill:#e6f3ff,stroke:#0066cc,stroke-width:1.5px
-    classDef service fill:#ffffff,stroke:#333
+    classDef workload fill:#ffffff,stroke:#333
     classDef bridge fill:#fffbe6,stroke:#f0ad4e
     classDef invisible stroke:none,fill:none
 
@@ -45,7 +45,7 @@ graph TD
             
             visualizer["**Visualizer**<br><br>Based on RViz2<br>Provides noVNC Remote Desktop"]
             cloud_bridge["**Cloud Zenoh Bridge**<br><br><u>Role</u>: Router<br>Listens on TCP/7447<br>Converts Zenoh ↔️ DDS"]
-            class visualizer service
+            class visualizer workload
             class cloud_bridge bridge
             
             visualizer -->|"ROS2 DDS Data"| cloud_bridge
@@ -64,7 +64,7 @@ graph TD
             autoware["**Autoware**<br><br>Core Autonomous Driving Algorithms<br>Perception, Planning, Control"]
             scenario_simulator["**Scenario Simulator**<br><br>Provides Simulation Scenarios<br>With Sensor Data"]
             edge_bridge["**Edge Zenoh Bridge**<br><br><u>Role</u>: Client<br>Converts DDS ↔️ Zenoh"]
-            class autoware,scenario_simulator service
+            class autoware,scenario_simulator workload
             class edge_bridge bridge
 
             autoware <-->|"ROS2 DDS Data"| scenario_simulator
@@ -122,7 +122,7 @@ Ensure the following software is installed:
 
 ### 3.3. Starting the System
 
-1. **Launch All Services**:
+1. **Launch All Workloads**:
    In the project root directory, run:
    ```bash
    docker-compose up -d
@@ -131,7 +131,7 @@ Ensure the following software is installed:
    - The first launch may take several minutes to download the required Docker images.
 
 2. **Monitor Startup Logs (Optional)**:
-   To view the real-time logs from all services, run:
+   To view the real-time logs from all workloads, run:
    ```bash
    docker-compose logs -f
    ```
@@ -169,13 +169,13 @@ Ensure the following software is installed:
 
 ### Issue 1: Visualizer Shows "Global Status: Warning" or a Blank Screen
 
-- **Cause**: This can be a race condition where ROS 2 nodes in one container start before the Zenoh bridge connection is fully established, preventing topics from being discovered correctly. The `depends_on` option in `docker-compose.yaml` helps, but doesn't guarantee service readiness.
+- **Cause**: This can be a race condition where ROS 2 nodes in one container start before the Zenoh bridge connection is fully established, preventing topics from being discovered correctly. The `depends_on` option in `docker-compose.yaml` helps, but doesn't guarantee workload readiness.
 - **Solutions**:
-  1. **Restart Services**: A simple restart often resolves timing issues.
+  1. **Restart Workloads**: A simple restart often resolves timing issues.
      ```bash
      docker-compose restart
      ```
-  2. **Staged Startup**: Manually start the core services first, wait a moment, then start the compute-heavy services.
+  2. **Staged Startup**: Manually start the core workloads first, wait a moment, then start the compute-heavy workloads.
      ```bash
      # Start the cloud side and the bridges
      docker-compose up -d cloud_zenoh_bridge edge_zenoh_bridge visualizer
