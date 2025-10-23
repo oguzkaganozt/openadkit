@@ -86,6 +86,6 @@ graph LR
 
 ## Getting Started
 
-- **[Getting Started](https://autowarefoundation.github.io/openadkit/GettingStarted/)**
+- **[Getting Started](https://autowarefoundation.github.io/openadkit/getting-started/)**
 - **[Documentation](https://autowarefoundation.github.io/openadkit/)**
 - **[Contributing](https://autowarefoundation.github.io/openadkit/contributing/)**
