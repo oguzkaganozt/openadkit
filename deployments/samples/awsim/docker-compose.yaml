@@ -1,0 +1,61 @@
+services:
+  awsim:
+    container_name: awsim
+    image: ghcr.io/autowarefoundation/autoware:universe-cuda-20251118
+    network_mode: host
+    ipc: host
+    # privileged: true
+    volumes:
+      # - ${PWD}/nishishinjuku_autoware_map:/autoware_map/nishishinjuku_autoware_map
+      # - ${HOME}/autoware_data:/root/autoware_data
+      - ${PWD}/cyclonedds.xml:/etc/cyclonedds.xml
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${PWD}/awsim/demo:/awsim/demo
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - DISPLAY=${DISPLAY}
+      - CYCLONEDDS_URI=/etc/cyclonedds.xml
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 3G
+    command: |    
+     /awsim/demo/AWSIM-Demo-Lightweight.x86_64
+
+  autoware-monolithic:
+    container_name: autoware-monolithic
+    image: ghcr.io/autowarefoundation/autoware:universe-cuda-20251118
+    network_mode: host
+    ipc: host
+    # privileged: true
+    volumes:
+      - ${PWD}/nishishinjuku_autoware_map:/autoware_map/nishishinjuku_autoware_map
+      - ${HOME}/autoware_data:/root/autoware_data
+      - ${PWD}/cyclonedds.xml:/etc/cyclonedds.xml
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - DISPLAY=${DISPLAY}
+      - CYCLONEDDS_URI=/etc/cyclonedds.xml
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 9G
+    command: |
+      ros2 launch autoware_launch e2e_simulator.launch.xml
+      vehicle_model:=sample_vehicle
+      sensor_model:=awsim_sensor_kit
+      map_path:=/autoware_map/nishishinjuku_autoware_map
+      rviz:=true

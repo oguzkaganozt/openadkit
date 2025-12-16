@@ -1,31 +1,34 @@
 services:
   autoware-monolithic:
     container_name: autoware-monolithic
-    image: ghcr.io/autowarefoundation/autoware:universe-cuda
+    image: ghcr.io/autowarefoundation/autoware:universe-cuda-20251118
     volumes:
       - $HOME/autoware_map/sample-map-rosbag:/autoware_map:ro
       - $HOME/autoware_data:/root/autoware_data
+      - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+      - DISPLAY=:1
+    runtime: nvidia
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
     command: |
       ros2 launch autoware_launch logging_simulator.launch.xml
       map_path:=/autoware_map
       vehicle_model:=sample_vehicle
       sensor_model:=sample_sensor_kit
-      rviz:=false
+      rviz:=true
 
   visualizer:
     container_name: autoware-visualizer
-    image: ghcr.io/autowarefoundation/autoware-tools:visualizer
+    image: ghcr.io/autowarefoundation/autoware-tools:visualizer-20251118
     ports:
       - 6080:6080
     environment:
