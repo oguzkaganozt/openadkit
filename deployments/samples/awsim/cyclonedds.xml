@@ -14,10 +14,5 @@
                 <WhcHigh>1MB</WhcHigh>
             </Watermarks>
         </Internal>
-        <!-- SharedMemory requires iceoryx RouDi daemon - remove if not available -->
-        <SharedMemory>
-            <Enable>true</Enable>
-            <LogLevel>info</LogLevel>
-        </SharedMemory>
     </Domain>
 </CycloneDDS>

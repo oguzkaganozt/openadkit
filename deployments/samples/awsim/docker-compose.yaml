@@ -58,4 +58,4 @@ services:
       vehicle_model:=sample_vehicle
       sensor_model:=awsim_sensor_kit
       map_path:=/autoware_map/nishishinjuku_autoware_map
-      rviz:=true
+      rviz:=false
