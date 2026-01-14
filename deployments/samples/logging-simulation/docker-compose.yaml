@@ -9,13 +9,8 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    runtime: nvidia
+    gpus: all
     command: |
       ros2 launch autoware_launch logging_simulator.launch.xml
       map_path:=/autoware_map
