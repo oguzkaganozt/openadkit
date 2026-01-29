@@ -36,5 +36,5 @@
 
 - [Running a Deployment Sample](../deployments/)
 - Learn more about the Open AD Kit components
-  - [Workloads](../workloads/)
+  - [Components](../components/)
   - [Tools](../tools/)

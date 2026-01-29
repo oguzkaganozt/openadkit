@@ -3,13 +3,13 @@
 [AutoSD](https://sigs.centos.org/automotive/about/), short for Automotive Stream Distribution, is the upstream binary distribution that serves as the public, in-development preview and functional precursor of the Red Hat In-Vehicle Operating System (OS).
 
 AutoSD is downstream of CentOS Stream, so it retains most of the CentOS Stream code with a few divergences,
-such as an optimized automotive-specific kernel rather than CentOS Stream’s kernel package.
+such as an optimized automotive-specific kernel rather than CentOS Stream's kernel package.
 Red Hat In-Vehicle OS is based on both AutoSD and RHEL, both of which are downstreams of CentOS Stream.
 
 AutoSD brings different features into the table, such as:
 
 * Mixed Critical Orchestration with Systemd, Eclipse [BlueChi](https://github.com/eclipse-bluechi/bluechi) and [QM](https://github.com/containers/qm)
-* Container management and workload definition with [Podman and Quadlet](https://www.redhat.com/en/blog/quadlet-podman)
+* Container management and component definition with [Podman and Quadlet](https://www.redhat.com/en/blog/quadlet-podman)
 * A realtime [linux kernel](https://gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9/-/tree/main-automotive?ref_type=heads)
 * Immutable system images with [OSTree](https://sigs.centos.org/automotive/features-and-concepts/con_ostree/)
 

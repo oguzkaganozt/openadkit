@@ -41,7 +41,7 @@ graph TD
     %% --- Style Definitions ---
     classDef machine fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray:5 5
     classDef network fill:#e6f3ff,stroke:#0066cc,stroke-width:1.5px
-    classDef workload fill:#ffffff,stroke:#333
+    classDef component fill:#ffffff,stroke:#333
     classDef bridge fill:#fffbe6,stroke:#f0ad4e
     classDef invisible stroke:none,fill:none
 
@@ -56,7 +56,7 @@ graph TD
             
             visualizer["**Visualizer**<br><br>Based on RViz2<br>Provides noVNC Remote Desktop"]
             cloud_bridge["**Cloud Zenoh Bridge**<br><br><u>Role</u>: Router<br>Listens on TCP/7448<br>Converts Zenoh ↔️ DDS"]
-            class visualizer workload
+            class visualizer component
             class cloud_bridge bridge
             
             visualizer -->|"ROS2 DDS Data"| cloud_bridge
@@ -75,7 +75,7 @@ graph TD
             autoware["**Autoware**<br><br>Core Autonomous Driving Algorithms<br>Perception, Planning, Control"]
             scenario_simulator["**Scenario Simulator**<br><br>Provides Simulation Scenarios<br>With Sensor Data"]
             edge_bridge["**Edge Zenoh Bridge**<br><br><u>Role</u>: Client<br>Converts DDS ↔️ Zenoh"]
-            class autoware,scenario_simulator workload
+            class autoware,scenario_simulator component
             class edge_bridge bridge
 
             autoware <-->|"ROS2 DDS Data"| scenario_simulator
@@ -133,7 +133,7 @@ Ensure the following software is installed:
 
 ### 3.3. Starting the System
 
-1. **Launch Workloads**:
+1. **Launch Components**:
    
    **Option A: Split Topology (Recommended)**
    Separate Edge and Cloud components to simulate a real-world distributed environment.
@@ -174,7 +174,7 @@ Ensure the following software is installed:
    ```
 
 2. **Monitor Startup Logs (Optional)**:
-   To view the real-time logs from all workloads, run:
+   To view the real-time logs from all components, run:
    ```bash
    docker compose logs -f
    ```
@@ -220,13 +220,13 @@ Ensure the following software is installed:
 
 ### Issue 1: Visualizer Shows "Global Status: Warning" or a Blank Screen
 
-- **Cause**: This can be a race condition where ROS 2 nodes in one container start before the Zenoh bridge connection is fully established, preventing topics from being discovered correctly. The `depends_on` option in `docker-compose.yaml` helps, but doesn't guarantee workload readiness.
+- **Cause**: This can be a race condition where ROS 2 nodes in one container start before the Zenoh bridge connection is fully established, preventing topics from being discovered correctly. The `depends_on` option in `docker-compose.yaml` helps, but doesn't guarantee component readiness.
 - **Solutions**:
-  1. **Restart Workloads**: A simple restart often resolves timing issues.
+  1. **Restart Components**: A simple restart often resolves timing issues.
      ```bash
      docker-compose restart
      ```
-  2. **Staged Startup**: Manually start the core workloads first, wait a moment, then start the compute-heavy workloads.
+  2. **Staged Startup**: Manually start the core components first, wait a moment, then start the compute-heavy components.
      ```bash
      # Start the cloud side
      ./cloud.sh up -d
