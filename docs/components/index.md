@@ -40,4 +40,4 @@ The system component is responsible for managing the vehicle's system. System co
 
 ### API
 
-The API component is responsible for providing [AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/) interface for the vehicle's state. API component can be configured to enable/disable various interfaces. For more details on Autoware Interfaces design document [https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/).
+The API component is responsible for providing [AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/) interface for the vehicle's state. API component can be configured to enable/disable various interfaces. For more details on [Autoware Interface design document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/).
