@@ -28,9 +28,9 @@ ARG ROS_DISTRO
 # Copy files
 COPY setup-dev-env.sh ansible-galaxy-requirements.yaml amd64.env amd64_jazzy.env arm64.env /autoware/
 COPY ansible/ /autoware/ansible/
-COPY docker/scripts/cleanup_apt.sh /autoware/cleanup_apt.sh
+COPY docker/autoware-base/build_scripts/cleanup_apt.sh /autoware/cleanup_apt.sh
 RUN chmod +x /autoware/cleanup_apt.sh
-COPY docker/scripts/cleanup_system.sh /autoware/cleanup_system.sh
+COPY docker/autoware-base/build_scripts/cleanup_system.sh /autoware/cleanup_system.sh
 RUN chmod +x /autoware/cleanup_system.sh
 WORKDIR /autoware
 
@@ -85,7 +85,7 @@ FROM base AS rosdep-base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 
-COPY docker/scripts/resolve_rosdep_keys.sh /autoware/resolve_rosdep_keys.sh
+COPY docker/autoware-base/resolve_rosdep_keys.sh /autoware/resolve_rosdep_keys.sh
 RUN chmod +x /autoware/resolve_rosdep_keys.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -239,7 +239,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 ENV CCACHE_DIR="/root/.ccache"
 
-COPY docker/scripts/build_and_clean.sh /autoware/build_and_clean.sh
+COPY docker/autoware-base/build_scripts/build_and_clean.sh /autoware/build_and_clean.sh
 RUN chmod +x /autoware/build_and_clean.sh
 
 # Set up development environment and tools
@@ -402,10 +402,6 @@ RUN --mount=type=ssh \
   && /autoware/cleanup_system.sh $LIB_DIR $ROS_DISTRO
 
 COPY --from=visualization-devel /opt/autoware /opt/autoware
-
-# Copy bash aliases
-COPY docker/etc/.bash_aliases /root/.bash_aliases
-RUN echo "source /opt/autoware/setup.bash" > /etc/bash.bashrc
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["/bin/bash"]

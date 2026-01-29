@@ -65,9 +65,5 @@ RUN --mount=type=ssh \
 
 COPY --from=api-devel /opt/autoware /opt/autoware
 
-# Copy bash aliases
-COPY docker/etc/.bash_aliases /root/.bash_aliases
-RUN echo "source /opt/autoware/setup.bash" > /etc/bash.bashrc
-
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["/bin/bash"]

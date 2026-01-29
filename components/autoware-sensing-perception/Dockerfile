@@ -99,10 +99,6 @@ COPY --from=sensing-perception-devel /opt/autoware /opt/autoware
 # TODO(youtalk): Fix https://github.com/autowarefoundation/autoware/pull/6235 workaround
 COPY --from=sensing-perception-devel /opt/autoware/share/autoware_launch /opt/autoware/share/autoware_launch
 
-# Copy bash aliases
-COPY docker/etc/.bash_aliases /root/.bash_aliases
-RUN echo "source /opt/autoware/setup.bash" > /etc/bash.bashrc
-
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["/bin/bash"]
 
