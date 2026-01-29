@@ -3,23 +3,23 @@
 
 group "default" {
   targets = [
-    "base",
-    "base-cuda"
+    "autoware-base",
+    "autoware-base-cuda"
   ]
 }
 
 // For docker/metadata-action
-target "docker-metadata-action-base" {}
-target "docker-metadata-action-base-cuda" {}
+target "docker-metadata-action-autoware-base" {}
+target "docker-metadata-action-autoware-base-cuda" {}
 
-target "base" {
-  inherits = ["docker-metadata-action-base"]
-  dockerfile = "components/devel/Dockerfile.devel"
-  target = "base"
+target "autoware-base" {
+  inherits = ["docker-metadata-action-autoware-base"]
+  dockerfile = "components/Dockerfile.autoware-base"
+  target = "autoware-base"
 }
 
-target "base-cuda" {
-  inherits = ["docker-metadata-action-base-cuda"]
-  dockerfile = "components/devel/Dockerfile.devel"
-  target = "base-cuda"
+target "autoware-base-cuda" {
+  inherits = ["docker-metadata-action-autoware-base-cuda"]
+  dockerfile = "components/Dockerfile.autoware-base"
+  target = "autoware-base-cuda"
 }
