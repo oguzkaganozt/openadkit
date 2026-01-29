@@ -1,8 +1,8 @@
-# Dockerfile.api - Builds API packages
-# Outputs: universe-api runtime image
+# autoware-api/Dockerfile - Builds API packages
+# Outputs: autoware-api runtime image
 
 ARG ROSDEP_IMAGE=ghcr.io/autowarefoundation/openadkit/rosdep-depend:latest
-ARG UNIVERSE_COMMON_DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-common-devel:latest
+ARG AUTOWARE_COMMON_DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-common-devel:latest
 ARG AUTOWARE_BASE_IMAGE=ghcr.io/autowarefoundation/autoware-base:latest
 ARG ROS_DISTRO=humble
 ARG LIB_DIR=x86_64
@@ -15,7 +15,7 @@ FROM $ROSDEP_IMAGE AS rosdep-depend
 # Build stage: api-devel
 # =============================================================================
 # hadolint ignore=DL3006
-FROM $UNIVERSE_COMMON_DEVEL_IMAGE AS api-devel
+FROM $AUTOWARE_COMMON_DEVEL_IMAGE AS api-devel
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 ENV CCACHE_DIR="/root/.ccache"

@@ -1,5 +1,5 @@
-# Dockerfile.devel - Unified Dockerfile for all intermediate development stages
-# This file consolidates: base, rosdep, core, universe-common, and visualization
+# autoware-base/Dockerfile - Unified Dockerfile for all intermediate development stages
+# This file consolidates: autoware-base, rosdep, core, autoware-common, and visualization
 #
 # Build targets:
 #   - base / base-cuda: Foundation images
@@ -12,7 +12,7 @@
 # =============================================================================
 # Global ARGs
 # =============================================================================
-ARG BASE_IMAGE
+ARG BASE_IMAGE=ros:humble-ros-base-jammy
 ARG ROS_DISTRO=humble
 ARG LIB_DIR=x86_64
 

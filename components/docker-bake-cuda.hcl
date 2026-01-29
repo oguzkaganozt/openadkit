@@ -3,39 +3,39 @@
 
 group "default" {
   targets = [
-    "universe-common-devel-cuda",
-    "universe-sensing-perception-cuda",
-    "universe-cuda"
+    "autoware-common-devel-cuda",
+    "autoware-sensing-perception-cuda",
+    "autoware-cuda"
   ]
 }
 
 // For docker/metadata-action
-target "docker-metadata-action-universe-common-devel-cuda" {}
-target "docker-metadata-action-universe-sensing-perception-cuda" {}
-target "docker-metadata-action-universe-cuda" {}
+target "docker-metadata-action-autoware-common-devel-cuda" {}
+target "docker-metadata-action-autoware-sensing-perception-cuda" {}
+target "docker-metadata-action-autoware-cuda" {}
 
 // =============================================================================
 // Intermediate build images (CUDA)
 // =============================================================================
 
-target "universe-common-devel-cuda" {
-  inherits = ["docker-metadata-action-universe-common-devel-cuda"]
+target "autoware-common-devel-cuda" {
+  inherits = ["docker-metadata-action-autoware-common-devel-cuda"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "universe-common-devel-cuda"
+  target = "autoware-common-devel-cuda"
 }
 
 // =============================================================================
 // Runtime images (CUDA)
 // =============================================================================
 
-target "universe-sensing-perception-cuda" {
-  inherits = ["docker-metadata-action-universe-sensing-perception-cuda"]
+target "autoware-sensing-perception-cuda" {
+  inherits = ["docker-metadata-action-autoware-sensing-perception-cuda"]
   dockerfile = "components/autoware-sensing-perception/Dockerfile"
-  target = "universe-sensing-perception-cuda"
+  target = "autoware-sensing-perception-cuda"
 }
 
-target "universe-cuda" {
-  inherits = ["docker-metadata-action-universe-cuda"]
+target "autoware-cuda" {
+  inherits = ["docker-metadata-action-autoware-cuda"]
   dockerfile = "components/autoware-universe/Dockerfile"
-  target = "universe-cuda"
+  target = "autoware-cuda"
 }

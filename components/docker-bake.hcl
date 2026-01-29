@@ -5,14 +5,14 @@ group "default" {
   targets = [
     "rosdep-depend",
     "core-devel",
-    "universe-common-devel",
-    "universe-sensing-perception",
-    "universe-localization-mapping",
-    "universe-planning-control",
-    "universe-vehicle-system",
-    "universe-visualization",
-    "universe-api",
-    "universe"
+    "autoware-common-devel",
+    "autoware-sensing-perception",
+    "autoware-localization-mapping",
+    "autoware-planning-control",
+    "autoware-vehicle-system",
+    "autoware-visualization",
+    "autoware-api",
+    "autoware-universe"
   ]
 }
 
@@ -21,34 +21,34 @@ group "intermediate" {
   targets = [
     "rosdep-depend",
     "core-devel",
-    "universe-common-devel"
+    "autoware-common-devel"
   ]
 }
 
 // Runtime images group (final products)
 group "runtime" {
   targets = [
-    "universe-sensing-perception",
-    "universe-localization-mapping",
-    "universe-planning-control",
-    "universe-vehicle-system",
-    "universe-visualization",
-    "universe-api",
-    "universe"
+    "autoware-sensing-perception",
+    "autoware-localization-mapping",
+    "autoware-planning-control",
+    "autoware-vehicle-system",
+    "autoware-visualization",
+    "autoware-api",
+    "autoware-universe"
   ]
 }
 
 // For docker/metadata-action
 target "docker-metadata-action-rosdep-depend" {}
 target "docker-metadata-action-core-devel" {}
-target "docker-metadata-action-universe-common-devel" {}
-target "docker-metadata-action-universe-sensing-perception" {}
-target "docker-metadata-action-universe-localization-mapping" {}
-target "docker-metadata-action-universe-planning-control" {}
-target "docker-metadata-action-universe-vehicle-system" {}
-target "docker-metadata-action-universe-visualization" {}
-target "docker-metadata-action-universe-api" {}
-target "docker-metadata-action-universe" {}
+target "docker-metadata-action-autoware-common-devel" {}
+target "docker-metadata-action-autoware-sensing-perception" {}
+target "docker-metadata-action-autoware-localization-mapping" {}
+target "docker-metadata-action-autoware-planning-control" {}
+target "docker-metadata-action-autoware-vehicle-system" {}
+target "docker-metadata-action-autoware-visualization" {}
+target "docker-metadata-action-autoware-api" {}
+target "docker-metadata-action-autoware-universe" {}
 
 // =============================================================================
 // Intermediate build images
@@ -66,54 +66,54 @@ target "core-devel" {
   target = "core-devel"
 }
 
-target "universe-common-devel" {
-  inherits = ["docker-metadata-action-universe-common-devel"]
+target "autoware-common-devel" {
+  inherits = ["docker-metadata-action-autoware-common-devel"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "universe-common-devel"
+  target = "autoware-common-devel"
 }
 
 // =============================================================================
 // Runtime images
 // =============================================================================
 
-target "universe-sensing-perception" {
-  inherits = ["docker-metadata-action-universe-sensing-perception"]
+target "autoware-sensing-perception" {
+  inherits = ["docker-metadata-action-autoware-sensing-perception"]
   dockerfile = "components/autoware-sensing-perception/Dockerfile"
-  target = "universe-sensing-perception"
+  target = "autoware-sensing-perception"
 }
 
-target "universe-localization-mapping" {
-  inherits = ["docker-metadata-action-universe-localization-mapping"]
+target "autoware-localization-mapping" {
+  inherits = ["docker-metadata-action-autoware-localization-mapping"]
   dockerfile = "components/autoware-localization-mapping/Dockerfile"
-  target = "universe-localization-mapping"
+  target = "autoware-localization-mapping"
 }
 
-target "universe-planning-control" {
-  inherits = ["docker-metadata-action-universe-planning-control"]
+target "autoware-planning-control" {
+  inherits = ["docker-metadata-action-autoware-planning-control"]
   dockerfile = "components/autoware-planning-control/Dockerfile"
-  target = "universe-planning-control"
+  target = "autoware-planning-control"
 }
 
-target "universe-vehicle-system" {
-  inherits = ["docker-metadata-action-universe-vehicle-system"]
+target "autoware-vehicle-system" {
+  inherits = ["docker-metadata-action-autoware-vehicle-system"]
   dockerfile = "components/autoware-vehicle-system/Dockerfile"
-  target = "universe-vehicle-system"
+  target = "autoware-vehicle-system"
 }
 
-target "universe-visualization" {
-  inherits = ["docker-metadata-action-universe-visualization"]
+target "autoware-visualization" {
+  inherits = ["docker-metadata-action-autoware-visualization"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "universe-visualization"
+  target = "autoware-visualization"
 }
 
-target "universe-api" {
-  inherits = ["docker-metadata-action-universe-api"]
+target "autoware-api" {
+  inherits = ["docker-metadata-action-autoware-api"]
   dockerfile = "components/autoware-api/Dockerfile"
-  target = "universe-api"
+  target = "autoware-api"
 }
 
-target "universe" {
-  inherits = ["docker-metadata-action-universe"]
+target "autoware-universe" {
+  inherits = ["docker-metadata-action-autoware-universe"]
   dockerfile = "components/autoware-universe/Dockerfile"
-  target = "universe"
+  target = "autoware-universe"
 }

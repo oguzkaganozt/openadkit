@@ -1,16 +1,16 @@
-# Dockerfile.universe - Combines all component packages into a single image
+# autoware-universe/Dockerfile - Combines all component packages into a single image
 # Outputs: universe and universe-cuda runtime images
 
 ARG ROSDEP_IMAGE=ghcr.io/autowarefoundation/openadkit/rosdep-depend:latest
-ARG UNIVERSE_COMMON_DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-common-devel:latest
-ARG UNIVERSE_COMMON_DEVEL_CUDA_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-common-devel-cuda:latest
-ARG SENSING_PERCEPTION_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-sensing-perception:latest
-ARG SENSING_PERCEPTION_CUDA_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-sensing-perception-cuda:latest
-ARG LOCALIZATION_MAPPING_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-localization-mapping:latest
-ARG PLANNING_CONTROL_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-planning-control:latest
-ARG VEHICLE_SYSTEM_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-vehicle-system:latest
-ARG VISUALIZATION_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-visualization:latest
-ARG API_IMAGE=ghcr.io/autowarefoundation/openadkit/universe-api:latest
+ARG AUTOWARE_COMMON_DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-common-devel:latest
+ARG AUTOWARE_COMMON_DEVEL_CUDA_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-common-devel-cuda:latest
+ARG AUTOWARE_SENSING_PERCEPTION_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-sensing-perception:latest
+ARG AUTOWARE_SENSING_PERCEPTION_CUDA_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-sensing-perception-cuda:latest
+ARG AUTOWARE_LOCALIZATION_MAPPING_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-localization-mapping:latest
+ARG AUTOWARE_PLANNING_CONTROL_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-planning-control:latest
+ARG AUTOWARE_VEHICLE_SYSTEM_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-vehicle-system:latest
+ARG AUTOWARE_VISUALIZATION_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-visualization:latest
+ARG AUTOWARE_API_IMAGE=ghcr.io/autowarefoundation/openadkit/autoware-api:latest
 ARG AUTOWARE_BASE_IMAGE=ghcr.io/autowarefoundation/autoware-base:latest
 ARG AUTOWARE_BASE_CUDA_IMAGE=ghcr.io/autowarefoundation/autoware-base:cuda-latest
 ARG ROS_DISTRO=humble
