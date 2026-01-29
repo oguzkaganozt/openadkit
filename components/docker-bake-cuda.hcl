@@ -20,7 +20,7 @@ target "docker-metadata-action-universe-cuda" {}
 
 target "universe-common-devel-cuda" {
   inherits = ["docker-metadata-action-universe-common-devel-cuda"]
-  dockerfile = "components/devel/Dockerfile.devel"
+  dockerfile = "components/autoware-base/Dockerfile"
   target = "universe-common-devel-cuda"
 }
 
@@ -30,12 +30,12 @@ target "universe-common-devel-cuda" {
 
 target "universe-sensing-perception-cuda" {
   inherits = ["docker-metadata-action-universe-sensing-perception-cuda"]
-  dockerfile = "components/sensing-perception/Dockerfile.sensing-perception"
+  dockerfile = "components/autoware-sensing-perception/Dockerfile"
   target = "universe-sensing-perception-cuda"
 }
 
 target "universe-cuda" {
   inherits = ["docker-metadata-action-universe-cuda"]
-  dockerfile = "components/universe/Dockerfile.universe"
+  dockerfile = "components/autoware-universe/Dockerfile"
   target = "universe-cuda"
 }
