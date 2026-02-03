@@ -10,7 +10,7 @@
 
 </div>
 
-#### Containerized Workloads for Autoware
+#### Containerized Components for Autoware
 
 Open AD Kit is a collaborative project developed by the Autoware Foundation and its member companies and alliance partners. It aims to bring software-defined best practices to the Autoware project and to enhance the Autoware ecosystem and capabilities by partnering with other organizations that share the goal of creating software-defined vehicles.
 
@@ -22,21 +22,21 @@ The Autoware Foundation is a voting member of the [SOAFEE (Scalable Open Archite
 
 ## Key Features
 
-### Granular Workloads
+### Granular Components
 
-Open AD Kit is a micro-service based project, which means that it is designed to be deployed on a variety of platforms with microservices architecture. Each workload is designed to be independent and can be deployed on a variety of platforms.
+Open AD Kit is a micro-service based project, which means that it is designed to be deployed on a variety of platforms with microservices architecture. Each component is designed to be independent and can be deployed on a variety of platforms.
 
-- **Independent workloads** for sensing, perception, mapping, localization, planning, control, and visualization
+- **Independent components** for sensing, perception, mapping, localization, planning, control, and visualization
 - **Multi-platform deployment** supporting both amd64 and arm64 architectures  
 - **Service mesh integration** with configurable environment variables
 
-![Granular Workloads](docs/assets/images/granular-workloads.png)
+![Granular Components](docs/assets/images/granular-components.png)
 
 ### Mixed Criticality
 
-Open AD Kit supports mixed criticality deployment, enabling separation of safety-critical and non-critical workloads. This architecture allows flexible deployment strategies where critical autonomous driving functions can run on certified hardware while monitoring and development workloads operate on standard platforms.
+Open AD Kit supports mixed criticality deployment, enabling separation of safety-critical and non-critical components. This architecture allows flexible deployment strategies where critical autonomous driving functions can run on certified hardware while monitoring and development components operate on standard platforms.
 
-- **Flexible deployment** separating safety-critical and monitoring workloads
+- **Flexible deployment** separating safety-critical and monitoring components
 - **Configurable criticality** from development testing to production safety systems
 - **Hardware abstraction** supporting safety island compute architectures
 
@@ -66,10 +66,10 @@ Open AD Kit envisions an always connected, complete autonomous driving developme
 
 ```mermaid
 graph LR
-    A[Q2/2025<br/>Open AD Kit workloads and tools definition]
-    B[Q3/2025<br/>Modular Autoware workloads]
-    C[Q4/2025<br/>Configurable workloads for use cases]
-    D[Q1/2026<br/>Workload orchestration support]
+    A[Q2/2025<br/>Open AD Kit components and tools definition]
+    B[Q3/2025<br/>Modular Autoware components]
+    C[Q4/2025<br/>Configurable components for use cases]
+    D[Q1/2026<br/>Component orchestration support]
 
     A --> B --> C --> D;
 

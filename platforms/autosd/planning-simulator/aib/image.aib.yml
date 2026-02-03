@@ -31,16 +31,16 @@ content:
       parents: true
   add_files:
     # systemd unit that fetches the tier4 git repository
-    - source_path: ../workloads/systemd/awf-oak-git.service
+    - source_path: ../components/systemd/awf-oak-git.service
       path: /etc/systemd/system/awf-oak-git.service
     # awf oak pod
-    - source_path: ../workloads/container-files/awf-oak.pod
+    - source_path: ../components/container-files/awf-oak.pod
       path: /etc/containers/systemd/awf-oak.pod
     # awf oak planning service
-    - source_path: ../workloads/container-files/awf-oak-planning.container
+    - source_path: ../components/container-files/awf-oak-planning.container
       path: /etc/containers/systemd/awf-oak-planning.container
     # awf oak simulator service
-    - source_path: ../workloads/container-files/awf-oak-simulator.container
+    - source_path: ../components/container-files/awf-oak-simulator.container
       path: /etc/containers/systemd/awf-oak-simulator.container
   systemd:
     enabled_services:
