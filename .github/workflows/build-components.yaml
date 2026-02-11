@@ -25,6 +25,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout Autoware
+        uses: actions/checkout@v4
+        with:
+          repository: https://github.com/autowarefoundation/autoware.git
+          path: autoware
+          fetch-depth: 1
+
     #   - name: Free disk space
     #     uses: ./.github/actions/free-disk-space
 
