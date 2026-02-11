@@ -32,6 +32,13 @@ jobs:
           ref: main
           path: autoware
           fetch-depth: 1
+          
+      - name: Install jq and vcs2l
+        run: |
+            sudo apt-get -y update
+            sudo apt-get -y install jq python3-pip
+            pip install --no-cache-dir vcs2l
+        shell: bash
     
       - name: Pull Autoware Source
         run: |
