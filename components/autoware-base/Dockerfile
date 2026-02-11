@@ -58,7 +58,7 @@ RUN --mount=type=ssh \
   && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" > /etc/bash.bashrc
 
 # Create entrypoint
-COPY docker/etc/ros_entrypoint.sh /ros_entrypoint.sh
+COPY components/autoware-base/etc/ros_entrypoint.sh /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh
 CMD ["/bin/bash"]
 
