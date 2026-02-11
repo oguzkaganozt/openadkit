@@ -44,7 +44,7 @@ jobs:
         run: |
             mkdir -p autoware/src
             vcs import --shallow autoware/src < autoware/repositories/autoware.repos
-            shell: bash
+        shell: bash
 
     #   - name: Free disk space
     #     uses: ./.github/actions/free-disk-space
