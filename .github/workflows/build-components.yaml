@@ -28,7 +28,8 @@ jobs:
       - name: Checkout Autoware
         uses: actions/checkout@v6
         with:
-          repository: autowarefoundation/autoware.git
+          repository: autowarefoundation/autoware
+          ref: main
           path: autoware
           fetch-depth: 1
 
