@@ -23,12 +23,12 @@ jobs:
         target: [autoware-base, autoware-base-cuda]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout Autoware
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          repository: https://github.com/autowarefoundation/autoware.git
+          repository: autowarefoundation/autoware.git
           path: autoware
           fetch-depth: 1
 
