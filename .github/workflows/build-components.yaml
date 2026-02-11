@@ -32,6 +32,12 @@ jobs:
           ref: main
           path: autoware
           fetch-depth: 1
+    
+      - name: Pull Autoware Source
+        run: |
+            mkdir -p autoware/src
+            vcs import --shallow autoware/src < autoware/repositories/autoware.repos
+            shell: bash
 
     #   - name: Free disk space
     #     uses: ./.github/actions/free-disk-space
