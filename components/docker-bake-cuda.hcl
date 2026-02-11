@@ -21,7 +21,7 @@ target "docker-metadata-action-autoware-cuda" {}
 target "autoware-common-devel-cuda" {
   inherits = ["docker-metadata-action-autoware-common-devel-cuda"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "autoware-common-devel-cuda"
+  target = "universe-common-devel-cuda"
 }
 
 // =============================================================================
@@ -31,11 +31,11 @@ target "autoware-common-devel-cuda" {
 target "autoware-sensing-perception-cuda" {
   inherits = ["docker-metadata-action-autoware-sensing-perception-cuda"]
   dockerfile = "components/autoware-sensing-perception/Dockerfile"
-  target = "autoware-sensing-perception-cuda"
+  target = "universe-sensing-perception-cuda"
 }
 
 target "autoware-cuda" {
   inherits = ["docker-metadata-action-autoware-cuda"]
   dockerfile = "components/autoware-universe/Dockerfile"
-  target = "autoware-cuda"
+  target = "universe-cuda"
 }

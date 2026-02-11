@@ -25,8 +25,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+    #   - name: Free disk space
+    #     uses: ./.github/actions/free-disk-space
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

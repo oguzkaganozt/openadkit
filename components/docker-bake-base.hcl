@@ -15,11 +15,11 @@ target "docker-metadata-action-autoware-base-cuda" {}
 target "autoware-base" {
   inherits = ["docker-metadata-action-autoware-base"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "autoware-base"
+  target = "base"
 }
 
 target "autoware-base-cuda" {
   inherits = ["docker-metadata-action-autoware-base-cuda"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "autoware-base-cuda"
+  target = "base-cuda"
 }

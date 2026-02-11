@@ -69,7 +69,7 @@ target "core-devel" {
 target "autoware-common-devel" {
   inherits = ["docker-metadata-action-autoware-common-devel"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "autoware-common-devel"
+  target = "universe-common-devel"
 }
 
 // =============================================================================
@@ -79,41 +79,41 @@ target "autoware-common-devel" {
 target "autoware-sensing-perception" {
   inherits = ["docker-metadata-action-autoware-sensing-perception"]
   dockerfile = "components/autoware-sensing-perception/Dockerfile"
-  target = "autoware-sensing-perception"
+  target = "universe-sensing-perception"
 }
 
 target "autoware-localization-mapping" {
   inherits = ["docker-metadata-action-autoware-localization-mapping"]
   dockerfile = "components/autoware-localization-mapping/Dockerfile"
-  target = "autoware-localization-mapping"
+  target = "universe-localization-mapping"
 }
 
 target "autoware-planning-control" {
   inherits = ["docker-metadata-action-autoware-planning-control"]
   dockerfile = "components/autoware-planning-control/Dockerfile"
-  target = "autoware-planning-control"
+  target = "universe-planning-control"
 }
 
 target "autoware-vehicle-system" {
   inherits = ["docker-metadata-action-autoware-vehicle-system"]
   dockerfile = "components/autoware-vehicle-system/Dockerfile"
-  target = "autoware-vehicle-system"
+  target = "universe-vehicle-system"
 }
 
 target "autoware-visualization" {
   inherits = ["docker-metadata-action-autoware-visualization"]
   dockerfile = "components/autoware-base/Dockerfile"
-  target = "autoware-visualization"
+  target = "universe-visualization"
 }
 
 target "autoware-api" {
   inherits = ["docker-metadata-action-autoware-api"]
   dockerfile = "components/autoware-api/Dockerfile"
-  target = "autoware-api"
+  target = "universe-api"
 }
 
 target "autoware-universe" {
   inherits = ["docker-metadata-action-autoware-universe"]
   dockerfile = "components/autoware-universe/Dockerfile"
-  target = "autoware-universe"
+  target = "universe"
 }
