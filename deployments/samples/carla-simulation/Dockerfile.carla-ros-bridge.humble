@@ -1,0 +1,47 @@
+ARG CARLA_VERSION=0.9.15
+ARG ROS_DISTRO=humble
+
+FROM carlasim/carla:${CARLA_VERSION} AS carla
+
+FROM ros:${ROS_DISTRO}-ros-base
+
+ARG CARLA_VERSION
+ARG ROS_DISTRO
+
+ENV CARLA_VERSION=${CARLA_VERSION}
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN mkdir -p /opt/carla-ros-bridge/src
+WORKDIR /opt/carla-ros-bridge
+
+COPY --from=carla /home/carla/PythonAPI /opt/carla/PythonAPI
+
+COPY requirements.txt /opt/carla-ros-bridge/
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    python3-catkin-pkg \
+    python3-catkin-pkg-modules \
+    python3-colcon-common-extensions \
+    python3-opencv \
+    python3-osrf-pycommon \
+    python3-pip \
+    python3-rosdep \
+    python3-wstool \
+    ros-${ROS_DISTRO}-ackermann-msgs \
+    ros-${ROS_DISTRO}-cv-bridge \
+    ros-${ROS_DISTRO}-derived-object-msgs \
+    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+    wget \
+  && python3 -m pip install --no-cache-dir --upgrade pip \
+  && python3 -m pip install --no-cache-dir carla==${CARLA_VERSION} \
+  && python3 -m pip install --no-cache-dir -r /opt/carla-ros-bridge/requirements.txt \
+  && rm -rf /var/lib/apt/lists/* \
+  && printf '%s\n' 'export PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla' > /opt/carla/setup.bash
+
+COPY . /opt/carla-ros-bridge/src/
+
+RUN printf '%s\n' "${CARLA_VERSION}" > /opt/carla-ros-bridge/src/carla_ros_bridge/src/carla_ros_bridge/CARLA_VERSION
+
+RUN /bin/bash -c 'source /opt/ros/${ROS_DISTRO}/setup.bash; colcon build --packages-up-to carla_ros_bridge'
+
+COPY ./docker/content/ros_entrypoint.sh /

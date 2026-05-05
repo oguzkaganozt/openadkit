@@ -28,18 +28,14 @@ services:
       - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
     depends_on:
       - carla
-    volumes:
-      - ${CARLA_ROS_BRIDGE_REMAP_FILE}:/bridge/ros2_remap.args:ro
     command: >
-      /bin/bash -lc "ros2 launch ${CARLA_ROS_BRIDGE_LAUNCH_FILE}
+      /bin/bash -lc "ros2 launch carla_ros_bridge ${CARLA_ROS_BRIDGE_LAUNCH_FILE}
       host:=${CARLA_ROS_BRIDGE_HOST}
       port:=${CARLA_ROS_BRIDGE_PORT}
       role_name:=${CARLA_EGO_VEHICLE_NAME}
       town:=${CARLA_WORLD}
       $(if [ x${CARLA_SYNCHRONOUS_MODE} != x ]; then echo synchronous_mode:=${CARLA_SYNCHRONOUS_MODE}; fi)
-      ${CARLA_ROS_BRIDGE_LAUNCH_ARGS}
-      --ros-args
-      $(cat /bridge/ros2_remap.args)"
+      ${CARLA_ROS_BRIDGE_LAUNCH_ARGS}"
     restart: on-failure
 
   map:

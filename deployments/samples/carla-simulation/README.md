@@ -12,13 +12,40 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 
 ## Start the deployment
 
-1. Start services:
+1. Build the local CARLA ROS bridge image:
 
    ```bash
-   docker compose --env-file carla-simulation.env up -d
+   git clone https://github.com/carla-simulator/ros-bridge.git ~/carla-ros-bridge
+   cp Dockerfile.carla-ros-bridge.humble ~/carla-ros-bridge/Dockerfile.openadkit
+   docker build \
+     --build-arg CARLA_VERSION=0.9.15 \
+     --build-arg ROS_DISTRO=humble \
+     -t local/carla-ros-bridge:0.9.15-humble \
+     -f ~/carla-ros-bridge/Dockerfile.openadkit \
+     ~/carla-ros-bridge
    ```
 
-2. Open RViz:
+2. Start services with the GPU override:
+
+   ```bash
+   docker compose \
+     --env-file carla-simulation.env \
+     -f docker-compose.yaml \
+     -f docker-compose.gpu.override.yaml \
+     up -d
+   ```
+
+   If the bridge starts before CARLA is ready, recreate only the bridge after CARLA is listening:
+
+   ```bash
+   docker compose \
+     --env-file carla-simulation.env \
+     -f docker-compose.yaml \
+     -f docker-compose.gpu.override.yaml \
+     up -d --force-recreate carla-ros-bridge
+   ```
+
+3. Open RViz:
 
    ```
    http://localhost:6080/vnc.html
@@ -26,7 +53,7 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 
    Password: `openadkit`
 
-3. After RViz starts, use `2D Pose Estimate` to seed the ego pose and start your route flow.
+4. After RViz starts, use `2D Pose Estimate` to seed the ego pose and start your route flow.
 
 ## Runtime checks
 
@@ -41,12 +68,13 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 - Confirm no dummy world feeds are enabled by checking startup logs for:
   `LAUNCH_DUMMY_VEHICLE=false`, `LAUNCH_DUMMY_PERCEPTION=false`, `LAUNCH_DUMMY_DOORS=false`.
 
-## Topic integration contract
+## Topic integration status
 
-CARLA bridge topic names and remaps are controlled by:
-
-`CARLA_ROS_BRIDGE_REMAP_FILE` (defaults to `./carla_bridge_remap.camera_lidar.args`).
 `CARLA_SYNCHRONOUS_MODE` is optional: set it only when your selected bridge launch file supports the `synchronous_mode` argument.
+
+This sample starts CARLA, the CARLA ROS bridge, and the OpenADKit stack with shared ROS time. Native CARLA bridge topics do not directly match all Autoware message types, so closed-loop CARLA driving still needs explicit adapter nodes for control/status/sensor type conversion.
+
+ROS 2 Humble `ros2 launch` does not accept a global `--ros-args` remap block for launched nodes. The included remap files are reference templates for adapter or launch integration work, not arguments passed directly to the bridge command.
 
 - Vehicle command path expected by Autoware (default examples):
   - `/carla/ego_vehicle/vehicle_control_cmd -> /control/command/control_cmd`
@@ -58,23 +86,17 @@ CARLA bridge topic names and remaps are controlled by:
 - TF / time alignment:
   - `/clock` should be remapped from CARLA to `/clock`.
   - `/tf` and `/tf_static` must stay consistent for base frame and map frame alignment.
-  - `USE_SIM_TIME=true` and `SCENARIO_SIMULATION=true` are enabled by default.
+  - `USE_SIM_TIME=true` is enabled by default.
+  - `SCENARIO_SIMULATION=false` is the default for the published OpenADKit simulator image because it does not include `autoware_dummy_infrastructure`.
 
-If your CARLA topic role names differ, update `carla_bridge_remap.camera_lidar.args` and set `CARLA_ROS_BRIDGE_REMAP_FILE` accordingly.
+If your CARLA topic role names differ, update the adapter configuration and reference remap templates accordingly.
 
-## Camera + lidar vs lidar-only bridge
+## Reference Remap Templates
 
 - Camera+lidar mode: default remap file
-  - `CARLA_ROS_BRIDGE_REMAP_FILE=./carla_bridge_remap.camera_lidar.args`
-- LiDAR-only mode: use the lidar-only template
-  1. Edit `carla-simulation.env` and set:
-     ```bash
-     CARLA_ROS_BRIDGE_REMAP_FILE=./carla_bridge_remap.lidar_only.args
-     ```
-  2. Restart the bridge:
-     ```bash
-     docker compose --env-file carla-simulation.env up -d carla-ros-bridge
-     ```
+  - `carla_bridge_remap.camera_lidar.args`
+- LiDAR-only mode: reference remap file
+  - `carla_bridge_remap.lidar_only.args`
 
 ## Stop
 
