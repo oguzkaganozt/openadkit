@@ -25,6 +25,19 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
      ~/carla-ros-bridge
    ```
 
+   If the VM cannot reach the default Ubuntu apt mirrors reliably, pass a regional mirror:
+
+   ```bash
+   docker build \
+     --build-arg CARLA_VERSION=0.9.15 \
+     --build-arg ROS_DISTRO=humble \
+     --build-arg UBUNTU_APT_MIRROR=http://es.archive.ubuntu.com/ubuntu \
+     --build-arg UBUNTU_SECURITY_APT_MIRROR=http://es.archive.ubuntu.com/ubuntu \
+     -t local/carla-ros-bridge:0.9.15-humble \
+     -f ~/carla-ros-bridge/Dockerfile.openadkit \
+     ~/carla-ros-bridge
+   ```
+
 2. Start services with the GPU override:
 
    ```bash
