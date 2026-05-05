@@ -157,57 +157,46 @@ runuser -u openadkit -- bash -lc \
   'cd /home/openadkit/carla-ros-bridge && git submodule update --init --recursive && test -f carla_msgs/package.xml'
 ```
 
-## 5. Start CARLA and Wait for RPC
+## 5. Start the Stack with the Helper
 
-Run compose as `openadkit`, not `root`, so `$HOME` in `carla-simulation.env` resolves to `/home/openadkit`:
-
-```bash
-runuser -u openadkit -- bash -lc \
-  'cd /workspace/openadkit/deployments/samples/carla-simulation && \
-   docker compose --env-file carla-simulation.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml up -d carla'
-```
-
-Wait until CARLA listens on RPC port `2000`:
-
-```bash
-for i in $(seq 1 120); do
-  ss -ltn | grep -q ':2000 ' && break
-  sleep 5
-done
-```
-
-## 6. Start the Bridge, Then the Stack
-
-Start or recreate the bridge after CARLA is listening:
+Run the startup helper as `openadkit`, not `root`, so `$HOME` in `carla-simulation.env` resolves to `/home/openadkit`:
 
 ```bash
 runuser -u openadkit -- bash -lc \
   'cd /workspace/openadkit/deployments/samples/carla-simulation && \
-   docker compose --env-file carla-simulation.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml up -d --force-recreate carla-ros-bridge'
+   ./start-carla-simulation.sh'
 ```
 
-Wait for the bridge to spawn the ego vehicle and sensors:
-
-```bash
-docker logs -f carla-ros-bridge
-```
-
-Expected log lines:
+The helper performs the safe sequence automatically:
 
 ```text
-Created EgoVehicle(id=...)
-All objects spawned.
+start CARLA
+wait for CARLA RPC on 127.0.0.1:2000
+force-recreate carla-ros-bridge
+wait for bridge log: All objects spawned.
+start the remaining OpenADKit services
+verify /clock and key topics
 ```
 
-Start the rest of the OpenADKit services:
+For non-GPU testing:
 
 ```bash
 runuser -u openadkit -- bash -lc \
   'cd /workspace/openadkit/deployments/samples/carla-simulation && \
-   docker compose --env-file carla-simulation.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml up -d'
+   ./start-carla-simulation.sh --no-gpu'
 ```
 
-## 7. Verify Runtime State
+To print the planned commands without running them:
+
+```bash
+runuser -u openadkit -- bash -lc \
+  'cd /workspace/openadkit/deployments/samples/carla-simulation && \
+   ./start-carla-simulation.sh --dry-run'
+```
+
+## 6. Verify Runtime State
+
+The helper runs these checks unless `--skip-verify` is passed. Re-run them manually if needed.
 
 Check containers:
 
@@ -244,7 +233,7 @@ Expected topics:
 /vehicle/status/velocity_status
 ```
 
-## 8. Open RViz Through a Local Tunnel
+## 7. Open RViz Through a Local Tunnel
 
 From your local machine, create a tunnel to the VM:
 
@@ -276,7 +265,7 @@ curl -I --max-time 10 http://127.0.0.1:6080/vnc.html
 
 Expected response: HTTP `200` from `WebSockify`.
 
-## 9. Recovery Notes
+## 8. Recovery Notes
 
 If CARLA restarts after the bridge spawned actors, the bridge can keep stale actor IDs and `/clock` may stop. Evidence looks like:
 
@@ -285,19 +274,19 @@ OdometrySensor could not publish. parent actor ... not found
 SpeedometerSensor could not publish. Parent actor ... not found
 ```
 
-Recover by recreating only the bridge after CARLA is running again:
+Recover by rerunning the helper. It starts CARLA if needed and recreates the bridge after the RPC port is reachable:
 
 ```bash
 runuser -u openadkit -- bash -lc \
   'cd /workspace/openadkit/deployments/samples/carla-simulation && \
-   docker compose --env-file carla-simulation.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml up -d --force-recreate carla-ros-bridge'
+   ./start-carla-simulation.sh'
 ```
 
 If bridge logs show `ModuleNotFoundError: No module named 'carla_msgs'`, the CARLA ROS bridge was cloned without submodules. Run submodule init and rebuild the bridge image.
 
 If Vast shows `ssh8.vast.ai:<port>` but SSH is refused, run `vastai ssh-url <INSTANCE_ID>` and use the direct `root@<PUBLIC_IP> -p <DIRECT_PORT>` endpoint instead.
 
-## 10. Cleanup
+## 9. Cleanup
 
 Stop the local SSH tunnel by killing the matching local `ssh -fN -L 6080:127.0.0.1:6080` process.
 

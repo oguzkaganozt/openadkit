@@ -38,24 +38,18 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
      ~/carla-ros-bridge
    ```
 
-2. Start services with the GPU override:
+2. Start services with the startup helper:
 
    ```bash
-   docker compose \
-     --env-file carla-simulation.env \
-     -f docker-compose.yaml \
-     -f docker-compose.gpu.override.yaml \
-     up -d
+   ./start-carla-simulation.sh
    ```
 
-   If the bridge starts before CARLA is ready, recreate only the bridge after CARLA is listening:
+   The helper starts CARLA first, waits for the RPC port, recreates the bridge, waits for CARLA objects to spawn, starts the remaining OpenADKit services, and verifies `/clock` plus key topics.
+
+   To run without the GPU override:
 
    ```bash
-   docker compose \
-     --env-file carla-simulation.env \
-     -f docker-compose.yaml \
-     -f docker-compose.gpu.override.yaml \
-     up -d --force-recreate carla-ros-bridge
+   ./start-carla-simulation.sh --no-gpu
    ```
 
 3. Open RViz:
