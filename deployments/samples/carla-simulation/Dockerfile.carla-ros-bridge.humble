@@ -46,6 +46,8 @@ RUN sed -i \
 
 COPY . /opt/carla-ros-bridge/src/
 
+RUN test -f /opt/carla-ros-bridge/src/carla_msgs/package.xml
+
 RUN printf '%s\n' "${CARLA_VERSION}" > /opt/carla-ros-bridge/src/carla_ros_bridge/src/carla_ros_bridge/CARLA_VERSION
 
 RUN /bin/bash -c 'source /opt/ros/${ROS_DISTRO}/setup.bash; colcon build --packages-up-to carla_ros_bridge'

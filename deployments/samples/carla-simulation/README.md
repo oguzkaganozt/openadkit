@@ -15,7 +15,7 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 1. Build the local CARLA ROS bridge image:
 
    ```bash
-   git clone https://github.com/carla-simulator/ros-bridge.git ~/carla-ros-bridge
+   git clone --recurse-submodules https://github.com/carla-simulator/ros-bridge.git ~/carla-ros-bridge
    cp Dockerfile.carla-ros-bridge.humble ~/carla-ros-bridge/Dockerfile.openadkit
    docker build \
      --build-arg CARLA_VERSION=0.9.15 \
