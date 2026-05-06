@@ -13,7 +13,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
   IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
+  IMAGE_PREFIX_TOOL: ghcr.io/${{ github.repository_owner }}/autoware-tools
   BAKE_FILE: components/docker-bake.hcl
+  BAKE_FILE_TOOLS: tools/docker-bake.hcl
 
 jobs:
   detect-autoware-tag:
@@ -280,7 +282,60 @@ jobs:
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-main,mode=max
 
   # =============================================================================
-  # Stage 3: Build universe and universe-cuda images (parallel)
+  # Stage 3: Build tool images
+  # =============================================================================
+  build-tools:
+    runs-on: ubuntu-22.04
+    needs: [detect-autoware-tag, build-components]
+    if: needs.detect-autoware-tag.outputs.should_run == 'true'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: carla-interface
+    steps:
+      - name: Checkout OpenADKit repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for ${{ matrix.target }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX_TOOL }}
+          bake-target: docker-metadata-action-${{ matrix.target }}
+          tags: |
+            type=raw,value=${{ matrix.target }}-${{ needs.detect-autoware-tag.outputs.autoware_tag }}
+          flavor: |
+            latest=false
+
+      - name: Build and push ${{ matrix.target }}
+        uses: docker/bake-action@v5
+        with:
+          files: |
+            ${{ env.BAKE_FILE_TOOLS }}
+            ${{ steps.meta.outputs.bake-file }}
+          targets: ${{ matrix.target }}
+          push: true
+          set: |
+            *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-${{ needs.detect-autoware-tag.outputs.autoware_tag }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:tool-${{ matrix.target }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:tool-${{ matrix.target }}-main,mode=max
+
+  # =============================================================================
+  # Stage 4: Build universe and universe-cuda images (parallel)
   # =============================================================================
   build-universe:
     runs-on: ubuntu-22.04

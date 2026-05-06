@@ -7,7 +7,7 @@ The default flow uses the official CARLA Ubuntu 22 container image and does not 
 ## Runtime
 
 - CARLA: `carlasim/carla:0.9.16`
-- CARLA interface image: `local/openadkit-carla-interface:0.9.16`
+- CARLA interface image: `ghcr.io/autowarefoundation/autoware-tools:carla-interface`
 - Autoware modules: standard OpenADKit split images
 - CARLA map: `Town01`
 - Autoware map assets: downloaded to `$HOME/autoware_data/maps/Town01`
@@ -33,13 +33,15 @@ cd deployments/samples/carla-simulation
 
 The helper will:
 
-- Build `local/openadkit-carla-interface:0.9.16` with `carla==0.9.16`.
+- Use the CI-built `ghcr.io/autowarefoundation/autoware-tools:carla-interface` image.
 - Download the official CARLA Autoware Town01 map assets if missing.
 - Start `carlasim/carla:0.9.16` as `carla-e2e` on `DISPLAY=:0`.
 - Preload `Town01`.
 - Start modular OpenADKit map, system, CARLA interface, sensing, perception, localization, planning, vehicle, control, and API containers.
 - Start the browser RViz/noVNC visualizer.
 - Verify localization, CARLA LiDAR, and the CARLA ego actor.
+
+Use `--build` to build the CARLA interface image locally from `tools/carla-interface` before starting the stack.
 
 The default behavior is no-drive. Set the route and engage manually in RViz.
 
@@ -87,16 +89,16 @@ Moved ... m: start=(..., ...) current=(..., ...)
 
 ## Faster Relaunch
 
-After the e2e image has already been built:
+The helper does not build the CARLA interface image unless `--build` is passed, so relaunching uses the configured image directly:
 
 ```bash
-./start-carla-e2e-demo.sh --skip-build
+./start-carla-e2e-demo.sh
 ```
 
 For start-only behavior with an explicit no-drive flag:
 
 ```bash
-./start-carla-e2e-demo.sh --skip-build --no-drive
+./start-carla-e2e-demo.sh --no-drive
 ```
 
 ## Command Path
@@ -114,5 +116,5 @@ Closed-loop control uses this path:
 ## Stop
 
 ```bash
-docker rm -f autoware-e2e-carla autoware-e2e-visualizer carla-e2e
+docker compose --env-file carla-simulation.e2e.env -f docker-compose.yaml down
 ```

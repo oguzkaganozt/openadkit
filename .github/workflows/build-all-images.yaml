@@ -13,6 +13,8 @@ on:
       - 'components/visualizer/**'
       - 'components/simulator/**'
       - 'components/universe/**'
+      - 'tools/docker-bake.hcl'
+      - 'tools/carla-interface/**'
   schedule:
     - cron: '0 0 1 * *'
   workflow_dispatch:
@@ -25,7 +27,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
   IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
+  IMAGE_PREFIX_TOOL: ghcr.io/${{ github.repository_owner }}/autoware-tools
   BAKE_FILE: components/docker-bake.hcl
+  BAKE_FILE_TOOLS: tools/docker-bake.hcl
 
 jobs:
   prepare:
@@ -278,7 +282,63 @@ jobs:
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
 
   # =============================================================================
-  # Stage 3: Build universe and universe-cuda images (parallel)
+  # Stage 3: Build tool images
+  # =============================================================================
+  build-tools:
+    runs-on: ubuntu-22.04
+    needs: [prepare, build-components]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64]
+        ros-distro: [humble]
+        target:
+          - carla-interface
+    steps:
+      - name: Checkout OpenADKit repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for ${{ matrix.target }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX_TOOL }}
+          bake-target: docker-metadata-action-${{ matrix.target }}
+          tags: |
+            type=raw,value=${{ matrix.target }},enable={{is_default_branch}}
+            type=raw,value=${{ matrix.target }}-${{ needs.prepare.outputs.build_tag }}
+          flavor: |
+            latest=false
+
+      - name: Build and push ${{ matrix.target }}
+        uses: docker/bake-action@v5
+        with:
+          files: |
+            ${{ env.BAKE_FILE_TOOLS }}
+            ${{ steps.meta.outputs.bake-file }}
+          targets: ${{ matrix.target }}
+          push: true
+          set: |
+            *.platform=${{ matrix.platform }}
+            *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:tool-${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:tool-${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
+
+  # =============================================================================
+  # Stage 4: Build universe and universe-cuda images (parallel)
   # =============================================================================
   build-universe:
     runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
@@ -378,11 +438,11 @@ jobs:
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
 
   # =============================================================================
-  # Stage 4: Create multi-arch manifests
+  # Stage 5: Create multi-arch manifests
   # =============================================================================
   create-manifests:
     runs-on: ubuntu-22.04
-    needs: [prepare, build-common, build-components, build-universe]
+    needs: [prepare, build-common, build-components, build-tools, build-universe]
     permissions:
       contents: read
       packages: write

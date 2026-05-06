@@ -1,4 +1,5 @@
-FROM ghcr.io/autowarefoundation/openadkit:simulator
+ARG SIMULATOR_IMAGE=ghcr.io/autowarefoundation/openadkit:simulator
+FROM ${SIMULATOR_IMAGE} AS carla-interface
 
 ARG CARLA_PYTHON_VERSION=0.9.16
 

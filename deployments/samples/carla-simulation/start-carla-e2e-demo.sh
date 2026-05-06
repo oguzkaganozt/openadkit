@@ -2,9 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../.." && pwd)
 ENV_FILE=carla-simulation.e2e.env
 DRY_RUN=false
-SKIP_BUILD=false
+BUILD_IMAGE=false
 SKIP_VERIFY=false
 START_VISUALIZER_OVERRIDE=
 AUTO_DRIVE_OVERRIDE=
@@ -17,7 +18,8 @@ Starts the closed-loop CARLA e2e demo using CARLA on the host display and
 Autoware's in-tree autoware_carla_interface.
 
 Options:
-  --skip-build          Do not build the local CARLA interface image
+  --build               Build the local CARLA interface image from tools
+  --skip-build          Do not build the local CARLA interface image (default)
   --skip-verify         Skip topic, actor, and localization verification
   --no-visualizer       Do not start the browser RViz/noVNC visualizer container
   --drive               Set a forward route and engage autonomous mode
@@ -29,8 +31,11 @@ EOF
 
 while (($#)); do
   case "$1" in
+    --build)
+      BUILD_IMAGE=true
+      ;;
     --skip-build)
-      SKIP_BUILD=true
+      BUILD_IMAGE=false
       ;;
     --skip-verify)
       SKIP_VERIFY=true
@@ -109,15 +114,18 @@ prepare_map() {
 }
 
 build_image() {
-  if [[ "$SKIP_BUILD" == true ]]; then
+  if [[ "$BUILD_IMAGE" != true ]]; then
     return 0
   fi
 
-  run docker build \
-    -t "$CARLA_INTERFACE_IMAGE" \
-    --build-arg CARLA_PYTHON_VERSION="$CARLA_PYTHON_VERSION" \
-    -f Dockerfile.carla-interface \
-    .
+  run docker buildx bake \
+    --load \
+    --progress=plain \
+    -f "$REPO_ROOT/tools/docker-bake.hcl" \
+    --set "*.context=$REPO_ROOT" \
+    --set "carla-interface.tags=$CARLA_INTERFACE_IMAGE" \
+    --set "carla-interface.args.CARLA_PYTHON_VERSION=$CARLA_PYTHON_VERSION" \
+    carla-interface
 }
 
 wait_for_carla_rpc() {
