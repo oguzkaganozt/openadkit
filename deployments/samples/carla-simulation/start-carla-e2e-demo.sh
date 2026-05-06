@@ -17,7 +17,7 @@ Starts the closed-loop CARLA e2e demo using CARLA on the host display and
 Autoware's in-tree autoware_carla_interface.
 
 Options:
-  --skip-build          Do not build the local Autoware e2e image
+  --skip-build          Do not build the local CARLA interface image
   --skip-verify         Skip topic, actor, and localization verification
   --no-visualizer       Do not start the browser RViz/noVNC visualizer container
   --drive               Set a forward route and engage autonomous mode
@@ -67,6 +67,13 @@ run() {
   fi
 }
 
+run_compose() {
+  printf '+ docker compose --env-file %s -f docker-compose.yaml %s\n' "$ENV_FILE" "$*"
+  if [[ "$DRY_RUN" == false ]]; then
+    docker compose --env-file "$ENV_FILE" -f docker-compose.yaml "$@"
+  fi
+}
+
 load_env() {
   set -a
   # shellcheck source=/dev/null
@@ -107,9 +114,9 @@ build_image() {
   fi
 
   run docker build \
-    -t "$AUTOWARE_CARLA_E2E_IMAGE" \
+    -t "$CARLA_INTERFACE_IMAGE" \
     --build-arg CARLA_PYTHON_VERSION="$CARLA_PYTHON_VERSION" \
-    -f Dockerfile.autoware-carla-e2e \
+    -f Dockerfile.carla-interface \
     .
 }
 
@@ -139,7 +146,7 @@ wait_for_carla_api() {
 
   local deadline=$((SECONDS + CARLA_START_TIMEOUT))
   while ((SECONDS < deadline)); do
-    if docker run --rm --network host "$AUTOWARE_CARLA_E2E_IMAGE" bash -lc "python3 - <<'PY'
+    if docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
 import carla
 client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
 client.set_timeout(5)
@@ -165,41 +172,7 @@ start_container_carla() {
   fi
 
   stop_container_carla
-
-  local vk_icd_mount=()
-  local vk_icd_env=()
-  if [[ -n "${CARLA_VK_ICD_HOST_PATH:-}" && -n "${CARLA_VK_ICD_CONTAINER_PATH:-}" ]]; then
-    if [[ "$DRY_RUN" == true || -f "$CARLA_VK_ICD_HOST_PATH" ]]; then
-      vk_icd_mount=(-v "$CARLA_VK_ICD_HOST_PATH:$CARLA_VK_ICD_CONTAINER_PATH:ro")
-      vk_icd_env=(-e VK_ICD_FILENAMES="$CARLA_VK_ICD_CONTAINER_PATH")
-    fi
-  fi
-
-  run docker run -d \
-    --name "$CARLA_CONTAINER_NAME" \
-    --network host \
-    --ipc host \
-    --init \
-    --gpus all \
-    -e DISPLAY="$CARLA_DISPLAY" \
-    -e SDL_VIDEODRIVER=x11 \
-    -e NVIDIA_VISIBLE_DEVICES=all \
-    -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display \
-    "${vk_icd_env[@]}" \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    "${vk_icd_mount[@]}" \
-    "$CARLA_CONTAINER_IMAGE" \
-    /bin/bash ./CarlaUE4.sh \
-    -windowed \
-    -vulkan \
-    -nosound \
-    -ResX="$CARLA_RESX" \
-    -ResY="$CARLA_RESY" \
-    -quality-level="$CARLA_QUALITY" \
-    -carla-rpc-port="$CARLA_RPC_PORT" \
-    -world-port="$CARLA_WORLD_PORT" \
-    -stdout \
-    -FullStdOutLogOutput
+  run_compose up -d --force-recreate carla
 
   wait_for_carla_rpc
   wait_for_carla_api
@@ -207,7 +180,7 @@ start_container_carla() {
 
 preload_carla_world() {
   if [[ "$DRY_RUN" == true ]]; then
-    run docker run --rm --network host "$AUTOWARE_CARLA_E2E_IMAGE" bash -lc "python3 - <<'PY'
+    run docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
 import carla
 client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
 client.set_timeout(float('$CARLA_LOAD_TIMEOUT'))
@@ -219,7 +192,7 @@ PY"
 
   local deadline=$((SECONDS + CARLA_LOAD_TIMEOUT))
   while ((SECONDS < deadline)); do
-    if docker run --rm --network host "$AUTOWARE_CARLA_E2E_IMAGE" bash -lc "python3 - <<'PY'
+    if docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
 import carla
 client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
 client.set_timeout(30)
@@ -236,19 +209,20 @@ PY"; then
 }
 
 start_autoware() {
-  run docker rm -f "$AUTOWARE_CARLA_E2E_CONTAINER" || true
-
-  run docker run -d \
-    --name "$AUTOWARE_CARLA_E2E_CONTAINER" \
-    --network host \
-    --ipc host \
-    --init \
-    --gpus all \
-    -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-    -e ROS_DOMAIN_ID="$ROS_DOMAIN_ID" \
-    -v "$HOME/autoware_data:/root/autoware_data:ro" \
-    "$AUTOWARE_CARLA_E2E_IMAGE" \
-    bash -lc "source /opt/ros/humble/setup.bash && source /opt/autoware/setup.bash && ros2 launch autoware_launch e2e_simulator.launch.xml map_path:=/root/autoware_data/maps/Town01 vehicle_model:=sample_vehicle sensor_model:=carla_sensor_kit simulator_type:=carla rviz:=$AUTOWARE_E2E_RVIZ timeout:=$AUTOWARE_E2E_TIMEOUT use_empty_dynamic_object_publisher:=$AUTOWARE_E2E_EMPTY_OBJECTS use_traffic_light_recognition:=$AUTOWARE_E2E_USE_TRAFFIC_LIGHT_RECOGNITION cuda_ground_segmentation_node_param_path:=/tmp/unused_cuda_ground_segmentation.param.yaml"
+  if docker container inspect autoware-e2e-carla >/dev/null 2>&1; then
+    run docker rm -f autoware-e2e-carla
+  fi
+  run_compose up -d --force-recreate \
+    map \
+    system \
+    carla-interface \
+    sensing \
+    perception \
+    localization \
+    planning \
+    vehicle \
+    control \
+    api
 }
 
 start_visualizer() {
@@ -256,17 +230,8 @@ start_visualizer() {
     return 0
   fi
 
-  run docker rm -f "$AUTOWARE_CARLA_E2E_VISUALIZER_CONTAINER" || true
-  run docker run -d \
-    --name "$AUTOWARE_CARLA_E2E_VISUALIZER_CONTAINER" \
-    --network host \
-    --ipc host \
-    --init \
-    -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-    -e ROS_DOMAIN_ID="$ROS_DOMAIN_ID" \
-    -e RVIZ_CONFIG=/opt/autoware/share/autoware_launch/rviz/autoware.rviz \
-    -e USE_SIM_TIME=true \
-    ghcr.io/autowarefoundation/openadkit:visualizer
+  run docker rm -f autoware-e2e-visualizer || true
+  run_compose up -d --force-recreate visualizer
 }
 
 verify_runtime() {
@@ -282,8 +247,40 @@ verify_runtime() {
   local deadline=$((SECONDS + AUTOWARE_E2E_VERIFY_TIMEOUT))
   local output
   while ((SECONDS < deadline)); do
-    if output=$(docker exec "$AUTOWARE_CARLA_E2E_CONTAINER" bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; timeout 5 ros2 topic echo --once /localization/kinematic_state >/dev/null; timeout 5 ros2 topic echo --once /sensing/lidar/top/pointcloud_before_sync >/dev/null; python3 - <<'PY'
+    if output=$(docker exec "$CARLA_INTERFACE_CONTAINER" bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
+import time
+
 import carla
+import rclpy
+from nav_msgs.msg import Odometry
+from rclpy.qos import qos_profile_sensor_data
+from sensor_msgs.msg import PointCloud2
+
+rclpy.init()
+node = rclpy.create_node('openadkit_e2e_runtime_verifier')
+latest_odom = None
+latest_lidar = None
+
+def on_odom(msg):
+    global latest_odom
+    latest_odom = msg
+
+def on_lidar(msg):
+    global latest_lidar
+    latest_lidar = msg
+
+node.create_subscription(Odometry, '/localization/kinematic_state', on_odom, 10)
+node.create_subscription(PointCloud2, '/sensing/lidar/top/pointcloud_before_sync', on_lidar, qos_profile_sensor_data)
+
+deadline = time.time() + 20.0
+while time.time() < deadline and (latest_odom is None or latest_lidar is None):
+    rclpy.spin_once(node, timeout_sec=0.2)
+
+if latest_odom is None:
+    raise RuntimeError('Timed out waiting for /localization/kinematic_state')
+if latest_lidar is None:
+    raise RuntimeError('Timed out waiting for /sensing/lidar/top/pointcloud_before_sync')
+
 client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
 client.set_timeout(10)
 world = client.get_world()
@@ -294,6 +291,8 @@ print(world.get_map().name)
 print('vehicles', len(vehicles), 'ego', len(ego))
 if not ego:
     raise SystemExit(1)
+node.destroy_node()
+rclpy.shutdown()
 PY" 2>&1); then
       printf '%s\n' "$output"
       return 0
@@ -301,7 +300,7 @@ PY" 2>&1); then
     sleep "$AUTOWARE_E2E_VERIFY_INTERVAL"
   done
 
-  docker logs --tail 160 "$AUTOWARE_CARLA_E2E_CONTAINER" >&2 || true
+  docker compose --env-file "$ENV_FILE" -f docker-compose.yaml logs --tail 160 >&2 || true
   printf 'Timed out waiting for CARLA e2e verification\n' >&2
   return 1
 }
@@ -319,7 +318,7 @@ start_autonomous_drive() {
   docker exec \
     -e AUTOWARE_E2E_ROUTE_FORWARD_DISTANCE="$AUTOWARE_E2E_ROUTE_FORWARD_DISTANCE" \
     -e AUTOWARE_E2E_ROUTE_SETTLE_TIMEOUT="$AUTOWARE_E2E_ROUTE_SETTLE_TIMEOUT" \
-    "$AUTOWARE_CARLA_E2E_CONTAINER" \
+    "$CARLA_INTERFACE_CONTAINER" \
     bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
 import os
 import time
@@ -454,7 +453,7 @@ verify_autonomous_drive() {
   docker exec \
     -e AUTOWARE_E2E_DRIVE_VERIFY_TIMEOUT="$AUTOWARE_E2E_DRIVE_VERIFY_TIMEOUT" \
     -e AUTOWARE_E2E_DRIVE_VERIFY_DISTANCE="$AUTOWARE_E2E_DRIVE_VERIFY_DISTANCE" \
-    "$AUTOWARE_CARLA_E2E_CONTAINER" \
+    "$CARLA_INTERFACE_CONTAINER" \
     bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
 import math
 import os

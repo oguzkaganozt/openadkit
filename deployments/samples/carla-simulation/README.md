@@ -1,13 +1,14 @@
 # Autoware Open AD Kit CARLA E2E Simulation
 
-This sample runs closed-loop CARLA 0.9.16 end-to-end simulation with Autoware's `autoware_carla_interface`.
+This sample runs closed-loop CARLA 0.9.16 end-to-end simulation with modular OpenADKit containers and Autoware's `autoware_carla_interface`.
 
-The default runtime uses the official CARLA Ubuntu 22 container image. It does not use the CARLA ROS bridge, dummy vehicle, dummy perception, Docker Compose, or a host-installed CARLA runtime.
+The default runtime uses the official CARLA Ubuntu 22 container image. It does not use the CARLA ROS bridge, dummy vehicle, dummy perception, a monolithic Autoware container, or a host-installed CARLA runtime.
 
 ## Runtime
 
 - CARLA: `carlasim/carla:0.9.16`
-- Autoware e2e image: `local/openadkit-autoware-carla-e2e:0.9.16`
+- CARLA interface image: `local/openadkit-carla-interface:0.9.16`
+- Autoware modules: standard OpenADKit split images
 - CARLA map: `Town01`
 - Autoware map assets: `$HOME/autoware_data/maps/Town01`
 - RViz/noVNC: `ghcr.io/autowarefoundation/openadkit:visualizer`
@@ -27,11 +28,11 @@ The default runtime uses the official CARLA Ubuntu 22 container image. It does n
 
 The helper will:
 
-- Build `local/openadkit-autoware-carla-e2e:0.9.16` with `carla==0.9.16`.
+- Build `local/openadkit-carla-interface:0.9.16` with `carla==0.9.16`.
 - Download the official CARLA Autoware Town01 map assets if missing.
 - Start `carlasim/carla:0.9.16` as `carla-e2e` on `DISPLAY=:0`.
 - Preload `Town01`.
-- Start Autoware with `e2e_simulator.launch.xml simulator_type:=carla`.
+- Start modular OpenADKit map, system, CARLA interface, sensing, perception, localization, planning, vehicle, control, and API containers.
 - Start the browser RViz/noVNC visualizer.
 - Verify localization, CARLA LiDAR, and the CARLA ego actor.
 
