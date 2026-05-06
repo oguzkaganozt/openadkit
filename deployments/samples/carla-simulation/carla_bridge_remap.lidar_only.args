@@ -1,6 +1,0 @@
--r /clock:=/clock
--r /carla/ego_vehicle/vehicle_control_cmd:=/control/command/control_cmd
--r /carla/ego_vehicle/vehicle_status:=/vehicle/status/velocity_status
--r /carla/ego_vehicle/lidar_top/point_cloud:=/sensing/lidar/top/pointcloud_raw
--r /carla/ego_vehicle/imu/imu:=/sensing/imu/imu_data
--r /carla/ego_vehicle/gnss/gnss:=/sensing/gnss/pose

@@ -8,12 +8,13 @@ SKIP_BUILD=false
 SKIP_VERIFY=false
 START_VISUALIZER_OVERRIDE=
 AUTO_DRIVE_OVERRIDE=
+CARLA_RUNTIME_OVERRIDE=
 
 usage() {
   cat <<'EOF'
 Usage: ./start-carla-e2e-demo.sh [options]
 
-Starts the closed-loop CARLA e2e demo using native CARLA on the host display and
+Starts the closed-loop CARLA e2e demo using CARLA on the host display and
 Autoware's in-tree autoware_carla_interface.
 
 Options:
@@ -22,6 +23,8 @@ Options:
   --no-visualizer       Do not start the browser RViz/noVNC visualizer container
   --drive               Set a forward route and engage autonomous mode
   --no-drive            Start the stack without setting a route or engaging
+  --container-carla     Run CARLA from the configured container image
+  --native-carla        Run CARLA from CARLA_NATIVE_PATH on the host
   --dry-run             Print planned commands without running them
   -h, --help            Show this help text
 EOF
@@ -43,6 +46,12 @@ while (($#)); do
       ;;
     --no-drive)
       AUTO_DRIVE_OVERRIDE=false
+      ;;
+    --container-carla)
+      CARLA_RUNTIME_OVERRIDE=container
+      ;;
+    --native-carla)
+      CARLA_RUNTIME_OVERRIDE=native
       ;;
     --dry-run)
       DRY_RUN=true
@@ -87,6 +96,10 @@ load_env() {
   if [[ -n "$AUTO_DRIVE_OVERRIDE" ]]; then
     AUTOWARE_E2E_AUTO_DRIVE=$AUTO_DRIVE_OVERRIDE
   fi
+
+  if [[ -n "$CARLA_RUNTIME_OVERRIDE" ]]; then
+    CARLA_RUNTIME=$CARLA_RUNTIME_OVERRIDE
+  fi
 }
 
 prepare_map() {
@@ -115,6 +128,7 @@ build_image() {
 
   run docker build \
     -t "$AUTOWARE_CARLA_E2E_IMAGE" \
+    --build-arg CARLA_PYTHON_VERSION="$CARLA_PYTHON_VERSION" \
     -f Dockerfile.autoware-carla-e2e \
     .
 }
@@ -177,19 +191,91 @@ stop_native_carla() {
   run pkill -KILL -f '[C]arlaUE4' || true
 }
 
-start_native_carla() {
-  if [[ "$DRY_RUN" == false && ! -x "$CARLA_NATIVE_PATH/CarlaUE4.sh" ]]; then
-    printf 'Native CARLA not found at %s\n' "$CARLA_NATIVE_PATH" >&2
-    printf 'Set CARLA_NATIVE_PATH or install/copy CARLA 0.9.15 there.\n' >&2
+stop_container_carla() {
+  run docker rm -f "$CARLA_CONTAINER_NAME" || true
+}
+
+stop_carla() {
+  stop_container_carla
+  stop_native_carla
+}
+
+start_container_carla() {
+  if [[ "$DRY_RUN" == false && ! -S /tmp/.X11-unix/X${CARLA_DISPLAY#:} ]]; then
+    printf 'X display socket for %s was not found under /tmp/.X11-unix\n' "$CARLA_DISPLAY" >&2
     return 1
   fi
 
-  stop_native_carla
+  stop_carla
+
+  local vk_icd_mount=()
+  local vk_icd_env=()
+  if [[ -n "${CARLA_VK_ICD_HOST_PATH:-}" && -n "${CARLA_VK_ICD_CONTAINER_PATH:-}" ]]; then
+    if [[ "$DRY_RUN" == true || -f "$CARLA_VK_ICD_HOST_PATH" ]]; then
+      vk_icd_mount=(-v "$CARLA_VK_ICD_HOST_PATH:$CARLA_VK_ICD_CONTAINER_PATH:ro")
+      vk_icd_env=(-e VK_ICD_FILENAMES="$CARLA_VK_ICD_CONTAINER_PATH")
+    fi
+  fi
+
+  run docker run -d \
+    --name "$CARLA_CONTAINER_NAME" \
+    --network host \
+    --ipc host \
+    --init \
+    --gpus all \
+    -e DISPLAY="$CARLA_DISPLAY" \
+    -e SDL_VIDEODRIVER=x11 \
+    -e NVIDIA_VISIBLE_DEVICES=all \
+    -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display \
+    "${vk_icd_env[@]}" \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    "${vk_icd_mount[@]}" \
+    "$CARLA_CONTAINER_IMAGE" \
+    /bin/bash ./CarlaUE4.sh \
+    -windowed \
+    -vulkan \
+    -nosound \
+    -ResX="$CARLA_RESX" \
+    -ResY="$CARLA_RESY" \
+    -quality-level="$CARLA_QUALITY" \
+    -carla-rpc-port="$CARLA_RPC_PORT" \
+    -world-port="$CARLA_WORLD_PORT" \
+    -stdout \
+    -FullStdOutLogOutput
+
+  wait_for_carla_rpc
+  wait_for_carla_api
+}
+
+start_native_carla() {
+  if [[ "$DRY_RUN" == false && ! -x "$CARLA_NATIVE_PATH/CarlaUE4.sh" ]]; then
+    printf 'Native CARLA not found at %s\n' "$CARLA_NATIVE_PATH" >&2
+    printf 'Set CARLA_NATIVE_PATH or install/copy CARLA 0.9.16 there.\n' >&2
+    return 1
+  fi
+
+  stop_carla
   run mkdir -p "$CARLA_NATIVE_HOME"
 
   run_shell "cd '$CARLA_NATIVE_PATH' && DISPLAY='$CARLA_DISPLAY' HOME='$CARLA_NATIVE_HOME' SDL_VIDEODRIVER=x11 ./CarlaUE4.sh -windowed -vulkan -nosound -ResX='$CARLA_RESX' -ResY='$CARLA_RESY' -quality-level='$CARLA_QUALITY' -carla-rpc-port='$CARLA_RPC_PORT' -world-port='$CARLA_WORLD_PORT' -stdout -FullStdOutLogOutput > '$HOME/carla-native-gui.log' 2>&1 & printf '%s\n' \$! > '$HOME/carla-native-gui.pid'"
   wait_for_carla_rpc
   wait_for_carla_api
+}
+
+start_carla() {
+  case "$CARLA_RUNTIME" in
+    container)
+      start_container_carla
+      ;;
+    native)
+      start_native_carla
+      ;;
+    *)
+      printf 'Unknown CARLA_RUNTIME: %s\n' "$CARLA_RUNTIME" >&2
+      printf 'Expected one of: container, native\n' >&2
+      return 1
+      ;;
+  esac
 }
 
 preload_carla_world() {
@@ -499,7 +585,7 @@ main() {
   load_env
   prepare_map
   build_image
-  start_native_carla
+  start_carla
   preload_carla_world
   start_autoware
   start_visualizer

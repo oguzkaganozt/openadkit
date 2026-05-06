@@ -2,6 +2,8 @@ FROM ghcr.io/autowarefoundation/openadkit:sensing-perception-cuda AS sensing_per
 
 FROM ghcr.io/autowarefoundation/openadkit:universe
 
+ARG CARLA_PYTHON_VERSION=0.9.16
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -13,7 +15,7 @@ RUN apt-get update \
     ros-humble-pcl-msgs \
     ros-humble-rsl \
     ros-humble-xacro \
-  && python3 -m pip install --no-cache-dir carla==0.9.15 \
+  && python3 -m pip install --no-cache-dir carla==${CARLA_PYTHON_VERSION} \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=sensing_perception_cuda /opt/autoware/lib/libpointcloud_based_occupancy_grid_map.so /opt/autoware/lib/
@@ -22,9 +24,9 @@ COPY --from=sensing_perception_cuda /opt/autoware/lib/libautoware_probabilistic_
 COPY --from=sensing_perception_cuda /opt/autoware/lib/libsynchronized_grid_map_fusion.so /opt/autoware/lib/
 COPY --from=sensing_perception_cuda /opt/autoware/share/ament_index/resource_index/rclcpp_components/autoware_probabilistic_occupancy_grid_map /opt/autoware/share/ament_index/resource_index/rclcpp_components/
 
-# Native CARLA on a visible X display can crash when the interface reloads the
-# same map during startup. Preload Town01 in the launcher, then skip only this
-# redundant load_world call while preserving map reloads for other maps.
+# CARLA can crash when the interface reloads the same visible map during
+# startup. Preload Town01 in the launcher, then skip only this redundant
+# load_world call while preserving map reloads for other maps.
 RUN python3 - <<'PY'
 from pathlib import Path
 

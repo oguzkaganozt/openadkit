@@ -1,193 +1,112 @@
-# Autoware Open AD Kit CARLA Simulation
+# Autoware Open AD Kit CARLA E2E Simulation
 
-This sample deployment has two CARLA modes:
+This sample runs closed-loop CARLA 0.9.16 end-to-end simulation with Autoware's `autoware_carla_interface`.
 
-- `--planning-demo`: RViz planning demo with dummy vehicle/perception and CARLA visible as an external world source.
-- `start-carla-e2e-demo.sh`: closed-loop CARLA e2e demo using Autoware's `autoware_carla_interface`.
+The default runtime uses the official CARLA Ubuntu 22 container image. It does not use the CARLA ROS bridge, dummy vehicle, dummy perception, Docker Compose, or a native CARLA installation.
+
+## Runtime
+
+- CARLA: `carlasim/carla:0.9.16`
+- Autoware e2e image: `local/openadkit-autoware-carla-e2e:0.9.16`
+- CARLA map: `Town01`
+- Autoware map assets: `$HOME/autoware_data/maps/Town01`
+- RViz/noVNC: `ghcr.io/autowarefoundation/openadkit:visualizer`
 
 ## Requirements
 
-- Docker Compose (v2)
-- A compatible CARLA image host runtime and container image access
-- Optional: NVIDIA runtime for GPU acceleration (recommended for CARLA rendering)
+- Docker with NVIDIA Container Toolkit
+- Access to `carlasim/carla:0.9.16`
+- A working host X display, usually `DISPLAY=:0`
+- Host NVIDIA Vulkan ICD at `/usr/share/vulkan/icd.d/nvidia_icd.json`
 
-If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (already default).
+## Start
 
-## Start the deployment
+```bash
+./start-carla-e2e-demo.sh
+```
 
-1. Build the local CARLA ROS bridge image:
+The helper will:
 
-   ```bash
-   git clone --recurse-submodules https://github.com/carla-simulator/ros-bridge.git ~/carla-ros-bridge
-   cp Dockerfile.carla-ros-bridge.humble ~/carla-ros-bridge/Dockerfile.openadkit
-   docker build \
-     --build-arg CARLA_VERSION=0.9.15 \
-     --build-arg ROS_DISTRO=humble \
-     -t local/carla-ros-bridge:0.9.15-humble \
-     -f ~/carla-ros-bridge/Dockerfile.openadkit \
-     ~/carla-ros-bridge
-   ```
+- Build `local/openadkit-autoware-carla-e2e:0.9.16` with `carla==0.9.16`.
+- Download the official CARLA Autoware Town01 map assets if missing.
+- Start `carlasim/carla:0.9.16` as `carla-e2e` on `DISPLAY=:0`.
+- Preload `Town01`.
+- Start Autoware with `e2e_simulator.launch.xml simulator_type:=carla`.
+- Start the browser RViz/noVNC visualizer.
+- Verify localization, CARLA LiDAR, and the CARLA ego actor.
 
-   If the VM cannot reach the default Ubuntu apt mirrors reliably, pass a regional mirror:
+The default behavior is no-drive. Set the route and engage manually in RViz.
 
-   ```bash
-   docker build \
-     --build-arg CARLA_VERSION=0.9.15 \
-     --build-arg ROS_DISTRO=humble \
-     --build-arg UBUNTU_APT_MIRROR=http://es.archive.ubuntu.com/ubuntu \
-     --build-arg UBUNTU_SECURITY_APT_MIRROR=http://es.archive.ubuntu.com/ubuntu \
-     -t local/carla-ros-bridge:0.9.15-humble \
-     -f ~/carla-ros-bridge/Dockerfile.openadkit \
-     ~/carla-ros-bridge
-   ```
+## Open RViz
 
-2. Start services with the startup helper.
+If running remotely, forward noVNC from the machine running the sample:
 
-   For a reproducible RViz planning demo, use planning demo mode:
+```bash
+ssh -L 8080:localhost:6080 <user>@<host>
+```
 
-   ```bash
-   ./start-carla-simulation.sh --planning-demo
-   ```
+Open:
 
-   This mode starts CARLA and the CARLA ROS bridge for visualization and sensor topics, while Autoware uses dummy vehicle and perception publishers so `2D Pose Estimate`, `2D Goal Pose`, `Auto`, and `Accept Start` work in RViz without CARLA adapter nodes. It also uses a bridge launch path that does not subscribe to RViz `/initialpose`, avoiding a collision with Autoware's pose initialization. A demo-only MRM suppressor is enabled because the full fail-safe graph can briefly report stale diagnostics when running this mixed CARLA/dummy setup.
+```text
+http://localhost:8080/vnc.html
+```
 
-   For adapter development mode, where dummy vehicle and dummy perception remain disabled, run:
+Password:
 
-   ```bash
-   ./start-carla-simulation.sh
-   ```
+```text
+openadkit
+```
 
-   The helper starts CARLA first, waits for the RPC port, recreates the bridge, waits for CARLA objects to spawn, starts the remaining OpenADKit services, and verifies `/clock` plus key topics.
+In RViz:
 
-   To run without the GPU override:
+- Use `2D Goal Pose` to set a route.
+- Wait for routing and planning to become available.
+- Click `Auto` to engage autonomous driving.
 
-   ```bash
-   ./start-carla-simulation.sh --no-gpu
-   ```
+## Optional Drive Check
 
-3. Open RViz:
+To automatically set a short forward route, engage autonomous mode, and verify movement:
 
-   ```
-   http://localhost:6080/vnc.html
-   ```
+```bash
+./start-carla-e2e-demo.sh --drive
+```
 
-   Password: `openadkit`
+Expected success output includes:
 
-4. In planning demo mode, after RViz starts:
+```text
+Route set: start=(..., ...) goal=(..., ...)
+Autonomous mode active
+Moved ... m: start=(..., ...) current=(..., ...)
+```
 
-   - Use `2D Pose Estimate` to seed the ego pose.
-   - Use `2D Goal Pose` to set a route.
-   - Click `Auto`.
-   - Click `Accept Start` if prompted.
+## Faster Relaunch
 
-## Closed-loop CARLA e2e demo
+After the e2e image has already been built:
 
-The e2e demo uses native CARLA on the host X display and the Autoware Universe `e2e_simulator.launch.xml simulator_type:=carla` path. It does not use the CARLA ROS bridge or dummy vehicle/perception publishers.
+```bash
+./start-carla-e2e-demo.sh --skip-build
+```
 
-1. Ensure CARLA 0.9.15 is available on the host. The VM setup used:
+For start-only behavior with an explicit no-drive flag:
 
-   ```bash
-   /home/openadkit/carla-0.9.15-native/CarlaUE4.sh
-   ```
+```bash
+./start-carla-e2e-demo.sh --skip-build --no-drive
+```
 
-   If your CARLA path is different, set `CARLA_NATIVE_PATH` in `carla-simulation.e2e.env` or export it before running.
+## Command Path
 
-2. Start the e2e demo:
+Closed-loop control uses this path:
 
-   ```bash
-   ./start-carla-e2e-demo.sh
-   ```
-
-   The helper will:
-
-   - Build `local/openadkit-autoware-carla-e2e:0.9.15` from `Dockerfile.autoware-carla-e2e`.
-   - Download the official CARLA Autoware Town01 maps to `$HOME/autoware_data/maps/Town01`.
-   - Start native CARLA on `DISPLAY=:0`, port `2000`.
-   - Preload `Town01`.
-   - Start `autoware_launch e2e_simulator.launch.xml` with `sensor_model:=carla_sensor_kit` and `simulator_type:=carla`.
-   - Start the browser RViz/noVNC visualizer container.
-   - Verify `/localization/kinematic_state`, CARLA LiDAR, and the CARLA `ego_vehicle` actor.
-
-   To automatically set a forward Town01 route, switch Autoware to autonomous mode, and verify localization moves, run:
-
-   ```bash
-   ./start-carla-e2e-demo.sh --drive
-   ```
-
-3. Open RViz/noVNC:
-
-   ```
-   http://localhost:6080/vnc.html
-   ```
-
-   Password: `openadkit`
-
-4. Use RViz or AD API to set a route and engage. The closed-loop command path is:
-
-   ```text
-   /control/command/control_cmd
-     -> autoware_raw_vehicle_cmd_converter
-     -> /control/command/actuation_cmd
-     -> autoware_carla_interface
-     -> CARLA ego vehicle
-   ```
-
-The e2e image includes a small runtime patch for `autoware_carla_interface`: if CARLA is already on `Town01`, it skips the redundant `client.load_world("Town01")` call. This avoids a native-CARLA GUI crash observed during startup while preserving map reloads when a different CARLA map is active.
-
-The e2e image also copies the pointcloud occupancy-grid runtime components from `ghcr.io/autowarefoundation/openadkit:sensing-perception-cuda`, including the matching `rclcpp_components` resource index. The base `universe` image only advertises the laserscan occupancy-grid component, while `e2e_simulator.launch.xml simulator_type:=carla` loads the pointcloud occupancy-grid node.
-
-## Runtime checks
-
-- Confirm ROS graph topics show bridge outputs:
-
-  ```bash
-  docker exec -it autoware-map ros2 topic list | grep -E 'clock|control|sensing|vehicle'
-  ```
-
-- Ensure `/clock` is active and `use_sim_time=true` in simulator and core components.
-
-- In adapter development mode, confirm no dummy world feeds are enabled by checking startup logs for `LAUNCH_DUMMY_VEHICLE=false`, `LAUNCH_DUMMY_PERCEPTION=false`, `LAUNCH_DUMMY_DOORS=false`.
-- In planning demo mode, `LAUNCH_DUMMY_VEHICLE=true` and `LAUNCH_DUMMY_PERCEPTION=true` are expected.
-
-## Topic integration status
-
-`CARLA_SYNCHRONOUS_MODE` is optional: set it only when your selected bridge launch file supports the `synchronous_mode` argument.
-
-The planning-demo helper starts CARLA, the CARLA ROS bridge, and the OpenADKit stack with shared ROS time. Native CARLA bridge topics do not directly match all Autoware message types, so closed-loop CARLA driving uses the separate e2e helper and `autoware_carla_interface`.
-
-ROS 2 Humble `ros2 launch` does not accept a global `--ros-args` remap block for launched nodes. The included remap files are reference templates for adapter or launch integration work, not arguments passed directly to the bridge command.
-
-- Vehicle command path expected by Autoware (default examples):
-  - `/carla/ego_vehicle/vehicle_control_cmd -> /control/command/control_cmd`
-  - `/carla/ego_vehicle/vehicle_status -> /vehicle/status/velocity_status`
-- Sensor paths expected by Autoware perception (default examples):
-  - `/sensing/lidar/top/pointcloud_raw` (`sensor_msgs/msg/PointCloud2`)
-  - `/sensing/imu/imu_data` (`sensor_msgs/msg/Imu`)
-  - `/sensing/gnss/pose` (`geometry_msgs/msg/PoseWithCovarianceStamped`)
-- TF / time alignment:
-  - `/clock` should be remapped from CARLA to `/clock`.
-  - `/tf` and `/tf_static` must stay consistent for base frame and map frame alignment.
-  - `USE_SIM_TIME=true` is enabled by default.
-  - `SCENARIO_SIMULATION=false` is the default for the published OpenADKit simulator image because it does not include `autoware_dummy_infrastructure`.
-
-If your CARLA topic role names differ, update the adapter configuration and reference remap templates accordingly.
-
-## Reference Remap Templates
-
-- Camera+lidar mode: default remap file
-  - `carla_bridge_remap.camera_lidar.args`
-- LiDAR-only mode: reference remap file
-  - `carla_bridge_remap.lidar_only.args`
+```text
+/control/command/control_cmd
+  -> autoware_raw_vehicle_cmd_converter
+  -> /control/command/actuation_cmd
+  -> autoware_carla_interface
+  -> CARLA ego vehicle
+```
 
 ## Stop
 
 ```bash
-docker compose --env-file carla-simulation.env --env-file carla-simulation.planning-demo.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml -f docker-compose.planning-demo.override.yaml down
-```
-
-For the e2e demo:
-
-```bash
-docker rm -f autoware-e2e-carla autoware-e2e-visualizer
-pkill -f '[C]arlaUE4'
+docker rm -f autoware-e2e-carla autoware-e2e-visualizer carla-e2e
 ```
