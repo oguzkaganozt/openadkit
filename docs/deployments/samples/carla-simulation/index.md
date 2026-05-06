@@ -2,7 +2,7 @@
 
 This sample runs a closed-loop CARLA 0.9.16 end-to-end simulation with Autoware's `autoware_carla_interface`.
 
-The default flow uses the official CARLA Ubuntu 22 container image and does not use the CARLA ROS bridge, dummy vehicle, dummy perception, or native CARLA installation.
+The default flow uses the official CARLA Ubuntu 22 container image and does not use the CARLA ROS bridge, dummy vehicle, dummy perception, or a host-installed CARLA runtime.
 
 ## Runtime
 
@@ -114,10 +114,4 @@ Closed-loop control uses this path:
 
 ```bash
 docker rm -f autoware-e2e-carla autoware-e2e-visualizer carla-e2e
-```
-
-If a native CARLA process was started during local experimentation, stop it separately:
-
-```bash
-pkill -f '[C]arlaUE4'
 ```

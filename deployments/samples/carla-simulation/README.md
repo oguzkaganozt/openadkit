@@ -2,7 +2,7 @@
 
 This sample runs closed-loop CARLA 0.9.16 end-to-end simulation with Autoware's `autoware_carla_interface`.
 
-The default runtime uses the official CARLA Ubuntu 22 container image. It does not use the CARLA ROS bridge, dummy vehicle, dummy perception, Docker Compose, or a native CARLA installation.
+The default runtime uses the official CARLA Ubuntu 22 container image. It does not use the CARLA ROS bridge, dummy vehicle, dummy perception, Docker Compose, or a host-installed CARLA runtime.
 
 ## Runtime
 
