@@ -29,6 +29,7 @@ assert_not_contains() {
 
 help_output=$("$SCRIPT" --help)
 assert_contains "$help_output" "Usage:"
+assert_contains "$help_output" "--planning-demo"
 assert_contains "$help_output" "--no-gpu"
 assert_contains "$help_output" "--skip-verify"
 
@@ -44,6 +45,11 @@ assert_contains "$no_gpu_plan" "docker compose --env-file carla-simulation.env -
 assert_contains "$no_gpu_plan" "docker compose --env-file carla-simulation.env -f docker-compose.yaml up -d --force-recreate --no-deps carla-ros-bridge"
 assert_not_contains "$no_gpu_plan" "docker-compose.gpu.override.yaml"
 assert_not_contains "$no_gpu_plan" "verify /clock and key topics"
+
+planning_demo_plan=$("$SCRIPT" --dry-run --planning-demo)
+assert_contains "$planning_demo_plan" "--env-file carla-simulation.env --env-file carla-simulation.planning-demo.env"
+assert_contains "$planning_demo_plan" "-f docker-compose.planning-demo.override.yaml"
+assert_contains "$planning_demo_plan" "up -d --force-recreate --no-deps carla-ros-bridge"
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT

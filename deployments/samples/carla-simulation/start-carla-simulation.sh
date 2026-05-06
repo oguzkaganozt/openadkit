@@ -5,6 +5,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 DRY_RUN=false
 USE_GPU=true
 VERIFY=true
+PLANNING_DEMO=false
 
 usage() {
   cat <<'EOF'
@@ -19,6 +20,8 @@ Starts the CARLA simulation sample in a race-safe order:
   6. verify /clock and key topics
 
 Options:
+  --planning-demo Use dummy Autoware vehicle/perception and a bridge launch
+                  that leaves RViz /initialpose for Autoware only
   --no-gpu        Do not include docker-compose.gpu.override.yaml
   --skip-verify   Skip ROS topic and /clock verification
   --dry-run       Print the planned commands without running them
@@ -28,6 +31,9 @@ EOF
 
 while (($#)); do
   case "$1" in
+    --planning-demo)
+      PLANNING_DEMO=true
+      ;;
     --no-gpu)
       USE_GPU=false
       ;;
@@ -50,9 +56,21 @@ while (($#)); do
   shift
 done
 
-COMPOSE=(docker compose --env-file carla-simulation.env -f docker-compose.yaml)
+ENV_FILES=(carla-simulation.env)
+if [[ "$PLANNING_DEMO" == true ]]; then
+  ENV_FILES+=(carla-simulation.planning-demo.env)
+fi
+
+COMPOSE=(docker compose)
+for env_file in "${ENV_FILES[@]}"; do
+  COMPOSE+=(--env-file "$env_file")
+done
+COMPOSE+=(-f docker-compose.yaml)
 if [[ "$USE_GPU" == true ]]; then
   COMPOSE+=(-f docker-compose.gpu.override.yaml)
+fi
+if [[ "$PLANNING_DEMO" == true ]]; then
+  COMPOSE+=(-f docker-compose.planning-demo.override.yaml)
 fi
 
 compose_text() {
@@ -76,11 +94,14 @@ run_compose() {
 load_env_defaults() {
   local env_keys=()
   local line
-  while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)= ]]; then
-      env_keys+=("${BASH_REMATCH[1]}")
-    fi
-  done < carla-simulation.env
+  local env_file
+  for env_file in "${ENV_FILES[@]}"; do
+    while IFS= read -r line; do
+      if [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+        env_keys+=("${BASH_REMATCH[1]}")
+      fi
+    done < "$env_file"
+  done
 
   local overrides=()
   local key
@@ -91,8 +112,10 @@ load_env_defaults() {
   done
 
   set -a
-  # shellcheck source=/dev/null
-  source carla-simulation.env
+  for env_file in "${ENV_FILES[@]}"; do
+    # shellcheck source=/dev/null
+    source "$env_file"
+  done
   set +a
 
   local override

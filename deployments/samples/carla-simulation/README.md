@@ -38,7 +38,17 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
      ~/carla-ros-bridge
    ```
 
-2. Start services with the startup helper:
+2. Start services with the startup helper.
+
+   For a reproducible RViz planning demo, use planning demo mode:
+
+   ```bash
+   ./start-carla-simulation.sh --planning-demo
+   ```
+
+   This mode starts CARLA and the CARLA ROS bridge for visualization and sensor topics, while Autoware uses dummy vehicle and perception publishers so `2D Pose Estimate`, `2D Goal Pose`, `Auto`, and `Accept Start` work in RViz without CARLA adapter nodes. It also uses a bridge launch path that does not subscribe to RViz `/initialpose`, avoiding a collision with Autoware's pose initialization. A demo-only MRM suppressor is enabled because the full fail-safe graph can briefly report stale diagnostics when running this mixed CARLA/dummy setup.
+
+   For adapter development mode, where dummy vehicle and dummy perception remain disabled, run:
 
    ```bash
    ./start-carla-simulation.sh
@@ -60,7 +70,12 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 
    Password: `openadkit`
 
-4. After RViz starts, use `2D Pose Estimate` to seed the ego pose and start your route flow.
+4. In planning demo mode, after RViz starts:
+
+   - Use `2D Pose Estimate` to seed the ego pose.
+   - Use `2D Goal Pose` to set a route.
+   - Click `Auto`.
+   - Click `Accept Start` if prompted.
 
 ## Runtime checks
 
@@ -72,8 +87,8 @@ If you do not enable GPU passthrough, set `CARLA_RENDERING=-RenderOffScreen` (al
 
 - Ensure `/clock` is active and `use_sim_time=true` in simulator and core components.
 
-- Confirm no dummy world feeds are enabled by checking startup logs for:
-  `LAUNCH_DUMMY_VEHICLE=false`, `LAUNCH_DUMMY_PERCEPTION=false`, `LAUNCH_DUMMY_DOORS=false`.
+- In adapter development mode, confirm no dummy world feeds are enabled by checking startup logs for `LAUNCH_DUMMY_VEHICLE=false`, `LAUNCH_DUMMY_PERCEPTION=false`, `LAUNCH_DUMMY_DOORS=false`.
+- In planning demo mode, `LAUNCH_DUMMY_VEHICLE=true` and `LAUNCH_DUMMY_PERCEPTION=true` are expected.
 
 ## Topic integration status
 
@@ -108,5 +123,5 @@ If your CARLA topic role names differ, update the adapter configuration and refe
 ## Stop
 
 ```bash
-docker compose --env-file carla-simulation.env down
+docker compose --env-file carla-simulation.env --env-file carla-simulation.planning-demo.env -f docker-compose.yaml -f docker-compose.gpu.override.yaml -f docker-compose.planning-demo.override.yaml down
 ```
