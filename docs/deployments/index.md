@@ -6,6 +6,7 @@ A **deployment** is a running instance of Open AD Kit, a specific combination of
 
 Sample deployment configurations to help you get started. Recommended for **learning and development**.
 
+- [Image Tags](image-tags.md) - Understand stable, build, and release tags for Open AD Kit images.
 - [Planning Simulation](samples/planning-simulation/index.md) - Run the Autoware planning simulation with a sample map.
 - [Logging Simulation](samples/logging-simulation/index.md) - Run the Autoware logging simulation with a sample rosbag.
 
