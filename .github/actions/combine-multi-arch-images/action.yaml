@@ -20,6 +20,10 @@ inputs:
   component-targets:
     description: 'Space-separated list of component and universe image targets (e.g., "sensing-perception localization-mapping universe")'
     required: true
+  publish-stable-tags:
+    description: Publish mutable stable and legacy tags after creating immutable build manifests
+    required: false
+    default: "false"
   token:
     description: GitHub token for registry access
     required: true
@@ -36,61 +40,110 @@ runs:
 
     - name: Combine multi-arch images for common packages
       run: |
-        set -e
+        set -euo pipefail
 
         IMAGE="${{ inputs.image-prefix-common }}"
         DISTRO="${{ inputs.ros-distro }}"
         BUILD_TAG="${{ inputs.build-tag }}"
 
-        # Known common image variants
-        MULTI_ARCH_VARIANTS="base devel"
-        CUDA_VARIANTS="base-cuda devel-cuda"
+        multi_arch_variants=(base devel)
+        cuda_variants=(base-cuda devel-cuda)
 
-        # Create multi-arch manifests (amd64 + arm64)
-        for variant in ${MULTI_ARCH_VARIANTS}; do
-          base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
+        create_multi_arch_manifest() {
+          local variant="$1"
+          local base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
           echo "Creating multi-arch manifest for ${IMAGE}:${base_tag}"
           docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
             "${IMAGE}:${variant}-amd64-${DISTRO}-${BUILD_TAG}" \
             "${IMAGE}:${variant}-arm64-${DISTRO}-${BUILD_TAG}"
           echo "Created ${IMAGE}:${base_tag}"
-        done
+        }
 
-        # Create single-arch aliases for CUDA (amd64-only)
-        for variant in ${CUDA_VARIANTS}; do
-          base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
+        create_single_arch_manifest() {
+          local variant="$1"
+          local base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
           echo "Creating single-arch manifest for ${IMAGE}:${base_tag}"
           docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
             "${IMAGE}:${variant}-amd64-${DISTRO}-${BUILD_TAG}"
           echo "Created ${IMAGE}:${base_tag}"
+        }
+
+        for variant in "${multi_arch_variants[@]}"; do
+          create_multi_arch_manifest "${variant}"
+        done
+
+        for variant in "${cuda_variants[@]}"; do
+          create_single_arch_manifest "${variant}"
         done
       shell: bash
 
     - name: Combine multi-arch images for component packages
       run: |
-        set -e
+        set -euo pipefail
 
+        COMMON_IMAGE="${{ inputs.image-prefix-common }}"
         IMAGE="${{ inputs.image-prefix-component }}"
         DISTRO="${{ inputs.ros-distro }}"
         BUILD_TAG="${{ inputs.build-tag }}"
         TARGETS="${{ inputs.component-targets }}"
+        PUBLISH_STABLE_TAGS="${{ inputs.publish-stable-tags }}"
 
-        for target in ${TARGETS}; do
-          base_tag="${target}-${DISTRO}-${BUILD_TAG}"
+        common_variants=(base devel base-cuda devel-cuda)
+        read -r -a targets <<< "${TARGETS}"
+
+        create_component_manifest() {
+          local target="$1"
+          local base_tag="${target}-${DISTRO}-${BUILD_TAG}"
 
           if [[ "${target}" == *cuda* ]]; then
-            # CUDA: single-arch alias (amd64-only)
             echo "Creating single-arch manifest for ${IMAGE}:${base_tag}"
             docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
               "${IMAGE}:${target}-amd64-${DISTRO}-${BUILD_TAG}"
             echo "Created ${IMAGE}:${base_tag}"
           else
-            # Multi-arch manifest (amd64 + arm64)
             echo "Creating multi-arch manifest for ${IMAGE}:${base_tag}"
             docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
               "${IMAGE}:${target}-amd64-${DISTRO}-${BUILD_TAG}" \
               "${IMAGE}:${target}-arm64-${DISTRO}-${BUILD_TAG}"
             echo "Created ${IMAGE}:${base_tag}"
           fi
+        }
+
+        publish_common_stable_tags() {
+          local variant="$1"
+          local base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
+          local tags=(-t "${COMMON_IMAGE}:${variant}-${DISTRO}")
+          if [ "${DISTRO}" = "humble" ]; then
+            tags+=(-t "${COMMON_IMAGE}:${variant}")
+          fi
+
+          echo "Publishing stable tags for ${COMMON_IMAGE}:${base_tag}"
+          docker buildx imagetools create "${tags[@]}" "${COMMON_IMAGE}:${base_tag}"
+        }
+
+        publish_component_stable_tags() {
+          local target="$1"
+          local base_tag="${target}-${DISTRO}-${BUILD_TAG}"
+          local tags=(-t "${IMAGE}:${target}-${DISTRO}")
+          if [ "${DISTRO}" = "humble" ]; then
+            tags+=(-t "${IMAGE}:${target}")
+          fi
+
+          echo "Publishing stable tags for ${IMAGE}:${base_tag}"
+          docker buildx imagetools create "${tags[@]}" "${IMAGE}:${base_tag}"
+        }
+
+        for target in "${targets[@]}"; do
+          create_component_manifest "${target}"
         done
+
+        if [ "${PUBLISH_STABLE_TAGS}" = "true" ]; then
+          for variant in "${common_variants[@]}"; do
+            publish_common_stable_tags "${variant}"
+          done
+
+          for target in "${targets[@]}"; do
+            publish_component_stable_tags "${target}"
+          done
+        fi
       shell: bash

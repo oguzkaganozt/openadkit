@@ -20,32 +20,37 @@ env:
   IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
 
 jobs:
-  # =============================================================================
-  # Stage 1: Validate inputs before touching anything
-  # =============================================================================
   validate:
     runs-on: ubuntu-22.04
     permissions:
       actions: read
       contents: read
       packages: read
+    env:
+      BUILD_TAG: ${{ inputs.build_tag }}
+      RELEASE_VERSION: ${{ inputs.version }}
     outputs:
       sha: ${{ steps.get-sha.outputs.sha }}
     steps:
-      - name: Validate version format
+      - name: Validate inputs
         run: |
-          echo "${{ inputs.version }}" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            || (echo "Invalid version format '${{ inputs.version }}': must be vX.Y.Z" && exit 1)
+          set -euo pipefail
 
-      - name: Validate build_tag format
-        run: |
-          echo "${{ inputs.build_tag }}" | grep -E '^[0-9]+-[0-9]+$' \
-            || (echo "Invalid build_tag format '${{ inputs.build_tag }}': must be RUN_ID-RUN_ATTEMPT" && exit 1)
+          if [[ ! "${RELEASE_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format '${RELEASE_VERSION}': must be vX.Y.Z" >&2
+            exit 1
+          fi
 
-      - name: Check release runs from main branch
-        run: |
-          [ "${{ github.ref }}" = "refs/heads/main" ] \
-            || (echo "Release must be triggered from main branch (got ${{ github.ref }})" && exit 1)
+          if [[ ! "${BUILD_TAG}" =~ ^[0-9]+-[0-9]+$ ]]; then
+            echo "Invalid build_tag format '${BUILD_TAG}': must be RUN_ID-RUN_ATTEMPT" >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Release must be triggered from main branch (got ${GITHUB_REF})" >&2
+            exit 1
+          fi
+        shell: bash
 
       - name: Validate source build run
         id: get-sha
@@ -53,34 +58,49 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          run_id=$(echo "${{ inputs.build_tag }}" | cut -d'-' -f1)
-          run_attempt=$(echo "${{ inputs.build_tag }}" | cut -d'-' -f2)
-          run_json=$(gh api repos/${{ github.repository }}/actions/runs/${run_id}/attempts/${run_attempt})
+          IFS='-' read -r run_id run_attempt <<< "${BUILD_TAG}"
+          run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/attempts/${run_attempt}")
 
-          workflow_name=$(printf '%s' "$run_json" | jq -r '.name')
-          workflow_path=$(printf '%s' "$run_json" | jq -r '.path')
-          head_branch=$(printf '%s' "$run_json" | jq -r '.head_branch')
-          status=$(printf '%s' "$run_json" | jq -r '.status')
-          conclusion=$(printf '%s' "$run_json" | jq -r '.conclusion')
-          sha=$(printf '%s' "$run_json" | jq -r '.head_sha')
+          workflow_name=$(printf '%s' "${run_json}" | jq -r '.name')
+          workflow_path=$(printf '%s' "${run_json}" | jq -r '.path')
+          head_branch=$(printf '%s' "${run_json}" | jq -r '.head_branch')
+          status=$(printf '%s' "${run_json}" | jq -r '.status')
+          conclusion=$(printf '%s' "${run_json}" | jq -r '.conclusion')
+          sha=$(printf '%s' "${run_json}" | jq -r '.head_sha')
 
-          [ "$workflow_name" = "build-all-images" ] || (echo "Expected build-all-images run, got '${workflow_name}'" && exit 1)
-          [ "$workflow_path" = ".github/workflows/build-all-images.yaml" ] || (echo "Unexpected workflow path '${workflow_path}'" && exit 1)
-          [ "$head_branch" = "main" ] || (echo "Source build must come from main branch (got '${head_branch}')" && exit 1)
-          [ "$status" = "completed" ] || (echo "Source build must be completed (got '${status}')" && exit 1)
-          [ "$conclusion" = "success" ] || (echo "Source build must succeed (got '${conclusion}')" && exit 1)
+          [ "${workflow_name}" = "build-all-images" ] || (echo "Expected build-all-images run, got '${workflow_name}'" >&2 && exit 1)
+          [ "${workflow_path}" = ".github/workflows/build-all-images.yaml" ] || (echo "Unexpected workflow path '${workflow_path}'" >&2 && exit 1)
+          [ "${head_branch}" = "main" ] || (echo "Source build must come from main branch (got '${head_branch}')" >&2 && exit 1)
+          [ "${status}" = "completed" ] || (echo "Source build must be completed (got '${status}')" >&2 && exit 1)
+          [ "${conclusion}" = "success" ] || (echo "Source build must succeed (got '${conclusion}')" >&2 && exit 1)
+          [ -n "${sha}" ] || (echo "Could not resolve SHA for run_id ${run_id} attempt ${run_attempt}" >&2 && exit 1)
 
-          [ -n "$sha" ] || (echo "Could not resolve SHA for run_id ${run_id} attempt ${run_attempt}" && exit 1)
-          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
+        shell: bash
 
-      - name: Check git tag does not already exist
+      - name: Check git tag can be used
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: ${{ steps.get-sha.outputs.sha }}
         run: |
-          if gh api repos/${{ github.repository }}/git/refs/tags/${{ inputs.version }} 2>/dev/null; then
-            echo "Tag ${{ inputs.version }} already exists — aborting to prevent duplicate release"
-            exit 1
+          set -euo pipefail
+
+          tag_json=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_VERSION}" 2>/dev/null || true)
+          if [ -z "${tag_json}" ]; then
+            exit 0
           fi
+
+          tag_type=$(printf '%s' "${tag_json}" | jq -r '.object.type')
+          tag_sha=$(printf '%s' "${tag_json}" | jq -r '.object.sha')
+
+          if [ "${tag_type}" = "commit" ] && [ "${tag_sha}" = "${SOURCE_SHA}" ]; then
+            echo "Tag ${RELEASE_VERSION} already points to ${SOURCE_SHA}; continuing"
+            exit 0
+          fi
+
+          echo "Tag ${RELEASE_VERSION} already exists but does not point to ${SOURCE_SHA}" >&2
+          exit 1
+        shell: bash
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -89,24 +109,96 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify build_tag exists in registry
+      - name: Preflight image promotion
+        env:
+          SOURCE_SHA: ${{ steps.get-sha.outputs.sha }}
         run: |
-          docker buildx imagetools inspect \
-            ${{ env.IMAGE_PREFIX_COMMON }}:base-humble-${{ inputs.build_tag }} \
-            || (echo "build_tag '${{ inputs.build_tag }}' not found in registry" && exit 1)
+          set -euo pipefail
+          COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
+          COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
+          RUN_ID="${BUILD_TAG%%-*}"
 
-  # =============================================================================
-  # Stage 2: Promote all images to release tag
-  # =============================================================================
+          distros=(humble jazzy)
+          common_variants=(base base-cuda devel devel-cuda)
+          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
+
+          inspect_image() {
+            docker buildx imagetools inspect --format '{{json .}}' "$1"
+          }
+
+          digest_from_json() {
+            jq -r '.manifest.digest'
+          }
+
+          verify_source_metadata() {
+            local source_ref="$1"
+            local source_json="$2"
+            local metadata_status
+
+            metadata_status=$(printf '%s' "${source_json}" | jq -r --arg build_tag "${BUILD_TAG}" --arg run_id "${RUN_ID}" --arg source_sha "${SOURCE_SHA}" '
+              [ (.image // {}) | to_entries[] | select(.key | startswith("linux/")) | (.value.config.Labels // {}) ] as $labels
+              | if ($labels | length) == 0 then "missing"
+                elif all($labels[]; .["org.opencontainers.image.build-tag"] == $build_tag and .["org.opencontainers.image.run-id"] == $run_id and .["org.opencontainers.image.revision"] == $source_sha) then "ok"
+                else "mismatch"
+                end
+            ')
+
+            if [ "${metadata_status}" != "ok" ]; then
+              echo "Source image metadata check failed for ${source_ref}: ${metadata_status}" >&2
+              exit 1
+            fi
+          }
+
+          check_image_pair() {
+            local source_ref="$1"
+            local dest_ref="$2"
+            local source_json source_digest dest_json dest_digest
+
+            echo "Checking source ${source_ref}"
+            source_json=$(inspect_image "${source_ref}")
+            verify_source_metadata "${source_ref}" "${source_json}"
+            source_digest=$(printf '%s' "${source_json}" | digest_from_json)
+
+            if dest_json=$(inspect_image "${dest_ref}" 2>/dev/null); then
+              dest_digest=$(printf '%s' "${dest_json}" | digest_from_json)
+              if [ "${dest_digest}" = "${source_digest}" ]; then
+                echo "Release image already exists with matching digest: ${dest_ref}"
+                return
+              fi
+
+              echo "Release image already exists with a different digest: ${dest_ref}" >&2
+              exit 1
+            fi
+          }
+
+          for distro in "${distros[@]}"; do
+            for variant in "${common_variants[@]}"; do
+              check_image_pair \
+                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
+                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
+            done
+
+            for target in "${component_targets[@]}"; do
+              check_image_pair \
+                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
+                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
+            done
+          done
+        shell: bash
+
   release-images:
     runs-on: ubuntu-22.04
     needs: validate
     permissions:
       contents: read
       packages: write
+    env:
+      BUILD_TAG: ${{ inputs.build_tag }}
+      RELEASE_VERSION: ${{ inputs.version }}
+      SOURCE_SHA: ${{ needs.validate.outputs.sha }}
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -115,64 +207,151 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Promote all images to ${{ inputs.version }}
+      - name: Promote all images
         run: |
           set -euo pipefail
-          BUILD_TAG="${{ inputs.build_tag }}"
-          VERSION="${{ inputs.version }}"
+          COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
+          COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
+          RUN_ID="${BUILD_TAG%%-*}"
+
+          distros=(humble jazzy)
+          common_variants=(base base-cuda devel devel-cuda)
+          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
+
+          inspect_image() {
+            docker buildx imagetools inspect --format '{{json .}}' "$1"
+          }
+
+          digest_from_json() {
+            jq -r '.manifest.digest'
+          }
+
+          verify_source_metadata() {
+            local source_ref="$1"
+            local source_json="$2"
+            local metadata_status
+
+            metadata_status=$(printf '%s' "${source_json}" | jq -r --arg build_tag "${BUILD_TAG}" --arg run_id "${RUN_ID}" --arg source_sha "${SOURCE_SHA}" '
+              [ (.image // {}) | to_entries[] | select(.key | startswith("linux/")) | (.value.config.Labels // {}) ] as $labels
+              | if ($labels | length) == 0 then "missing"
+                elif all($labels[]; .["org.opencontainers.image.build-tag"] == $build_tag and .["org.opencontainers.image.run-id"] == $run_id and .["org.opencontainers.image.revision"] == $source_sha) then "ok"
+                else "mismatch"
+                end
+            ')
+
+            if [ "${metadata_status}" != "ok" ]; then
+              echo "Source image metadata check failed for ${source_ref}: ${metadata_status}" >&2
+              exit 1
+            fi
+          }
+
+          promote_image() {
+            local source_ref="$1"
+            local dest_ref="$2"
+            local source_json source_digest dest_json dest_digest
+
+            source_json=$(inspect_image "${source_ref}")
+            verify_source_metadata "${source_ref}" "${source_json}"
+            source_digest=$(printf '%s' "${source_json}" | digest_from_json)
+
+            if dest_json=$(inspect_image "${dest_ref}" 2>/dev/null); then
+              dest_digest=$(printf '%s' "${dest_json}" | digest_from_json)
+              if [ "${dest_digest}" = "${source_digest}" ]; then
+                echo "Already promoted ${dest_ref}"
+                return
+              fi
+
+              echo "Release image already exists with a different digest: ${dest_ref}" >&2
+              exit 1
+            fi
+
+            echo "Promoting ${source_ref}@${source_digest} -> ${dest_ref}"
+            docker buildx imagetools create -t "${dest_ref}" "${source_ref}@${source_digest}"
+          }
+
+          for distro in "${distros[@]}"; do
+            for variant in "${common_variants[@]}"; do
+              promote_image \
+                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
+                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
+            done
+
+            for target in "${component_targets[@]}"; do
+              promote_image \
+                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
+                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
+            done
+          done
+        shell: bash
+
+      - name: Verify promoted images
+        run: |
+          set -euo pipefail
           COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
           COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
 
-          DISTROS="humble jazzy"
-          COMMON_VARIANTS="base base-cuda devel devel-cuda"
-          COMPONENT_TARGETS="sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda"
+          distros=(humble jazzy)
+          common_variants=(base base-cuda devel devel-cuda)
+          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
 
-          for distro in ${DISTROS}; do
-            for variant in ${COMMON_VARIANTS}; do
-              echo "Promoting ${COMMON}:${variant}-${distro}-${BUILD_TAG} → ${VERSION}"
-              docker buildx imagetools create \
-                -t "${COMMON}:${variant}-${distro}-${VERSION}" \
-                "${COMMON}:${variant}-${distro}-${BUILD_TAG}"
+          image_digest() {
+            docker buildx imagetools inspect --format '{{json .}}' "$1" | jq -r '.manifest.digest'
+          }
+
+          verify_image_pair() {
+            local source_ref="$1"
+            local dest_ref="$2"
+            local source_digest dest_digest
+
+            source_digest=$(image_digest "${source_ref}")
+            dest_digest=$(image_digest "${dest_ref}")
+
+            if [ "${source_digest}" != "${dest_digest}" ]; then
+              echo "Promoted image digest mismatch for ${dest_ref}" >&2
+              exit 1
+            fi
+          }
+
+          for distro in "${distros[@]}"; do
+            for variant in "${common_variants[@]}"; do
+              verify_image_pair \
+                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
+                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
             done
-            for target in ${COMPONENT_TARGETS}; do
-              echo "Promoting ${COMPONENT}:${target}-${distro}-${BUILD_TAG} → ${VERSION}"
-              docker buildx imagetools create \
-                -t "${COMPONENT}:${target}-${distro}-${VERSION}" \
-                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}"
+
+            for target in "${component_targets[@]}"; do
+              verify_image_pair \
+                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
+                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
             done
           done
+        shell: bash
 
-  # =============================================================================
-  # Stage 3: Create git tag and GitHub Release
-  # =============================================================================
   release-github:
     runs-on: ubuntu-22.04
     needs: [validate, release-images]
     permissions:
       contents: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      SOURCE_SHA: ${{ needs.validate.outputs.sha }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Create git tag
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ inputs.version }}',
-              sha: '${{ needs.validate.outputs.sha }}'
-            })
-            console.log('Created tag ${{ inputs.version }} at ${{ needs.validate.outputs.sha }}')
-
-      - name: Create GitHub Release
+      - name: Create or verify GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ inputs.version }}" \
-            --title "OpenADKit ${{ inputs.version }}" \
+          set -euo pipefail
+
+          if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
+            echo "GitHub Release ${RELEASE_VERSION} already exists"
+            exit 0
+          fi
+
+          gh release create "${RELEASE_VERSION}" \
+            --target "${SOURCE_SHA}" \
+            --title "OpenADKit ${RELEASE_VERSION}" \
             --generate-notes
+        shell: bash

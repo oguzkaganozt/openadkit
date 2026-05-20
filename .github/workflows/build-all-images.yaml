@@ -2,7 +2,12 @@ name: build-all-images
 
 on:
   push:
+    branches:
+      - '**'
     paths:
+      - '.github/actions/combine-multi-arch-images/**'
+      - '.github/actions/free-disk-space/**'
+      - '.github/workflows/build-all-images.yaml'
       - 'components/docker-bake.hcl'
       - 'components/common/**'
       - 'components/sensing-perception/**'
@@ -35,6 +40,7 @@ jobs:
     outputs:
       autoware_ref: ${{ steps.prepare.outputs.autoware_ref }}
       build_tag: ${{ steps.prepare.outputs.build_tag }}
+      cache_scope: ${{ steps.prepare.outputs.cache_scope }}
     steps:
       - name: Resolve shared build inputs
         id: prepare
@@ -42,8 +48,18 @@ jobs:
           set -euo pipefail
           autoware_ref=$(git ls-remote https://github.com/autowarefoundation/autoware refs/heads/main | cut -f1)
           build_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          echo "autoware_ref=${autoware_ref}" >> "$GITHUB_OUTPUT"
-          echo "build_tag=${build_tag}" >> "$GITHUB_OUTPUT"
+          safe_ref=$(printf '%s' "${GITHUB_REF_NAME:-unknown}" | tr -c 'A-Za-z0-9_.-' '-' | cut -c1-60)
+          ref_hash=$(printf '%s' "${GITHUB_REF:-unknown}" | sha256sum | cut -c1-12)
+          if [ "${GITHUB_REF:-}" = "refs/heads/main" ]; then
+            cache_scope="main"
+          else
+            cache_scope="${safe_ref}-${ref_hash}"
+          fi
+          {
+            echo "autoware_ref=${autoware_ref}"
+            echo "build_tag=${build_tag}"
+            echo "cache_scope=${cache_scope}"
+          } >> "$GITHUB_OUTPUT"
         shell: bash
 
   # =============================================================================
@@ -106,7 +122,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-base
           tags: |
-            type=raw,value=base-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=base-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -118,7 +133,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-base-cuda
           tags: |
-            type=raw,value=base-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=base-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -130,7 +144,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-devel
           tags: |
-            type=raw,value=devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -142,7 +155,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-devel-cuda
           tags: |
-            type=raw,value=devel-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=devel-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -162,10 +174,11 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.args.ROS_DISTRO=${{ matrix.ros-distro }}
             *.args.BASE_IMAGE=ros:${{ matrix.ros-distro }}-ros-base-${{ matrix.ros-distro == 'jazzy' && 'noble' || 'jammy' }}
-            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
-            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
+            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
+            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
+            *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
       - name: Build and push common images (CUDA, amd64 only)
         if: matrix.platform == 'linux/amd64'
@@ -183,8 +196,11 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.args.ROS_DISTRO=${{ matrix.ros-distro }}
             *.args.BASE_IMAGE=ros:${{ matrix.ros-distro }}-ros-base-${{ matrix.ros-distro == 'jazzy' && 'noble' || 'jammy' }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-main
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-main,mode=max
+            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
+            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
+            *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
   # =============================================================================
   # Stage 2: Build component images (parallel)
@@ -262,7 +278,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMPONENT }}
           bake-target: docker-metadata-action-${{ matrix.target }}
           tags: |
-            type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -282,8 +297,11 @@ jobs:
             *.args.COMMON_BASE_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:base-cuda-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.COMMON_DEVEL_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.COMMON_DEVEL_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-cuda-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
+            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
+            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
+            *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
   # =============================================================================
   # Stage 3: Build universe and universe-cuda images (parallel)
@@ -354,7 +372,6 @@ jobs:
           images: ${{ env.IMAGE_PREFIX_COMPONENT }}
           bake-target: docker-metadata-action-${{ matrix.target }}
           tags: |
-            type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
@@ -382,10 +399,11 @@ jobs:
             *.args.API_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:api-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.VISUALIZER_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:visualizer-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
-            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
-            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
+            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
+            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
+            *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
   # =============================================================================
   # Stage 4: Create multi-arch manifests
@@ -426,6 +444,7 @@ jobs:
             simulator
             universe
             universe-cuda
+          publish-stable-tags: ${{ github.ref == 'refs/heads/main' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   summarize:
@@ -445,7 +464,7 @@ jobs:
             echo "To release this build:"
             echo "1. Go to **Actions → release → Run workflow**"
             echo "2. Set \`build_tag\` to \`${{ needs.prepare.outputs.build_tag }}\`"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
   notify-failure:
     runs-on: ubuntu-latest
