@@ -36,7 +36,7 @@ env:
 
 jobs:
   prepare:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
     permissions:
       contents: read
     outputs:
@@ -69,7 +69,7 @@ jobs:
   # =============================================================================
   build-common:
     needs: prepare
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && (matrix.platform == 'linux/amd64' && 'depot-ubuntu-24.04-16' || 'depot-ubuntu-24.04-arm-16') || github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
     permissions:
       contents: read
       packages: write
@@ -208,7 +208,7 @@ jobs:
   # Stage 2: Build component images (parallel)
   # =============================================================================
   build-components:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && (matrix.platform == 'linux/amd64' && 'depot-ubuntu-24.04-16' || 'depot-ubuntu-24.04-arm-16') || github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
     needs: [prepare, build-common]
     permissions:
       contents: read
@@ -309,7 +309,7 @@ jobs:
   # Stage 3: Build universe and universe-cuda images (parallel)
   # =============================================================================
   build-universe:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && (matrix.platform == 'linux/amd64' && 'depot-ubuntu-24.04-16' || 'depot-ubuntu-24.04-arm-16') || github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-16-ubuntu-2204' || 'ubicloud-standard-16-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
     needs: [prepare, build-common, build-components]
     permissions:
       contents: read
@@ -411,7 +411,7 @@ jobs:
   # Stage 4: Create multi-arch manifests
   # =============================================================================
   create-manifests:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [prepare, build-common, build-components, build-universe]
     permissions:
       contents: read
@@ -450,7 +450,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   release-candidate:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [prepare, create-manifests]
     permissions:
       contents: read
@@ -563,7 +563,7 @@ jobs:
           subject-path: release-candidate/openadkit-release-candidate-${{ needs.prepare.outputs.build_tag }}.json
 
   smoke-tests:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [prepare, release-candidate]
     permissions:
       contents: read
@@ -624,7 +624,7 @@ jobs:
           retention-days: 90
 
   summarize:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-latest' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-latest' }}
     needs: [prepare, release-candidate, smoke-tests]
     if: success()
     steps:
@@ -645,7 +645,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   notify-failure:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-latest' }}
+    runs-on: ${{ github.repository_owner == 'oz-openadkit-labs' && 'depot-ubuntu-24.04-16' || github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-16-ubuntu-2204' || 'ubuntu-latest' }}
     needs: [prepare, build-common, build-components, build-universe, create-manifests, release-candidate, smoke-tests]
     if: failure() && github.event_name == 'schedule'
     permissions:
