@@ -40,12 +40,28 @@ on:
         required: true
         type: boolean
         default: false
+      common_image_source:
+        description: Which common images to use as the build base
+        required: true
+        type: choice
+        default: stable
+        options:
+          - stable
+          - build_tag
       common_build_tag:
-        description: Existing common image build tag (RUN_ID-RUN_ATTEMPT). Required when rebuild_common is false.
+        description: Common image build tag (RUN_ID-RUN_ATTEMPT). Required when common_image_source is build_tag and rebuild_common is false.
         required: false
         type: string
+      dependency_image_source:
+        description: Which component images universe targets should copy from
+        required: true
+        type: choice
+        default: stable
+        options:
+          - stable
+          - build_tag
       dependency_build_tag:
-        description: Existing component image build tag for universe dependencies. Defaults to common_build_tag.
+        description: Component image build tag for universe dependencies. Required when dependency_image_source is build_tag.
         required: false
         type: string
 
@@ -72,6 +88,8 @@ jobs:
       cache_scope: ${{ steps.prepare.outputs.cache_scope }}
       common_tag: ${{ steps.prepare.outputs.common_tag }}
       dependency_tag: ${{ steps.prepare.outputs.dependency_tag }}
+      common_image_source: ${{ steps.prepare.outputs.common_image_source }}
+      dependency_image_source: ${{ steps.prepare.outputs.dependency_image_source }}
       rebuild_common: ${{ steps.prepare.outputs.rebuild_common }}
       target: ${{ steps.prepare.outputs.target }}
       ros_distro: ${{ steps.prepare.outputs.ros_distro }}
@@ -86,7 +104,9 @@ jobs:
           INPUT_ROS_DISTRO: ${{ inputs.ros_distro }}
           INPUT_PLATFORM: ${{ inputs.platform }}
           INPUT_REBUILD_COMMON: ${{ inputs.rebuild_common }}
+          INPUT_COMMON_IMAGE_SOURCE: ${{ inputs.common_image_source }}
           INPUT_COMMON_BUILD_TAG: ${{ inputs.common_build_tag }}
+          INPUT_DEPENDENCY_IMAGE_SOURCE: ${{ inputs.dependency_image_source }}
           INPUT_DEPENDENCY_BUILD_TAG: ${{ inputs.dependency_build_tag }}
         run: |
           set -euo pipefail
@@ -96,13 +116,23 @@ jobs:
             exit 1
           fi
 
-          if [ "${INPUT_REBUILD_COMMON}" = "false" ] && [ -z "${INPUT_COMMON_BUILD_TAG}" ]; then
-            echo "common_build_tag is required when rebuild_common is false." >&2
+          if [ "${INPUT_REBUILD_COMMON}" = "true" ] && [ "${INPUT_COMMON_IMAGE_SOURCE}" = "build_tag" ] && [ -n "${INPUT_COMMON_BUILD_TAG}" ]; then
+            echo "Do not set common_build_tag when rebuild_common is true." >&2
+            exit 1
+          fi
+
+          if [ "${INPUT_REBUILD_COMMON}" = "false" ] && [ "${INPUT_COMMON_IMAGE_SOURCE}" = "build_tag" ] && [ -z "${INPUT_COMMON_BUILD_TAG}" ]; then
+            echo "common_build_tag is required when common_image_source is build_tag and rebuild_common is false." >&2
             exit 1
           fi
 
           if [ -n "${INPUT_COMMON_BUILD_TAG}" ] && [[ ! "${INPUT_COMMON_BUILD_TAG}" =~ ^[0-9]+-[0-9]+$ ]]; then
             echo "Invalid common_build_tag '${INPUT_COMMON_BUILD_TAG}': must be RUN_ID-RUN_ATTEMPT" >&2
+            exit 1
+          fi
+
+          if [ "${INPUT_DEPENDENCY_IMAGE_SOURCE}" = "build_tag" ] && [ -z "${INPUT_DEPENDENCY_BUILD_TAG}" ]; then
+            echo "dependency_build_tag is required when dependency_image_source is build_tag." >&2
             exit 1
           fi
 
@@ -123,15 +153,22 @@ jobs:
           fi
 
           if [ "${INPUT_REBUILD_COMMON}" = "true" ]; then
+            common_image_source="build_tag"
             common_tag="${build_tag}"
           else
-            common_tag="${INPUT_COMMON_BUILD_TAG}"
+            common_image_source="${INPUT_COMMON_IMAGE_SOURCE}"
+            if [ "${common_image_source}" = "build_tag" ]; then
+              common_tag="${INPUT_COMMON_BUILD_TAG}"
+            else
+              common_tag="stable"
+            fi
           fi
 
-          if [ -n "${INPUT_DEPENDENCY_BUILD_TAG}" ]; then
+          dependency_image_source="${INPUT_DEPENDENCY_IMAGE_SOURCE}"
+          if [ "${dependency_image_source}" = "build_tag" ]; then
             dependency_tag="${INPUT_DEPENDENCY_BUILD_TAG}"
           else
-            dependency_tag="${common_tag}"
+            dependency_tag="stable"
           fi
 
           case "${INPUT_PLATFORM}" in
@@ -165,6 +202,8 @@ jobs:
             echo "cache_scope=${cache_scope}"
             echo "common_tag=${common_tag}"
             echo "dependency_tag=${dependency_tag}"
+            echo "common_image_source=${common_image_source}"
+            echo "dependency_image_source=${dependency_image_source}"
             echo "rebuild_common=${INPUT_REBUILD_COMMON}"
             echo "target=${INPUT_TARGET}"
             echo "ros_distro=${INPUT_ROS_DISTRO}"
@@ -372,6 +411,54 @@ jobs:
           flavor: |
             latest=false
 
+      - name: Resolve base image references
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          DISTRO: ${{ needs.prepare.outputs.ros_distro }}
+          COMMON_IMAGE_SOURCE: ${{ needs.prepare.outputs.common_image_source }}
+          DEPENDENCY_IMAGE_SOURCE: ${{ needs.prepare.outputs.dependency_image_source }}
+          COMMON_TAG: ${{ needs.prepare.outputs.common_tag }}
+          DEPENDENCY_TAG: ${{ needs.prepare.outputs.dependency_tag }}
+          IMAGE_PREFIX_COMMON: ${{ env.IMAGE_PREFIX_COMMON }}
+          IMAGE_PREFIX_COMPONENT: ${{ env.IMAGE_PREFIX_COMPONENT }}
+        run: |
+          set -euo pipefail
+
+          if [ "${PLATFORM}" = "linux/amd64" ]; then
+            arch=amd64
+          else
+            arch=arm64
+          fi
+
+          image_tag_suffix() {
+            local source="$1"
+            local tag="$2"
+            if [ "${source}" = "build_tag" ]; then
+              printf -- '-%s' "${tag}"
+            fi
+          }
+
+          common_suffix=$(image_tag_suffix "${COMMON_IMAGE_SOURCE}" "${COMMON_TAG}")
+          dependency_suffix=$(image_tag_suffix "${DEPENDENCY_IMAGE_SOURCE}" "${DEPENDENCY_TAG}")
+
+          {
+            echo "COMMON_BASE_IMAGE=${IMAGE_PREFIX_COMMON}:base-${arch}-${DISTRO}${common_suffix}"
+            echo "COMMON_DEVEL_IMAGE=${IMAGE_PREFIX_COMMON}:devel-${arch}-${DISTRO}${common_suffix}"
+            echo "COMMON_BASE_CUDA_IMAGE=${IMAGE_PREFIX_COMMON}:base-cuda-amd64-${DISTRO}${common_suffix}"
+            echo "COMMON_DEVEL_CUDA_IMAGE=${IMAGE_PREFIX_COMMON}:devel-cuda-amd64-${DISTRO}${common_suffix}"
+            echo "SENSING_PERCEPTION_IMAGE=${IMAGE_PREFIX_COMPONENT}:sensing-perception-${arch}-${DISTRO}${dependency_suffix}"
+            echo "SENSING_PERCEPTION_CUDA_IMAGE=${IMAGE_PREFIX_COMPONENT}:sensing-perception-cuda-amd64-${DISTRO}${dependency_suffix}"
+            echo "LOCALIZATION_MAPPING_IMAGE=${IMAGE_PREFIX_COMPONENT}:localization-mapping-${arch}-${DISTRO}${dependency_suffix}"
+            echo "PLANNING_CONTROL_IMAGE=${IMAGE_PREFIX_COMPONENT}:planning-control-${arch}-${DISTRO}${dependency_suffix}"
+            echo "VEHICLE_SYSTEM_IMAGE=${IMAGE_PREFIX_COMPONENT}:vehicle-system-${arch}-${DISTRO}${dependency_suffix}"
+            echo "API_IMAGE=${IMAGE_PREFIX_COMPONENT}:api-${arch}-${DISTRO}${dependency_suffix}"
+            echo "VISUALIZER_IMAGE=${IMAGE_PREFIX_COMPONENT}:visualizer-${arch}-${DISTRO}${dependency_suffix}"
+            echo "SIMULATOR_IMAGE=${IMAGE_PREFIX_COMPONENT}:simulator-${arch}-${DISTRO}${dependency_suffix}"
+          } >> "$GITHUB_ENV"
+
+          echo "Using COMMON_BASE_IMAGE=${IMAGE_PREFIX_COMMON}:base-${arch}-${DISTRO}${common_suffix}"
+        shell: bash
+
       - name: Build and push component image
         uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
         with:
@@ -383,18 +470,18 @@ jobs:
           set: |
             *.platform=${{ matrix.platform }}
             *.args.ROS_DISTRO=${{ needs.prepare.outputs.ros_distro }}
-            *.args.COMMON_BASE_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:base-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.common_tag }}
-            *.args.COMMON_BASE_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:base-cuda-amd64-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.common_tag }}
-            *.args.COMMON_DEVEL_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.common_tag }}
-            *.args.COMMON_DEVEL_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-cuda-amd64-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.common_tag }}
-            *.args.SENSING_PERCEPTION_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:sensing-perception-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.SENSING_PERCEPTION_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:sensing-perception-cuda-amd64-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.LOCALIZATION_MAPPING_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:localization-mapping-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.PLANNING_CONTROL_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:planning-control-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.VEHICLE_SYSTEM_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:vehicle-system-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.API_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:api-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.VISUALIZER_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:visualizer-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
-            *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.dependency_tag }}
+            *.args.COMMON_BASE_IMAGE=${{ env.COMMON_BASE_IMAGE }}
+            *.args.COMMON_BASE_CUDA_IMAGE=${{ env.COMMON_BASE_CUDA_IMAGE }}
+            *.args.COMMON_DEVEL_IMAGE=${{ env.COMMON_DEVEL_IMAGE }}
+            *.args.COMMON_DEVEL_CUDA_IMAGE=${{ env.COMMON_DEVEL_CUDA_IMAGE }}
+            *.args.SENSING_PERCEPTION_IMAGE=${{ env.SENSING_PERCEPTION_IMAGE }}
+            *.args.SENSING_PERCEPTION_CUDA_IMAGE=${{ env.SENSING_PERCEPTION_CUDA_IMAGE }}
+            *.args.LOCALIZATION_MAPPING_IMAGE=${{ env.LOCALIZATION_MAPPING_IMAGE }}
+            *.args.PLANNING_CONTROL_IMAGE=${{ env.PLANNING_CONTROL_IMAGE }}
+            *.args.VEHICLE_SYSTEM_IMAGE=${{ env.VEHICLE_SYSTEM_IMAGE }}
+            *.args.API_IMAGE=${{ env.API_IMAGE }}
+            *.args.VISUALIZER_IMAGE=${{ env.VISUALIZER_IMAGE }}
+            *.args.SIMULATOR_IMAGE=${{ env.SIMULATOR_IMAGE }}
             *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
             *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
             *.labels.org.opencontainers.image.revision=${{ github.sha }}
@@ -448,6 +535,8 @@ jobs:
           BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
           COMMON_TAG: ${{ needs.prepare.outputs.common_tag }}
           DEPENDENCY_TAG: ${{ needs.prepare.outputs.dependency_tag }}
+          COMMON_IMAGE_SOURCE: ${{ needs.prepare.outputs.common_image_source }}
+          DEPENDENCY_IMAGE_SOURCE: ${{ needs.prepare.outputs.dependency_image_source }}
           CREATE_MANIFEST: ${{ needs.prepare.outputs.create_manifest }}
           IMAGE: ${{ env.IMAGE_PREFIX_COMPONENT }}
         run: |
@@ -458,7 +547,9 @@ jobs:
             echo "| **target** | \`${TARGET}\` |"
             echo "| **ros_distro** | \`${DISTRO}\` |"
             echo "| **build_tag** | \`${BUILD_TAG}\` |"
+            echo "| **common_image_source** | \`${COMMON_IMAGE_SOURCE}\` |"
             echo "| **common_tag** | \`${COMMON_TAG}\` |"
+            echo "| **dependency_image_source** | \`${DEPENDENCY_IMAGE_SOURCE}\` |"
             echo "| **dependency_tag** | \`${DEPENDENCY_TAG}\` |"
             echo ""
             echo "### Published image references"
