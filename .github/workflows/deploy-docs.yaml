@@ -6,10 +6,12 @@ on:
       - main
     paths:
       - mkdocs.yaml
+      - docs/requirements.txt
       - "**/*.md"
       - "**/*.svg"
       - "**/*.png"
       - "**/*.jpg"
+      - "docs/assets/**"
   workflow_dispatch:
 
 permissions:
@@ -36,23 +38,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install mkdocs-material
-          pip install mkdocs-awesome-pages-plugin
-          pip install mkdocs-exclude
-          pip install mkdocs-macros-plugin
-          pip install mkdocs-same-dir
-          pip install pymdown-extensions
-          pip install python-markdown-math
-          pip install mdx-truly-sane-lists
-          pip install plantuml-markdown
-          pip install mkdocs-mermaid2-plugin
+        run: pip install -r docs/requirements.txt
 
       - name: Build with MkDocs
         run: mkdocs build --clean --verbose
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs-site
           path: ./site
@@ -83,4 +75,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
