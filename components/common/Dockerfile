@@ -1,6 +1,6 @@
 # Dockerfile - Builds common-base and common-devel images with CUDA flavors
 # Default base image for ROS Humble (jammy). For ROS Jazzy, use noble (set via --build-arg)
-ARG BASE_IMAGE=ros:humble-ros-base-jammy
+ARG BASE_IMAGE=ros:humble-ros-base-jammy@sha256:5417e56962ff6e15d4cf9b2f78a71a78f3901f47cd78696b575b7eecdb54eb78
 ARG ROS_DISTRO=humble
 
 # =============================================================================

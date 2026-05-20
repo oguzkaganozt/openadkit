@@ -7,8 +7,13 @@ on:
         description: 'Release version (e.g. v1.0.0)'
         required: true
       build_tag:
-        description: 'Build tag to promote (e.g. 123456789-1)'
+        description: 'Build tag to promote (RUN_ID-RUN_ATTEMPT)'
         required: true
+      promote_stable:
+        description: 'Move stable and legacy tags after release promotion'
+        required: true
+        type: boolean
+        default: true
 
 concurrency:
   group: release
@@ -30,7 +35,8 @@ jobs:
       BUILD_TAG: ${{ inputs.build_tag }}
       RELEASE_VERSION: ${{ inputs.version }}
     outputs:
-      sha: ${{ steps.get-sha.outputs.sha }}
+      sha: ${{ steps.source.outputs.sha }}
+      manifest_sha256: ${{ steps.manifest.outputs.manifest_sha256 }}
     steps:
       - name: Validate inputs
         run: |
@@ -53,7 +59,7 @@ jobs:
         shell: bash
 
       - name: Validate source build run
-        id: get-sha
+        id: source
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -78,10 +84,77 @@ jobs:
           echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
         shell: bash
 
+      - name: Download and validate release candidate manifest
+        id: manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          IFS='-' read -r run_id run_attempt <<< "${BUILD_TAG}"
+          artifact_name="openadkit-release-candidate-${BUILD_TAG}"
+          mkdir -p release-candidate
+
+          gh run download "${run_id}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name "${artifact_name}" \
+            --dir release-candidate
+
+          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
+          [ -f "${manifest}" ] || (echo "Missing release candidate manifest ${manifest}" >&2 && exit 1)
+
+          jq -e \
+            --arg repository "${GITHUB_REPOSITORY}" \
+            --arg run_id "${run_id}" \
+            --arg run_attempt "${run_attempt}" \
+            --arg build_tag "${BUILD_TAG}" \
+            --arg source_sha "${SOURCE_SHA}" \
+            '.schema_version == "1"
+             and .repository == $repository
+             and .workflow == "build-all-images"
+             and .run_id == $run_id
+             and .run_attempt == $run_attempt
+             and .build_tag == $build_tag
+             and .source_branch == "main"
+             and .source_sha == $source_sha
+             and (.images | length == 28)
+             and all(.images[]; (.source_ref | contains($build_tag)) and (.source_digest | test("^sha256:[0-9a-f]{64}$")) and (.platforms | length >= 1))' \
+            "${manifest}" >/dev/null
+
+          manifest_sha256=$(sha256sum "${manifest}" | cut -d' ' -f1)
+          echo "manifest_sha256=${manifest_sha256}" >> "${GITHUB_OUTPUT}"
+        shell: bash
+
+      - name: Require successful scan for build tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          artifact_name="openadkit-scan-summary-${BUILD_TAG}"
+          mkdir -p scan-summary
+          runs_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/scan.yaml/runs?branch=main&status=completed&per_page=50")
+          found_scan=""
+
+          while read -r scan_run_id; do
+            if gh run download "${scan_run_id}" --repo "${GITHUB_REPOSITORY}" --name "${artifact_name}" --dir scan-summary >/dev/null 2>&1; then
+              summary="scan-summary/openadkit-scan-summary-${BUILD_TAG}.json"
+              jq -e --arg build_tag "${BUILD_TAG}" --arg source_sha "${SOURCE_SHA}" '
+                .build_tag == $build_tag and .source_sha == $source_sha and .status == "success"
+              ' "${summary}" >/dev/null
+              echo "Found successful scan gate in run ${scan_run_id}"
+              found_scan="${scan_run_id}"
+              break
+            fi
+          done < <(printf '%s' "${runs_json}" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+
+          [ -n "${found_scan}" ] || (echo "Could not find a successful scan summary for ${BUILD_TAG}" >&2 && exit 1)
+        shell: bash
+
       - name: Check git tag can be used
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SOURCE_SHA: ${{ steps.get-sha.outputs.sha }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
         run: |
           set -euo pipefail
 
@@ -93,6 +166,11 @@ jobs:
           tag_type=$(printf '%s' "${tag_json}" | jq -r '.object.type')
           tag_sha=$(printf '%s' "${tag_json}" | jq -r '.object.sha')
 
+          if [ "${tag_type}" = "tag" ]; then
+            tag_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}" --jq '.object.sha')
+            tag_type="commit"
+          fi
+
           if [ "${tag_type}" = "commit" ] && [ "${tag_sha}" = "${SOURCE_SHA}" ]; then
             echo "Tag ${RELEASE_VERSION} already points to ${SOURCE_SHA}; continuing"
             exit 0
@@ -103,10 +181,10 @@ jobs:
         shell: bash
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -114,16 +192,11 @@ jobs:
 
       - name: Preflight image promotion
         env:
-          SOURCE_SHA: ${{ steps.get-sha.outputs.sha }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
         run: |
           set -euo pipefail
-          COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
-          COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
           RUN_ID="${BUILD_TAG%%-*}"
-
-          distros=(humble jazzy)
-          common_variants=(base base-cuda devel devel-cuda)
-          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
+          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
 
           inspect_image() {
             docker buildx imagetools inspect --format '{{json .}}' "$1"
@@ -152,116 +225,95 @@ jobs:
             fi
           }
 
-          check_image_pair() {
-            local source_ref="$1"
-            local dest_ref="$2"
-            local source_json source_digest dest_json dest_digest
+          jq -c '.images[]' "${manifest}" | while read -r image; do
+            family=$(printf '%s' "${image}" | jq -r '.family')
+            name=$(printf '%s' "${image}" | jq -r '.name')
+            distro=$(printf '%s' "${image}" | jq -r '.ros_distro')
+            source_ref=$(printf '%s' "${image}" | jq -r '.source_ref')
+            source_digest=$(printf '%s' "${image}" | jq -r '.source_digest')
+            if [ "${family}" = "common" ]; then
+              dest_ref="${IMAGE_PREFIX_COMMON}:${name}-${distro}-${RELEASE_VERSION}"
+            else
+              dest_ref="${IMAGE_PREFIX_COMPONENT}:${name}-${distro}-${RELEASE_VERSION}"
+            fi
 
-            echo "Checking source ${source_ref}"
-            source_json=$(inspect_image "${source_ref}")
+            echo "Checking ${source_ref}@${source_digest} -> ${dest_ref}"
+            source_json=$(inspect_image "${source_ref}@${source_digest}")
             verify_source_metadata "${source_ref}" "${source_json}"
-            source_digest=$(printf '%s' "${source_json}" | digest_from_json)
+            actual_source_digest=$(printf '%s' "${source_json}" | digest_from_json)
+            [ "${actual_source_digest}" = "${source_digest}" ] || (echo "Digest mismatch for ${source_ref}" >&2 && exit 1)
 
             if dest_json=$(inspect_image "${dest_ref}" 2>/dev/null); then
               dest_digest=$(printf '%s' "${dest_json}" | digest_from_json)
-              if [ "${dest_digest}" = "${source_digest}" ]; then
-                echo "Release image already exists with matching digest: ${dest_ref}"
-                return
+              if [ "${dest_digest}" != "${source_digest}" ]; then
+                echo "Release image already exists with a different digest: ${dest_ref}" >&2
+                exit 1
               fi
-
-              echo "Release image already exists with a different digest: ${dest_ref}" >&2
-              exit 1
+              echo "Release image already exists with matching digest: ${dest_ref}"
             fi
-          }
-
-          for distro in "${distros[@]}"; do
-            for variant in "${common_variants[@]}"; do
-              check_image_pair \
-                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
-                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
-            done
-
-            for target in "${component_targets[@]}"; do
-              check_image_pair \
-                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
-                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
-            done
           done
         shell: bash
 
   release-images:
     runs-on: ubuntu-22.04
     needs: validate
+    environment: release
     permissions:
+      actions: read
       contents: read
       packages: write
     env:
       BUILD_TAG: ${{ inputs.build_tag }}
       RELEASE_VERSION: ${{ inputs.version }}
-      SOURCE_SHA: ${{ needs.validate.outputs.sha }}
     steps:
+      - name: Download release candidate manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          IFS='-' read -r run_id _ <<< "${BUILD_TAG}"
+          mkdir -p release-candidate
+          gh run download "${run_id}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name "openadkit-release-candidate-${BUILD_TAG}" \
+            --dir release-candidate
+        shell: bash
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Promote all images
+      - name: Promote recorded image digests
         run: |
           set -euo pipefail
-          COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
-          COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
-          RUN_ID="${BUILD_TAG%%-*}"
+          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
 
-          distros=(humble jazzy)
-          common_variants=(base base-cuda devel devel-cuda)
-          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
-
-          inspect_image() {
-            docker buildx imagetools inspect --format '{{json .}}' "$1"
+          inspect_digest() {
+            docker buildx imagetools inspect --format '{{json .}}' "$1" | jq -r '.manifest.digest'
           }
 
-          digest_from_json() {
-            jq -r '.manifest.digest'
-          }
-
-          verify_source_metadata() {
-            local source_ref="$1"
-            local source_json="$2"
-            local metadata_status
-
-            metadata_status=$(printf '%s' "${source_json}" | jq -r --arg build_tag "${BUILD_TAG}" --arg run_id "${RUN_ID}" --arg source_sha "${SOURCE_SHA}" '
-              [ (.image // {}) | to_entries[] | select(.key | startswith("linux/")) | (.value.config.Labels // {}) ] as $labels
-              | if ($labels | length) == 0 then "missing"
-                elif all($labels[]; .["org.opencontainers.image.build-tag"] == $build_tag and .["org.opencontainers.image.run-id"] == $run_id and .["org.opencontainers.image.revision"] == $source_sha) then "ok"
-                else "mismatch"
-                end
-            ')
-
-            if [ "${metadata_status}" != "ok" ]; then
-              echo "Source image metadata check failed for ${source_ref}: ${metadata_status}" >&2
-              exit 1
+          jq -c '.images[]' "${manifest}" | while read -r image; do
+            family=$(printf '%s' "${image}" | jq -r '.family')
+            name=$(printf '%s' "${image}" | jq -r '.name')
+            distro=$(printf '%s' "${image}" | jq -r '.ros_distro')
+            source_ref=$(printf '%s' "${image}" | jq -r '.source_ref')
+            source_digest=$(printf '%s' "${image}" | jq -r '.source_digest')
+            if [ "${family}" = "common" ]; then
+              dest_ref="${IMAGE_PREFIX_COMMON}:${name}-${distro}-${RELEASE_VERSION}"
+            else
+              dest_ref="${IMAGE_PREFIX_COMPONENT}:${name}-${distro}-${RELEASE_VERSION}"
             fi
-          }
 
-          promote_image() {
-            local source_ref="$1"
-            local dest_ref="$2"
-            local source_json source_digest dest_json dest_digest
-
-            source_json=$(inspect_image "${source_ref}")
-            verify_source_metadata "${source_ref}" "${source_json}"
-            source_digest=$(printf '%s' "${source_json}" | digest_from_json)
-
-            if dest_json=$(inspect_image "${dest_ref}" 2>/dev/null); then
-              dest_digest=$(printf '%s' "${dest_json}" | digest_from_json)
+            if dest_digest=$(inspect_digest "${dest_ref}" 2>/dev/null); then
               if [ "${dest_digest}" = "${source_digest}" ]; then
                 echo "Already promoted ${dest_ref}"
-                return
+                continue
               fi
 
               echo "Release image already exists with a different digest: ${dest_ref}" >&2
@@ -270,88 +322,164 @@ jobs:
 
             echo "Promoting ${source_ref}@${source_digest} -> ${dest_ref}"
             docker buildx imagetools create -t "${dest_ref}" "${source_ref}@${source_digest}"
-          }
-
-          for distro in "${distros[@]}"; do
-            for variant in "${common_variants[@]}"; do
-              promote_image \
-                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
-                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
-            done
-
-            for target in "${component_targets[@]}"; do
-              promote_image \
-                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
-                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
-            done
           done
         shell: bash
 
       - name: Verify promoted images
         run: |
           set -euo pipefail
-          COMMON="${{ env.IMAGE_PREFIX_COMMON }}"
-          COMPONENT="${{ env.IMAGE_PREFIX_COMPONENT }}"
-
-          distros=(humble jazzy)
-          common_variants=(base base-cuda devel devel-cuda)
-          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
+          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
 
           image_digest() {
             docker buildx imagetools inspect --format '{{json .}}' "$1" | jq -r '.manifest.digest'
           }
 
-          verify_image_pair() {
-            local source_ref="$1"
-            local dest_ref="$2"
-            local source_digest dest_digest
-
-            source_digest=$(image_digest "${source_ref}")
-            dest_digest=$(image_digest "${dest_ref}")
-
-            if [ "${source_digest}" != "${dest_digest}" ]; then
-              echo "Promoted image digest mismatch for ${dest_ref}" >&2
-              exit 1
+          jq -c '.images[]' "${manifest}" | while read -r image; do
+            family=$(printf '%s' "${image}" | jq -r '.family')
+            name=$(printf '%s' "${image}" | jq -r '.name')
+            distro=$(printf '%s' "${image}" | jq -r '.ros_distro')
+            source_digest=$(printf '%s' "${image}" | jq -r '.source_digest')
+            if [ "${family}" = "common" ]; then
+              dest_ref="${IMAGE_PREFIX_COMMON}:${name}-${distro}-${RELEASE_VERSION}"
+            else
+              dest_ref="${IMAGE_PREFIX_COMPONENT}:${name}-${distro}-${RELEASE_VERSION}"
             fi
-          }
 
-          for distro in "${distros[@]}"; do
-            for variant in "${common_variants[@]}"; do
-              verify_image_pair \
-                "${COMMON}:${variant}-${distro}-${BUILD_TAG}" \
-                "${COMMON}:${variant}-${distro}-${RELEASE_VERSION}"
-            done
+            dest_digest=$(image_digest "${dest_ref}")
+            [ "${dest_digest}" = "${source_digest}" ] || (echo "Promoted digest mismatch for ${dest_ref}" >&2 && exit 1)
+          done
+        shell: bash
 
-            for target in "${component_targets[@]}"; do
-              verify_image_pair \
-                "${COMPONENT}:${target}-${distro}-${BUILD_TAG}" \
-                "${COMPONENT}:${target}-${distro}-${RELEASE_VERSION}"
-            done
+  promote-stable:
+    runs-on: ubuntu-22.04
+    needs: [validate, release-images]
+    if: ${{ inputs.promote_stable }}
+    environment: release
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    env:
+      BUILD_TAG: ${{ inputs.build_tag }}
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Download release candidate manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          IFS='-' read -r run_id _ <<< "${BUILD_TAG}"
+          mkdir -p release-candidate
+          gh run download "${run_id}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name "openadkit-release-candidate-${BUILD_TAG}" \
+            --dir release-candidate
+        shell: bash
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote stable and legacy tags
+        run: |
+          set -euo pipefail
+          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
+
+          jq -c '.images[]' "${manifest}" | while read -r image; do
+            family=$(printf '%s' "${image}" | jq -r '.family')
+            name=$(printf '%s' "${image}" | jq -r '.name')
+            distro=$(printf '%s' "${image}" | jq -r '.ros_distro')
+            source_digest=$(printf '%s' "${image}" | jq -r '.source_digest')
+            stable_tags=$(printf '%s' "${image}" | jq -r '.stable_tags[]')
+            if [ "${family}" = "common" ]; then
+              image_prefix="${IMAGE_PREFIX_COMMON}"
+            else
+              image_prefix="${IMAGE_PREFIX_COMPONENT}"
+            fi
+            release_ref="${image_prefix}:${name}-${distro}-${RELEASE_VERSION}"
+
+            tag_args=()
+            while read -r stable_tag; do
+              tag_args+=(-t "${image_prefix}:${stable_tag}")
+            done <<< "${stable_tags}"
+
+            echo "Promoting stable tags for ${release_ref}"
+            docker buildx imagetools create "${tag_args[@]}" "${release_ref}@${source_digest}"
           done
         shell: bash
 
   release-github:
     runs-on: ubuntu-22.04
-    needs: [validate, release-images]
+    needs: [validate, release-images, promote-stable]
+    if: ${{ !cancelled() && needs.release-images.result == 'success' && (needs.promote-stable.result == 'success' || needs.promote-stable.result == 'skipped') }}
+    environment: release
     permissions:
+      actions: read
       contents: write
     env:
+      BUILD_TAG: ${{ inputs.build_tag }}
       RELEASE_VERSION: ${{ inputs.version }}
       SOURCE_SHA: ${{ needs.validate.outputs.sha }}
+      MANIFEST_SHA256: ${{ needs.validate.outputs.manifest_sha256 }}
     steps:
-      - name: Create or verify GitHub Release
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          IFS='-' read -r run_id _ <<< "${BUILD_TAG}"
+          mkdir -p release-artifacts scan-summary
+          gh run download "${run_id}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name "openadkit-release-candidate-${BUILD_TAG}" \
+            --dir release-artifacts
+
+          runs_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/scan.yaml/runs?branch=main&status=completed&per_page=50")
+          scan_run_id=$(printf '%s' "${runs_json}" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id' | while read -r candidate; do
+            if gh run download "${candidate}" --repo "${GITHUB_REPOSITORY}" --name "openadkit-scan-summary-${BUILD_TAG}" --dir scan-summary >/dev/null 2>&1; then
+              echo "${candidate}"
+              break
+            fi
+          done)
+          [ -n "${scan_run_id}" ] || (echo "Missing scan summary artifact for ${BUILD_TAG}" >&2 && exit 1)
+
+          cp "scan-summary/openadkit-scan-summary-${BUILD_TAG}.json" release-artifacts/
+          {
+            echo "OpenADKit ${RELEASE_VERSION}"
+            echo ""
+            echo "- Build tag: ${BUILD_TAG}"
+            echo "- Source SHA: ${SOURCE_SHA}"
+            echo "- Release candidate manifest SHA256: ${MANIFEST_SHA256}"
+            echo "- Scan gate run: ${scan_run_id}"
+            echo ""
+            echo "The attached release candidate manifest records every promoted image digest."
+          } > release-artifacts/release-notes.md
+        shell: bash
+
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
-            echo "GitHub Release ${RELEASE_VERSION} already exists"
+            release_json=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_VERSION}")
+            draft=$(printf '%s' "${release_json}" | jq -r '.draft')
+            prerelease=$(printf '%s' "${release_json}" | jq -r '.prerelease')
+            [ "${draft}" = "false" ] || (echo "Existing release ${RELEASE_VERSION} is a draft" >&2 && exit 1)
+            [ "${prerelease}" = "false" ] || (echo "Existing release ${RELEASE_VERSION} is marked prerelease" >&2 && exit 1)
+            gh release upload "${RELEASE_VERSION}" release-artifacts/* --clobber
             exit 0
           fi
 
-          gh release create "${RELEASE_VERSION}" \
+          gh release create "${RELEASE_VERSION}" release-artifacts/* \
             --target "${SOURCE_SHA}" \
             --title "OpenADKit ${RELEASE_VERSION}" \
-            --generate-notes
+            --notes-file release-artifacts/release-notes.md
         shell: bash
