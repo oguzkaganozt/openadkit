@@ -75,7 +75,7 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: ${{ github.repository_owner == 'oz-openadkit-labs' && 30 || 8 }}
       matrix:
         platform: [linux/amd64, linux/arm64]
         ros-distro: [humble, jazzy]
