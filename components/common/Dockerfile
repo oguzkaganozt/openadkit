@@ -26,9 +26,9 @@ RUN echo 'APT::Install-Recommends "false";' > /etc/apt/apt.conf.d/99-disable-ext
 # Install apt packages and add GitHub to known hosts for private repositories
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
   && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache
-RUN printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' > /etc/apt/apt.conf.d/80-retries
+RUN printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::http::No-Cache "true";\nAcquire::https::No-Cache "true";\n' > /etc/apt/apt.conf.d/80-retries
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+  /scripts/apt_update_retry.sh && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
   gosu \
   ssh \
   && /scripts/cleanup_apt.sh \
@@ -90,7 +90,7 @@ RUN --mount=type=ssh \
   --mount=type=bind,source=autoware/src/universe/external/pointcloud_to_laserscan,target=/autoware/src/universe/external/pointcloud_to_laserscan \
   --mount=type=bind,source=autoware/src/universe/external/rtklib_ros_bridge,target=/autoware/src/universe/external/rtklib_ros_bridge \
   --mount=type=bind,source=autoware/src/universe/external/tier4_autoware_msgs,target=/autoware/src/universe/external/tier4_autoware_msgs \
-  apt-get update \
+  /scripts/apt_update_retry.sh \
   && source /opt/ros/"$ROS_DISTRO"/setup.bash \
   && rosdep update \
   && /scripts/resolve_rosdep_keys.sh /autoware/src "${ROS_DISTRO}" --dependency-types=exec > /tmp/rosdep-universe-common-exec-pkgs.txt \

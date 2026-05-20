@@ -26,7 +26,7 @@ RUN --mount=type=cache,target="${CCACHE_DIR}" \
   --mount=type=bind,source=/autoware/src/universe/autoware_universe/sensing/autoware_pcl_extensions,target=/autoware/src/universe/autoware_universe/sensing/autoware_pcl_extensions \
   --mount=type=bind,source=/autoware/src/universe/autoware_universe/control/autoware_external_cmd_selector,target=/autoware/src/universe/autoware_universe/control/autoware_external_cmd_selector \
   --mount=type=bind,source=/autoware/src/universe/autoware_universe/vehicle/autoware_raw_vehicle_cmd_converter,target=/autoware/src/universe/autoware_universe/vehicle/autoware_raw_vehicle_cmd_converter \
-  apt-get update \
+  /scripts/apt_update_retry.sh \
   && source /opt/ros/"$ROS_DISTRO"/setup.bash \
   && source /opt/autoware/setup.bash \
   && rosdep update \
@@ -54,7 +54,7 @@ RUN --mount=type=ssh \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
   ./setup-dev-env.sh -y --module all --no-nvidia --no-cuda-drivers --runtime openadkit --ros-distro $ROS_DISTRO \
   && pipx uninstall ansible \
-  && apt-get update \
+  && /scripts/apt_update_retry.sh \
   && cat /tmp/rosdep-universe-common-exec-pkgs.txt | xargs apt-get install -y --no-install-recommends \
   && cat /tmp/rosdep-simulator-exec-pkgs.txt | xargs apt-get install -y --no-install-recommends \
   && /scripts/cleanup_apt.sh true \

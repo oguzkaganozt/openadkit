@@ -13,7 +13,7 @@ ARG ROS_DISTRO
 # Install rosdep dependencies and build packages
 RUN --mount=type=cache,target="${CCACHE_DIR}" \
   --mount=type=bind,source=autoware/src/universe/autoware_universe/visualization,target=/autoware/src/universe/autoware_universe/visualization \
-  apt-get update \
+  /scripts/apt_update_retry.sh \
   && source /opt/ros/"$ROS_DISTRO"/setup.bash \
   && source /opt/autoware/setup.bash \
   && rosdep update \
@@ -39,7 +39,7 @@ COPY --from=visualizer-devel /tmp/rosdep-visualizer-exec-pkgs.txt /tmp/rosdep-vi
 # Install rosdep dependencies and apt packages (openbox, VNC, and simulator dependencies)
 RUN --mount=type=ssh \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  apt-get update \
+  /scripts/apt_update_retry.sh \
   && cat /tmp/rosdep-universe-common-exec-pkgs.txt | xargs apt-get install -y --no-install-recommends \
   && cat /tmp/rosdep-visualizer-exec-pkgs.txt | xargs apt-get install -y --no-install-recommends \
   && apt-get install -y --no-install-recommends \
