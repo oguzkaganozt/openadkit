@@ -36,15 +36,15 @@ on:
           - linux/arm64
           - both
       rebuild_common:
-        description: Rebuild common-base and common-devel before the component
+        description: Rebuild common-base and common-devel before the component (recommended on feature branches)
         required: true
         type: boolean
-        default: false
+        default: true
       common_image_source:
-        description: Which common images to use as the build base
+        description: Which common images to use as the build base (stable only works on main after a recent full build)
         required: true
         type: choice
-        default: stable
+        default: build_tag
         options:
           - stable
           - build_tag
@@ -152,7 +152,13 @@ jobs:
             cache_scope="${safe_ref}-${ref_hash}"
           fi
 
-          if [ "${INPUT_REBUILD_COMMON}" = "true" ]; then
+          rebuild_common="${INPUT_REBUILD_COMMON}"
+          if [ "${rebuild_common}" = "false" ] && [ "${INPUT_COMMON_IMAGE_SOURCE}" = "stable" ] && [ "${GITHUB_REF:-}" != "refs/heads/main" ]; then
+            echo "::notice::Stable common images are only supported on main. Forcing rebuild_common=true on ${GITHUB_REF_NAME}."
+            rebuild_common="true"
+          fi
+
+          if [ "${rebuild_common}" = "true" ]; then
             common_image_source="build_tag"
             common_tag="${build_tag}"
           else
@@ -204,7 +210,7 @@ jobs:
             echo "dependency_tag=${dependency_tag}"
             echo "common_image_source=${common_image_source}"
             echo "dependency_image_source=${dependency_image_source}"
-            echo "rebuild_common=${INPUT_REBUILD_COMMON}"
+            echo "rebuild_common=${rebuild_common}"
             echo "target=${INPUT_TARGET}"
             echo "ros_distro=${INPUT_ROS_DISTRO}"
             echo "platforms=${platforms}"
@@ -326,6 +332,7 @@ jobs:
             *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
             *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
             *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-main
             *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }}
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
@@ -348,6 +355,7 @@ jobs:
             *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
             *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
             *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ needs.prepare.outputs.ros_distro }}-main
             *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }}
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
@@ -485,6 +493,7 @@ jobs:
             *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
             *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
             *.labels.org.opencontainers.image.revision=${{ github.sha }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ needs.prepare.outputs.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-main
             *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ needs.prepare.outputs.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }}
             *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ needs.prepare.outputs.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ needs.prepare.outputs.ros_distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
 
