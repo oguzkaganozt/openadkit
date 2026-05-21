@@ -7,3 +7,9 @@ docker run --rm --network host ghcr.io/autowarefoundation/autoware-tools:carla-i
 ```
 
 The image is normally built by GitHub Actions from `tools/docker-bake.hcl`.
+
+To build it locally:
+
+```bash
+docker buildx bake -f tools/docker-bake.hcl carla-interface
+```
