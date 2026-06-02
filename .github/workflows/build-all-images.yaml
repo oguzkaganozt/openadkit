@@ -2,12 +2,7 @@ name: build-all-images
 
 on:
   push:
-    branches:
-      - '**'
     paths:
-      - '.github/actions/combine-multi-arch-images/**'
-      - '.github/actions/free-disk-space/**'
-      - '.github/workflows/build-all-images.yaml'
       - 'components/docker-bake.hcl'
       - 'components/common/**'
       - 'components/sensing-perception/**'
@@ -31,18 +26,15 @@ env:
   IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
   IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
   BAKE_FILE: components/docker-bake.hcl
-  ROS_HUMBLE_BASE_IMAGE: ros:humble-ros-base-jammy@sha256:5417e56962ff6e15d4cf9b2f78a71a78f3901f47cd78696b575b7eecdb54eb78
-  ROS_JAZZY_BASE_IMAGE: ros:jazzy-ros-base-noble@sha256:eac11a5285beeb1e1884e71f7091c610e08452e823bfb3f43afaa334375325f6
 
 jobs:
   prepare:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     outputs:
       autoware_ref: ${{ steps.prepare.outputs.autoware_ref }}
       build_tag: ${{ steps.prepare.outputs.build_tag }}
-      cache_scope: ${{ steps.prepare.outputs.cache_scope }}
     steps:
       - name: Resolve shared build inputs
         id: prepare
@@ -50,18 +42,8 @@ jobs:
           set -euo pipefail
           autoware_ref=$(git ls-remote https://github.com/autowarefoundation/autoware refs/heads/main | cut -f1)
           build_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          safe_ref=$(printf '%s' "${GITHUB_REF_NAME:-unknown}" | tr -c 'A-Za-z0-9_.-' '-' | cut -c1-60)
-          ref_hash=$(printf '%s' "${GITHUB_REF:-unknown}" | sha256sum | cut -c1-12)
-          if [ "${GITHUB_REF:-}" = "refs/heads/main" ]; then
-            cache_scope="main"
-          else
-            cache_scope="${safe_ref}-${ref_hash}"
-          fi
-          {
-            echo "autoware_ref=${autoware_ref}"
-            echo "build_tag=${build_tag}"
-            echo "cache_scope=${cache_scope}"
-          } >> "$GITHUB_OUTPUT"
+          echo "autoware_ref=${autoware_ref}" >> "$GITHUB_OUTPUT"
+          echo "build_tag=${build_tag}" >> "$GITHUB_OUTPUT"
         shell: bash
 
   # =============================================================================
@@ -69,19 +51,19 @@ jobs:
   # =============================================================================
   build-common:
     needs: prepare
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-4-ubuntu-2204' || 'ubicloud-standard-4-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      max-parallel: ${{ github.repository_owner == 'oguzkaganozt' && 4 || 8 }}
+      max-parallel: 8
       matrix:
         platform: [linux/amd64, linux/arm64]
         ros-distro: [humble, jazzy]
     steps:
       - name: Checkout OpenADKit repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Free Disk Space (Ubuntu)
         uses: ./.github/actions/free-disk-space
@@ -94,7 +76,7 @@ jobs:
         shell: bash
 
       - name: Checkout Autoware repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
         with:
           repository: autowarefoundation/autoware
           ref: ${{ needs.prepare.outputs.autoware_ref }}
@@ -108,10 +90,10 @@ jobs:
         shell: bash
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -119,50 +101,54 @@ jobs:
 
       - name: Extract metadata for openadkit-common:base
         id: meta-common-base
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-base
           tags: |
+            type=raw,value=base-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=base-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Extract metadata for openadkit-common:base-cuda
         id: meta-common-base-cuda
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-base-cuda
           tags: |
+            type=raw,value=base-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=base-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Extract metadata for openadkit-common:devel
         id: meta-common-devel
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-devel
           tags: |
+            type=raw,value=devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Extract metadata for openadkit-common:devel-cuda
         id: meta-common-devel-cuda
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMMON }}
           bake-target: docker-metadata-action-common-devel-cuda
           tags: |
+            type=raw,value=devel-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=devel-cuda-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Build and push common images (non-CUDA)
-        uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
+        uses: docker/bake-action@v5
         with:
           files: |
             ${{ env.BAKE_FILE }}
@@ -175,16 +161,16 @@ jobs:
           set: |
             *.platform=${{ matrix.platform }}
             *.args.ROS_DISTRO=${{ matrix.ros-distro }}
-            *.args.BASE_IMAGE=${{ matrix.ros-distro == 'jazzy' && env.ROS_JAZZY_BASE_IMAGE || env.ROS_HUMBLE_BASE_IMAGE }}
-            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
-            *.labels.org.opencontainers.image.revision=${{ github.sha }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
+            *.args.BASE_IMAGE=ros:${{ matrix.ros-distro }}-ros-base-${{ matrix.ros-distro == 'jazzy' && 'noble' || 'jammy' }}
+            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
+            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
+            *.labels."org.opencontainers.image.autoware-ref"=${{ needs.prepare.outputs.autoware_ref }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
 
       - name: Build and push common images (CUDA, amd64 only)
         if: matrix.platform == 'linux/amd64'
-        uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
+        uses: docker/bake-action@v5
         with:
           files: |
             ${{ env.BAKE_FILE }}
@@ -197,25 +183,25 @@ jobs:
           set: |
             *.platform=${{ matrix.platform }}
             *.args.ROS_DISTRO=${{ matrix.ros-distro }}
-            *.args.BASE_IMAGE=${{ matrix.ros-distro == 'jazzy' && env.ROS_JAZZY_BASE_IMAGE || env.ROS_HUMBLE_BASE_IMAGE }}
-            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
-            *.labels.org.opencontainers.image.revision=${{ github.sha }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
+            *.args.BASE_IMAGE=ros:${{ matrix.ros-distro }}-ros-base-${{ matrix.ros-distro == 'jazzy' && 'noble' || 'jammy' }}
+            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
+            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
+            *.labels."org.opencontainers.image.autoware-ref"=${{ needs.prepare.outputs.autoware_ref }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:common-cuda-${{ matrix.ros-distro }}-main,mode=max
 
   # =============================================================================
   # Stage 2: Build component images (parallel)
   # =============================================================================
   build-components:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-4-ubuntu-2204' || 'ubicloud-standard-4-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     needs: [prepare, build-common]
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      max-parallel: ${{ github.repository_owner == 'oguzkaganozt' && 4 || 8 }}
+      max-parallel: 8
       matrix:
         platform: [linux/amd64, linux/arm64]
         ros-distro: [humble, jazzy]
@@ -237,7 +223,7 @@ jobs:
             target: sensing-perception-cuda
     steps:
       - name: Checkout OpenADKit repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Free Disk Space (Ubuntu)
         uses: ./.github/actions/free-disk-space
@@ -250,7 +236,7 @@ jobs:
         shell: bash
 
       - name: Checkout Autoware repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
         with:
           repository: autowarefoundation/autoware
           ref: ${{ needs.prepare.outputs.autoware_ref }}
@@ -264,10 +250,10 @@ jobs:
         shell: bash
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -275,17 +261,18 @@ jobs:
 
       - name: Extract metadata for ${{ matrix.target }}
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMPONENT }}
           bake-target: docker-metadata-action-${{ matrix.target }}
           tags: |
+            type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Build and push ${{ matrix.target }}
-        uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
+        uses: docker/bake-action@v5
         with:
           files: |
             ${{ env.BAKE_FILE }}
@@ -299,24 +286,24 @@ jobs:
             *.args.COMMON_BASE_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:base-cuda-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.COMMON_DEVEL_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.COMMON_DEVEL_CUDA_IMAGE=${{ env.IMAGE_PREFIX_COMMON }}:devel-cuda-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
-            *.labels.org.opencontainers.image.revision=${{ github.sha }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
+            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
+            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
+            *.labels."org.opencontainers.image.autoware-ref"=${{ needs.prepare.outputs.autoware_ref }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
 
   # =============================================================================
   # Stage 3: Build universe and universe-cuda images (parallel)
   # =============================================================================
   build-universe:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && (matrix.platform == 'linux/amd64' && 'ubicloud-standard-4-ubuntu-2204' || 'ubicloud-standard-4-arm-ubuntu-2204') || (matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm') }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     needs: [prepare, build-common, build-components]
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      max-parallel: ${{ github.repository_owner == 'oguzkaganozt' && 4 || 8 }}
+      max-parallel: 8
       matrix:
         platform: [linux/amd64, linux/arm64]
         ros-distro: [humble, jazzy]
@@ -331,7 +318,7 @@ jobs:
             target: universe-cuda
     steps:
       - name: Checkout OpenADKit repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Free Disk Space (Ubuntu)
         uses: ./.github/actions/free-disk-space
@@ -344,7 +331,7 @@ jobs:
         shell: bash
 
       - name: Checkout Autoware repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
         with:
           repository: autowarefoundation/autoware
           ref: ${{ needs.prepare.outputs.autoware_ref }}
@@ -358,10 +345,10 @@ jobs:
         shell: bash
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -369,17 +356,18 @@ jobs:
 
       - name: Extract metadata for ${{ matrix.target }}
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_PREFIX_COMPONENT }}
           bake-target: docker-metadata-action-${{ matrix.target }}
           tags: |
+            type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }},enable={{is_default_branch}}
             type=raw,value=${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
           flavor: |
             latest=false
 
       - name: Build and push ${{ matrix.target }}
-        uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
+        uses: docker/bake-action@v5
         with:
           files: |
             ${{ env.BAKE_FILE }}
@@ -401,17 +389,17 @@ jobs:
             *.args.API_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:api-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.VISUALIZER_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:visualizer-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.build-tag=${{ needs.prepare.outputs.build_tag }}
-            *.labels.org.opencontainers.image.run-id=${{ github.run_id }}
-            *.labels.org.opencontainers.image.revision=${{ github.sha }}
-            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }}
-            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.cache_scope }},mode=max
+            *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
+            *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
+            *.labels."org.opencontainers.image.autoware-ref"=${{ needs.prepare.outputs.autoware_ref }}
+            *.cache-from=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main
+            *.cache-to=type=registry,ref=ghcr.io/${{ github.repository_owner }}/openadkit-buildcache:${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-main,mode=max
 
   # =============================================================================
   # Stage 4: Create multi-arch manifests
   # =============================================================================
   create-manifests:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     needs: [prepare, build-common, build-components, build-universe]
     permissions:
       contents: read
@@ -422,10 +410,10 @@ jobs:
         ros-distro: [humble, jazzy]
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Combine multi-arch images
         uses: ./.github/actions/combine-multi-arch-images
@@ -446,186 +434,11 @@ jobs:
             simulator
             universe
             universe-cuda
-          publish-stable-tags: "false"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  release-candidate:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-22.04' }}
-    needs: [prepare, create-manifests]
-    permissions:
-      contents: read
-      packages: read
-      attestations: write
-      id-token: write
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate release candidate manifest
-        env:
-          AUTOWARE_REF: ${{ needs.prepare.outputs.autoware_ref }}
-          BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
-        run: |
-          set -euo pipefail
-
-          mkdir -p release-candidate
-          manifest_path="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
-          COMMON="${IMAGE_PREFIX_COMMON}"
-          COMPONENT="${IMAGE_PREFIX_COMPONENT}"
-
-          jq -n \
-            --arg schema_version "1" \
-            --arg repository "${GITHUB_REPOSITORY}" \
-            --arg workflow "build-all-images" \
-            --arg run_id "${GITHUB_RUN_ID}" \
-            --arg run_attempt "${GITHUB_RUN_ATTEMPT}" \
-            --arg build_tag "${BUILD_TAG}" \
-            --arg source_ref "${GITHUB_REF}" \
-            --arg source_branch "${GITHUB_REF_NAME}" \
-            --arg source_sha "${GITHUB_SHA}" \
-            --arg autoware_ref "${AUTOWARE_REF}" \
-            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{schema_version: $schema_version, repository: $repository, workflow: $workflow, run_id: $run_id, run_attempt: $run_attempt, build_tag: $build_tag, source_ref: $source_ref, source_branch: $source_branch, source_sha: $source_sha, autoware_ref: $autoware_ref, generated_at: $generated_at, images: []}' \
-            > "${manifest_path}"
-
-          add_image() {
-            local family="$1"
-            local name="$2"
-            local distro="$3"
-            local image_prefix="$4"
-            local source_ref="${image_prefix}:${name}-${distro}-${BUILD_TAG}"
-            local source_json source_digest platforms cuda stable_tags tmp
-
-            echo "Recording ${source_ref}"
-            source_json=$(docker buildx imagetools inspect --format '{{json .}}' "${source_ref}")
-            source_digest=$(printf '%s' "${source_json}" | jq -r '.manifest.digest')
-            platforms=$(printf '%s' "${source_json}" | jq -c '[ (.image // {}) | keys[] | select(startswith("linux/")) ]')
-            if [[ "${name}" == *cuda* ]]; then
-              cuda=true
-            else
-              cuda=false
-            fi
-            stable_tags=$(jq -n --arg name "${name}" --arg distro "${distro}" '
-              ["\($name)-\($distro)"] + (if $distro == "humble" then [$name] else [] end)
-            ')
-            tmp=$(mktemp)
-            jq \
-              --arg family "${family}" \
-              --arg name "${name}" \
-              --arg distro "${distro}" \
-              --arg source_ref "${source_ref}" \
-              --arg source_digest "${source_digest}" \
-              --argjson platforms "${platforms}" \
-              --argjson cuda "${cuda}" \
-              --argjson stable_tags "${stable_tags}" \
-              '.images += [{family: $family, name: $name, ros_distro: $distro, source_ref: $source_ref, source_digest: $source_digest, platforms: $platforms, cuda: $cuda, stable_tags: $stable_tags}]' \
-              "${manifest_path}" > "${tmp}"
-            mv "${tmp}" "${manifest_path}"
-          }
-
-          distros=(humble jazzy)
-          common_variants=(base base-cuda devel devel-cuda)
-          component_targets=(sensing-perception sensing-perception-cuda localization-mapping planning-control vehicle-system api visualizer simulator universe universe-cuda)
-
-          for distro in "${distros[@]}"; do
-            for variant in "${common_variants[@]}"; do
-              add_image common "${variant}" "${distro}" "${COMMON}"
-            done
-
-            for target in "${component_targets[@]}"; do
-              add_image component "${target}" "${distro}" "${COMPONENT}"
-            done
-          done
-
-          jq -S . "${manifest_path}" > "${manifest_path}.tmp"
-          mv "${manifest_path}.tmp" "${manifest_path}"
-          sha256sum "${manifest_path}" > "${manifest_path}.sha256"
-        shell: bash
-
-      - name: Upload release candidate manifest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: openadkit-release-candidate-${{ needs.prepare.outputs.build_tag }}
-          path: release-candidate/
-          if-no-files-found: error
-          retention-days: 90
-
-      - name: Attest release candidate manifest
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-path: release-candidate/openadkit-release-candidate-${{ needs.prepare.outputs.build_tag }}.json
-
-  smoke-tests:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-22.04' }}
-    needs: [prepare, release-candidate]
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - name: Download release candidate manifest
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with:
-          name: openadkit-release-candidate-${{ needs.prepare.outputs.build_tag }}
-          path: release-candidate
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify release candidate image set
-        env:
-          BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
-        run: |
-          set -euo pipefail
-
-          manifest="release-candidate/openadkit-release-candidate-${BUILD_TAG}.json"
-          summary="release-candidate/openadkit-smoke-summary-${BUILD_TAG}.json"
-
-          jq -e '.images | length == 28' "${manifest}" >/dev/null
-
-          jq -r '.images[] | "\(.source_ref)@\(.source_digest)"' "${manifest}" | while read -r image_ref; do
-            echo "Inspecting ${image_ref}"
-            docker buildx imagetools inspect "${image_ref}" >/dev/null
-          done
-
-          for distro in humble jazzy; do
-            image_ref=$(jq -r --arg distro "${distro}" '.images[] | select(.family == "common" and .name == "base" and .ros_distro == $distro) | "\(.source_ref)@\(.source_digest)"' "${manifest}")
-            echo "Running ROS smoke test for ${image_ref}"
-            docker run --rm --platform linux/amd64 "${image_ref}" bash -lc "source /opt/ros/${distro}/setup.bash && command -v ros2 >/dev/null && ros2 --help >/dev/null"
-          done
-
-          jq -n \
-            --arg build_tag "${BUILD_TAG}" \
-            --arg status "success" \
-            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{build_tag: $build_tag, status: $status, generated_at: $generated_at}' \
-            > "${summary}"
-        shell: bash
-
-      - name: Upload smoke summary
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: openadkit-smoke-summary-${{ needs.prepare.outputs.build_tag }}
-          path: release-candidate/openadkit-smoke-summary-${{ needs.prepare.outputs.build_tag }}.json
-          if-no-files-found: error
-          retention-days: 90
-
   summarize:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-latest' }}
-    needs: [prepare, release-candidate, smoke-tests]
+    runs-on: ubuntu-latest
+    needs: [prepare, create-manifests]
     if: success()
     steps:
       - name: Write job summary
@@ -636,23 +449,21 @@ jobs:
             echo "|-----|-------|"
             echo "| **build_tag** | \`${{ needs.prepare.outputs.build_tag }}\` |"
             echo "| **autoware_ref** | \`${{ needs.prepare.outputs.autoware_ref }}\` |"
-            echo "| **release_candidate_manifest** | \`openadkit-release-candidate-${{ needs.prepare.outputs.build_tag }}\` |"
             echo ""
-            echo "Release checklist:"
-            echo "1. Wait for **scan-images** to pass for \`${{ needs.prepare.outputs.build_tag }}\`."
-            echo "2. Go to **Actions → release → Run workflow**."
-            echo "3. Set \`build_tag\` to \`${{ needs.prepare.outputs.build_tag }}\`."
+            echo "To release this build:"
+            echo "1. Go to **Actions → release → Run workflow**"
+            echo "2. Set \`build_tag\` to \`${{ needs.prepare.outputs.build_tag }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   notify-failure:
-    runs-on: ${{ github.repository_owner == 'oguzkaganozt' && 'ubicloud-standard-4-ubuntu-2204' || 'ubuntu-latest' }}
-    needs: [prepare, build-common, build-components, build-universe, create-manifests, release-candidate, smoke-tests]
+    runs-on: ubuntu-latest
+    needs: [prepare, build-common, build-components, build-universe, create-manifests]
     if: failure() && github.event_name == 'schedule'
     permissions:
       issues: write
     steps:
       - name: Create failure issue
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.create({
