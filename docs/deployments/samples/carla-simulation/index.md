@@ -20,6 +20,7 @@ The CARLA container runs on the host X display with NVIDIA GPU access. The helpe
 - Docker with NVIDIA Container Toolkit
 - Access to `carlasim/carla:0.9.16`
 - A working host X display, usually `DISPLAY=:0`
+- Host X access for local Docker containers, for example `xhost +SI:localuser:root`
 - Host NVIDIA Vulkan ICD at `/usr/share/vulkan/icd.d/nvidia_icd.json`
 
 ## Start

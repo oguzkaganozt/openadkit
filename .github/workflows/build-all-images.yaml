@@ -442,7 +442,7 @@ jobs:
   # =============================================================================
   create-manifests:
     runs-on: ubuntu-22.04
-    needs: [prepare, build-common, build-components, build-tools, build-universe]
+    needs: [prepare, build-common, build-components, build-universe]
     permissions:
       contents: read
       packages: write

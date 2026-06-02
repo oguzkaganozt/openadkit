@@ -217,6 +217,7 @@ PY"; then
 }
 
 start_autoware() {
+  run docker rm -f "$CARLA_INTERFACE_CONTAINER" || true
   if docker container inspect autoware-e2e-carla >/dev/null 2>&1; then
     run docker rm -f autoware-e2e-carla
   fi
