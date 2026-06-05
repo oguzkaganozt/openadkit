@@ -15,21 +15,17 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # CARLA can crash when the interface reloads the same visible map during
-# startup. Preload Town01 in the launcher, then skip only this redundant
-# load_world call while preserving map reloads for other maps.
+# startup. Preload Town01 in the launcher, then use CARLA's conditional
+# world loader while preserving map reloads for other maps.
 RUN python3 - <<'PY'
 from pathlib import Path
 
 path = Path('/opt/autoware/lib/python3.10/site-packages/autoware_carla_interface/carla_autoware.py')
 text = path.read_text()
-old = '        client.load_world(self.carla_map)\n        self.world = client.get_world()\n'
-new = '''        current_world = client.get_world()
-        current_map = current_world.get_map().name
-        if not current_map.endswith("/" + self.carla_map):
-            client.load_world(self.carla_map)
-        self.world = client.get_world()
-'''
-if old not in text:
-    raise SystemExit('autoware_carla_interface load_world block not found')
-path.write_text(text.replace(old, new, 1))
+old = '        client.load_world(self.carla_map)\n'
+new = '        client.load_world_if_different(self.carla_map)\n'
+if old in text:
+    path.write_text(text.replace(old, new, 1))
+elif new not in text:
+    raise SystemExit('autoware_carla_interface load_world call not found')
 PY

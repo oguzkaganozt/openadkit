@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../.." && pwd)
 ENV_FILE=carla-simulation.e2e.env
+PYTHON_HELPER=$SCRIPT_DIR/carla_e2e_helper.py
 DRY_RUN=false
 BUILD_IMAGE=false
 SKIP_VERIFY=false
@@ -154,12 +155,11 @@ wait_for_carla_api() {
 
   local deadline=$((SECONDS + CARLA_START_TIMEOUT))
   while ((SECONDS < deadline)); do
-    if docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
-import carla
-client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
-client.set_timeout(5)
-print(client.get_world().get_map().name)
-PY" >/dev/null 2>&1; then
+    if docker run --rm --network host \
+      -e CARLA_RPC_HOST="$CARLA_RPC_HOST" \
+      -e CARLA_RPC_PORT="$CARLA_RPC_PORT" \
+      -e CARLA_API_TIMEOUT=5 \
+      "$CARLA_INTERFACE_IMAGE" python3 - wait-api < "$PYTHON_HELPER" >/dev/null 2>&1; then
       return 0
     fi
     sleep 5
@@ -188,25 +188,18 @@ start_container_carla() {
 
 preload_carla_world() {
   if [[ "$DRY_RUN" == true ]]; then
-    run docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
-import carla
-client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
-client.set_timeout(float('$CARLA_LOAD_TIMEOUT'))
-world = client.load_world('$CARLA_WORLD')
-print(world.get_map().name)
-PY"
+    printf '+ docker run --rm --network host ... %s python3 - preload-world < %s\n' "$CARLA_INTERFACE_IMAGE" "$PYTHON_HELPER"
     return 0
   fi
 
   local deadline=$((SECONDS + CARLA_LOAD_TIMEOUT))
   while ((SECONDS < deadline)); do
-    if docker run --rm --network host "$CARLA_INTERFACE_IMAGE" bash -lc "python3 - <<'PY'
-import carla
-client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
-client.set_timeout(30)
-world = client.load_world('$CARLA_WORLD')
-print(world.get_map().name)
-PY"; then
+    if docker run --rm --network host \
+      -e CARLA_RPC_HOST="$CARLA_RPC_HOST" \
+      -e CARLA_RPC_PORT="$CARLA_RPC_PORT" \
+      -e CARLA_LOAD_TIMEOUT=30 \
+      -e CARLA_WORLD="$CARLA_WORLD" \
+      "$CARLA_INTERFACE_IMAGE" python3 - preload-world < "$PYTHON_HELPER"; then
       return 0
     fi
     sleep 5
@@ -253,53 +246,12 @@ verify_runtime() {
   local deadline=$((SECONDS + AUTOWARE_E2E_VERIFY_TIMEOUT))
   local output
   while ((SECONDS < deadline)); do
-    if output=$(docker exec "$CARLA_INTERFACE_CONTAINER" bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
-import time
-
-import carla
-import rclpy
-from nav_msgs.msg import Odometry
-from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import PointCloud2
-
-rclpy.init()
-node = rclpy.create_node('openadkit_e2e_runtime_verifier')
-latest_odom = None
-latest_lidar = None
-
-def on_odom(msg):
-    global latest_odom
-    latest_odom = msg
-
-def on_lidar(msg):
-    global latest_lidar
-    latest_lidar = msg
-
-node.create_subscription(Odometry, '/localization/kinematic_state', on_odom, 10)
-node.create_subscription(PointCloud2, '/sensing/lidar/top/pointcloud_before_sync', on_lidar, qos_profile_sensor_data)
-
-deadline = time.time() + 20.0
-while time.time() < deadline and (latest_odom is None or latest_lidar is None):
-    rclpy.spin_once(node, timeout_sec=0.2)
-
-if latest_odom is None:
-    raise RuntimeError('Timed out waiting for /localization/kinematic_state')
-if latest_lidar is None:
-    raise RuntimeError('Timed out waiting for /sensing/lidar/top/pointcloud_before_sync')
-
-client = carla.Client('$CARLA_RPC_HOST', int('$CARLA_RPC_PORT'))
-client.set_timeout(10)
-world = client.get_world()
-world.tick(2)
-vehicles = [a for a in world.get_actors() if a.type_id.startswith('vehicle.')]
-ego = [v for v in vehicles if v.attributes.get('role_name') == 'ego_vehicle']
-print(world.get_map().name)
-print('vehicles', len(vehicles), 'ego', len(ego))
-if not ego:
-    raise SystemExit(1)
-node.destroy_node()
-rclpy.shutdown()
-PY" 2>&1); then
+    if output=$(docker exec -i \
+      -e CARLA_RPC_HOST="$CARLA_RPC_HOST" \
+      -e CARLA_RPC_PORT="$CARLA_RPC_PORT" \
+      "$CARLA_INTERFACE_CONTAINER" \
+      bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - verify-runtime" \
+      < "$PYTHON_HELPER" 2>&1); then
       printf '%s\n' "$output"
       return 0
     fi
@@ -322,128 +274,12 @@ start_autonomous_drive() {
   fi
 
   docker exec \
+    -i \
     -e AUTOWARE_E2E_ROUTE_FORWARD_DISTANCE="$AUTOWARE_E2E_ROUTE_FORWARD_DISTANCE" \
     -e AUTOWARE_E2E_ROUTE_SETTLE_TIMEOUT="$AUTOWARE_E2E_ROUTE_SETTLE_TIMEOUT" \
     "$CARLA_INTERFACE_CONTAINER" \
-    bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
-import os
-import time
-
-import rclpy
-from autoware_adapi_v1_msgs.msg import OperationModeState, RouteState
-from autoware_adapi_v1_msgs.srv import ChangeOperationMode, ClearRoute, SetRoutePoints
-from geometry_msgs.msg import Pose
-from nav_msgs.msg import Odometry
-
-forward_distance = float(os.environ['AUTOWARE_E2E_ROUTE_FORWARD_DISTANCE'])
-settle_timeout = float(os.environ['AUTOWARE_E2E_ROUTE_SETTLE_TIMEOUT'])
-autonomous_mode = getattr(OperationModeState, 'AUTONOMOUS', 2)
-
-rclpy.init()
-node = rclpy.create_node('openadkit_e2e_route_and_engage')
-latest_odom = None
-latest_operation = None
-latest_route = None
-
-def on_odom(msg):
-    global latest_odom
-    latest_odom = msg
-
-def on_operation(msg):
-    global latest_operation
-    latest_operation = msg
-
-def on_route(msg):
-    global latest_route
-    latest_route = msg
-
-node.create_subscription(Odometry, '/localization/kinematic_state', on_odom, 10)
-node.create_subscription(OperationModeState, '/api/operation_mode/state', on_operation, 10)
-node.create_subscription(RouteState, '/api/routing/state', on_route, 10)
-
-def spin_until(predicate, timeout, description):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        rclpy.spin_once(node, timeout_sec=0.2)
-        if predicate():
-            return True
-    raise RuntimeError(f'Timed out waiting for {description}')
-
-def wait_for_service(client, timeout, name):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if client.wait_for_service(timeout_sec=1.0):
-            return
-    raise RuntimeError(f'Timed out waiting for service {name}')
-
-def call_service(client, request, timeout, name):
-    wait_for_service(client, timeout, name)
-    future = client.call_async(request)
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        rclpy.spin_once(node, timeout_sec=0.2)
-        if future.done():
-            response = future.result()
-            if response is None:
-                raise RuntimeError(f'{name} returned no response')
-            status = getattr(response, 'status', None)
-            if status is not None and not status.success:
-                raise RuntimeError(f'{name} failed: {status.message}')
-            return response
-    raise RuntimeError(f'Timed out waiting for response from {name}')
-
-spin_until(lambda: latest_odom is not None, settle_timeout, '/localization/kinematic_state')
-start_pose = latest_odom.pose.pose
-
-clear_route = node.create_client(ClearRoute, '/api/routing/clear_route')
-set_route = node.create_client(SetRoutePoints, '/api/routing/set_route_points')
-change_route = node.create_client(SetRoutePoints, '/api/routing/change_route_points')
-change_to_autonomous = node.create_client(ChangeOperationMode, '/api/operation_mode/change_to_autonomous')
-
-call_service(clear_route, ClearRoute.Request(), settle_timeout, '/api/routing/clear_route')
-
-clear_deadline = time.time() + min(10.0, settle_timeout)
-while time.time() < clear_deadline:
-    rclpy.spin_once(node, timeout_sec=0.2)
-    if latest_route is not None and latest_route.state == RouteState.UNSET:
-        break
-
-request = SetRoutePoints.Request()
-request.header.frame_id = 'map'
-request.option.allow_goal_modification = True
-request.goal = Pose()
-request.goal.position.x = start_pose.position.x + forward_distance
-request.goal.position.y = start_pose.position.y
-request.goal.position.z = 0.0
-request.goal.orientation = start_pose.orientation
-
-try:
-    call_service(set_route, request, settle_timeout, '/api/routing/set_route_points')
-except RuntimeError as error:
-    if 'route is already set' not in str(error).lower() and 'invalid_state' not in str(error).lower():
-        raise
-    call_service(change_route, request, settle_timeout, '/api/routing/change_route_points')
-print(
-    'Route set: '
-    f'start=({start_pose.position.x:.2f}, {start_pose.position.y:.2f}) '
-    f'goal=({request.goal.position.x:.2f}, {request.goal.position.y:.2f})'
-)
-
-spin_until(
-    lambda: latest_operation is not None and latest_operation.is_autonomous_mode_available,
-    settle_timeout,
-    'autonomous mode availability',
-)
-call_service(change_to_autonomous, ChangeOperationMode.Request(), settle_timeout, '/api/operation_mode/change_to_autonomous')
-spin_until(
-    lambda: latest_operation is not None and latest_operation.mode == autonomous_mode,
-    settle_timeout,
-    'autonomous mode transition',
-)
-print('Autonomous mode active')
-node.destroy_node()
-rclpy.shutdown()
-PY"
+    bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - set-route-and-engage" \
+    < "$PYTHON_HELPER"
 }
 
 verify_autonomous_drive() {
@@ -457,59 +293,12 @@ verify_autonomous_drive() {
   fi
 
   docker exec \
+    -i \
     -e AUTOWARE_E2E_DRIVE_VERIFY_TIMEOUT="$AUTOWARE_E2E_DRIVE_VERIFY_TIMEOUT" \
     -e AUTOWARE_E2E_DRIVE_VERIFY_DISTANCE="$AUTOWARE_E2E_DRIVE_VERIFY_DISTANCE" \
     "$CARLA_INTERFACE_CONTAINER" \
-    bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - <<'PY'
-import math
-import os
-import time
-
-import rclpy
-from nav_msgs.msg import Odometry
-
-timeout = float(os.environ['AUTOWARE_E2E_DRIVE_VERIFY_TIMEOUT'])
-required_distance = float(os.environ['AUTOWARE_E2E_DRIVE_VERIFY_DISTANCE'])
-
-rclpy.init()
-node = rclpy.create_node('openadkit_e2e_motion_verifier')
-latest_odom = None
-
-def on_odom(msg):
-    global latest_odom
-    latest_odom = msg
-
-node.create_subscription(Odometry, '/localization/kinematic_state', on_odom, 10)
-
-deadline = time.time() + timeout
-while latest_odom is None and time.time() < deadline:
-    rclpy.spin_once(node, timeout_sec=0.2)
-
-if latest_odom is None:
-    raise RuntimeError('Timed out waiting for /localization/kinematic_state')
-
-start = latest_odom.pose.pose.position
-start_x = start.x
-start_y = start.y
-
-while time.time() < deadline:
-    rclpy.spin_once(node, timeout_sec=0.2)
-    current = latest_odom.pose.pose.position
-    distance = math.hypot(current.x - start_x, current.y - start_y)
-    if distance >= required_distance:
-        print(
-            f'Moved {distance:.2f} m: '
-            f'start=({start_x:.2f}, {start_y:.2f}) '
-            f'current=({current.x:.2f}, {current.y:.2f})'
-        )
-        node.destroy_node()
-        rclpy.shutdown()
-        raise SystemExit(0)
-
-current = latest_odom.pose.pose.position
-distance = math.hypot(current.x - start_x, current.y - start_y)
-raise RuntimeError(f'Autonomous motion verification failed: moved {distance:.2f} m')
-PY"
+    bash -lc "source /opt/ros/humble/setup.bash; source /opt/autoware/setup.bash; python3 - verify-motion" \
+    < "$PYTHON_HELPER"
 }
 
 main() {
