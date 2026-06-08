@@ -174,7 +174,9 @@ stop_container_carla() {
 }
 
 start_container_carla() {
-  if [[ "$DRY_RUN" == false && ! -S /tmp/.X11-unix/X${CARLA_DISPLAY#:} ]]; then
+  local display_num="${CARLA_DISPLAY##*:}"
+  display_num="${display_num%%.*}"
+  if [[ "$DRY_RUN" == false && ! -S "/tmp/.X11-unix/X${display_num}" ]]; then
     printf 'X display socket for %s was not found under /tmp/.X11-unix\n' "$CARLA_DISPLAY" >&2
     return 1
   fi

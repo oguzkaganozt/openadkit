@@ -14,13 +14,16 @@ RUN apt-get update \
     transforms3d \
   && rm -rf /var/lib/apt/lists/*
 
+# TODO: Remove this patch once autowarefoundation/autoware_universe#12616
+# is merged and available in the base simulator image.
 # CARLA can crash when the interface reloads the same visible map during
 # startup. Preload Town01 in the launcher, then use CARLA's conditional
 # world loader while preserving map reloads for other maps.
 RUN python3 - <<'PY'
+import autoware_carla_interface
 from pathlib import Path
 
-path = Path('/opt/autoware/lib/python3.10/site-packages/autoware_carla_interface/carla_autoware.py')
+path = Path(autoware_carla_interface.__file__).parent / "carla_autoware.py"
 text = path.read_text()
 old = '        client.load_world(self.carla_map)\n'
 new = '        client.load_world_if_different(self.carla_map)\n'

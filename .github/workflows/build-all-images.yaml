@@ -903,7 +903,7 @@ jobs:
 
   notify-failure:
     runs-on: ubuntu-latest
-    needs: [prepare, build-common, build-components, build-universe, create-manifests, capture-metadata]
+    needs: [prepare, build-common, build-components, build-tools, build-universe, create-manifests, capture-metadata]
     if: failure() && github.event_name == 'schedule'
     permissions:
       issues: write
