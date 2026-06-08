@@ -1,4 +1,5 @@
 site_name: Autoware Open AD Kit
+site_description: A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.
 site_url: https://autowarefoundation.github.io/openadkit/
 repo_url: https://github.com/autowarefoundation/openadkit
 edit_uri: edit/main/docs/
@@ -47,8 +48,6 @@ extra:
   font:
     text: Roboto
     code: Roboto Mono
-  version:
-    provider: mike
 
 extra_css:
   - assets/css/extra.css

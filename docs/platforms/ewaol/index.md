@@ -7,7 +7,7 @@
 
 <span class="oak-badge oak-badge--supported">Documented</span> <span class="oak-badge oak-badge--verified">Verified in v3.0</span>
 
-EWAOL is an actively supported platform in the Open AD Kit ecosystem. The official Open AD Kit v3.0 documentation provides step-by-step build, flash, and runtime instructions for the ADLink AADP-AVA platform.
+EWAOL is an actively supported platform in the Open AD Kit ecosystem. The official Open AD Kit v3.0 documentation provides step-by-step build, flash, and runtime instructions for the ADLINK AADP-AVA platform.
 
 While this repository is progressively adding EWAOL-specific deployment assets and container orchestration files, the platform itself is fully documented and tested upstream.
 
@@ -19,7 +19,7 @@ EWAOL is delivered via the `meta-ewaol` Yocto layer and organizes the stack into
 2. **EWAOL Linux filesystem** — Core services including Docker, K3s, and Xen virtualization
 3. **Platform-specific system software** — Firmware, bootloader, OS, and optional Xen hypervisor
 
-It provides runtime parity between edge hardware (ADLink AVA with Ampere Altra / Arm Neoverse N1) and cloud instances (AWS Graviton), making it ideal for hybrid development and deployment workflows.
+It provides runtime parity between edge hardware (ADLINK AVA with Ampere Altra / Arm Neoverse N1) and cloud instances (AWS Graviton), making it ideal for hybrid development and deployment workflows.
 
 ## Key Capabilities
 
@@ -52,7 +52,7 @@ For the complete EWAOL installation and runtime guide, see the official Open AD 
 
 | Platform | Architecture | Status |
 |----------|--------------|--------|
-| ADLink AADP-AVA | Arm64 (Ampere Altra, Neoverse N1) | Verified |
+| ADLINK AADP-AVA | Arm64 (Ampere Altra, Neoverse N1) | Verified |
 | AWS EC2 Graviton | Arm64 (Neoverse N1 equivalent) | Runtime parity confirmed |
 
 ## Related

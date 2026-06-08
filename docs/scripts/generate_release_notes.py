@@ -89,7 +89,7 @@ def render_empty_state() -> str:
 
 def render_release_section(release: dict) -> str:
     tag = release.get("tag_name", "unknown")
-    title = release.get("name") or f"OpenADKit {tag}"
+    title = release.get("name") or f"Open AD Kit {tag}"
     published_at = release.get("published_at") or release.get("created_at") or ""
     published_date = format_date(published_at) if published_at else "unknown date"
     html_url = release.get("html_url", f"https://github.com/{REPO}/releases/tag/{tag}")

@@ -21,7 +21,7 @@ As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) bluepr
 <div class="oak-card">
 <span class="oak-card-icon">:material-cloud-outline:</span>
 <h3>EWAOL</h3>
-<p>Edge Workload Abstraction and Orchestration Layer — Arm's container-centric Yocto framework. Verified on ADLink AVA with K3s runtime.</p>
+<p>Edge Workload Abstraction and Orchestration Layer — Arm's container-centric Yocto framework. Verified on ADLINK AVA with K3s runtime.</p>
 <a href="ewaol/" class="md-button md-button--primary">View EWAOL Docs</a>
 </div>
 
@@ -55,7 +55,7 @@ Key capabilities:
 - **Virtualization**: Xen support for mixed-criticality separation
 - **Cloud-to-edge parity**: Arm Neoverse N1 architecture on both AVA platform and AWS Graviton
 
-EWAOL is actively documented and tested in Open AD Kit v3.0 with full build and runtime instructions for the ADLink AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets.
+EWAOL is actively documented and tested in Open AD Kit v3.0 with full build and runtime instructions for the ADLINK AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets.
 
 ## Development Platforms
 

@@ -32,13 +32,13 @@ For running a full Autoware stack on a verified edge platform, the requirements 
 | Architecture | arm64 |
 
 !!! info "Why the difference?"
-    The 40-core Neoverse N1 requirement reflects the verified Open AD Kit v3.0 platform (ADLink AADP-AVA), which runs the full Autoware stack with real-time constraints. Local development with sample simulations has lower requirements.
+    The 40-core Neoverse N1 requirement reflects the verified Open AD Kit v3.0 platform (ADLINK AADP-AVA), which runs the full Autoware stack with real-time constraints. Local development with sample simulations has lower requirements.
 
 ## Tested Hardware
 
 | Platform | Architecture | Status | Notes |
 |----------|--------------|--------|-------|
-| ADLink AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary verified platform for Open AD Kit v3.0 edge deployment |
+| ADLINK AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary verified platform for Open AD Kit v3.0 edge deployment |
 | ADLINK ADM-AL30 | arm64 | <span class="oak-badge oak-badge--verified">Verified</span> | Used in Zenoh multi-vehicle fleet management demos |
 
 ## Tests Ongoing
@@ -74,7 +74,7 @@ graph LR
     end
 
     subgraph Edge["Edge Deployment"]
-        E1[ADLink AADP-AVA]
+        E1[ADLINK AADP-AVA]
         E2[ADLINK ADM-AL30]
         E3[NVIDIA Jetson Orin]
     end
