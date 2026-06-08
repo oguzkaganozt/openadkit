@@ -1,7 +1,7 @@
 # Makefile for Open AD Kit documentation
 # Installs required MkDocs packages and serves documentation
 
-.PHONY: help prepare prepare-if-missing serve build clean
+.PHONY: help prepare prepare-if-missing serve build clean generate-release-notes
 
 # Default target
 help:
@@ -10,15 +10,20 @@ help:
 	@echo "  make prepare-if-missing  Reuse local image if present, otherwise build it"
 	@echo "  make serve        Start development server on the built container"
 	@echo "  make build        Build static documentation"
+	@echo "  make generate-release-notes  Refresh release notes from GitHub Releases"
 	@echo "  make clean        Clean build artifacts"
 
 # Serve documentation locally
 serve:
-	docker run --rm -p 8000:8000 -v $$(pwd):/app mkdocs-dev
+	docker run --rm -p 8000:8000 -v $$(pwd):/app -e NO_MKDOCS_2_WARNING=1 mkdocs-dev
+
+# Refresh release notes from GitHub Releases
+generate-release-notes:
+	python3 docs/scripts/generate_release_notes.py
 
 # Build static documentation
 build:
-	docker run --rm -v $$(pwd):/app --user $$(id -u):$$(id -g) mkdocs-dev mkdocs build
+	docker run --rm -v $$(pwd):/app --user $$(id -u):$$(id -g) -e NO_MKDOCS_2_WARNING=1 mkdocs-dev mkdocs build
 
 # Clean build artifacts
 clean:

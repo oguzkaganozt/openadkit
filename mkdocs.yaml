@@ -7,9 +7,13 @@ copyright: Copyright &copy; 2025 The Autoware Foundation
 
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
+    - announce.dismiss
     - content.action.edit
+    - content.code.annotate
     - content.code.copy
+    - content.tabs.link
     - navigation.expand
     - navigation.footer
     - navigation.indexes
@@ -28,11 +32,13 @@ theme:
   palette:
     - scheme: default
       primary: white
+      accent: blue
       toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
     - scheme: slate
-      primary: grey
+      primary: black
+      accent: light-blue
       toggle:
         icon: material/weather-night
         name: Switch to light mode

@@ -1,44 +1,96 @@
 # Getting Started
 
-## Requirements
+This guide walks you through setting up your environment and running your first Open AD Kit deployment.
 
-- Docker Engine
-- NVIDIA Container Toolkit (Optional but highly recommended for sensing and perception tasks)
-- Autoware artifacts (Optional in general, but required for sensing and perception deployments such as Logging Simulation)
+## Prerequisites
 
-    > All the above requirements can be installed by running the **setup.sh** script.
+<div class="oak-card-grid">
+
+<div class="oak-card">
+<span class="oak-card-icon">:material-docker:</span>
+<h3>Docker Engine</h3>
+<p>Required for all deployments. Docker Compose is typically included with Docker Desktop.</p>
+<a href="https://docs.docker.com/engine/install/" class="md-button" target="_blank">Install Docker</a>
+</div>
+
+<div class="oak-card">
+<span class="oak-card-icon">:material-gpu:</span>
+<h3>NVIDIA Container Toolkit</h3>
+<p>Optional but strongly recommended for GPU-accelerated sensing and perception.</p>
+<a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html" class="md-button" target="_blank">Install Toolkit</a>
+</div>
+
+<div class="oak-card">
+<span class="oak-card-icon">:material-package-variant-closed:</span>
+<h3>Autoware Artifacts</h3>
+<p>Required for sensing and perception deployments such as Logging Simulation.</p>
+</div>
+
+</div>
+
+!!! tip "Quick Setup"
+    All the above requirements can be installed automatically by running the **`setup.sh`** script included in the repository.
 
 ## Installation
 
-1. Clone the repository
+<div class="oak-steps">
 
-    ```bash
-    git clone https://github.com/autowarefoundation/openadkit
-    cd openadkit
-    ```
+- **Clone the repository**
+  ```bash
+  git clone https://github.com/autowarefoundation/openadkit
+  cd openadkit
+  ```
 
-2. Set up the runtime environment by running the `setup.sh` script located at the root of the repository. This requires sudo privileges (skip if you already have the environment set up on your platform):
+- **Set up the runtime environment**
+  ```bash
+  sudo ./setup.sh
+  ```
+  This installs Docker, NVIDIA Container Toolkit, and other dependencies. It requires sudo privileges.
 
-    ```bash
-    sudo ./setup.sh
-    ```
+  !!! tip "Skip NVIDIA Toolkit"
+      Use the `--no-nvidia` flag if you do not have an NVIDIA GPU. Otherwise, the toolkit is **highly recommended** for sensing and perception performance.
 
-    > You can use the `--no-nvidia` flag to skip the installation of the NVIDIA Container Toolkit if you don't have a **NVIDIA GPU**. Otherwise, it's **highly recommended** to install it to utilize CUDA for better performance for sensing and perception tasks.
+- **Download Autoware artifacts (if needed)**
+  ```bash
+  sudo ./setup.sh --download-artifacts
+  ```
+  Required for deployments that mount `${HOME}/autoware_data`, including the Logging Simulation sample.
 
-3. Download the Autoware artifacts by running the following command, which requires sudo privileges:
+</div>
 
-    ```bash
-    sudo ./setup.sh --download-artifacts
-    ```
+## Verify Your Installation
 
-    > This step is required for deployments that mount `${HOME}/autoware_data`, including the Logging Simulation sample.
+After running `setup.sh`, confirm your environment is ready:
+
+```bash
+# Check Docker
+docker --version
+docker compose version
+
+# Check NVIDIA toolkit (if installed)
+nvidia-ctk --version
+
+# Verify artifacts directory
+ls -la ~/autoware_data
+```
+
+!!! success "Ready to Deploy"
+    If all checks pass, you are ready to run a sample deployment. See [Sample Deployments](../deployments/samples/index.md).
 
 ## Reference
 
-- [Container Image Tags](image-tags.md)
-- [Release Flow](release-flow.md)
+- [Container Image Tags](image-tags.md) — Understanding the tag schema for choosing the right image
+- [Release Flow](release-flow.md) — How Open AD Kit releases are built, scanned, and promoted
 
 ## Next Steps
 
-- [Running a sample deployment](../deployments/index.md)
-- [Learn more about the Open AD Kit components](../components/index.md)
+- [Run your first deployment](../deployments/samples/planning-simulation/index.md) — Start with the Planning Simulation sample
+- [Learn about components](../components/index.md) — Understand the Open AD Kit architecture
+- [Choose a platform](../platforms/index.md) — Deploy to AutoSD, EWAOL, or your local machine
+
+<!-- DIAGRAM PLACEHOLDER:
+     Description: Installation Flow diagram
+     Style: 3-step horizontal visual flow: Clone → Setup (with optional --no-nvidia branch) → Verify
+     Use minimal icons, clean arrows, blue-green accent on the active step
+     Dimensions: 800x200px, SVG preferred
+-->

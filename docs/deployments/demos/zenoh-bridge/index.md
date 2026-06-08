@@ -1,51 +1,52 @@
-# Open AD Kit Remote Visualization with Zenoh Bridge: Implementation Report and User Manual
+# Zenoh Bridge Demo
 
-## 1. Introduction
+!!! abstract ""
+    This demo demonstrates a distributed deployment pattern for Open AD Kit: separating compute-intensive components (perception, planning, simulation) on an edge server from lightweight visualization and control on a remote machine. Zenoh bridges the two isolated ROS 2 environments with high-performance, low-latency communication.
 
-This document provides a comprehensive implementation guide and technical overview for the distributed architecture of Open AD Kit. The core objective is to separate compute-intensive and lightweight components of an autonomous driving system, enabling deployment across different hardware. For example, the core Autoware software stack runs on the edge side (e.g., vehicle, or a powerful simulation server). Users can remotely visualize and manage Autoware from their laptops or a cloud-based management system.
+!!! abstract "When to Use This Demo"
+    Use the Zenoh Bridge demo when you need to:
 
-To achieve this, we utilize [Zenoh](https://zenoh.io/) as a high-performance, low-latency communication protocol, paired with the [`zenoh-bridge-ros2dds`](https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds) tool to seamlessly connect two ROS 2 (Robot Operating System 2) environments isolated by Docker virtual networks. This manual covers architecture design, setup steps, system startup, and troubleshooting, providing complete operational guidance.
+    - **Remotely visualize** an Autoware stack running on a vehicle or powerful simulation server
+    - **Separate compute and display** to optimize resource usage on each machine
+    - **Validate cloud-edge architecture** before production deployment
+    - **Manage multiple vehicles** from a central monitoring station (via Zenoh namespaces)
 
-### 1.1. Demo Video
+## Demo Video
 
 [![[openadkit x zenoh-bridge] remote control (cloud/edge) demo](https://img.youtube.com/vi/6yhhxlVQTKI/0.jpg)](https://www.youtube.com/watch?v=6yhhxlVQTKI)
 
-| Time  | Description                  |
-| :---- | :--------------------------- |
-| 00:00 | Start cloud services         |
-| 00:16 | Start edge services          |
+| Time | Description |
+|------|-------------|
+| 00:00 | Start cloud services |
+| 00:16 | Start edge services |
 | 00:52 | Demo: Stop, planning, resume |
 | 01:53 | Stop edge and cloud services |
 
-## 2. Detailed Architecture Design
+## Architecture
 
-### 2.1. Core Concept: Edge-Cloud Model
+### Edge-Cloud Model
 
-The system decouples the previously monolithic architecture into an edge-cloud model:
+The system decouples the monolithic stack into two domains:
 
-- **Edge Side**: Includes components with high computational demands (especially CPU and GPU).
-  - `autoware`: Core perception, decision-making, and planning modules.
-  - `scenario_simulator`: Generates virtual traffic environments and provides simulated sensor data for Autoware.
-  - **Deployment**: Typically on vehicles or powerful edge machines.
+- **Edge Side** — High computational demand (CPU/GPU)
+  - `autoware`: Core perception, decision-making, and planning modules
+  - `scenario_simulator`: Generates virtual traffic environments and sensor data
+  - **Deployment**: Vehicle compute unit or powerful simulation server
 
-- **Cloud Side**: Includes lightweight components critical for user interaction and visualization.
-  - `visualizer`: Based on RViz2, encapsulated with noVNC, allowing users to access the visualization interface via any modern web browser without installing ROS 2 or RViz locally.
-  - **Deployment**: Typically on a user's laptop or a cloud-based management system, where low computational power is sufficient.
+- **Cloud Side** — Lightweight interaction and visualization
+  - `visualizer`: Browser-accessible RViz2 via noVNC; no local ROS 2 installation required
+  - **Deployment**: Laptop, workstation, or cloud management system
 
-### 2.2. Architecture Diagram
-
-The following Mermaid diagram illustrates the components, networks, and data flow paths.
+### Architecture Diagram
 
 ```mermaid
 graph TD
-    %% --- Style Definitions ---
     classDef machine fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray:5 5
     classDef network fill:#e6f3ff,stroke:#0066cc,stroke-width:1.5px
     classDef component fill:#ffffff,stroke:#333
     classDef bridge fill:#fffbe6,stroke:#f0ad4e
     classDef invisible stroke:none,fill:none
 
-    %% === Cloud Side ===
     subgraph CloudSide["Cloud Side (User Machine)"]
         direction LR
         class CloudSide machine
@@ -54,16 +55,15 @@ graph TD
             direction TB
             class CloudNet network
             
-            visualizer["**Visualizer**<br><br>Based on RViz2<br>Provides noVNC Remote Desktop"]
-            cloud_bridge["**Cloud Zenoh Bridge**<br><br><u>Role</u>: Router<br>Listens on TCP/7448<br>Converts Zenoh ↔️ DDS"]
+            visualizer["**Visualizer**<br><br>RViz2 via noVNC<br>Browser Remote Desktop"]
+            cloud_bridge["**Cloud Zenoh Bridge**<br><br>Router<br>Listens on TCP"]
             class visualizer component
             class cloud_bridge bridge
             
-            visualizer -->|"ROS 2 DDS data"| cloud_bridge
+            visualizer -->|"ROS 2 DDS"| cloud_bridge
         end
     end
 
-    %% === Edge Side ===
     subgraph EdgeSide["Edge Side (Vehicle/Server)"]
         direction LR
         class EdgeSide machine
@@ -72,182 +72,216 @@ graph TD
             direction TB
             class EdgeNet network
 
-            autoware["**Autoware**<br><br>Core Autonomous Driving Algorithms<br>Perception, Planning, Control"]
-            scenario_simulator["**Scenario Simulator**<br><br>Provides Simulation Scenarios<br>With Sensor Data"]
-            edge_bridge["**Edge Zenoh Bridge**<br><br><u>Role</u>: Client<br>Converts DDS ↔️ Zenoh"]
+            autoware["**Autoware**<br><br>Perception, Planning, Control"]
+            scenario_simulator["**Scenario Simulator**<br><br>Virtual Environment<br>Sensor Data"]
+            edge_bridge["**Edge Zenoh Bridge**<br><br>Client<br>Converts DDS ↔ Zenoh"]
             class autoware,scenario_simulator component
             class edge_bridge bridge
 
-            autoware <-->|"ROS 2 DDS data"| scenario_simulator
-            autoware -->|"ROS 2 DDS data"| edge_bridge
-            scenario_simulator -->|"ROS 2 DDS data"| edge_bridge
+            autoware <-->|"ROS 2 DDS"| scenario_simulator
+            autoware -->|"ROS 2 DDS"| edge_bridge
+            scenario_simulator -->|"ROS 2 DDS"| edge_bridge
         end
     end
 
-    %% === External & Cross-Network Connections ===
     user[fa:fa-user User] -->|"HTTP (Port 6081)"| visualizer
-    edge_bridge -->|"<b>Zenoh Protocol over zenoh_net</b><br>Connects to tcp/cloud_zenoh_bridge:7448"| cloud_bridge
+    edge_bridge -->|"Zenoh Protocol<br>over zenoh_net"| cloud_bridge
 ```
 
-### 2.3. Network Isolation and Communication Bridge
+### Network Isolation and Communication Bridge
 
-- **Network Design**:
-  - `edge_net`: An isolated virtual network for `autoware` and `scenario_simulator`, using ROS 2 DDS multicast for low-latency communication.
-  - `cloud_net`: An isolated network for `visualizer`, simulating physical or logical separation from the server.
-  - TCP/IP (use `zenoh_net` docker network in this demo for simplicity): The network that connects `edge_zenoh_bridge` and `cloud_zenoh_bridge`, ensuring a clean cross-domain data transmission path.
+- **`edge_net`** — Isolated virtual network for `autoware` and `scenario_simulator`. Uses ROS 2 DDS multicast for low-latency local communication.
+- **`cloud_net`** — Isolated network for `visualizer`, simulating physical or logical separation.
+- **`zenoh_net`** — Bridges `edge_zenoh_bridge` and `cloud_zenoh_bridge` across domains. Zenoh replaces raw DDS multicast with a tunneled TCP connection, enabling cross-network operation.
 
-- **Communication Core: Zenoh Bridge**:
-  - `cloud_zenoh_bridge` (`zenoh-bridge-ros2dds` container): Acts as a **Router**, listening for client connections on TCP port `7448`. It receives Zenoh data from the edge and converts it to ROS 2 DDS for the `visualizer`.
-  - `edge_zenoh_bridge` (`zenoh-bridge-ros2dds` container): Acts as a **Client**, connecting to the `cloud_zenoh_bridge` via `zenoh_net`. It scans for ROS 2 topics in `edge_net`, converts them to the Zenoh protocol, and forwards them to the router.
-  - `config/zenoh-bridge-ros2dds.json5`: A configuration file defining the bridge's mode, listening endpoints, and topic filtering rules, allowing precise control over transmitted data to optimize bandwidth.
+### Zenoh Bridge Configuration
 
-## 3. User Manual
+- **`cloud_zenoh_bridge`** — Acts as a **Router**, listening for client connections. In recent versions of `zenoh-bridge-ros2dds` (v0.11.0+), the default listen port is **TCP 7447**.
+- **`edge_zenoh_bridge`** — Acts as a **Client**, connecting to the cloud router via `zenoh_net`. It scans ROS 2 topics in `edge_net`, converts them to Zenoh, and forwards to the router.
+- **`config/zenoh-bridge-ros2dds.json5`** — Defines bridge mode, endpoints, and topic filtering rules. Filtering allows precise bandwidth control by excluding high-frequency or irrelevant topics.
 
-### 3.1. Prerequisites
+!!! warning "Prevent DDS Cross-Traffic"
+    When bridging two ROS 2 domains, ensure they cannot discover each other via native DDS multicast. Use `ROS_DOMAIN_ID` separation or configure `CYCLONEDDS_URI` to restrict interfaces. Otherwise, topics may be duplicated across both networks.
 
-Ensure the following software is installed:
-1. **Docker Engine**: See [Docker Installation Guide](https://docs.docker.com/engine/install/).
-2. **Docker Compose**: Usually included with Docker Desktop; otherwise, see [Docker Compose Installation Guide](https://docs.docker.com/compose/install/).
-3. **Git**: For cloning the project.
-4. A stable internet connection for pulling Docker images.
+### Multi-Vehicle Namespace Support
 
-### 3.2. Installation and Setup
+Zenoh supports **namespace-based multi-vehicle management** by assigning a unique namespace to each bridge:
 
-1. **Clone the Project**:
-   Execute the following commands in a terminal:
+```json5
+{
+  namespace: "/bot1"
+}
+```
+
+This allows a single cloud visualizer or fleet management station to connect to multiple vehicles without reconfiguring ROS nodes on each vehicle. The `zenoh_autoware_fms` prototype demonstrates this pattern on ADLINK ADM-AL30 hardware.
+
+## Prerequisites
+
+- Docker Engine
+- Docker Compose (included with Docker Desktop or installed separately)
+- Git
+- Stable internet connection for pulling images
+
+## Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/autowarefoundation/openadkit
+cd openadkit/deployments/demos/zenoh-bridge
+```
+
+### 2. Verify Directory Structure
+
+```
+.
+├── README.md
+├── docker-compose.yaml
+├── cloud.sh
+├── edge.sh
+└── config/
+    └── zenoh-bridge-ros2dds.json5
+```
+
+Modify `config/zenoh-bridge-ros2dds.json5` to filter topics as needed.
+
+## Starting the System
+
+### Option A: Split Topology (Recommended)
+
+Separate Edge and Cloud components to simulate a real-world distributed environment.
+
+```bash
+# Terminal 1: Start Edge components (Autoware, Simulator, Edge Bridge)
+./edge.sh up -d
+
+# Terminal 2: Start Cloud components (Visualizer, Cloud Bridge)
+./cloud.sh up -d
+```
+
+### Option B: Monolithic Deployment
+
+Run everything on a single machine using standard Docker Compose.
+
+```bash
+docker compose up -d
+```
+
+The initial launch may take several minutes to download images.
+
+### Option C: Distributed Deployment (Multi-Machine)
+
+Deploy on separate machines (e.g., one Cloud, one Edge):
+
+**1. Cloud Machine:**
+
+```bash
+./cloud.sh
+# [Info] Cloud services started.
+#        To connect from Edge, set CLOUD_IP to one of the following:
+#        [Public/Routable IPs]
+#        - 192.168.1.100
+```
+
+**2. Edge Machine:**
+
+```bash
+export CLOUD_IP=192.168.1.100
+./edge.sh
+```
+
+### Monitor Startup Logs
+
+```bash
+docker compose logs -f
+```
+
+## Verification and Usage
+
+### 1. Check Container Status
+
+Run `docker ps` or `docker compose ps` to verify all containers are running:
+
+- `map-init` — Should have exited successfully before `autoware` starts
+- `autoware`
+- `scenario_simulator`
+- `visualizer`
+- `edge_zenoh_bridge`
+- `cloud_zenoh_bridge`
+
+### 2. Access the Visualizer
+
+Open a web browser and navigate to:
+
+```
+http://localhost:6081
+```
+
+Use the default password **`openadkit`**.
+
+### 3. Verify Operation
+
+- The noVNC interface should display RViz2.
+- If **Global Status** in the RViz2 Displays panel shows `OK` (green), the system is running correctly. You should see maps, the vehicle model, and simulated objects.
+- If it shows **Warning**, see the troubleshooting section below.
+
+### 4. Stop the System
+
+```bash
+# Stop Cloud
+./cloud.sh down
+
+# Stop Edge
+./edge.sh down
+
+# Stop All and remove volumes (recommended for full cleanup)
+docker compose down -v
+```
+
+The `-v` flag removes the `autoware_map` volume. Omit it to preserve extracted map data. On the next startup, `map-init` validates the volume and refreshes it if the pinned simulator image tag changes or required files are missing.
+
+## Troubleshooting
+
+### Visualizer Shows "Global Status: Warning" or Blank Screen
+
+**Cause:** Race condition where ROS 2 nodes start before the Zenoh bridge connection is fully established. `depends_on` helps but does not guarantee readiness.
+
+**Solutions:**
+
+1. **Restart:**
    ```bash
-   git clone https://github.com/autowarefoundation/openadkit
-   cd openadkit/deployments/demos/zenoh-bridge
+   docker compose restart
    ```
 
-2. **Verify Directory Structure**:
-   Ensure the project includes:
-   ```
-   .
-   ├── README.md
-   ├── docker-compose.yaml
-   └── config/
-       └── zenoh-bridge-ros2dds.json5
-   ```
-   Modify `zenoh-bridge-ros2dds.json5` as needed to filter topics.
-
-### 3.3. Starting the System
-
-1. **Launch Components**:
-   
-   **Option A: Split Topology (Recommended)**
-   Separate Edge and Cloud components to simulate a real-world distributed environment.
+2. **Staged Startup:** Start the cloud side first, wait, then start the edge side.
    ```bash
-   # Terminal 1: Start Edge components (Autoware, Simulator, Edge Bridge)
-   ./edge.sh up -d
-
-   # Terminal 2: Start Cloud components (Visualizer, Cloud Bridge)
    ./cloud.sh up -d
+   sleep 15
+   ./edge.sh up -d
    ```
 
-   **Option B: Monolithic Deployment**
-   Run everything on a single machine using standard Docker Compose.
-   ```bash
-   docker compose up -d
-   ```
-   - `-d` runs containers in the background.
-    - The initial launch may take several minutes to download the required Docker images.
+### Port Conflict (Port is already allocated)
 
-   **Option C: Distributed Deployment (Multi-Machine)**
-   To deploy on separate machines (e.g., one Cloud, one Edge):
+**Cause:** Ports `6081` or `7447`/`7448` are in use.
 
-   **1. Cloud Machine:**
-   Run `cloud.sh` to start services. It will automatically detect and display available IP addresses:
-   ```bash
-   ./cloud.sh
-   # [Info] Cloud services started.
-   #        To connect from Edge, set CLOUD_IP to one of the following:
-   #        [Public/Routable IPs]
-   #        - 192.168.1.100
-   ```
+**Solution:** Stop the conflicting program, or modify `docker-compose.yaml`. For example, change `6081:6080` to `8080:6080` and access via `http://localhost:8080`.
 
-   **2. Edge Machine:**
-   Use the displayed IP to connect:
-   ```bash
-   export CLOUD_IP=192.168.1.100
-   ./edge.sh
-   ```
+### Container Fails to Start with `file not found`
 
-2. **Monitor Startup Logs (Optional)**:
-   To view the real-time logs from all components, run:
-   ```bash
-   docker compose logs -f
-   ```
+**Cause:** `config/zenoh-bridge-ros2dds.json5` is missing or inaccessible.
 
-### 3.4. Verification and Usage
+**Solution:** Verify the `config` directory and file exist. On Linux/macOS, check file permissions to ensure Docker can read them.
 
-1. **Check Container Status**:
-   Run `docker ps` or `docker compose ps` to ensure all containers are running:
-   - `map-init` should have exited successfully before `autoware` starts
-   - `autoware`
-   - `scenario_simulator`
-   - `visualizer`
-   - `edge_zenoh_bridge`
-   - `cloud_zenoh_bridge`
+## Related
 
-2. **Access noVNC Visualization Interface**:
-   Open a web browser and navigate to:
-   ```
-   http://localhost:6081
-   ```
-   Use the default password `openadkit`.
+- [Zenoh Plugin ROS2 DDS](https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds)
+- [Managing Multiple Autoware Vehicles with Zenoh](https://autoware.org/managing-multiple-autoware-vehicles-with-zenoh/)
+- [Driving Autoware with Zenoh](https://autoware.org/driving-autoware-with-zenoh/)
+- [Sample Deployments](../../samples/index.md) — Single-machine simulations
 
-3. **Verify Operation**:
-   - The noVNC interface should display the RViz2 visualization tool.
-   - If the `Global Status` in the RViz2 "Displays" panel shows `OK` (green text), the system is running correctly. You should see maps, the vehicle model, and other simulated objects.
-   - If it shows `Warning`, please refer to the troubleshooting section below.
-
-4. **Stop the System**:
-
-   To stop the containers:
-
-   ```bash
-   # Stop Cloud
-   ./cloud.sh down
-
-   # Stop Edge
-   ./edge.sh down
-
-   # Stop All and remove volumes (Recommended for full cleanup)
-   docker compose down -v
-   ```
-   - The `-v` flag also removes the `autoware_map` volume. Omit it if you wish to preserve the extracted map data for future use. On the next startup, `map-init` validates the volume and refreshes it if the pinned simulator image tag changes or required map files are missing.
-
-## 4. Troubleshooting
-
-### Issue 1: Visualizer Shows "Global Status: Warning" or a Blank Screen
-
-- **Cause**: This can be a race condition where ROS 2 nodes in one container start before the Zenoh bridge connection is fully established, preventing topics from being discovered correctly. The `depends_on` option in `docker-compose.yaml` helps, but doesn't guarantee component readiness.
-- **Solutions**:
-  1. **Restart Components**: A simple restart often resolves timing issues.
-     ```bash
-      docker compose restart
-     ```
-  2. **Staged Startup**: Manually start the core components first, wait a moment, then start the compute-heavy components.
-     ```bash
-     # Start the cloud side
-     ./cloud.sh up -d
-     # Wait for them to initialize
-     sleep 15
-     # Start the edge side
-     ./edge.sh up -d
-     ```
-
-### Issue 2: Port Conflict (Port is already allocated)
-
-- **Cause**: Ports `6081` or `7448` are in use by another program.
-- **Solution**:
-  - Stop the program using the port.
-  - Or modify `docker-compose.yaml`, e.g., change `6081:6080` to `8080:6080`, and access via `http://localhost:8080`.
-
-### Issue 3: Container Fails to Start with `file not found` or Permission Issues
-
-- **Cause**: The `config/zenoh-bridge-ros2dds.json5` file is missing or inaccessible.
-- **Solution**:
-  - Verify the `config` directory and file exist.
-  - On Linux/macOS, check file permissions to ensure Docker can read them.
+<!-- DIAGRAM PLACEHOLDER:
+     Description: Zenoh Multi-Vehicle Namespace diagram
+     Style: Star topology with cloud visualizer/FMS at center, multiple edge vehicles connected via Zenoh namespaces (/bot1, /bot2, /bot3)
+     Use blue-green gradient on connection lines, dark navy background for the cloud node
+     Dimensions: 800x400px, SVG preferred
+-->

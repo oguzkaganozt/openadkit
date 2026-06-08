@@ -1,23 +1,76 @@
 # Hardware
 
-This section provides information about the hardware requirements for the Open AD Kit, as well as the tested hardware platforms.
+This section provides information about the hardware requirements for Open AD Kit deployments, as well as the tested and planned hardware platforms.
 
-## Hardware Requirements
+## Requirements
 
-The Open AD Kit supports **amd64** and **arm64** architectures with the following requirements:
+Open AD Kit supports both **amd64** and **arm64** architectures. Requirements vary depending on whether you are running local development/simulation or deploying to a verified edge platform.
 
-- CPU with 8 or more cores
-- 16 GB RAM
-- [Optional] NVIDIA GPU with 4 GB VRAM
+### Local Development & Simulation
+
+For running sample deployments, simulations, and development workloads on a workstation or cloud instance:
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| CPU | 8 cores | 16 cores |
+| RAM | 16 GB | 32 GB |
+| GPU | — | NVIDIA with 4 GB+ VRAM (for sensing/perception) |
+| Storage | 50 GB | 100 GB+ SSD |
+
+!!! tip "GPU Recommendation"
+    An NVIDIA GPU is highly recommended for sensing and perception tasks. Without a GPU, CUDA-accelerated components will fall back to CPU execution, which significantly impacts performance.
+
+### Verified Edge Deployment
+
+For running a full Autoware stack on a verified edge platform, the requirements are higher:
+
+| Resource | Specification |
+|----------|---------------|
+| CPU | 40-core Arm Neoverse N1 equivalent (or better) |
+| RAM | 32 GB |
+| GPU | NVIDIA with CUDA support (for sensing/perception) |
+| Architecture | arm64 |
+
+!!! info "Why the difference?"
+    The 40-core Neoverse N1 requirement reflects the verified Open AD Kit v3.0 platform (ADLink AADP-AVA), which runs the full Autoware stack with real-time constraints. Local development with sample simulations has lower requirements.
 
 ## Tested Hardware
 
-- [ADLink AADP-AVA](https://www.adlinktech.com/products/Computer_on_Modules/COM-HPC-Server-Carrier-and-Starter-Kit/Ampere_Altra_Developer_Platform)
+| Platform | Architecture | Status | Notes |
+|----------|--------------|--------|-------|
+| ADLink AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary verified platform for Open AD Kit v3.0 edge deployment |
+| ADLINK ADM-AL30 | arm64 | <span class="oak-badge oak-badge--verified">Verified</span> | Used in Zenoh multi-vehicle fleet management demos |
+
+## Tests Ongoing
+
+| Platform | Architecture | Status | Notes |
+|----------|--------------|--------|-------|
+| NVIDIA Jetson Orin | arm64 | <span class="oak-badge oak-badge--testing">Tests Ongoing</span> | JetPack 6 validation in progress. Not yet fully verified for production use. |
 
 ## Planned Validation
 
-- [NVIDIA Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)
+| Platform | Architecture | Status | Notes |
+|----------|--------------|--------|-------|
+| AWS EC2 G5.4XLarge | amd64 | <span class="oak-badge oak-badge--planned">Planned</span> | GPU-enabled cloud instance for simulation workloads |
 
-## Tested Cloud Instances
+## Development Hosts
 
-- AWS EC2 G5.4XLarge
+The following operating systems are supported for local development:
+
+- **Ubuntu 22.04 LTS** (primary)
+- **Ubuntu 24.04 LTS**
+
+Other Linux distributions may work but are not actively tested.
+
+## Related
+
+- [Supported Platforms](../platforms/index.md)
+- [Getting Started](../getting-started/index.md)
+
+<!-- DIAGRAM PLACEHOLDER:
+     Description: Verified Platform Matrix diagram
+     Style: Clean grid layout with status badges, minimal borders, black/gray typography
+     Content: Platform (rows) × Deployment Type (columns: Local Dev, Edge, Cloud)
+     Show ADLink AVA as verified across all three, Jetson Orin as testing for Edge, etc.
+     Dimensions: 900x350px, SVG preferred
+-->

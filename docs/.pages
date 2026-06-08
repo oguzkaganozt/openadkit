@@ -1,8 +1,9 @@
 nav:
-  - index.md
+  - Introduction: index.md
   - getting-started
   - deployments
   - components
   - platforms
   - hardware
+  - Releases: releases
   - contributing

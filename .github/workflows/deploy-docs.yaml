@@ -7,11 +7,15 @@ on:
     paths:
       - mkdocs.yaml
       - docs/requirements.txt
+      - "docs/scripts/**"
       - "**/*.md"
       - "**/*.svg"
       - "**/*.png"
       - "**/*.jpg"
       - "docs/assets/**"
+  release:
+    types:
+      - published
   workflow_dispatch:
 
 permissions:
@@ -38,8 +42,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/requirements.txt
 
+      - name: Generate release notes
+        run: python docs/scripts/generate_release_notes.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build with MkDocs
         run: mkdocs build --clean --verbose
+        env:
+          NO_MKDOCS_2_WARNING: 1
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

@@ -1,52 +1,57 @@
 # Release Flow
 
-Open AD Kit releases are **promotions** of existing validated builds, not new builds. This ensures that every released image has passed the full build-and-scan pipeline.
+Open AD Kit releases are promoted from existing CI builds rather than rebuilt at release time. This ensures that the exact images validated during CI are the images that ship to users.
+
+Published release details are listed on the [Releases](../releases/index.md) page.
 
 ## Release Process
 
-```mermaid
-flowchart LR
-    A[Build all images] --> B[Full image scan]
-    B --> C{Scan passed?}
-    C -->|Yes| D[Promote build to release]
-    C -->|No| E[Fix & rebuild]
-    D --> F[Tag stable aliases]
-```
+<div class="oak-steps">
 
-## Step-by-Step
+- **Build all images**
+  Run `build-all-images` from `main`. Stable releases must use an Autoware `X.Y.Z` tag; pre-releases may use an Autoware tag or full 40-character SHA.
 
-1. **Build**
+- **Record the build tag**
+  Keep the build summary's `build_tag`, formatted as `RUN_ID-RUN_ATTEMPT`.
 
-   Run the `build-all-images` workflow from the `main` branch.
+- **Scan the images**
+  Ensure `scan-images` completes successfully for that `build_tag`. Scheduled builds request scans automatically; otherwise run `scan-images` manually.
+  Scans validate SBOMs and check for known CVEs.
 
-   - Stable Open AD Kit releases must be built from an Autoware `X.Y.Z` tag.
-   - Pre-releases may use an Autoware `X.Y.Z` tag or a full 40-character SHA.
+- **Promote and tag**
+  Run the `release` workflow with the Open AD Kit `version` and the validated `build_tag`. This promotes the scanned images to stable release tags and updates latest aliases.
 
-2. **Capture the build tag**
+</div>
 
-   Keep the `build_tag` from the workflow summary. It is formatted as `RUN_ID-RUN_ATTEMPT` (e.g., `123456789-1`).
+## Source of Truth
 
-3. **Scan**
+The following artifacts are the canonical reference for release validation:
 
-   Ensure `scan-images` completes successfully for that `build_tag`.
+- **Build metadata** — CI run logs and artifact manifests
+- **Scan metadata** — SBOM and CVE scan results
+- **`.github/image-inventory.json`** — Canonical inventory of all published images and their tags
 
-   - Scheduled builds request scans automatically.
-   - Otherwise, run `scan-images` manually and set `build_tag`.
+## Tag Promotion
 
-4. **Release**
+When a release workflow runs, the following tag aliases are updated:
 
-   Run the `release` workflow with:
+| From | To | Example |
+|------|-----|---------|
+| Build tag | Stable release | `planning-control-humble-123456789-1` → `planning-control-humble-v1.0.0` |
+| Stable release | Latest alias | `planning-control-humble-v1.0.0` → `planning-control-humble` |
+| Latest alias | Default alias | `planning-control-humble` → `planning-control` |
 
-   - Open AD Kit `version` (e.g., `v1.0.0` or `v1.0.0-rc.1`)
-   - Validated `build_tag`
+!!! info "Pre-Releases"
+    Pre-release tags (e.g., `-rc.1`) are published but **do not update** latest stable aliases. This prevents prerelease images from being pulled by default aliases.
 
-## Validation
+## Related
 
-The release workflow validates:
+- [Container Image Tags](image-tags.md) — Understanding the tag schema
+- [Getting Started](index.md) — Quick start guide
 
-- The source build succeeded and is from `main`.
-- The full scan passed.
-- Build metadata, scan metadata, and `.github/image-inventory.json` are consistent.
-- Registry digests match between build and scan artifacts.
-
-Only after all checks pass are the stable aliases updated.
+<!-- DIAGRAM PLACEHOLDER:
+     Description: Release Timeline diagram
+     Style: Horizontal 4-step timeline with clean nodes: Build → Scan → Promote → Tag
+     Use minimal circles connected by a line, blue-green gradient on the active step highlight
+     Dimensions: 900x200px, SVG preferred
+-->

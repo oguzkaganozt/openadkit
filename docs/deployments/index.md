@@ -1,17 +1,56 @@
 # Deployments
 
-A **deployment** is a running instance of Open AD Kit, a specific combination of Autoware components configured to achieve a particular task, such as a simulation or a full autonomous driving stack.
+A **deployment** is a running instance of Open AD Kit — a specific combination of Autoware components configured to achieve a particular task, such as a simulation or a full autonomous driving stack.
 
-## Samples
+Deployments are defined using container orchestration files (typically `docker-compose.yaml`), making them portable and reproducible across environments from a developer's laptop to production edge devices.
 
-Sample deployment configurations to help you get started. Recommended for **learning and development**.
+## Deployment Types
 
-- [Planning Simulation](samples/planning-simulation/index.md) - Run the Autoware planning simulation with a sample map.
-- [Scenario Simulation](samples/scenario-simulation/index.md) - Run the Autoware scenario simulation with the TIER IV Scenario Simulator.
-- [Logging Simulation](samples/logging-simulation/index.md) - Run the Autoware logging simulation with a sample rosbag.
+<div class="oak-card-grid">
 
-## Demos
+<div class="oak-card">
+<span class="oak-card-icon">:material-test-tube:</span>
+<h3>Samples</h3>
+<p>Self-contained, single-machine deployments for learning and development. Each sample demonstrates a specific Autoware workflow with minimal setup.</p>
+<a href="samples/" class="md-button">Explore Samples</a>
+</div>
 
-Demo deployment configurations that are specific to certain **use case scenarios**.
+<div class="oak-card">
+<span class="oak-card-icon">:material-lan-connect:</span>
+<h3>Demos</h3>
+<p>Multi-machine and distributed deployments that demonstrate advanced use cases such as cloud-edge bridging and remote visualization.</p>
+<a href="demos/" class="md-button">Explore Demos</a>
+</div>
 
-- [Zenoh-bridge](demos/zenoh-bridge/index.md) - Demonstrates a "Cloud-Edge" deployment model by seamlessly bridging two isolated ROS 2 environments, decoupling compute-intensive components from lightweight visualization components.
+</div>
+
+## Choosing a Deployment
+
+| Deployment | Type | Purpose | Complexity |
+|-----------|------|---------|------------|
+| [Planning Simulation](samples/planning-simulation/index.md) | Sample | Run Autoware planning stack with a sample map | Single machine |
+| [Scenario Simulation](samples/scenario-simulation/index.md) | Sample | Execute predefined scenarios with TIER IV Scenario Simulator | Single machine |
+| [Logging Simulation](samples/logging-simulation/index.md) | Sample | Replay recorded sensor data (rosbag) through the AD stack | Single machine |
+| [Zenoh Bridge](demos/zenoh-bridge/index.md) | Demo | Distributed cloud-edge visualization with ROS 2 bridging | Multi-machine |
+
+## Architecture
+
+All deployments share a common pattern:
+
+1. **Component images** are pulled from the GitHub Container Registry
+2. **Environment files** (`.env`) configure runtime parameters
+3. **Docker Compose** orchestrates containers on a single host
+4. **Optional: Zenoh bridge** connects distributed ROS 2 domains for remote operation
+
+<!-- DIAGRAM PLACEHOLDER:
+     Description: Deployment Topology Overview diagram
+     Style: Clean layout showing two columns: Samples (single machine, all containers on one host) vs Demos (distributed, edge + cloud)
+     Use minimal icons, black/gray text, blue-green accent on connection lines
+     Dimensions: 800x350px, SVG preferred
+-->
+
+## Next Steps
+
+- [Run your first sample deployment](samples/planning-simulation/index.md)
+- [Learn about Open AD Kit components](../components/index.md)
+- [Understand container image tags](../getting-started/image-tags.md)

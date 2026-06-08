@@ -1,8 +1,10 @@
 # Open AD Kit Components
 
-[Open AD Kit](https://autoware.org/open-ad-kit/) offers containers for Autoware Components to simplify the deployment of Autoware and its dependencies. This directory contains scripts to build Component containers.
+This directory contains scripts and configurations to build Open AD Kit container images.
 
-Detailed instructions on how to deploy the components can be found in the [Open AD Kit Deployments](https://autowarefoundation.github.io/openadkit/deployments/).
+## Documentation
+
+For **complete component documentation**, architecture overview, and visualizer settings, see the [Open AD Kit Components Documentation](https://autowarefoundation.github.io/openadkit/components/).
 
 ## Build Pipeline
 
@@ -32,5 +34,5 @@ flowchart TB
 
 | Group | Description | Targets |
 |-------|-------------|---------|
-| `common` | Common images | base, devel |
+| `common` | Common images | base, devel, base-cuda, devel-cuda |
 | `component` | Component images | sensing-perception, sensing-perception-cuda, localization-mapping, planning-control, vehicle-system, api, visualizer, simulator |
