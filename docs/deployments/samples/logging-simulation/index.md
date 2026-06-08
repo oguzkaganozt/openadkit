@@ -4,7 +4,7 @@ This sample deployment demonstrates the Open AD Kit logging simulation workflow.
 
 ## Source of Truth
 
-The complete operational instructions for this deployment live alongside the deployment assets in [`deployments/samples/logging-simulation/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/deployments/samples/logging-simulation/README.md).
+The complete operational instructions for this deployment live alongside the deployment assets in [`deployments/samples/logging-simulation/README.md`](../../../deployments/samples/logging-simulation/README.md).
 
 That README covers:
 
