@@ -42,3 +42,4 @@
 
 - [Running a sample deployment](../deployments/index.md)
 - [Learn more about the Open AD Kit components](../components/index.md)
+# Preview trigger
