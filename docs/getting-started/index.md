@@ -17,7 +17,7 @@
     cd openadkit
     ```
 
-2. Setup the runtime environment by running the `setup.sh` script located at the root of the repository. This requires sudo privileges (skip if you already have the environment setup on your platform):
+2. Set up the runtime environment by running the `setup.sh` script located at the root of the repository. This requires sudo privileges (skip if you already have the environment set up on your platform):
 
     ```bash
     sudo ./setup.sh
@@ -25,13 +25,18 @@
 
     > You can use the `--no-nvidia` flag to skip the installation of the NVIDIA Container Toolkit if you don't have a **NVIDIA GPU**. Otherwise, it's **highly recommended** to install it to utilize CUDA for better performance for sensing and perception tasks.
 
-3. Download the Autoware artifacts by running the following command, requires sudo privileges:
+3. Download the Autoware artifacts by running the following command, which requires sudo privileges:
 
     ```bash
     sudo ./setup.sh --download-artifacts
     ```
 
     > This step is required for deployments that mount `${HOME}/autoware_data`, including the Logging Simulation sample.
+
+## Reference
+
+- [Container Image Tags](image-tags.md)
+- [Release Flow](release-flow.md)
 
 ## Next Steps
 
