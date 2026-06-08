@@ -28,6 +28,7 @@ group "component" {
     "api",
     "visualizer",
     "simulator",
+    "carla-interface",
   ]
 }
 
@@ -51,6 +52,7 @@ target "docker-metadata-action-vehicle-system" {}
 target "docker-metadata-action-api" {}
 target "docker-metadata-action-visualizer" {}
 target "docker-metadata-action-simulator" {}
+target "docker-metadata-action-carla-interface" {}
 target "docker-metadata-action-universe" {}
 target "docker-metadata-action-universe-cuda" {}
 
@@ -124,6 +126,12 @@ target "simulator" {
   inherits = ["docker-metadata-action-simulator"]
   dockerfile = "components/simulator/Dockerfile"
   target = "simulator"
+}
+
+target "carla-interface" {
+  inherits = ["docker-metadata-action-carla-interface"]
+  dockerfile = "components/carla-interface/Dockerfile"
+  target = "carla-interface"
 }
 
 target "universe" {

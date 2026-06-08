@@ -7,7 +7,7 @@ The default runtime uses the official CARLA Ubuntu 22 container image. It does n
 ## Runtime
 
 - CARLA: `carlasim/carla:0.9.16`
-- CARLA interface image: `ghcr.io/autowarefoundation/autoware-tools:carla-interface`
+- CARLA interface image: `ghcr.io/autowarefoundation/openadkit:carla-interface`
 - Autoware modules: standard OpenADKit split images
 - CARLA map: `Town01`
 - Autoware map assets: `$HOME/autoware_data/maps/Town01`

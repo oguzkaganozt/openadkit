@@ -122,7 +122,7 @@ build_image() {
   run docker buildx bake \
     --load \
     --progress=plain \
-    -f "$REPO_ROOT/tools/docker-bake.hcl" \
+    -f "$REPO_ROOT/components/docker-bake.hcl" \
     --set "*.context=$REPO_ROOT" \
     --set "carla-interface.tags=$CARLA_INTERFACE_IMAGE" \
     --set "carla-interface.args.CARLA_PYTHON_VERSION=$CARLA_PYTHON_VERSION" \
