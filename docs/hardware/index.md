@@ -6,9 +6,9 @@ This section provides information about the hardware requirements for the Open A
 
 The Open AD Kit supports **amd64** and **arm64** architectures with the following requirements:
 
-- CPU with 8 cores
-- 16GB RAM
-- [Optional] NVIDIA GPU (4GB RAM)
+- CPU with 8 or more cores
+- 16 GB RAM
+- [Optional] NVIDIA GPU with 4 GB VRAM
 
 ## Tested Hardware
 

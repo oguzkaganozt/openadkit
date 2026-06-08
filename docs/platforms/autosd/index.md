@@ -6,21 +6,21 @@ AutoSD is downstream of CentOS Stream, so it retains most of the CentOS Stream c
 such as an optimized automotive-specific kernel rather than CentOS Stream's kernel package.
 Red Hat In-Vehicle OS is based on both AutoSD and RHEL, both of which are downstreams of CentOS Stream.
 
-AutoSD brings different features into the table, such as:
+AutoSD brings different features to the table, such as:
 
-* Mixed Critical Orchestration with Systemd, Eclipse [BlueChi](https://github.com/eclipse-bluechi/bluechi) and [QM](https://github.com/containers/qm)
+* Mixed Critical Orchestration with Systemd, Eclipse [BlueChi](https://github.com/eclipse-bluechi/bluechi), and [QM](https://github.com/containers/qm)
 * Container management and component definition with [Podman and Quadlet](https://www.redhat.com/en/blog/quadlet-podman)
-* A realtime [linux kernel](https://gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9/-/tree/main-automotive?ref_type=heads)
+* A real-time [Linux kernel](https://gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9/-/tree/main-automotive?ref_type=heads)
 * Immutable system images with [OSTree](https://sigs.centos.org/automotive/features-and-concepts/con_ostree/)
 
 ## Folder Structure
 
-This folder contains a per use-case structure on how to deploy/run Open AD Kit in AutoSD, with each folder containing at least:
+This folder contains a per-use-case structure for deploying and running Open AD Kit on AutoSD. Each folder contains at least:
 
-* quadlet files to define containerized services to  be managed by podman and systemd
-* automotive-image-builder files to build an AutoSD image(s)
+* quadlet files to define containerized services to be managed by Podman and systemd
+* automotive-image-builder files to build an AutoSD image
 
-Build and running instructions in this page applies to any user-case/sub folder.
+Build and running instructions on this page apply to any use-case subfolder.
 
 * [planning-simulator](./planning-simulator/index.md): Run planning and simulator services in containers (pre-built)
 
@@ -30,12 +30,12 @@ Build and running instructions in this page applies to any user-case/sub folder.
 
 If using the container script (recommended):
 
-* Docker/podman
+* Docker or Podman
 * QEMU
 
 If running automotive image builder on the host:
 
-* rpm based Linux distro such as Fedora, CentOS or RHEL
+* RPM-based Linux distro such as Fedora, CentOS, or RHEL
 * Automotive Image Builder
 * OSBuild
 * QEMU
@@ -71,7 +71,7 @@ You may want to change the owner of `disk.qcow2`:
 $ sudo chown $(logname) disk.qcow2
 ```
 
-You can now use qemu to run the image in a mounted qemu disk.
+You can now use QEMU to run the image from a mounted QEMU disk.
 
 ### Running
 

@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-This document provides a comprehensive implementation guide and technical overview for the distributed architecture of the Open AD Kit project. The core objective is to separate compute-intensive and lightweight components of an autonomous driving system, enabling deployment across different hardware. For example, the core Autoware software stack runs on the edge side (e.g., vehicle, or a powerful simulation server). Users can remotely visualize and manage Autoware from their laptops or a cloud-based management system.
+This document provides a comprehensive implementation guide and technical overview for the distributed architecture of Open AD Kit. The core objective is to separate compute-intensive and lightweight components of an autonomous driving system, enabling deployment across different hardware. For example, the core Autoware software stack runs on the edge side (e.g., vehicle, or a powerful simulation server). Users can remotely visualize and manage Autoware from their laptops or a cloud-based management system.
 
 To achieve this, we utilize [Zenoh](https://zenoh.io/) as a high-performance, low-latency communication protocol, paired with the [`zenoh-bridge-ros2dds`](https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds) tool to seamlessly connect two ROS 2 (Robot Operating System 2) environments isolated by Docker virtual networks. This manual covers architecture design, setup steps, system startup, and troubleshooting, providing complete operational guidance.
 
@@ -26,7 +26,7 @@ The system decouples the previously monolithic architecture into an edge-cloud m
 - **Edge Side**: Includes components with high computational demands (especially CPU and GPU).
   - `autoware`: Core perception, decision-making, and planning modules.
   - `scenario_simulator`: Generates virtual traffic environments and provides simulated sensor data for Autoware.
-  - **Deployment**: Typically on vehicles or powerful edge machine.
+  - **Deployment**: Typically on vehicles or powerful edge machines.
 
 - **Cloud Side**: Includes lightweight components critical for user interaction and visualization.
   - `visualizer`: Based on RViz2, encapsulated with noVNC, allowing users to access the visualization interface via any modern web browser without installing ROS 2 or RViz locally.
@@ -59,7 +59,7 @@ graph TD
             class visualizer component
             class cloud_bridge bridge
             
-            visualizer -->|"ROS2 DDS Data"| cloud_bridge
+            visualizer -->|"ROS 2 DDS data"| cloud_bridge
         end
     end
 
@@ -78,9 +78,9 @@ graph TD
             class autoware,scenario_simulator component
             class edge_bridge bridge
 
-            autoware <-->|"ROS2 DDS Data"| scenario_simulator
-            autoware -->|"ROS2 DDS Data"| edge_bridge
-            scenario_simulator -->|"ROS2 DDS Data"| edge_bridge
+            autoware <-->|"ROS 2 DDS data"| scenario_simulator
+            autoware -->|"ROS 2 DDS data"| edge_bridge
+            scenario_simulator -->|"ROS 2 DDS data"| edge_bridge
         end
     end
 
@@ -94,7 +94,7 @@ graph TD
 - **Network Design**:
   - `edge_net`: An isolated virtual network for `autoware` and `scenario_simulator`, using ROS 2 DDS multicast for low-latency communication.
   - `cloud_net`: An isolated network for `visualizer`, simulating physical or logical separation from the server.
-  - TCP/IP (use `zenoh_net` docker network in this demo for simplicity): The network that is possible to connect `edge_zenoh_bridge` and `cloud_zenoh_bridge`, ensuring a clean cross-domain data transmission path.
+  - TCP/IP (use `zenoh_net` docker network in this demo for simplicity): The network that connects `edge_zenoh_bridge` and `cloud_zenoh_bridge`, ensuring a clean cross-domain data transmission path.
 
 - **Communication Core: Zenoh Bridge**:
   - `cloud_zenoh_bridge` (`zenoh-bridge-ros2dds` container): Acts as a **Router**, listening for client connections on TCP port `7448`. It receives Zenoh data from the edge and converts it to ROS 2 DDS for the `visualizer`.
@@ -151,7 +151,7 @@ Ensure the following software is installed:
    docker compose up -d
    ```
    - `-d` runs containers in the background.
-   - The first launch may take several minutes to download the required Docker images.
+    - The initial launch may take several minutes to download the required Docker images.
 
    **Option C: Distributed Deployment (Multi-Machine)**
    To deploy on separate machines (e.g., one Cloud, one Edge):
@@ -182,7 +182,7 @@ Ensure the following software is installed:
 ### 3.4. Verification and Usage
 
 1. **Check Container Status**:
-   Run `docker ps` or `docker-compose ps` to ensure all containers are running:
+   Run `docker ps` or `docker compose ps` to ensure all containers are running:
    - `map-init` should have exited successfully before `autoware` starts
    - `autoware`
    - `scenario_simulator`
@@ -203,7 +203,8 @@ Ensure the following software is installed:
    - If it shows `Warning`, please refer to the troubleshooting section below.
 
 4. **Stop the System**:
-    To stop the containers:
+
+   To stop the containers:
 
    ```bash
    # Stop Cloud
@@ -225,7 +226,7 @@ Ensure the following software is installed:
 - **Solutions**:
   1. **Restart Components**: A simple restart often resolves timing issues.
      ```bash
-     docker-compose restart
+      docker compose restart
      ```
   2. **Staged Startup**: Manually start the core components first, wait a moment, then start the compute-heavy components.
      ```bash

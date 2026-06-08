@@ -1,6 +1,6 @@
 # Supported Platforms
 
-As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software defined vehicle ecosystem, it tracks multiple platform directions. The repository currently contains runnable assets for AutoSD; EWAOL remains a documented target rather than an implemented one.
+As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle ecosystem, it tracks multiple platform directions. The repository currently contains runnable assets for AutoSD; EWAOL remains a documented target rather than an implemented one.
 
 Here is an explanatory blog post on the [benefits of open standards in automotive development](https://www.soafee.io/blog/2025/the-benefits-of-open-standards-in-automotive-development/).
 
