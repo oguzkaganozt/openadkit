@@ -9,15 +9,15 @@
 
 </div>
 
-#### Containerized Components for Autoware
+## Containerized Components for Autoware
 
 Open AD Kit is a collaborative project developed by the Autoware Foundation and its member companies and alliance partners. It aims to bring software-defined best practices to the Autoware project and to enhance the Autoware ecosystem and capabilities by partnering with other organizations that share the goal of creating software-defined vehicles.
 
-Open AD Kit aims to democratize autonomous drive (AD) systems by bringing the cloud and edge closer together. In doing so, Open AD Kit will lower the threshold for developing and deploying the Autoware software stack by providing an efficient and modernized CI-CD approach.
+Open AD Kit aims to democratize autonomous driving (AD) systems by bringing the cloud and edge closer together. In doing so, Open AD Kit will lower the threshold for developing and deploying the Autoware software stack by providing an efficient and modernized CI/CD approach.
 
-#### The First SOAFEE Blueprint
+## The First SOAFEE Blueprint
 
-The Autoware Foundation is a voting member of the [SOAFEE (Scalable Open Architecture For the Embedded Edge)](https://soafee.io/) initiative, as the Autoware Open AD Kit is the first SOAFEE blueprint for the software defined vehicle ecosystem.
+The Autoware Foundation is a voting member of the [SOAFEE (Scalable Open Architecture For the Embedded Edge)](https://soafee.io/) initiative, and the Autoware Open AD Kit is the first SOAFEE blueprint for the software-defined vehicle ecosystem.
 
 ### Quick Links
 
@@ -53,7 +53,7 @@ The build metadata, scan metadata, and `.github/image-inventory.json` are the so
 
 ### Modular Components
 
-Open AD Kit is a micro-service based project, which means that it is designed to be deployed on a variety of platforms with microservices architecture. Each component is designed to be independent and can be deployed on a variety of platforms.
+Open AD Kit is a microservice-based project designed to run on a variety of platforms. Each component is independent and can be deployed independently.
 
 - **Independent images** for sensing, perception, mapping, localization, planning, control, APIs, simulation, and visualization
 - **Multi-platform deployment** supporting both amd64 and arm64 architectures
@@ -67,13 +67,13 @@ Open AD Kit supports mixed criticality deployment, enabling separation of safety
 
 - **Flexible deployment** separating safety-critical and monitoring components
 - **Configurable criticality** from development testing to production safety systems
-- **Hardware abstraction** supporting safety island compute architectures
+- **Hardware abstraction** supporting safety-island compute architectures
 
 ![Mixed Criticality](docs/assets/images/mixed-criticality.png)
 
 ### Cloud Native
 
-Open AD Kit leverages modern cloud native technologies to deliver scalable, portable AD stack.
+Open AD Kit leverages modern cloud-native technologies to deliver a scalable, portable AD stack.
 
 - **Seamless scaling** from development laptops to production edge devices
 - **Hybrid cloud support** bridging development and production environments
@@ -83,7 +83,7 @@ Open AD Kit leverages modern cloud native technologies to deliver scalable, port
 
 ### Connected and Continuous
 
-Open AD Kit envisions an always connected, complete autonomous driving development and deployment platform spanning data collection, calibration, and map annotation to machine learning operations, open-source simulation and system validation.
+Open AD Kit envisions an always-connected, complete autonomous driving development and deployment platform spanning data collection, calibration, and map annotation to machine learning operations, open-source simulation, and system validation.
 
 - **Automated CI/CD** with GitHub Actions integration
 - **Optimized build caching** for faster deployment cycles
