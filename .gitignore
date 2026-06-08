@@ -31,3 +31,6 @@ capture/
 
 # CodeChecker
 .codechecker/
+
+# Playwright CLI artifacts
+.playwright-cli/
