@@ -8,6 +8,7 @@ Sample deployment configurations to help you get started. Recommended for **lear
 
 - [CARLA Simulation](samples/carla-simulation/index.md) - Run Autoware planning/control with CARLA as the external simulator.
 - [Planning Simulation](samples/planning-simulation/index.md) - Run the Autoware planning simulation with a sample map.
+- [Scenario Simulation](samples/scenario-simulation/index.md) - Run the Autoware scenario simulation with the TIER IV Scenario Simulator.
 - [Logging Simulation](samples/logging-simulation/index.md) - Run the Autoware logging simulation with a sample rosbag.
 
 ## Demos
