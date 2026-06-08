@@ -65,9 +65,11 @@ All sample deployments require:
 | Port already in use | Another service on 6080 | Change the port mapping in `docker-compose.yaml` |
 | Poor performance | No GPU acceleration | Install NVIDIA Container Toolkit or reduce workload |
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Sample Deployment Lifecycle diagram
-     Style: Circular or horizontal flow showing: Download → Configure → Start → Visualize → Interact → Stop
-     Use minimal icons, clean arrows, blue-green accent on the active step highlight
-     Dimensions: 900x200px, SVG preferred
--->
+```mermaid
+flowchart LR
+    A[Download Assets] --> B[Configure Environment]
+    B --> C[Start Deployment]
+    C --> D[Open Visualizer]
+    D --> E[Interact with Simulation]
+    E --> F[Stop Deployment]
+```

@@ -88,9 +88,9 @@ ls -la ~/autoware_data
 - [Learn about components](../components/index.md) — Understand the Open AD Kit architecture
 - [Choose a platform](../platforms/index.md) — Deploy to AutoSD, EWAOL, or your local machine
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Installation Flow diagram
-     Style: 3-step horizontal visual flow: Clone → Setup (with optional --no-nvidia branch) → Verify
-     Use minimal icons, clean arrows, blue-green accent on the active step
-     Dimensions: 800x200px, SVG preferred
--->
+```mermaid
+flowchart LR
+    A[Clone Repository] --> B[Run setup.sh]
+    B --> C[Verify Installation]
+    B -.->|Optional| D[--no-nvidia Flag]
+```

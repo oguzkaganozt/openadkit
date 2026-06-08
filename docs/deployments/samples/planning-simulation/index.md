@@ -97,9 +97,13 @@ docker compose --env-file planning-simulation.env down
 - [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data
 - [Components Overview](../../../components/index.md) — Learn about the planning and control stack
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Planning Simulation Architecture diagram
-     Style: Single-machine container layout showing: planning-control container, visualizer container, shared map volume
-     Blue-green accent on the planning-control component
-     Dimensions: 800x300px, SVG preferred
--->
+```mermaid
+graph LR
+    subgraph Host["Single Host"]
+        PC[planning-control]
+        VIZ[visualizer]
+    end
+
+    Map[~/autoware_map] --> PC
+    PC <-->|ROS 2 DDS| VIZ
+```

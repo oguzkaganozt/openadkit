@@ -67,10 +67,19 @@ Other Linux distributions may work but are not actively tested.
 - [Supported Platforms](../platforms/index.md)
 - [Getting Started](../getting-started/index.md)
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Verified Platform Matrix diagram
-     Style: Clean grid layout with status badges, minimal borders, black/gray typography
-     Content: Platform (rows) × Deployment Type (columns: Local Dev, Edge, Cloud)
-     Show ADLink AVA as verified across all three, Jetson Orin as testing for Edge, etc.
-     Dimensions: 900x350px, SVG preferred
--->
+```mermaid
+graph LR
+    subgraph Local_Dev["Local Development"]
+        L1[Ubuntu 22.04/24.04]
+    end
+
+    subgraph Edge["Edge Deployment"]
+        E1[ADLink AADP-AVA]
+        E2[ADLINK ADM-AL30]
+        E3[NVIDIA Jetson Orin]
+    end
+
+    subgraph Cloud["Cloud Simulation"]
+        C1[AWS EC2 G5.4XLarge]
+    end
+```

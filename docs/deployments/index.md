@@ -42,12 +42,19 @@ All deployments share a common pattern:
 3. **Docker Compose** orchestrates containers on a single host
 4. **Optional: Zenoh bridge** connects distributed ROS 2 domains for remote operation
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Deployment Topology Overview diagram
-     Style: Clean layout showing two columns: Samples (single machine, all containers on one host) vs Demos (distributed, edge + cloud)
-     Use minimal icons, black/gray text, blue-green accent on connection lines
-     Dimensions: 800x350px, SVG preferred
--->
+```mermaid
+graph LR
+    subgraph Samples["Samples (Single Machine)"]
+        S1[Planning Simulation]
+        S2[Scenario Simulation]
+        S3[Logging Simulation]
+    end
+
+    subgraph Demos["Demos (Distributed)"]
+        D1[Edge: Autoware + Simulator]
+        D2[Cloud: Visualizer + Bridge]
+    end
+```
 
 ## Next Steps
 

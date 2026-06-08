@@ -49,9 +49,9 @@ When a release workflow runs, the following tag aliases are updated:
 - [Container Image Tags](image-tags.md) — Understanding the tag schema
 - [Getting Started](index.md) — Quick start guide
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Release Timeline diagram
-     Style: Horizontal 4-step timeline with clean nodes: Build → Scan → Promote → Tag
-     Use minimal circles connected by a line, blue-green gradient on the active step highlight
-     Dimensions: 900x200px, SVG preferred
--->
+```mermaid
+flowchart LR
+    A[Build All Images] --> B[Scan Images]
+    B --> C[Promote & Tag]
+    C --> D[Update Aliases]
+```

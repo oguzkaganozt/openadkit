@@ -69,9 +69,8 @@ For local development and simulation, Open AD Kit supports:
 - [Hardware requirements and tested platforms](../hardware/index.md)
 - [Getting started guide](../getting-started/index.md)
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: SOAFEE Blueprint Ecosystem diagram
-     Style: Dark navy background (#0a0e27), geometric nodes, blue-green gradient connectors
-     Content: Open AD Kit (center node, first blueprint) → branches to DENSO AVP blueprint, Red Hat AutoSD blueprint
-     Dimensions: 900x400px, SVG preferred
--->
+```mermaid
+graph LR
+    OAK[Open AD Kit<br/>First Blueprint] --> DENSO[DENSO AVP Blueprint]
+    OAK --> RH[Red Hat AutoSD Blueprint]
+```

@@ -118,9 +118,10 @@ docker compose --env-file logging-simulation.env --profile rosbag down
 - [Components Overview](../../../components/index.md) — Learn about the sensing and perception stack
 - [Getting Started](../../../getting-started/index.md) — Environment setup and artifact download
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Logging Simulation Data Flow diagram
-     Style: Horizontal flow showing: Rosbag file → sensing-perception container → localization-mapping → planning-control → visualizer
-     Highlight the sensing-perception step with blue-green accent (GPU-accelerated)
-     Dimensions: 900x300px, SVG preferred
--->
+```mermaid
+flowchart LR
+    Rosbag[Rosbag File] --> SP[sensing-perception]
+    SP --> LM[localization-mapping]
+    LM --> PC[planning-control]
+    PC --> Viz[visualizer]
+```

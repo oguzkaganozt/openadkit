@@ -60,9 +60,11 @@ For the complete EWAOL installation and runtime guide, see the official Open AD 
 - [Supported Platforms overview](../index.md)
 - [AutoSD platform](../autosd/index.md)
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: EWAOL Build Pipeline diagram
-     Style: Dark navy background (#0a0e27), geometric nodes, blue-green gradient connectors on active paths
-     Content: Yocto kas configuration → build → flash AVA → boot → K3s cluster → Autoware containers
-     Dimensions: 800x400px, SVG preferred
--->
+```mermaid
+flowchart LR
+    A[kas Configuration] --> B[Yocto Build]
+    B --> C[Flash AVA]
+    C --> D[Boot]
+    D --> E[K3s Cluster]
+    E --> F[Autoware Containers]
+```

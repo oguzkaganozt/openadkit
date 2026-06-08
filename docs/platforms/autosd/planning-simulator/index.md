@@ -24,9 +24,11 @@
 - [Open AD Kit Deployments](../../../deployments/index.md)
 - [Components Overview](../../../components/index.md)
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: AutoSD Planning-Simulator Container Topology
-     Style: Shows AutoSD host with systemd/Quadlet spawning Podman containers: planning-control, simulator, visualizer
-     Blue-green accent on the Quadlet → container orchestration arrows
-     Dimensions: 800x350px, SVG preferred
--->
+```mermaid
+graph LR
+    Host[AutoSD Host] --> Systemd[Systemd + Quadlet]
+    Systemd --> Podman[Podman]
+    Podman --> PC[planning-control]
+    Podman --> SIM[simulator]
+    Podman --> VIZ[visualizer]
+```

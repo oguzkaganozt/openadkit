@@ -124,9 +124,7 @@ Open a pull request against the `main` branch of the upstream repository. The PR
 
 All contributors are expected to adhere to the [Autoware Foundation Code of Conduct](https://github.com/autowarefoundation/openadkit/blob/main/CODE_OF_CONDUCT.md), which fosters an open, welcoming, and harassment-free environment.
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Contribution Workflow diagram
-     Style: Clean horizontal flow with minimal icons, black/gray text, blue-green accent on active step
-     Content: Fork → Clone → Branch → Develop → Commit (-s) → Push → PR
-     Dimensions: 900x200px, SVG preferred
--->
+```mermaid
+flowchart LR
+    Fork --> Clone --> Branch --> Develop --> Commit --> Push --> PR
+```

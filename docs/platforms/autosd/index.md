@@ -153,11 +153,19 @@ AutoSD's mixed-criticality architecture maps naturally to Open AD Kit's componen
 - [AutoSD Features and Concepts](https://sigs.centos.org/automotive/latest/features-and-concepts/)
 - [Supported Platforms overview](../index.md)
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: AutoSD Mixed Criticality Architecture diagram
-     Style: Dark navy background (#0a0e27), two partition boxes (Root and QM) with Open AD Kit components mapped inside each
-     Root box: planning, control, vehicle-system (green accent)
-     QM box: visualizer, simulator (blue accent)
-     OSTree layer beneath both
-     Dimensions: 800x450px, SVG preferred
--->
+```mermaid
+graph TB
+    subgraph Root["Root Partition (Safety-Critical)"]
+        R1[Planning]
+        R2[Control]
+        R3[Vehicle System]
+    end
+
+    subgraph QM["QM Partition (Non-Critical)"]
+        Q1[Visualizer]
+        Q2[Simulator]
+    end
+
+    OSTree[OSTree / Bootc<br/>Atomic Updates] --> Root
+    OSTree --> QM
+```

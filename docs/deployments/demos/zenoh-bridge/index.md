@@ -279,9 +279,13 @@ The `-v` flag removes the `autoware_map` volume. Omit it to preserve extracted m
 - [Driving Autoware with Zenoh](https://autoware.org/driving-autoware-with-zenoh/)
 - [Sample Deployments](../../samples/index.md) — Single-machine simulations
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Zenoh Multi-Vehicle Namespace diagram
-     Style: Star topology with cloud visualizer/FMS at center, multiple edge vehicles connected via Zenoh namespaces (/bot1, /bot2, /bot3)
-     Use blue-green gradient on connection lines, dark navy background for the cloud node
-     Dimensions: 800x400px, SVG preferred
--->
+```mermaid
+graph TD
+    Cloud[Cloud Visualizer / FMS] --> Bridge1[Zenoh Bridge /bot1]
+    Cloud --> Bridge2[Zenoh Bridge /bot2]
+    Cloud --> Bridge3[Zenoh Bridge /bot3]
+
+    Bridge1 --> V1[Vehicle 1]
+    Bridge2 --> V2[Vehicle 2]
+    Bridge3 --> V3[Vehicle 3]
+```

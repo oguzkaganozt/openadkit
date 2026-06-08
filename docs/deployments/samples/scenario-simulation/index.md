@@ -105,9 +105,16 @@ docker compose --env-file scenario-simulation.env down
 - [Planning Simulation](../planning-simulation/index.md) — Simpler single-map simulation
 - [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Scenario Simulation Architecture diagram
-     Style: Single-machine layout showing: autoware containers, scenario_simulator container, map-init service, visualizer
-     Highlight the scenario_simulator → autoware ROS 2 DDS connection with blue-green accent
-     Dimensions: 800x350px, SVG preferred
--->
+```mermaid
+graph LR
+    subgraph Host["Single Host"]
+        A[autoware]
+        S[scenario_simulator]
+        M[map-init]
+        V[visualizer]
+    end
+
+    M --> A
+    S <-->|ROS 2 DDS| A
+    A <-->|ROS 2 DDS| V
+```

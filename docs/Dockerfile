@@ -2,15 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir \
-    mkdocs-material \
-    mkdocs-awesome-pages-plugin \
-    mkdocs-exclude \
-    mkdocs-macros-plugin \
-    pymdown-extensions \
-    python-markdown-math \
-    mdx-truly-sane-lists \
-    plantuml-markdown
+COPY docs/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 

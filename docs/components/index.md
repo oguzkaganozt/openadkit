@@ -6,13 +6,27 @@ Open AD Kit is a component-based project designed to run on a variety of platfor
 
 Autoware uses a **Core / Universe** architecture. **Core** contains rigorously reviewed base functionality required for safe autonomous driving. **Universe** contains community extensions and research features that build on the Core foundation. Open AD Kit packages these into focused container images that can be composed into complete AD systems.
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Core vs Universe Architecture diagram
-     Style: Two-tier stack. Core layer (dark navy #0a0e27) at bottom with sensing, localization, planning, control, vehicle
-     Universe layer (lighter navy #141b3a) above with perception extensions, research features, simulator, visualizer
-     Blue-green gradient separator between layers
-     Dimensions: 800x400px, SVG preferred
--->
+```mermaid
+graph TB
+    subgraph Universe["Universe Layer"]
+        direction LR
+        U1[Perception Extensions]
+        U2[Research Features]
+        U3[Simulator]
+        U4[Visualizer]
+    end
+
+    subgraph Core["Core Layer"]
+        direction LR
+        C1[Sensing]
+        C2[Localization]
+        C3[Planning]
+        C4[Control]
+        C5[Vehicle]
+    end
+
+    Universe --> Core
+```
 
 ## Build Pipeline
 
@@ -217,18 +231,23 @@ For the full roadmap, see the [Autoware Architecture v2 Roadmap](https://autowar
 - [Getting Started](../getting-started/index.md) — Quick start guide
 - [Supported Platforms](../platforms/index.md) — Where to deploy
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Interface Layers Stack diagram
-     Style: 3-layer horizontal stack with blue-green gradient accent on the Component Interface layer
-     Top: AD API (external, HTTP/MQTT)
-     Middle: Component Interface (ROS 2 topics/services, highlighted)
-     Bottom: Local Interface (intra-component)
-     Dimensions: 800x250px, SVG preferred
--->
+```mermaid
+graph LR
+    subgraph AD_API["AD API (External)"]
+        A1[HTTP / MQTT]
+    end
 
-<!-- DIAGRAM PLACEHOLDER:
-     Description: Build Pipeline Overview diagram
-     Style: Horizontal flow showing ROS base → common → component images → universe aggregate
-     Use color coding matching the Mermaid diagram (blue for common, green for components, purple for universe)
-     Dimensions: 900x300px, SVG preferred
--->
+    subgraph Component_Interface["Component Interface"]
+        C1[ROS 2 Topics]
+        C2[ROS 2 Services]
+    end
+
+    subgraph Local_Interface["Local Interface"]
+        L1[Intra-component Communication]
+    end
+
+    AD_API --> Component_Interface
+    Component_Interface --> Local_Interface
+```
+
+
