@@ -41,42 +41,28 @@ The system decouples the monolithic stack into two domains:
 
 ```mermaid
 graph TD
-    classDef machine fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray:5 5
-    classDef network fill:#e6f3ff,stroke:#0066cc,stroke-width:1.5px
-    classDef component fill:#ffffff,stroke:#333
-    classDef bridge fill:#fffbe6,stroke:#f0ad4e
-    classDef invisible stroke:none,fill:none
-
     subgraph CloudSide["Cloud Side (User Machine)"]
         direction LR
-        class CloudSide machine
 
         subgraph CloudNet[cloud_net Network]
             direction TB
-            class CloudNet network
-            
+
             visualizer["**Visualizer**<br><br>RViz2 via noVNC<br>Browser Remote Desktop"]
             cloud_bridge["**Cloud Zenoh Bridge**<br><br>Router<br>Listens on TCP"]
-            class visualizer component
-            class cloud_bridge bridge
-            
+
             visualizer -->|"ROS 2 DDS"| cloud_bridge
         end
     end
 
     subgraph EdgeSide["Edge Side (Vehicle/Server)"]
         direction LR
-        class EdgeSide machine
 
         subgraph EdgeNet[edge_net Network]
             direction TB
-            class EdgeNet network
 
             autoware["**Autoware**<br><br>Perception, Planning, Control"]
             scenario_simulator["**Scenario Simulator**<br><br>Virtual Environment<br>Sensor Data"]
             edge_bridge["**Edge Zenoh Bridge**<br><br>Client<br>Converts DDS ↔ Zenoh"]
-            class autoware,scenario_simulator component
-            class edge_bridge bridge
 
             autoware <-->|"ROS 2 DDS"| scenario_simulator
             autoware -->|"ROS 2 DDS"| edge_bridge

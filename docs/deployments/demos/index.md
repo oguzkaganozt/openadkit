@@ -4,13 +4,15 @@ Demo deployments showcase **advanced use cases and distributed architectures** t
 
 ## Available Demos
 
-<div class="oak-card-grid">
+<div class="oak-card-grid" markdown="1">
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-lan-connect:</span>
+<div class="oak-card" markdown="1">
+
+:material-lan-connect:{ .oak-card-icon }
+
 <h3>Zenoh Bridge</h3>
 <p>Distributed cloud-edge visualization. Run compute-intensive Autoware components on an edge server while remotely visualizing and controlling the stack from a lightweight cloud machine using Zenoh protocol bridging.</p>
-<p><span class="oak-badge oak-badge--supported">Multi-Machine</span> <span class="oak-badge oak-badge--testing">Advanced</span></p>
+<p><span class="oak-badge oak-badge--neutral">Multi-Machine</span> <span class="oak-badge oak-badge--neutral">Advanced</span></p>
 <a href="zenoh-bridge/" class="md-button">Explore Zenoh Bridge Demo</a>
 </div>
 

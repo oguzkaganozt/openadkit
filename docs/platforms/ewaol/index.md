@@ -5,11 +5,13 @@
 
 ## Status
 
-<span class="oak-badge oak-badge--supported">Documented</span> <span class="oak-badge oak-badge--verified">Verified in v3.0</span>
+<span class="oak-badge oak-badge--verified">Verified upstream</span> <span class="oak-badge oak-badge--planned">Assets in progress</span>
 
-EWAOL is an actively supported platform in the Open AD Kit ecosystem. The official Open AD Kit v3.0 documentation provides step-by-step build, flash, and runtime instructions for the ADLINK AADP-AVA platform.
+EWAOL is a verified platform in the Open AD Kit v3.0 ecosystem. The official upstream documentation provides step-by-step build, flash, and runtime instructions for the ADLINK AADP-AVA platform.
 
-While this repository is progressively adding EWAOL-specific deployment assets and container orchestration files, the platform itself is fully documented and tested upstream.
+**Platform status:** Verified upstream in Open AD Kit v3.0 (ADLINK AADP-AVA, K3s runtime).
+
+**This repository:** EWAOL-specific deployment assets and container orchestration files are still being added. For current repo status, see [`platforms/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/platforms/README.md).
 
 ## What is EWAOL?
 

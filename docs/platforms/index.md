@@ -9,17 +9,21 @@ As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) bluepr
 
 ## Platform Overview
 
-<div class="oak-card-grid">
+<div class="oak-card-grid" markdown="1">
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-server:</span>
+<div class="oak-card" markdown="1">
+
+:material-server:{ .oak-card-icon }
+
 <h3>AutoSD</h3>
 <p>Automotive Stream Distribution — the upstream preview of Red Hat In-Vehicle OS. Mixed-criticality containers with Podman, Quadlet, and BlueChi orchestration.</p>
 <a href="autosd/" class="md-button md-button--primary">View AutoSD Docs</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-cloud-outline:</span>
+<div class="oak-card" markdown="1">
+
+:material-cloud-outline:{ .oak-card-icon }
+
 <h3>EWAOL</h3>
 <p>Edge Workload Abstraction and Orchestration Layer — Arm's container-centric Yocto framework. Verified on ADLINK AVA with K3s runtime.</p>
 <a href="ewaol/" class="md-button md-button--primary">View EWAOL Docs</a>
@@ -44,7 +48,7 @@ Key capabilities:
 
 ### [EWAOL](ewaol/index.md)
 
-<span class="oak-badge oak-badge--verified">Verified in v3.0</span> <span class="oak-badge oak-badge--supported">Documented</span>
+<span class="oak-badge oak-badge--verified">Verified upstream</span> <span class="oak-badge oak-badge--planned">Assets in progress</span>
 
 The Edge Workload Abstraction and Orchestration Layer (EWAOL) is a standards-based, container-centric framework for deploying edge workloads, delivered via the `meta-ewaol` Yocto layer. It is the reference implementation for SOAFEE.
 
@@ -55,7 +59,7 @@ Key capabilities:
 - **Virtualization**: Xen support for mixed-criticality separation
 - **Cloud-to-edge parity**: Arm Neoverse N1 architecture on both AVA platform and AWS Graviton
 
-EWAOL is actively documented and tested in Open AD Kit v3.0 with full build and runtime instructions for the ADLINK AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets.
+EWAOL is verified upstream in Open AD Kit v3.0 with full build and runtime instructions for the ADLINK AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets — see the [EWAOL platform page](ewaol/index.md) and [`platforms/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/platforms/README.md) for current status.
 
 ## Development Platforms
 

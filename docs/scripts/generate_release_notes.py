@@ -79,9 +79,12 @@ def render_empty_state() -> str:
             f"[GitHub Releases](https://github.com/{REPO}/releases).",
             "",
             "!!! info \"No releases yet\"",
-            "    There are no published releases yet. See the",
-            "    [Release Flow](../getting-started/release-flow.md) guide for how",
-            "    maintainers promote builds to stable or pre-release versions.",
+            "    There are no published releases yet. While waiting for the first stable release, you can:",
+            "",
+            "    - Pull images from [GitHub Container Registry](https://github.com/autowarefoundation/openadkit/pkgs/container/openadkit)",
+            "    - Use CI build tags as described in [Container Image Tags](../getting-started/image-tags.md)",
+            "    - Read how maintainers promote builds in [Release Flow](../getting-started/release-flow.md)",
+            "    - [Watch releases on GitHub](https://github.com/autowarefoundation/openadkit/releases) for notifications",
             "",
         ]
     )

@@ -4,24 +4,30 @@ This guide walks you through setting up your environment and running your first 
 
 ## Prerequisites
 
-<div class="oak-card-grid">
+<div class="oak-card-grid" markdown="1">
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-docker:</span>
+<div class="oak-card" markdown="1">
+
+:material-docker:{ .oak-card-icon }
+
 <h3>Docker Engine</h3>
 <p>Required for all deployments. Docker Compose is typically included with Docker Desktop.</p>
 <a href="https://docs.docker.com/engine/install/" class="md-button" target="_blank">Install Docker</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-gpu:</span>
+<div class="oak-card" markdown="1">
+
+:material-expansion-card:{ .oak-card-icon }
+
 <h3>NVIDIA Container Toolkit</h3>
 <p>Optional but strongly recommended for GPU-accelerated sensing and perception.</p>
 <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html" class="md-button" target="_blank">Install Toolkit</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-package-variant-closed:</span>
+<div class="oak-card" markdown="1">
+
+:material-package-variant-closed:{ .oak-card-icon }
+
 <h3>Autoware Artifacts</h3>
 <p>Required for sensing and perception deployments such as Logging Simulation.</p>
 </div>

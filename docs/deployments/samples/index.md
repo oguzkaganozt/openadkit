@@ -4,29 +4,35 @@ Sample deployments are self-contained configurations designed for **learning, de
 
 ## Available Samples
 
-<div class="oak-card-grid">
+<div class="oak-card-grid" markdown="1">
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-map-marker-path:</span>
+<div class="oak-card" markdown="1">
+
+:material-map-marker-path:{ .oak-card-icon }
+
 <h3>Planning Simulation</h3>
 <p>Run the Autoware planning stack against a pre-recorded point cloud map. Set a goal pose and watch the vehicle plan and follow a trajectory in a virtual environment.</p>
-<p><span class="oak-badge oak-badge--verified">Single Machine</span> <span class="oak-badge oak-badge--supported">GPU Optional</span></p>
+<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--supported">GPU Optional</span></p>
 <a href="planning-simulation/" class="md-button">Run Planning Simulation</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-file-document-outline:</span>
+<div class="oak-card" markdown="1">
+
+:material-file-document-outline:{ .oak-card-icon }
+
 <h3>Scenario Simulation</h3>
 <p>Execute predefined traffic scenarios using the official TIER IV Scenario Simulator container. Validate planning and behavior under specific conditions.</p>
-<p><span class="oak-badge oak-badge--verified">Single Machine</span> <span class="oak-badge oak-badge--supported">GPU Optional</span></p>
+<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--supported">GPU Optional</span></p>
 <a href="scenario-simulation/" class="md-button">Run Scenario Simulation</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-play-circle-outline:</span>
+<div class="oak-card" markdown="1">
+
+:material-play-circle-outline:{ .oak-card-icon }
+
 <h3>Logging Simulation</h3>
 <p>Replay recorded sensor data (rosbag) through the full Autoware stack. Test perception, localization, and planning against real-world logged data.</p>
-<p><span class="oak-badge oak-badge--verified">Single Machine</span> <span class="oak-badge oak-badge--testing">GPU Recommended</span></p>
+<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--recommended">GPU Recommended</span></p>
 <a href="logging-simulation/" class="md-button">Run Logging Simulation</a>
 </div>
 

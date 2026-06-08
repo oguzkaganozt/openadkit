@@ -6,17 +6,21 @@ Deployments are defined using container orchestration files (typically `docker-c
 
 ## Deployment Types
 
-<div class="oak-card-grid">
+<div class="oak-card-grid" markdown="1">
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-test-tube:</span>
+<div class="oak-card" markdown="1">
+
+:material-test-tube:{ .oak-card-icon }
+
 <h3>Samples</h3>
 <p>Self-contained, single-machine deployments for learning and development. Each sample demonstrates a specific Autoware workflow with minimal setup.</p>
 <a href="samples/" class="md-button">Explore Samples</a>
 </div>
 
-<div class="oak-card">
-<span class="oak-card-icon">:material-lan-connect:</span>
+<div class="oak-card" markdown="1">
+
+:material-lan-connect:{ .oak-card-icon }
+
 <h3>Demos</h3>
 <p>Multi-machine and distributed deployments that demonstrate advanced use cases such as cloud-edge bridging and remote visualization.</p>
 <a href="demos/" class="md-button">Explore Demos</a>
