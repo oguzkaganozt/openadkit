@@ -19,7 +19,7 @@ Starts the closed-loop CARLA e2e demo using CARLA on the host display and
 Autoware's in-tree autoware_carla_interface.
 
 Options:
-  --build               Build the local CARLA interface image from tools
+  --build               Build the local CARLA interface image from components
   --skip-build          Do not build the local CARLA interface image (default)
   --skip-verify         Skip topic, actor, and localization verification
   --no-visualizer       Do not start the browser RViz/noVNC visualizer container

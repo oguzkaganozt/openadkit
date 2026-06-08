@@ -29,7 +29,7 @@ The default runtime uses the official CARLA Ubuntu 22 container image. It does n
 
 The helper will:
 
-- Use the CI-built `ghcr.io/autowarefoundation/autoware-tools:carla-interface` image.
+- Use the CI-built `ghcr.io/autowarefoundation/openadkit:carla-interface` image.
 - Download the official CARLA Autoware Town01 map assets if missing.
 - Start `carlasim/carla:0.9.16` as `carla-e2e` on `DISPLAY=:0`.
 - Preload `Town01`.
@@ -37,7 +37,7 @@ The helper will:
 - Start the browser RViz/noVNC visualizer.
 - Verify localization, CARLA LiDAR, and the CARLA ego actor.
 
-Use `--build` to build the CARLA interface image locally from `tools/carla-interface` before starting the stack.
+Use `--build` to build the CARLA interface image locally from `components/carla-interface` before starting the stack.
 
 The default behavior is no-drive. Set the route and engage manually in RViz.
 
