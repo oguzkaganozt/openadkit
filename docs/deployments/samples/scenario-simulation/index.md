@@ -8,7 +8,7 @@ Open AD Kit deployments use the official TIER IV runtime image directly instead 
 
 ## Source of Truth
 
-The complete operational instructions for this deployment live alongside the deployment assets in [`deployments/samples/scenario-simulation/README.md`](../../../deployments/samples/scenario-simulation/README.md).
+The complete operational instructions for this deployment live alongside the deployment assets in `deployments/samples/scenario-simulation/README.md`.
 
 ## Quick Start
 

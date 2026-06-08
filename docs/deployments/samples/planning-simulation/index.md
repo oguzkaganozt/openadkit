@@ -4,7 +4,7 @@ This sample deployment demonstrates the Open AD Kit planning simulation workflow
 
 ## Source of Truth
 
-The complete operational instructions for this deployment live alongside the deployment assets in [`deployments/samples/planning-simulation/README.md`](../../../deployments/samples/planning-simulation/README.md).
+The complete operational instructions for this deployment live alongside the deployment assets in `deployments/samples/planning-simulation/README.md`.
 
 That README covers:
 
