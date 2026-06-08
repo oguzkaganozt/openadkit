@@ -8,13 +8,18 @@ copyright: Copyright &copy; 2025 The Autoware Foundation
 theme:
   name: material
   features:
+    - content.action.edit
+    - content.code.copy
     - navigation.expand
+    - navigation.footer
     - navigation.indexes
     - navigation.instant
     - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
+    - search.highlight
+    - search.suggest
   favicon: assets/images/autoware-foundation.png
   icon:
     logo: fontawesome/solid/car
@@ -59,8 +64,6 @@ markdown_extensions:
   - abbr
   - admonition
   - attr_list
-  - codehilite:
-      guess_lang: false
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -74,9 +77,7 @@ markdown_extensions:
   - pymdownx.arithmatex
   - pymdownx.details
   - pymdownx.highlight
-  - pymdownx.snippets:
-      auto_append:
-        - includes/abbreviations.md
+  - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
