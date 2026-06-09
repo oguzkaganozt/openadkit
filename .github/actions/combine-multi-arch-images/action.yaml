@@ -45,14 +45,17 @@ runs:
         MULTI_ARCH_VARIANTS="base devel"
         CUDA_VARIANTS="base-cuda devel-cuda"
 
+        require_image() {
+          if ! docker manifest inspect "$1" >/dev/null 2>&1; then
+            echo "ERROR: Source image $1 does not exist. Check build-all-images succeeded for $2." >&2
+            exit 1
+          fi
+        }
+
         for variant in ${MULTI_ARCH_VARIANTS}; do
           base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
           for arch in amd64 arm64; do
-            img="${IMAGE}:${variant}-${arch}-${DISTRO}-${BUILD_TAG}"
-            if ! docker manifest inspect "${img}" >/dev/null 2>&1; then
-              echo "ERROR: Source image ${img} does not exist. Check build-all-images succeeded for ${variant}-${arch}." >&2
-              exit 1
-            fi
+            require_image "${IMAGE}:${variant}-${arch}-${DISTRO}-${BUILD_TAG}" "${variant}-${arch}"
           done
           echo "Creating multi-arch manifest for ${IMAGE}:${base_tag}"
           docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
@@ -63,11 +66,7 @@ runs:
 
         for variant in ${CUDA_VARIANTS}; do
           base_tag="${variant}-${DISTRO}-${BUILD_TAG}"
-          img="${IMAGE}:${variant}-amd64-${DISTRO}-${BUILD_TAG}"
-          if ! docker manifest inspect "${img}" >/dev/null 2>&1; then
-            echo "ERROR: Source image ${img} does not exist. Check build-all-images succeeded for ${variant}-amd64." >&2
-            exit 1
-          fi
+          require_image "${IMAGE}:${variant}-amd64-${DISTRO}-${BUILD_TAG}" "${variant}-amd64"
           echo "Creating single-arch manifest for ${IMAGE}:${base_tag}"
           docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
             "${IMAGE}:${variant}-amd64-${DISTRO}-${BUILD_TAG}"
@@ -84,26 +83,25 @@ runs:
         BUILD_TAG="${{ inputs.build-tag }}"
         TARGETS="${{ inputs.component-targets }}"
 
+        require_image() {
+          if ! docker manifest inspect "$1" >/dev/null 2>&1; then
+            echo "ERROR: Source image $1 does not exist. Check build-all-images succeeded for $2." >&2
+            exit 1
+          fi
+        }
+
         for target in ${TARGETS}; do
           base_tag="${target}-${DISTRO}-${BUILD_TAG}"
 
           if [[ "${target}" == *cuda* ]]; then
-            img="${IMAGE}:${target}-amd64-${DISTRO}-${BUILD_TAG}"
-            if ! docker manifest inspect "${img}" >/dev/null 2>&1; then
-              echo "ERROR: Source image ${img} does not exist. Check build-all-images succeeded for ${target}." >&2
-              exit 1
-            fi
+            require_image "${IMAGE}:${target}-amd64-${DISTRO}-${BUILD_TAG}" "${target}"
             echo "Creating single-arch manifest for ${IMAGE}:${base_tag}"
             docker buildx imagetools create -t "${IMAGE}:${base_tag}" \
               "${IMAGE}:${target}-amd64-${DISTRO}-${BUILD_TAG}"
             echo "Created ${IMAGE}:${base_tag}"
           else
             for arch in amd64 arm64; do
-              img="${IMAGE}:${target}-${arch}-${DISTRO}-${BUILD_TAG}"
-              if ! docker manifest inspect "${img}" >/dev/null 2>&1; then
-                echo "ERROR: Source image ${img} does not exist. Check build-all-images succeeded for ${target}-${arch}." >&2
-                exit 1
-              fi
+              require_image "${IMAGE}:${target}-${arch}-${DISTRO}-${BUILD_TAG}" "${target}-${arch}"
             done
             echo "Creating multi-arch manifest for ${IMAGE}:${base_tag}"
             docker buildx imagetools create -t "${IMAGE}:${base_tag}" \

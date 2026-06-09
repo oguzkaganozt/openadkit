@@ -493,6 +493,8 @@ jobs:
         with:
           ref: ${{ needs.validate.outputs.release_sha }}
           path: src
+          # Bundle packaging only reads deployments/.
+          sparse-checkout: deployments
 
       - name: Download validated release metadata
         uses: actions/download-artifact@v4

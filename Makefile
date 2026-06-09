@@ -31,12 +31,12 @@ clean:
 
 # Install mkdocs dependencies
 prepare:
-	docker build -f docs/Dockerfile -t mkdocs-dev .
+	docker build -t mkdocs-dev docs
 
 # Reuse an existing image when offline or when rebuilding is unnecessary
 prepare-if-missing:
 	@if docker image inspect mkdocs-dev >/dev/null 2>&1; then \
 		echo "Using existing mkdocs-dev image"; \
 	else \
-		docker build -f docs/Dockerfile -t mkdocs-dev .; \
+		docker build -t mkdocs-dev docs; \
 	fi

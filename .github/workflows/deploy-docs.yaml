@@ -36,25 +36,11 @@ jobs:
           # The production site is always built from main, regardless of which
           # trigger fired (a release tag may point at an older commit).
           ref: main
-          fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Build docs
+        uses: ./.github/actions/build-docs
         with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r docs/requirements.txt
-
-      - name: Generate release notes
-        run: python docs/scripts/generate_release_notes.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build with MkDocs
-        run: mkdocs build --clean --verbose
-        env:
-          NO_MKDOCS_2_WARNING: 1
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0

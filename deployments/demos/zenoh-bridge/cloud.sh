@@ -53,6 +53,7 @@ show_help() {
 
 # Import common library
 source ./common.sh
+load_env
 
 # Define Cloud services
 BASE_SERVICES="visualizer cloud_zenoh_bridge"

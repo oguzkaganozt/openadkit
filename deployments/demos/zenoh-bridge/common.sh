@@ -7,23 +7,27 @@ RED='\033[0;31m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Load .env into the environment. Call before parsing flags so that
+# command-line options override .env values.
+load_env() {
+    # shellcheck disable=SC1091
+    [ -f .env ] && { set -a; . ./.env; set +a; }
+    return 0
+}
+
 validate_args() {
     local args="$1"
     local allowed_flags="-d --detach --build --no-build --no-deps --force-recreate --remove-orphans"
 
     for arg in $args; do
-        local allowed=false
-        for allowed_flag in $allowed_flags; do
-            if [ "$arg" = "$allowed_flag" ]; then
-                allowed=true
-                break
-            fi
-        done
-        if [ "$allowed" = false ]; then
-            echo -e "${RED}[Error]${NC} Invalid or unsafe flag: $arg"
-            echo "Allowed flags: $allowed_flags"
-            exit 1
-        fi
+        case " $allowed_flags " in
+            *" $arg "*) ;;
+            *)
+                echo -e "${RED}[Error]${NC} Invalid or unsafe flag: $arg"
+                echo "Allowed flags: $allowed_flags"
+                exit 1
+                ;;
+        esac
     done
 }
 

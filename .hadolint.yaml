@@ -1,0 +1,5 @@
+# hadolint config, used by the hadolint job in .github/workflows/lint.yaml
+# and auto-discovered by local hadolint runs.
+ignored:
+  - DL3008 # pin apt package versions — upstream ROS/Autoware packages move too fast to pin
+  - DL3015 # --no-install-recommends — some base images rely on recommended packages

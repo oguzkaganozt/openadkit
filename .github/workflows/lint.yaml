@@ -56,7 +56,7 @@ jobs:
         with:
           dockerfile: Dockerfile*
           recursive: true
-          ignore: DL3008,DL3015
+          config: .hadolint.yaml
 
   yamllint:
     runs-on: ubuntu-latest

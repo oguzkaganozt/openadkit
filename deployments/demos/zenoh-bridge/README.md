@@ -39,7 +39,7 @@ Access the visualizer at `http://localhost:6081` (use the `REMOTE_PASSWORD` set 
 
 ```bash
 # Make sure to set REMOTE_PASSWORD in .env first
-docker compose --env-file .env up -d
+docker compose up -d
 ```
 
 ## Teleoperation Controls

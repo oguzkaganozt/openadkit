@@ -21,10 +21,7 @@ show_help() {
 
 # Import common library
 source ./common.sh
-
-# Load .env before parsing flags so command-line options override it.
-# shellcheck disable=SC1091
-[ -f .env ] && { set -a; . ./.env; set +a; }
+load_env
 
 # Define Edge services
 EDGE_SERVICES="autoware scenario_simulator edge_zenoh_bridge"
@@ -69,7 +66,8 @@ fi
 TARGET_SERVICES="$EDGE_SERVICES"
 
 # The map is mounted from the host (fetched beforehand), not extracted in-container.
-MAP_DIR="${MAP_PATH:-$HOME/autoware_map/kashiwanoha_map}"
+# .env is the single source for the path; compose interpolates the same variable.
+MAP_DIR="${MAP_PATH:?MAP_PATH not set — is .env present?}"
 if [ "$CMD" == "up" ]; then
     for map_file in lanelet2_map.osm pointcloud_map.pcd; do
         if [ ! -f "${MAP_DIR}/${map_file}" ]; then

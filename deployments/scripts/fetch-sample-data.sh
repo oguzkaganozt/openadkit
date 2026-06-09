@@ -57,12 +57,17 @@ sha256_verify() { # <file> <expected-sum>
   [ "$got" = "$2" ] || err "checksum mismatch for $1 (expected $2, got $got)"
 }
 
-fetch_zip() { # <url> <sha256> <dirname>
-  local url="$1" sum="$2" name="$3" target="${MAP_ROOT}/$3"
-  if [ "$FORCE" -eq 0 ] && [ -d "$target" ]; then
-    echo "OK  ${name} already present at ${target} (use --force to re-download)"
+already_present() { # <target-dir> <name> — true when the target exists and --force is off
+  if [ "$FORCE" -eq 0 ] && [ -d "$1" ]; then
+    echo "OK  $2 already present at $1 (use --force to re-download)"
     return 0
   fi
+  return 1
+}
+
+fetch_zip() { # <url> <sha256> <dirname>
+  local url="$1" sum="$2" name="$3" target="${MAP_ROOT}/$3"
+  already_present "$target" "$name" && return 0
   command -v unzip >/dev/null 2>&1 || err "'unzip' is required"
   echo "==> downloading ${name} ..."
   curl -fL --retry 3 -o "${TMP}/${name}.zip" "$url"
@@ -74,18 +79,17 @@ fetch_zip() { # <url> <sha256> <dirname>
 
 fetch_kashiwanoha() {
   local target="${MAP_ROOT}/kashiwanoha_map"
-  if [ "$FORCE" -eq 0 ] && [ -d "$target" ]; then
-    echo "OK  kashiwanoha_map already present at ${target} (use --force to re-download)"
-    return 0
-  fi
+  already_present "$target" "kashiwanoha_map" && return 0
   echo "==> downloading kashiwanoha_map (tier4 scenario_simulator_v2 @ ${TIER4_TAG}) ..."
   local stage="${TMP}/kashiwanoha_map"
   mkdir -p "$stage"
-  local f
+  # Single curl invocation: reuses one connection for all five files.
+  local curl_args=() f
   for f in lanelet2_map.osm pointcloud_map.pcd global_map_center.pcd.yaml \
            lanelet2_map_provider.osm.yaml map.map_publisher.yaml; do
-    curl -fL --retry 3 -o "${stage}/${f}" "${TIER4_RAW}/${f}"
+    curl_args+=(-o "${stage}/${f}" "${TIER4_RAW}/${f}")
   done
+  curl -fL --retry 3 "${curl_args[@]}"
   # Move into place only after all files downloaded (avoid a half-populated dir).
   mkdir -p "$MAP_ROOT"
   rm -rf "$target"
