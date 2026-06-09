@@ -14,14 +14,36 @@ After starting the deployment, the scenario simulator generates a virtual traffi
 
 ## Requirements
 
-- Docker Engine
-- Open AD Kit repository cloned and environment set up
-
-!!! info "No Manual Map Download Required"
-    The default `sample.yaml` scenario uses the **Kashiwanoha** map bundled inside the TIER IV scenario simulator image. On first startup, the `map-init` service automatically extracts this map to `~/autoware_map/kashiwanoha_map`. It re-extracts the map if required files are missing or the configured TIER IV image tag changes.
+- Docker Engine (set up via `setup.sh`, below)
 
 !!! warning "Use the Correct Map"
     Do **not** use the `sample-map-planning` map with this deployment. The Kashiwanoha map is required. Using a different map will cause `setMap() for invalid version map`, missing route/localization, and repeated MRM transitions.
+
+## Before You Start
+
+No `git clone` required.
+
+### 1. Set up the environment (one-time)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash
+```
+
+### 2. Download the deployment bundle
+
+```bash
+curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/scenario-simulation.tar.gz | tar xz
+cd scenario-simulation
+```
+
+!!! note "Releases"
+    Deployment bundles ship as assets on each [GitHub Release](https://github.com/autowarefoundation/openadkit/releases). Until the first official release is published, developers can use the `deployments/samples/scenario-simulation/` folder from a cloned repository instead.
+
+### 3. Download the Kashiwanoha map
+
+```bash
+./fetch-sample-data.sh scenario-simulation
+```
 
 ## Configuration
 
@@ -34,9 +56,8 @@ Edit `scenario-simulation.env` to customize the deployment:
 | `OUTPUT_HOST_PATH` | Host directory for simulation results | `./output/` |
 | `OUTPUT_DIRECTORY` | Container path for simulation results | — |
 | `SCENARIO_SIMULATOR_IMAGE` | TIER IV scenario simulator image tag | (pinned in `.env`) |
-| `SCENARIO_READY_TIMEOUT` | Max seconds to wait for Autoware readiness | 120 |
-| `AUTO_EXTRACT_MAP` | Extract Kashiwanoha map from simulator image | `true` |
-| `MAP_PATH` | Host map directory mounted into containers | `~/autoware_map` |
+| `SCENARIO_READY_TIMEOUT` | Max seconds to wait for Autoware readiness | 300 |
+| `MAP_PATH` | Host map directory mounted into containers | `~/autoware_map/kashiwanoha_map` |
 
 ### Custom Scenarios
 
@@ -51,12 +72,13 @@ To run your own scenario:
 3. Simulation results are saved to `OUTPUT_HOST_PATH` (default: `./output/`)
 
 !!! tip "Custom Maps"
-    Custom scenarios must use the Kashiwanoha map unless you also provide a matching host map. For a different map, set `AUTO_EXTRACT_MAP=false`, update `MAP_PATH`, `LANELET2_MAP_FILE`, and `POINTCLOUD_MAP_FILE`, and ensure the files exist under `MAP_PATH` before starting.
+    Custom scenarios must use the Kashiwanoha map unless you also provide a matching host map. For a different map, update `MAP_PATH`, `LANELET2_MAP_FILE`, and `POINTCLOUD_MAP_FILE`, and ensure the files exist under `MAP_PATH` before starting.
 
 ## Start the Deployment
 
+From the `scenario-simulation` directory, start the containers:
+
 ```bash
-cd deployments/samples/scenario-simulation
 docker compose --env-file scenario-simulation.env up -d
 ```
 
@@ -84,8 +106,7 @@ docker compose --env-file scenario-simulation.env down
 
 ## Expected Behavior
 
-- The `map-init` service extracts the Kashiwanoha map on first run
-- Autoware containers initialize and wait for the map
+- Autoware containers initialize and load the mounted Kashiwanoha map
 - The scenario simulator container starts and waits for Autoware readiness
 - Once ready, the scenario executes automatically
 - Results are written to the configured output directory
@@ -94,7 +115,7 @@ docker compose --env-file scenario-simulation.env down
 
 | Issue | Solution |
 |-------|----------|
-| Scenario does not start | Check that `map-init` completed successfully (required files in `~/autoware_map`) |
+| Scenario does not start | Ensure the map was fetched: re-run `./fetch-sample-data.sh scenario-simulation` |
 | `setMap() for invalid version map` | You are using the wrong map. Ensure Kashiwanoha is extracted, not `sample-map-planning` |
 | Visualizer blank | Wait up to 90 seconds for full initialization; containers depend on each other sequentially |
 | Missing results | Verify `OUTPUT_HOST_PATH` exists and is writable |
@@ -110,11 +131,10 @@ graph LR
     subgraph Host["Single Host"]
         A[autoware]
         S[scenario_simulator]
-        M[map-init]
         V[visualizer]
     end
 
-    M --> A
+    Map[~/autoware_map] --> A
     S <-->|ROS 2 DDS| A
     A <-->|ROS 2 DDS| V
 ```

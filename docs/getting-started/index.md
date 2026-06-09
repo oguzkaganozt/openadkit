@@ -8,36 +8,27 @@ Open AD Kit runs on **Ubuntu** with Docker. Install everything with the included
 
 | Component | When you need it | How to install |
 |-----------|------------------|----------------|
-| **Docker Engine** | All deployments | `sudo ./setup.sh` |
-| **NVIDIA Container Toolkit** | GPU-accelerated sensing and perception | Included by default; use `--no-nvidia` to skip |
-| **Autoware artifacts** | Sensing and perception samples (for example, [Logging Simulation](../deployment/samples/logging-simulation/index.md)) | `sudo ./setup.sh --download-artifacts` |
+| **Docker Engine** | All deployments | `setup.sh` (below) |
+| **NVIDIA Container Toolkit** | GPU-accelerated sensing and perception | Included by default; add `--no-nvidia` to skip |
+| **Autoware artifacts** | Sensing and perception samples (for example, [Logging Simulation](../deployment/samples/logging-simulation/index.md)) | `setup.sh --download-artifacts` |
 
-## Installation
+## Set Up Your Environment
 
-<div class="oak-steps">
+`setup.sh` is self-contained — no `git clone` required. Run it directly:
 
-- **Clone the repository**
-  ```bash
-  git clone https://github.com/autowarefoundation/openadkit
-  cd openadkit
-  ```
+```bash
+curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash
+```
 
-- **Set up the runtime environment**
-  ```bash
-  sudo ./setup.sh
-  ```
-  This installs Docker, NVIDIA Container Toolkit, and other dependencies. It requires sudo privileges.
+This installs Docker, the NVIDIA Container Toolkit, and other dependencies (requires sudo).
 
-  !!! tip "Skip NVIDIA Toolkit"
-      Use the `--no-nvidia` flag if you do not have an NVIDIA GPU. Otherwise, the toolkit is **highly recommended** for sensing and perception performance.
+!!! tip "Skip NVIDIA Toolkit"
+    Append `-s -- --no-nvidia` (i.e. `… | sudo bash -s -- --no-nvidia`) if you do not have an NVIDIA GPU. Otherwise the toolkit is **highly recommended** for sensing and perception performance.
 
-- **Download Autoware artifacts (if needed)**
-  ```bash
-  sudo ./setup.sh --download-artifacts
-  ```
-  Required for deployments that mount `${HOME}/autoware_data`, including the Logging Simulation sample.
+!!! info "Autoware artifacts"
+    For sensing/perception samples (e.g. [Logging Simulation](../deployment/samples/logging-simulation/index.md)) that mount `${HOME}/autoware_data`, add `-s -- --download-artifacts`.
 
-</div>
+Each sample/demo is then downloaded as a self-contained bundle — see [Sample Deployments](../deployment/samples/index.md). You do **not** clone the repository to run deployments.
 
 ## Verify Your Installation
 
@@ -71,7 +62,6 @@ ls -la ~/autoware_data
 
 ```mermaid
 flowchart LR
-    A[Clone Repository] --> B[Run setup.sh]
-    B --> C[Verify Installation]
-    B -.->|Optional| D[--no-nvidia Flag]
+    A[Run setup.sh] --> B[Verify Installation] --> C[Download a deployment]
+    A -.->|Optional| D[--no-nvidia]
 ```

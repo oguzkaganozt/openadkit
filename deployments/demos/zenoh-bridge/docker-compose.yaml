@@ -1,26 +1,14 @@
 x-scenario-simulator-image: &scenario-simulator-image ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime
 
 services:
-  map-init:
-    image: *scenario-simulator-image
-    volumes:
-      - autoware_map:/autoware_map
-      - ../../common/scripts/map-init.sh:/map-init.sh:ro
-    command: /map-init.sh
-    environment:
-      - SCENARIO_SIMULATOR_IMAGE=ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime
-      - MAP_VOLUME_PATH=/autoware_map
-      - REQUIRED_FILES=lanelet2_map.osm pointcloud_map.pcd
-    restart: "no"
-
   autoware:
     image: ghcr.io/autowarefoundation/autoware:universe
     volumes:
-      - autoware_map:/autoware_map:ro
+      - ${MAP_PATH}:/autoware_map:ro
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=0
-    command: > 
+    command: >
       bash -c "source /opt/ros/humble/setup.bash &&
       ros2 launch autoware_launch planning_simulator.launch.xml
       map_path:=/autoware_map
@@ -29,8 +17,6 @@ services:
       scenario_simulation:=${SCENARIO_SIMULATION:-true}
       rviz:=false"
     depends_on:
-      map-init:
-        condition: service_completed_successfully
       edge_zenoh_bridge:
         condition: service_started
 
@@ -60,8 +46,6 @@ services:
           use_sim_time:=false \
           vehicle_model:=sample_vehicle
     depends_on:
-      map-init:
-        condition: service_completed_successfully
       autoware:
         condition: service_started
       edge_zenoh_bridge:
@@ -114,6 +98,3 @@ services:
     command: sleep infinity
     depends_on:
       - cloud_zenoh_bridge
-
-volumes:
-  autoware_map:

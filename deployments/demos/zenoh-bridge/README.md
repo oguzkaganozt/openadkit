@@ -6,13 +6,19 @@ This project demonstrates how to bridge Autoware data from Edge to Cloud using Z
 
 For **complete architecture documentation**, setup instructions, troubleshooting, and multi-machine deployment details, see the canonical documentation:
 
-**[Open AD Kit Docs — Zenoh Bridge Demo](https://autowarefoundation.github.io/openadkit/deployments/demos/zenoh-bridge/)**
+**[Open AD Kit Docs — Zenoh Bridge Demo](https://autowarefoundation.github.io/openadkit/deployment/demos/zenoh-bridge/)**
 
 ## Demo Video
 
 [![[openadkit x zenoh-bridge] remote control (cloud/edge) demo](https://img.youtube.com/vi/6yhhxlVQTKI/0.jpg)](https://www.youtube.com/watch?v=6yhhxlVQTKI)
 
 ## Quick Start
+
+First download the sample map (mounted by the Autoware service). From a cloned repo, use `../../scripts/fetch-sample-data.sh` instead:
+
+```bash
+./fetch-sample-data.sh zenoh-bridge
+```
 
 ### Split Topology (Recommended)
 

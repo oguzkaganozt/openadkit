@@ -6,12 +6,16 @@ This sample deployment demonstrates the Open AD Kit scenario simulation workflow
 
 For **complete operational instructions** including configuration, custom scenarios, and troubleshooting, see the canonical documentation:
 
-**[Open AD Kit Docs — Scenario Simulation](https://autowarefoundation.github.io/openadkit/deployments/samples/scenario-simulation/)**
+**[Open AD Kit Docs — Scenario Simulation](https://autowarefoundation.github.io/openadkit/deployment/samples/scenario-simulation/)**
 
 ## Quick Start
 
 ```bash
 # From this directory
+# 1. Download the Kashiwanoha map (from a cloned repo: ../../scripts/fetch-sample-data.sh)
+./fetch-sample-data.sh scenario-simulation
+
+# 2. Start the deployment
 docker compose --env-file scenario-simulation.env up -d
 ```
 

@@ -63,14 +63,16 @@ fi
 
 TARGET_SERVICES="$EDGE_SERVICES"
 
-if [ "$CMD" == "up" ]; then
-    echo -e "${YELLOW}[Info]${NC} Initializing map volume..."
-    if ! docker compose up --force-recreate --no-deps map-init; then
-        echo -e "${RED}[Error]${NC} Map initialization failed."
-        exit 1
-    fi
-elif [ "$CMD" == "down" ]; then
-    TARGET_SERVICES="map-init $EDGE_SERVICES"
+# Load MAP_PATH from .env so this precheck matches what Compose actually mounts.
+# shellcheck disable=SC1091
+[ -f .env ] && { set -a; . ./.env; set +a; }
+
+# The map is mounted from the host (fetched beforehand), not extracted in-container.
+MAP_DIR="${MAP_PATH:-$HOME/autoware_map/kashiwanoha_map}"
+if [ "$CMD" == "up" ] && [ ! -d "$MAP_DIR" ]; then
+    echo -e "${RED}[Error]${NC} Map not found at ${MAP_DIR}."
+    echo -e "       Run ./fetch-sample-data.sh zenoh-bridge first."
+    exit 1
 fi
 
 # Run Compose

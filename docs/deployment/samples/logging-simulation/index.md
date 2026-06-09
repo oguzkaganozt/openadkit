@@ -14,8 +14,7 @@ After starting the deployment and playing the rosbag, you will observe the Autow
 
 ## Requirements
 
-- Docker Engine
-- Open AD Kit repository cloned and environment set up
+- Docker Engine (set up via `setup.sh`, below)
 - NVIDIA Container Toolkit **highly recommended** (for GPU-accelerated sensing and perception)
 - Logging simulation sample map and rosbag (downloaded below)
 - Autoware artifacts (downloaded via `setup.sh`)
@@ -25,35 +24,30 @@ After starting the deployment and playing the rosbag, you will observe the Autow
 
 ## Before You Start
 
-### 1. Install Prerequisites
+No `git clone` required.
+
+### 1. Set up the environment + download Autoware artifacts (one-time)
 
 ```bash
-sudo apt-get install -y python3-pip unzip
-python3 -m pip install --user gdown
+curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash -s -- --download-artifacts
 ```
 
-### 2. Download Autoware Artifacts
+This installs Docker / the NVIDIA Container Toolkit and downloads the perception artifacts into `${HOME}/autoware_data` (mounted into the sensing and perception containers).
 
-The logging simulation mounts `${HOME}/autoware_data` into the sensing and perception containers. Download the artifacts first:
+### 2. Download the deployment bundle
 
 ```bash
-cd /path/to/openadkit
-sudo ./setup.sh --download-artifacts
+curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/logging-simulation.tar.gz | tar xz
+cd logging-simulation
 ```
 
-### 3. Download the Sample Map
+!!! note "Releases"
+    Deployment bundles ship as assets on each [GitHub Release](https://github.com/autowarefoundation/openadkit/releases). Until the first official release is published, developers can use the `deployments/samples/logging-simulation/` folder from a cloned repository instead.
+
+### 3. Download the sample map and rosbag
 
 ```bash
-mkdir -p ~/autoware_map
-gdown -O ~/autoware_map/sample-map-rosbag.zip 'https://docs.google.com/uc?export=download&id=1A-8BvYRX3DhSzkAnOcGWFw5T30xTlwZI'
-unzip -o -d ~/autoware_map ~/autoware_map/sample-map-rosbag.zip
-```
-
-### 4. Download the Sample Rosbag
-
-```bash
-gdown -O ~/autoware_map/sample-rosbag.zip 'https://docs.google.com/uc?export=download&id=1sU5wbxlXAfHIksuHjP3PyI2UVED8lZkP'
-unzip -o -d ~/autoware_map ~/autoware_map/sample-rosbag.zip
+./fetch-sample-data.sh logging-simulation
 ```
 
 !!! info "About the rosbag"
@@ -64,10 +58,9 @@ unzip -o -d ~/autoware_map ~/autoware_map/sample-rosbag.zip
 
 ## Start the Deployment
 
-Navigate to the deployment directory and start the base containers:
+From the `logging-simulation` directory, start the base containers:
 
 ```bash
-cd deployments/samples/logging-simulation
 docker compose --env-file logging-simulation.env up -d
 ```
 
@@ -106,7 +99,7 @@ docker compose --env-file logging-simulation.env --profile rosbag down
 | Issue | Solution |
 |-------|----------|
 | Containers fail to start | Verify `~/autoware_data` exists and contains the downloaded artifacts |
-| `file not found` for map/rosbag | Ensure both zip files were downloaded and extracted to `~/autoware_map` |
+| `file not found` for map/rosbag | Re-run `./fetch-sample-data.sh logging-simulation` to (re)download into `~/autoware_map` |
 | Very slow perception | GPU not available. Install NVIDIA Container Toolkit or reduce workload |
 | Visualizer blank | Wait 10-30 seconds for containers to initialize, then refresh |
 | No objects detected | The rosbag lacks image data. This is expected for the sample rosbag. |

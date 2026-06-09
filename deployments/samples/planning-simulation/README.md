@@ -6,12 +6,16 @@ This sample deployment demonstrates the Open AD Kit planning simulation workflow
 
 For **complete operational instructions** including map download, startup, visualizer access, and troubleshooting, see the canonical documentation:
 
-**[Open AD Kit Docs — Planning Simulation](https://autowarefoundation.github.io/openadkit/deployments/samples/planning-simulation/)**
+**[Open AD Kit Docs — Planning Simulation](https://autowarefoundation.github.io/openadkit/deployment/samples/planning-simulation/)**
 
 ## Quick Start
 
 ```bash
 # From this directory
+# 1. Download the sample map (from a cloned repo: ../../scripts/fetch-sample-data.sh)
+./fetch-sample-data.sh planning-simulation
+
+# 2. Start the deployment
 docker compose --env-file planning-simulation.env up -d
 ```
 

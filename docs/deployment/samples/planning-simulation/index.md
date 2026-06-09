@@ -14,8 +14,7 @@ After starting the deployment, you will access a noVNC-based RViz visualizer in 
 
 ## Requirements
 
-- Docker Engine
-- Open AD Kit repository cloned and environment set up
+- Docker Engine (set up via `setup.sh`, below)
 - Planning simulation sample map (downloaded below)
 
 !!! tip "GPU"
@@ -23,19 +22,28 @@ After starting the deployment, you will access a noVNC-based RViz visualizer in 
 
 ## Before You Start
 
-### Download the Sample Map
+No `git clone` required — set up Docker, then download the self-contained deployment bundle and its sample map.
 
-The planning simulation requires a sample map. You can download it automatically with `gdown`:
+### 1. Set up the environment (one-time)
 
 ```bash
-# Install prerequisites if needed
-sudo apt-get install -y python3-pip unzip
-python3 -m pip install --user gdown
+curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash
+```
 
-# Download and extract the sample map
-mkdir -p ~/autoware_map
-gdown -O ~/autoware_map/sample-map-planning.zip 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
-unzip -o -d ~/autoware_map ~/autoware_map/sample-map-planning.zip
+### 2. Download the deployment bundle
+
+```bash
+curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz | tar xz
+cd planning-simulation
+```
+
+!!! note "Releases"
+    Deployment bundles ship as assets on each [GitHub Release](https://github.com/autowarefoundation/openadkit/releases). Until the first official release is published, developers can use the `deployments/samples/planning-simulation/` folder from a cloned repository instead.
+
+### 3. Download the sample map
+
+```bash
+./fetch-sample-data.sh planning-simulation
 ```
 
 !!! info "About this map"
@@ -43,10 +51,9 @@ unzip -o -d ~/autoware_map ~/autoware_map/sample-map-planning.zip
 
 ## Start the Deployment
 
-Navigate to the deployment directory and start the containers:
+From the `planning-simulation` directory, start the containers:
 
 ```bash
-cd deployments/samples/planning-simulation
 docker compose --env-file planning-simulation.env up -d
 ```
 
@@ -87,7 +94,7 @@ docker compose --env-file planning-simulation.env down
 | Issue | Solution |
 |-------|----------|
 | Blank visualizer screen | Wait 10-30 seconds for containers to fully initialize, then refresh the browser |
-| `file not found` error | Ensure the sample map was downloaded and extracted to `~/autoware_map` |
+| `file not found` error | Re-run `./fetch-sample-data.sh planning-simulation` to (re)download the map into `~/autoware_map` |
 | Port 6080 in use | Modify the port mapping in `docker-compose.yaml` (e.g., `8080:6080`) |
 | Vehicle does not move after setting goal | Check that the initial pose is set correctly and the map is loaded in RViz |
 

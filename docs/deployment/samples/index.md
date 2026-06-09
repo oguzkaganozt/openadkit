@@ -42,9 +42,10 @@ Sample deployments are self-contained configurations designed for **learning, de
 
 All sample deployments require:
 
-1. **Docker Engine** installed and running
+1. **Docker Engine** installed and running (set up via `setup.sh`)
 2. **NVIDIA Container Toolkit** (optional but recommended for GPU acceleration)
-3. **Open AD Kit repository cloned** and environment set up via `setup.sh`
+
+No `git clone` is needed — each sample is downloaded as a self-contained bundle from the [latest release](https://github.com/autowarefoundation/openadkit/releases/latest).
 
 !!! tip "GPU Recommendation"
     While planning and scenario simulations can run on CPU-only machines, the logging simulation benefits significantly from a GPU for sensing and perception tasks.
@@ -53,8 +54,10 @@ All sample deployments require:
 
 <div class="oak-steps">
 
-- **Download assets** — Maps, rosbags, or artifacts as required by the specific sample
-- **Configure environment** — Edit the `.env` file for your setup
+- **Set up the environment** — `curl -fsSL …/setup.sh | sudo bash` (one-time)
+- **Get the deployment** — Download and extract the sample's `<sample>.tar.gz` bundle, then `cd <sample>`
+- **Download assets** — `./fetch-sample-data.sh <sample>` (maps/rosbags as required)
+- **Configure environment** — Edit the `.env` file for your setup (optional)
 - **Start the deployment** — Run `docker compose --env-file <sample>.env up -d`
 - **Open the visualizer** — Access RViz via noVNC at `http://localhost:6080/vnc.html`
 - **Interact with the simulation** — Set poses, launch scenarios, or play rosbags
@@ -67,13 +70,13 @@ All sample deployments require:
 | Issue | Likely Cause | Solution |
 |-------|--------------|----------|
 | Visualizer shows blank screen | Containers still initializing | Wait 10-30 seconds and refresh |
-| `file not found` on startup | Map or rosbag not downloaded | Follow the asset download steps in the sample guide |
+| `file not found` on startup | Map or rosbag not downloaded | Run `./fetch-sample-data.sh <sample>` |
 | Port already in use | Another service on 6080 | Change the port mapping in `docker-compose.yaml` |
 | Poor performance | No GPU acceleration | Install NVIDIA Container Toolkit or reduce workload |
 
 ```mermaid
 flowchart LR
-    A[Download Assets] --> B[Configure Environment]
+    A[Get Bundle] --> B[Fetch Assets]
     B --> C[Start Deployment]
     C --> D[Open Visualizer]
     D --> E[Interact with Simulation]

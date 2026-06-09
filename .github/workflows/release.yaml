@@ -475,6 +475,12 @@ jobs:
       actions: read
       contents: write
     steps:
+      - name: Check out repository at release SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.release_sha }}
+          path: src
+
       - name: Download validated release metadata
         uses: actions/download-artifact@v4
         with:
@@ -573,6 +579,27 @@ jobs:
           fi
         shell: bash
 
+      - name: Package deployment bundles
+        run: |
+          set -euo pipefail
+          fetch="src/deployments/scripts/fetch-sample-data.sh"
+          mkdir -p dist staging
+          for entry in \
+            "planning-simulation:src/deployments/samples/planning-simulation" \
+            "scenario-simulation:src/deployments/samples/scenario-simulation" \
+            "logging-simulation:src/deployments/samples/logging-simulation" \
+            "zenoh-bridge:src/deployments/demos/zenoh-bridge"; do
+            name="${entry%%:*}"
+            dir="${entry#*:}"
+            rm -rf "staging/${name}"
+            cp -a "${dir}" "staging/${name}"
+            cp "${fetch}" "staging/${name}/fetch-sample-data.sh"
+            chmod +x "staging/${name}/fetch-sample-data.sh"
+            tar -C staging -czf "dist/${name}.tar.gz" "${name}"
+            echo "packaged dist/${name}.tar.gz"
+          done
+        shell: bash
+
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -606,5 +633,5 @@ jobs:
               --notes-file release-notes.md \
               "${release_flags[@]}"
           fi
-          gh release upload "${VERSION}" release-metadata.json release-input/build/autoware-lock.repos --clobber
+          gh release upload "${VERSION}" release-metadata.json release-input/build/autoware-lock.repos dist/*.tar.gz --clobber
         shell: bash

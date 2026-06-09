@@ -103,21 +103,29 @@ This allows a single cloud visualizer or fleet management station to connect to 
 
 ## Prerequisites
 
-- Docker Engine
-- Docker Compose (included with Docker Desktop or installed separately)
-- Git
+- Docker Engine + Docker Compose (set up via `setup.sh`, below)
 - Stable internet connection for pulling images
 
 ## Setup
 
-### 1. Clone the Repository
+### 1. Set up the environment (one-time)
 
 ```bash
-git clone https://github.com/autowarefoundation/openadkit
-cd openadkit/deployments/demos/zenoh-bridge
+curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash
 ```
 
-### 2. Verify Directory Structure
+### 2. Download the deployment bundle and sample map
+
+```bash
+curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/zenoh-bridge.tar.gz | tar xz
+cd zenoh-bridge
+./fetch-sample-data.sh zenoh-bridge
+```
+
+!!! note "Releases"
+    Deployment bundles ship as assets on each [GitHub Release](https://github.com/autowarefoundation/openadkit/releases). Until the first official release is published, developers can use the `deployments/demos/zenoh-bridge/` folder from a cloned repository instead.
+
+### 3. Verify Directory Structure
 
 ```
 .
@@ -188,7 +196,6 @@ docker compose logs -f
 
 Run `docker ps` or `docker compose ps` to verify all containers are running:
 
-- `map-init` — Should have exited successfully before `autoware` starts
 - `autoware`
 - `scenario_simulator`
 - `visualizer`
@@ -220,11 +227,11 @@ Use the default password **`openadkit`**.
 # Stop Edge
 ./edge.sh down
 
-# Stop All and remove volumes (recommended for full cleanup)
-docker compose down -v
+# Stop everything
+docker compose down
 ```
 
-The `-v` flag removes the `autoware_map` volume. Omit it to preserve extracted map data. On the next startup, `map-init` validates the volume and refreshes it if the pinned simulator image tag changes or required files are missing.
+The map is mounted read-only from `~/autoware_map/kashiwanoha_map` on the host, so stopping the stack leaves it untouched. Re-fetch it any time with `./fetch-sample-data.sh zenoh-bridge`.
 
 ## Troubleshooting
 
