@@ -30,6 +30,8 @@ deployments/
 │   ├── planning-simulation/
 │   ├── scenario-simulation/
 │   └── logging-simulation/
-└── demos/
-    └── zenoh-bridge/
+├── demos/
+│   └── zenoh-bridge/
+└── scripts/
+    └── fetch-sample-data.sh   # downloads sample maps/rosbags into ~/autoware_map
 ```

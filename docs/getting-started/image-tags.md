@@ -15,6 +15,9 @@ Open AD Kit publishes images to the GitHub Container Registry (`ghcr.io/autoware
 | **CI development alias** | `planning-control-amd64-humble` | Per-platform mutable tag used during CI. **Do not use for pinned deployments.** |
 | **Pre-release** | `planning-control-humble-v1.0.0-rc.1` | Pre-release tag for testing. Pre-releases do not update latest stable aliases. |
 
+!!! note "ROS 2 distributions"
+    Examples use **Humble** (the current default). **Jazzy** images are published in parallel — substitute `-jazzy` for `-humble` in any tag (e.g. `planning-control-jazzy`, `planning-control-jazzy-v1.0.0`).
+
 ## CUDA Images
 
 CUDA-enabled variants follow the same patterns but are **amd64-only**:

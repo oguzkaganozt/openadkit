@@ -269,6 +269,8 @@ The map is mounted read-only from `~/autoware_map/kashiwanoha_map` on the host, 
 
 The `autoware` service in this deployment uses the upstream `ghcr.io/autowarefoundation/autoware:universe` image rather than an Open AD Kit component image. This is a temporary monolithic fallback while Open AD Kit migrates from monolithic to component-based architecture. OAK component images for the full monolithic stack will be available in a future release.
 
+This demo also depends on third-party images that are **not** pinned to immutable tags: `eclipse/zenoh-bridge-ros2dds:latest` and the community `ghcr.io/evshary/autoware_manual_control` teleop image. They may change upstream without notice — pin them to a specific digest if you need a fully reproducible demo.
+
 ## Related
 
 - [Zenoh Plugin ROS2 DDS](https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds)

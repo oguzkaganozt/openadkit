@@ -66,6 +66,16 @@ docker compose --env-file logging-simulation.env up -d
 
 Wait approximately 10 seconds for the containers to initialize.
 
+!!! tip "GPU acceleration (recommended)"
+    To run sensing and perception on an NVIDIA GPU, layer the GPU compose overlay and its env file on top of the base ones (both `--env-file` flags apply, the later overriding the former):
+
+    ```bash
+    docker compose -f docker-compose.yaml -f docker-compose.gpu.yaml \
+      --env-file logging-simulation.env --env-file logging-simulation.gpu.env up -d
+    ```
+
+    This swaps in the `sensing-perception-cuda` image and reserves the GPU for the `sensing` and `perception` services. It requires the NVIDIA Container Toolkit (installed by `setup.sh` by default).
+
 ## Access the Visualizer
 
 Open your browser and navigate to:

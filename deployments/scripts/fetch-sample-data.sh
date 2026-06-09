@@ -109,6 +109,12 @@ main() {
         "07e2da0b0bf12e2324f7083c2ce5556fb8044c50cef1da6428ab9084c3903bc8" "sample-map-rosbag"
       fetch_zip "${S3_BASE}/recordings/bags/demos/sample-rosbag.zip" \
         "5f9d36353393b3d249212153c19049822b1298db56512aa045b4f7f6fc37cf88" "sample-rosbag"
+      # Perception models are mounted from ~/autoware_data; ensure the host dir
+      # exists (Docker would otherwise create it as root). Populate it with
+      # `setup.sh --download-artifacts`.
+      mkdir -p "${HOME}/autoware_data"
+      echo "NOTE: logging-simulation also needs Autoware perception artifacts in ~/autoware_data"
+      echo "      (download them with: setup.sh --download-artifacts)."
       ;;
     scenario-simulation|zenoh-bridge)
       fetch_kashiwanoha

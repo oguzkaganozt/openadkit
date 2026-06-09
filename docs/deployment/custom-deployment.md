@@ -18,8 +18,8 @@ The simplest useful deployment runs just planning and visualization:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit/visualizer` | Browser-accessible RViz |
-| `planning-control` | `ghcr.io/autowarefoundation/openadkit/planning-control` | Planning and control logic |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
 
 ### Full Simulation Stack
 
@@ -27,9 +27,9 @@ Add a simulator to test planning without real sensors:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit/visualizer` | Browser-accessible RViz |
-| `planning-control` | `ghcr.io/autowarefoundation/openadkit/planning-control` | Planning and control logic |
-| `simulator` | `ghcr.io/autowarefoundation/openadkit/simulator` | Virtual vehicle and environment |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
+| `simulator` | `ghcr.io/autowarefoundation/openadkit:simulator` | Virtual vehicle and environment |
 
 ### Full Perception Stack
 
@@ -37,12 +37,12 @@ Run the complete Autoware pipeline with sensing and perception:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit/visualizer` | Browser-accessible RViz |
-| `sensing-perception` | `ghcr.io/autowarefoundation/openadkit/sensing-perception` | Sensor preprocessing and perception |
-| `localization-mapping` | `ghcr.io/autowarefoundation/openadkit/localization-mapping` | Localization and map serving |
-| `planning-control` | `ghcr.io/autowarefoundation/openadkit/planning-control` | Planning and control logic |
-| `vehicle-system` | `ghcr.io/autowarefoundation/openadkit/vehicle-system` | Vehicle interface and system services |
-| `api` | `ghcr.io/autowarefoundation/openadkit/api` | External API services |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `sensing-perception` | `ghcr.io/autowarefoundation/openadkit:sensing-perception` | Sensor preprocessing and perception |
+| `localization-mapping` | `ghcr.io/autowarefoundation/openadkit:localization-mapping` | Localization and map serving |
+| `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
+| `vehicle-system` | `ghcr.io/autowarefoundation/openadkit:vehicle-system` | Vehicle interface and system services |
+| `api` | `ghcr.io/autowarefoundation/openadkit:api` | External API services |
 
 !!! tip "GPU-Accelerated Perception"
     Use the `sensing-perception-cuda` image instead of `sensing-perception` for GPU-accelerated inference. This is **amd64-only** and requires NVIDIA Container Toolkit.
@@ -54,7 +54,7 @@ Here is a minimal `docker-compose.yaml` for a Planning Simulation-like stack:
 ```yaml
 services:
   planning-control:
-    image: ghcr.io/autowarefoundation/openadkit/planning-control
+    image: ghcr.io/autowarefoundation/openadkit:planning-control
     volumes:
       - ~/autoware_map:/autoware_map:ro
     environment:
@@ -63,7 +63,7 @@ services:
       ros2 launch tier4_planning_component tier4_planning_component.launch.xml
 
   visualizer:
-    image: ghcr.io/autowarefoundation/openadkit/visualizer
+    image: ghcr.io/autowarefoundation/openadkit:visualizer
     ports:
       - "6080:6080"
     environment:

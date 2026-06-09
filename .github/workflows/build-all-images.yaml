@@ -163,7 +163,7 @@ jobs:
               ]
           }
           ros_distro_matrix = {"include": [{"ros-distro": distro} for distro in distros]}
-          manifest_targets = " ".join(image["target"] for image in images if image["repo"] == "component")
+          manifest_targets = " ".join(image["target"] for image in images if image["stage"] == "component")
 
           outputs = {
               "common_matrix": common_matrix,

@@ -39,40 +39,34 @@ flowchart TB
 
 ## Building
 
+Use the repository's [`build.sh`](https://github.com/autowarefoundation/openadkit/blob/main/build.sh) wrapper — it checks out the Autoware source tree (`git clone` + `vcs import` of `autoware.repos`) and then invokes Docker Bake with the right build context, base image, and tags. Building Bake directly will not work without that source tree (see the note below).
+
 ```bash
 # Clone the repository
 git clone https://github.com/autowarefoundation/openadkit.git
 cd openadkit
 
-# Build everything (default group = common + component)
-docker buildx bake -f components/docker-bake.hcl
+# Build the component images (default target)
+./build.sh
 
-# Build a single group
-docker buildx bake -f components/docker-bake.hcl common
-docker buildx bake -f components/docker-bake.hcl component
-
-# Build a single target
-docker buildx bake -f components/docker-bake.hcl planning-control
+# Build only the common base/devel images
+./build.sh --target common
 ```
 
-!!! note "Component images depend on common images"
-    Component targets build `FROM` the common images (via the `COMMON_BASE_IMAGE` / `COMMON_DEVEL_IMAGE` build args, which default to `ghcr.io/autowarefoundation/openadkit-common`). Either build the `common` group first, or let the default group build both. To use locally built common images, override those args with `--set`.
-
-## Customization
-
-Build variables are Dockerfile `ARG`s and are overridden through Bake's `--set` flag, scoped per target (`*.args.<NAME>`):
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ROS_DISTRO` | ROS 2 distribution | `humble` |
-| `BASE_IMAGE` | Base ROS image | `ros:humble-ros-base-jammy` |
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--target` | `common` or `components` | `components` |
+| `--ros-distro` | `humble` or `jazzy` | `humble` |
+| `--platform` | `linux/amd64` or `linux/arm64` | current architecture |
+| `--no-cuda` | Skip building the CUDA images | CUDA enabled |
 
 ```bash
-# Build for ROS 2 Jazzy instead of Humble
-docker buildx bake -f components/docker-bake.hcl \
-  --set '*.args.ROS_DISTRO=jazzy' \
-  --set '*.args.BASE_IMAGE=ros:jazzy-ros-base-noble'
+# Build for ROS 2 Jazzy, amd64, without CUDA
+./build.sh --ros-distro jazzy --platform linux/amd64 --no-cuda
 ```
+
+!!! note "Why a wrapper instead of raw `docker buildx bake`"
+    The component Dockerfiles bind-mount parts of the Autoware source tree (`autoware/src/...`), so the source must be present before building. `build.sh` handles the `git clone` + `vcs import`, sets the Bake `context`, `BASE_IMAGE`, and image tags, and builds the `common` images before the `component` images (which build `FROM` them). The `docker-bake.hcl` targets themselves carry no context/tags defaults — CI supplies those the same way `build.sh` does.
 
 ## Continuous Integration
 
