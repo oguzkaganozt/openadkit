@@ -7,6 +7,15 @@ on:
       - reopened
       - synchronize
       - closed
+    paths:
+      - mkdocs.yaml
+      - docs/requirements.txt
+      - "docs/scripts/**"
+      - "**/*.md"
+      - "**/*.svg"
+      - "**/*.png"
+      - "**/*.jpg"
+      - "docs/assets/**"
 
 permissions:
   contents: write

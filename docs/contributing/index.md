@@ -62,7 +62,10 @@ Use descriptive branch names that reflect the change:
 Follow the existing code style and documentation conventions. For documentation changes, preview them locally:
 
 ```bash
-# Build and serve the docs site
+# Build the MkDocs container image (run once)
+make prepare
+
+# Serve the docs site
 make serve
 ```
 

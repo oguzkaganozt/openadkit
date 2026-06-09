@@ -4,7 +4,7 @@ Open AD Kit is a component-based project designed to run on a variety of platfor
 
 ## Architecture Overview
 
-Autoware uses a **Core / Universe** architecture. **Core** contains rigorously reviewed base functionality required for safe autonomous driving. **Universe** contains community extensions and research features that build on the Core foundation. Open AD Kit packages Core components into focused container images that can be composed into complete AD systems.
+Autoware uses a **Core / Universe** architecture. **Core** contains rigorously reviewed base functionality required for safe autonomous driving. **Universe** contains community extensions and research features that build on the Core foundation. Open AD Kit packages Universe components into focused container images that can be composed into complete AD systems.
 
 ## Build Pipeline
 
