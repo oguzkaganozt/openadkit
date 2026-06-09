@@ -9,7 +9,9 @@ For full visualizer settings and deployment context, see the [Open AD Kit Docs â
 ## Standalone Run
 
 ```bash
-docker run --rm --name visualizer -p 6080:6080 ghcr.io/autowarefoundation/openadkit:visualizer
+docker run --rm --name visualizer -p 6080:6080 \
+  -e REMOTE_PASSWORD=yourpassword \
+  ghcr.io/autowarefoundation/openadkit:visualizer
 ```
 
 ## Settings
@@ -18,7 +20,7 @@ docker run --rm --name visualizer -p 6080:6080 ghcr.io/autowarefoundation/openad
 |----------|---------|---------|-------------|
 | `RVIZ_CONFIG` | `/opt/autoware/share/autoware_launch/rviz/autoware.rviz` | Any valid path | RViz configuration file inside the container |
 | `REMOTE_DISPLAY` | `true` | `true`, `false` | Browser-based display (recommended). Set `false` for local RViz2 |
-| `REMOTE_PASSWORD` | `openadkit` | Any string | Password for the remote display |
+| `REMOTE_PASSWORD` | â€” (required) | Any string | Password for the remote display; the container exits if unset |
 
 ## Example with Custom Settings
 

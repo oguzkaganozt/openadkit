@@ -41,7 +41,7 @@ services:
       use_sim_time:=${USE_SIM_TIME}
       vehicle_model:=${VEHICLE_MODEL}
     restart: on-failure
-  
+
   vehicle:
     image: ghcr.io/autowarefoundation/openadkit:vehicle-system
     container_name: autoware-vehicle

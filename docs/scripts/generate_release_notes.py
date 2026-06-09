@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -16,6 +17,27 @@ from typing import Optional
 REPO = "autowarefoundation/openadkit"
 GITHUB_RELEASES_URL = f"https://api.github.com/repos/{REPO}/releases"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "releases" / "index.md"
+
+
+def parse_args() -> tuple[str, Path]:
+    parser = argparse.ArgumentParser(
+        description="Generate docs/releases/index.md from GitHub Releases.",
+        epilog="If GITHUB_TOKEN is set in the environment, it is used for API requests."
+    )
+    parser.add_argument(
+        "--repo",
+        default="autowarefoundation/openadkit",
+        help="GitHub repository in 'owner/name' format (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output file path (default: <script-dir>/../releases/index.md)"
+    )
+    args = parser.parse_args()
+    output_path = args.output or Path(__file__).resolve().parent.parent / "releases" / "index.md"
+    return args.repo, output_path
 
 
 def fetch_releases(token: Optional[str]) -> list[dict]:
@@ -134,6 +156,13 @@ def render_release_notes(releases: list[dict]) -> str:
 
 
 def main() -> None:
+    global REPO, GITHUB_RELEASES_URL, OUTPUT_PATH
+
+    repo, output_path = parse_args()
+    REPO = repo
+    GITHUB_RELEASES_URL = f"https://api.github.com/repos/{REPO}/releases"
+    OUTPUT_PATH = output_path
+
     token = os.environ.get("GITHUB_TOKEN")
     releases = fetch_releases(token)
     content = render_release_notes(releases)

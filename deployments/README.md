@@ -24,7 +24,7 @@ Distributed deployments for advanced use cases:
 
 ## Directory Layout
 
-```
+```text
 deployments/
 ├── samples/
 │   ├── planning-simulation/

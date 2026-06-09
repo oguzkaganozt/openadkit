@@ -73,6 +73,14 @@ set_build_options() {
 # Set platform
 set_platform() {
 	if [ -n "$option_platform" ]; then
+		case "$option_platform" in
+		linux/amd64 | linux/arm64) ;;
+		*)
+			echo "Invalid --platform: '$option_platform'. Use linux/amd64 or linux/arm64."
+			print_help
+			exit 1
+			;;
+		esac
 		platform="$option_platform"
 	else
 		platform="linux/amd64"
@@ -85,6 +93,12 @@ set_platform() {
 # Clone autoware repositories
 clone_repositories() {
 	cd "$WORKSPACE_ROOT"
+
+	# A checkout without the repos manifest is unusable; start over.
+	if [ -d "autoware" ] && [ ! -f "autoware/repositories/autoware.repos" ]; then
+		echo "autoware.repos not found. Re-cloning Autoware repository..."
+		rm -rf autoware
+	fi
 
 	if [ ! -d "autoware" ]; then
 		echo "Cloning Autoware repository..."

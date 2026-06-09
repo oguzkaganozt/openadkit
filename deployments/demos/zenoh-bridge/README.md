@@ -22,17 +22,24 @@ First download the sample map (mounted by the Autoware service). From a cloned r
 
 ### Split Topology (Recommended)
 
+Before starting, set a password for the visualizer in `.env`:
+
+```bash
+# Edit .env and set REMOTE_PASSWORD to a secure value
+```
+
 ```bash
 ./edge.sh up -d
 ./cloud.sh up -d
 ```
 
-Access the visualizer at `http://localhost:6081` (password: `openadkit`).
+Access the visualizer at `http://localhost:6081` (use the `REMOTE_PASSWORD` set in `.env`).
 
 ### Monolithic
 
 ```bash
-docker compose up -d
+# Make sure to set REMOTE_PASSWORD in .env first
+docker compose --env-file .env up -d
 ```
 
 ## Teleoperation Controls

@@ -44,6 +44,7 @@ All sample deployments require:
 
 1. **Docker Engine** installed and running (set up via `setup.sh`)
 2. **NVIDIA Container Toolkit** (optional but recommended for GPU acceleration)
+3. **Autoware Data** — perception model weights and sample sensor data. Download with `setup.sh --download-artifacts` (required for logging-simulation; optional for planning/scenario simulation)
 
 No `git clone` is needed — each sample is downloaded as a self-contained bundle from the [latest release](https://github.com/autowarefoundation/openadkit/releases/latest).
 

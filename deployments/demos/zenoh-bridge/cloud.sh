@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Function to get IPs excluding docker/br/veth interfaces
 get_ips() {

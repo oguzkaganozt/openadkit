@@ -1,9 +1,11 @@
 # Localization
 
 ## Overview
+
 The localization component determines the vehicle's pose within the HD map by fusing multiple positioning sources. It provides the ego pose estimate that planning and control rely on for trajectory generation. It runs inside the `localization-mapping` image, which is shared with mapping.
 
 ## What This Image Contains
+
 - **GNSS/RTK localization** — Global positioning with real-time kinematic correction
 - **IMU dead reckoning** — Inertial measurement for short-term motion estimation
 - **Visual odometry** — Camera-based motion estimation and pose tracking
@@ -14,8 +16,10 @@ The localization component determines the vehicle's pose within the HD map by fu
 - **Typical resource usage:** CPU-based, memory usage scales with map size (typically 2–4 GB). No GPU required.
 
 ## Used In
+
 - [Logging Simulation](../deployment/samples/logging-simulation/index.md)
 
 ## Related
+
 - [Mapping](mapping.md) — Shares the same `localization-mapping` image
 - [Autoware localization design document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/components/localization/)

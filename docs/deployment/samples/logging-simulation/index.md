@@ -80,7 +80,7 @@ Wait approximately 10 seconds for the containers to initialize.
 
 Open your browser and navigate to:
 
-```
+```text
 http://localhost:6080/vnc.html
 ```
 

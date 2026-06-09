@@ -31,7 +31,7 @@ CUDA-enabled variants follow the same patterns but are **amd64-only**:
 
 All component images share the same repository prefix:
 
-```
+```text
 ghcr.io/autowarefoundation/openadkit
 ```
 
@@ -51,7 +51,7 @@ ghcr.io/autowarefoundation/openadkit
 
 ### Decision Flow
 
-```
+```text
 Need fully reproducible deployment?
 ├── Yes → Use stable release tag (vX.Y.Z)
 └── No → Need specific ROS distro?

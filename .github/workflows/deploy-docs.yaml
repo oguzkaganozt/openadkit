@@ -21,8 +21,9 @@ on:
 permissions:
   contents: write
 
+# All triggers deploy the same production site, so serialize them globally.
 concurrency:
-  group: "pages-${{ github.ref }}"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -30,8 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
+          # The production site is always built from main, regardless of which
+          # trigger fired (a release tag may point at an older commit).
+          ref: main
           fetch-depth: 0
 
       - name: Setup Python
@@ -53,8 +57,10 @@ jobs:
           NO_MKDOCS_2_WARNING: 1
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@329bcc8f12caed2cefe5a5b80781499a6f3b361b # v4
+        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          publish_branch: gh-pages
+          folder: site
+          branch: gh-pages
+          # PR previews (pr-preview.yaml) live on the same branch; don't wipe them.
+          clean-exclude: pr-preview
+          force: false

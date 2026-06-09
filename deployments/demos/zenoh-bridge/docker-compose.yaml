@@ -52,7 +52,7 @@ services:
         condition: service_started
 
   edge_zenoh_bridge:
-    image:  eclipse/zenoh-bridge-ros2dds:latest
+    image: eclipse/zenoh-bridge-ros2dds:latest
     environment:
       - ROS_DISTRO=humble
       - ROS_DOMAIN_ID=0
@@ -65,15 +65,20 @@ services:
 
   visualizer:
     image: ghcr.io/autowarefoundation/openadkit:visualizer
+    # Uses bridge networking (port-mapped) to allow access from the host machine
+    # during split-topology deployments where edge and cloud run on separate hosts.
+    # The visualizer runs in a separate Docker network rather than host networking
+    # to enable controlled access via the exposed port (6081:6080).
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=1
-      - REMOTE_PASSWORD=openadkit
+      - REMOTE_PASSWORD=${REMOTE_PASSWORD:?Set REMOTE_PASSWORD in .env before starting the visualizer}
       - USE_SIM_TIME=true
     ports:
       - "0.0.0.0:6081:6080"
     depends_on:
-      - cloud_zenoh_bridge
+      cloud_zenoh_bridge:
+        condition: service_started
 
   cloud_zenoh_bridge:
     image: eclipse/zenoh-bridge-ros2dds:latest

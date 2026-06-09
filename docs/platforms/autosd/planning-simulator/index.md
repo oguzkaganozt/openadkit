@@ -39,11 +39,13 @@ The planning container launches `planning_simulator.launch.xml` with the extract
 1. Build an AutoSD image with the Automotive Image Builder using the manifests in `aib/` (see [AutoSD build instructions](../index.md#building-an-autosd-image))
 2. Boot the image on QEMU or target hardware
 3. Confirm the Quadlet services are active:
+
    ```bash
    systemctl status awf-oak-map.service
    systemctl status awf-oak-planning.service
    systemctl status awf-oak-simulator.service
    ```
+
 4. Access the visualizer via the exposed noVNC endpoint and run the planning simulation workflow
 
 ## Expected Outcome

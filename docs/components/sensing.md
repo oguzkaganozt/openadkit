@@ -1,9 +1,11 @@
 # Sensing
 
 ## Overview
+
 The sensing component collects, preprocesses, and publishes data from the vehicle's sensors. It runs inside the `sensing-perception` image and provides the raw and preprocessed sensor inputs that feed perception, localization, and other downstream components.
 
 ## What This Image Contains
+
 - **LiDAR preprocessing** — Point cloud acquisition, distortion correction, ring filtering, and outlier removal
 - **Camera preprocessing** — Image capture, distortion correction, and format conversion
 - **Radar preprocessing** — Radar target detection and noise filtering
@@ -14,11 +16,14 @@ The sensing component collects, preprocesses, and publishes data from the vehicl
 - **Typical resource usage:** CPU-intensive without GPU; GPU strongly recommended for point cloud preprocessing. 4–8 GB RAM typical.
 
 ## CUDA Variant
+
 The `sensing-perception-cuda` image is an amd64-only, GPU-accelerated variant that offloads point cloud preprocessing and sensor data operations to NVIDIA GPUs. It requires the NVIDIA Container Toolkit and is strongly recommended for [Logging Simulation](../deployment/samples/logging-simulation/index.md) deployments.
 
 ## Used In
+
 - [Logging Simulation](../deployment/samples/logging-simulation/index.md) — Replays recorded sensor data through the full stack
 
 ## Related
+
 - [Perception](perception.md) — Shares the same `sensing-perception` image
 - [Autoware sensing design document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/components/sensing/)

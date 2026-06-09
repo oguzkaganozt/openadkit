@@ -20,7 +20,7 @@ git commit -s -m "feat: add new deployment sample"
 
 The sign-off is a simple line at the end of the commit message:
 
-```
+```text
 Signed-off-by: Your Name <your.email@example.com>
 ```
 

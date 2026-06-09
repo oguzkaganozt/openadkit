@@ -63,7 +63,7 @@ Wait approximately 10 seconds for the containers to initialize.
 
 Open your browser and navigate to:
 
-```
+```text
 http://localhost:6080/vnc.html
 ```
 
@@ -72,7 +72,7 @@ Use the default password **`openadkit`** to access the visualizer. The RViz inte
 !!! tip "Remote Access"
     If running on a remote server, replace `localhost` with the server's IP address:
     ```
-    http://<your-server-ip>:6080/vnc.html
+http://<your-server-ip>:6080/vnc.html
     ```
 
 ## Run the Simulation

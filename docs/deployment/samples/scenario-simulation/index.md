@@ -65,6 +65,7 @@ To run your own scenario:
 
 1. Place your scenario YAML files under the `SCENARIO_HOST_DIR` (default: `./scenarios/`)
 2. Set the scenario path in the environment file:
+
    ```bash
    SCENARIO=/scenarios/my-scenario.yaml
    ```
@@ -88,13 +89,13 @@ Wait approximately **90 seconds** for Autoware and the scenario simulator to ini
 
 Open your browser and navigate to:
 
-```
+```text
 http://localhost:6080/vnc.html
 ```
 
 Use the default password **`openadkit`**. If running on a remote server, use the server's IP address and ensure port `6080` is reachable:
 
-```
+```text
 http://<server-ip>:6080/vnc.html
 ```
 

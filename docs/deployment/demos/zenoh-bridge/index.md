@@ -127,7 +127,7 @@ cd zenoh-bridge
 
 ### 3. Verify Directory Structure
 
-```
+```text
 .
 ├── README.md
 ├── docker-compose.yaml
@@ -138,6 +138,19 @@ cd zenoh-bridge
 ```
 
 Modify `config/zenoh-bridge-ros2dds.json5` to filter topics as needed.
+
+### 4. Configure Environment Variables
+
+Edit the `.env` file to customize your deployment. Key variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CLOUD_IP` | IP address or hostname of the cloud machine (used by edge bridge to connect) | `cloud_zenoh_bridge` (Docker DNS, single-host only) |
+| `MAP_PATH` | Host path to the map directory | `$HOME/autoware_map/kashiwanoha_map` |
+| `REMOTE_PASSWORD` | Password for noVNC visualizer (port 6080/6081). **Required — must be set before starting.** | (none) |
+| `SCENARIO_SIMULATION` | Enable scenario simulator (`true`/`false`) | `true` |
+
+For **split topology** (multi-machine), you must set `CLOUD_IP` to the actual IP of the cloud machine. See [Option A: Split Topology](#option-a-split-topology-recommended) below.
 
 ## Starting the System
 
@@ -206,11 +219,11 @@ Run `docker ps` or `docker compose ps` to verify all containers are running:
 
 Open a web browser and navigate to:
 
-```
+```text
 http://localhost:6081
 ```
 
-Use the default password **`openadkit`**.
+Log in with the password you set as `REMOTE_PASSWORD` in `.env`.
 
 ### 3. Verify Operation
 
@@ -242,11 +255,13 @@ The map is mounted read-only from `~/autoware_map/kashiwanoha_map` on the host, 
 **Solutions:**
 
 1. **Restart:**
+
    ```bash
    docker compose restart
    ```
 
 2. **Staged Startup:** Start the cloud side first, wait, then start the edge side.
+
    ```bash
    ./cloud.sh up -d
    sleep 15

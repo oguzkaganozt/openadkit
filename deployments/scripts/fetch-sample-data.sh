@@ -9,7 +9,15 @@ set -euo pipefail
 S3_BASE="https://autoware-files.s3.us-west-2.amazonaws.com"
 TIER4_TAG="25.0.20" # matches ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime
 TIER4_RAW="https://raw.githubusercontent.com/tier4/scenario_simulator_v2/${TIER4_TAG}/map/kashiwanoha_map/map"
-MAP_ROOT="${AUTOWARE_MAP_DIR:-${HOME}/autoware_map}"
+
+# Under sudo, HOME is root's; the data must land in the invoking user's home,
+# since that is what the deployments mount.
+if [ -n "${SUDO_USER:-}" ]; then
+  USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+else
+  USER_HOME="$HOME"
+fi
+MAP_ROOT="${AUTOWARE_MAP_DIR:-${USER_HOME}/autoware_map}"
 
 FORCE=0
 TMP=""
@@ -112,7 +120,10 @@ main() {
       # Perception models are mounted from ~/autoware_data; ensure the host dir
       # exists (Docker would otherwise create it as root). Populate it with
       # `setup.sh --download-artifacts`.
-      mkdir -p "${HOME}/autoware_data"
+      mkdir -p "${USER_HOME}/autoware_data"
+      if [ -n "${SUDO_USER:-}" ]; then
+        chown "${SUDO_USER}:" "${USER_HOME}/autoware_data"
+      fi
       echo "NOTE: logging-simulation also needs Autoware perception artifacts in ~/autoware_data"
       echo "      (download them with: setup.sh --download-artifacts)."
       ;;

@@ -6,6 +6,14 @@ on:
       - '**/*.sh'
       - '.github/workflows/**'
       - '.github/actions/**'
+      - '**/*.md'
+      - '**/Dockerfile*'
+      - '**/*.dockerfile'
+      - '**/docker-compose*.yaml'
+      - '**/docker-compose*.yml'
+      - 'mkdocs.yaml'
+      - 'docs/**/*.yaml'
+      - 'docs/**/*.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -35,4 +43,47 @@ jobs:
         uses: reviewdog/action-actionlint@be0761e4c1bab7cfdfca56cd03d4bb6253e39a4a # v1.72.0
         with:
           reporter: local
+          fail_on_error: true
+
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile*
+          recursive: true
+          ignore: DL3008,DL3015
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run yamllint
+        uses: reviewdog/action-yamllint@f01d8a48fd8d89f89895499fca2cff09f9e9e8c0 # v1.21.0
+        with:
+          reporter: github-pr-review
+          fail_on_error: true
+          yamllint_flags: >-
+            .github/workflows/
+            .github/actions/
+            deployments/
+            mkdocs.yaml
+            docs/
+
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run markdownlint
+        uses: reviewdog/action-markdownlint@3667398db9118d7e78f7a63d10e26ce454ba5f58 # v0.26.2
+        with:
+          reporter: github-pr-review
           fail_on_error: true

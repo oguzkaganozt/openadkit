@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Function to show help message
 show_help() {
@@ -20,6 +21,10 @@ show_help() {
 
 # Import common library
 source ./common.sh
+
+# Load .env before parsing flags so command-line options override it.
+# shellcheck disable=SC1091
+[ -f .env ] && { set -a; . ./.env; set +a; }
 
 # Define Edge services
 EDGE_SERVICES="autoware scenario_simulator edge_zenoh_bridge"
@@ -63,16 +68,16 @@ fi
 
 TARGET_SERVICES="$EDGE_SERVICES"
 
-# Load MAP_PATH from .env so this precheck matches what Compose actually mounts.
-# shellcheck disable=SC1091
-[ -f .env ] && { set -a; . ./.env; set +a; }
-
 # The map is mounted from the host (fetched beforehand), not extracted in-container.
 MAP_DIR="${MAP_PATH:-$HOME/autoware_map/kashiwanoha_map}"
-if [ "$CMD" == "up" ] && [ ! -d "$MAP_DIR" ]; then
-    echo -e "${RED}[Error]${NC} Map not found at ${MAP_DIR}."
-    echo -e "       Run ./fetch-sample-data.sh zenoh-bridge first."
-    exit 1
+if [ "$CMD" == "up" ]; then
+    for map_file in lanelet2_map.osm pointcloud_map.pcd; do
+        if [ ! -f "${MAP_DIR}/${map_file}" ]; then
+            echo -e "${RED}[Error]${NC} Map file ${map_file} not found in ${MAP_DIR}."
+            echo -e "       Run ../../scripts/fetch-sample-data.sh zenoh-bridge --force to (re-)fetch the map."
+            exit 1
+        fi
+    done
 fi
 
 # Run Compose

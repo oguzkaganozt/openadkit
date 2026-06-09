@@ -160,4 +160,3 @@ For Autoware's upstream autonomy direction, see the [Autoware architecture docum
 - [Deployments](../deployment/index.md) — How to compose components into running systems
 - [Getting Started](../getting-started/index.md) — Quick start guide
 - [Supported Platforms](../platforms/index.md) — Where to deploy
-

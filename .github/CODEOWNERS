@@ -1,6 +1,9 @@
-* ryohsuke.mitsudome@tier4.jp oguzkaganozt@gmail.com
+docs/** @RyohaMitsudome @oguzkaganozt
+components/** @RyohaMitsudome @oguzkaganozt
+deployments/** @RyohaMitsudome @oguzkaganozt
 
-.devcontainer/** oguzkaganozt@gmail.com yutaka.kondo@tier4.jp
-.github/** oguzkaganozt@gmail.com yutaka.kondo@tier4.jp
-ansible/** oguzkaganozt@gmail.com yutaka.kondo@tier4.jp
-docker/** oguzkaganozt@gmail.com yutaka.kondo@tier4.jp
+.devcontainer/** @oguzkaganozt @yutakondo
+.github/** @oguzkaganozt @yutakondo
+ansible/** @oguzkaganozt @yutakondo
+docker/** @oguzkaganozt @yutakondo
+mkdocs.yaml @RyohaMitsudome @oguzkaganozt
