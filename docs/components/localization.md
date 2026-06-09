@@ -18,6 +18,8 @@ The localization component determines the vehicle's pose within the HD map by fu
 ## Used In
 
 - [Logging Simulation](../deployment/samples/logging-simulation/index.md)
+- [Planning Simulation](../deployment/samples/planning-simulation/index.md)
+- [Scenario Simulation](../deployment/samples/scenario-simulation/index.md)
 
 ## Related
 

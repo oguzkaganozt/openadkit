@@ -57,7 +57,7 @@ cd openadkit
 |------|-------------|---------|
 | `--target` | `common` or `components` | `components` |
 | `--ros-distro` | `humble` or `jazzy` | `humble` |
-| `--platform` | `linux/amd64` or `linux/arm64` | current architecture |
+| `--platform` | `linux/amd64` or `linux/arm64` | `linux/amd64` (or `linux/arm64` on aarch64) |
 | `--no-cuda` | Skip building the CUDA images | CUDA enabled |
 
 ```bash

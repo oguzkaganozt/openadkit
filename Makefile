@@ -14,7 +14,7 @@ help:
 	@echo "  make clean        Clean build artifacts"
 
 # Serve documentation locally
-serve:
+serve: generate-release-notes
 	docker run --rm -p 8000:8000 -v $$(pwd):/app -e NO_MKDOCS_2_WARNING=1 mkdocs-dev
 
 # Refresh release notes from GitHub Releases
@@ -22,7 +22,7 @@ generate-release-notes:
 	python3 docs/scripts/generate_release_notes.py
 
 # Build static documentation
-build:
+build: generate-release-notes
 	docker run --rm -v $$(pwd):/app --user $$(id -u):$$(id -g) -e NO_MKDOCS_2_WARNING=1 mkdocs-dev mkdocs build
 
 # Clean build artifacts
