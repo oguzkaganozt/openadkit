@@ -4,38 +4,13 @@ This guide walks you through setting up your environment and running your first 
 
 ## Prerequisites
 
-<div class="oak-card-grid" markdown="1">
+Open AD Kit runs on **Ubuntu** with Docker. Install everything with the included [`setup.sh`](https://github.com/autowarefoundation/openadkit/blob/main/setup.sh) script instead of following separate install guides:
 
-<div class="oak-card" markdown="1">
-
-:material-docker:{ .oak-card-icon }
-
-<h3>Docker Engine</h3>
-<p>Required for all deployments. Docker Compose is typically included with Docker Desktop.</p>
-<a href="https://docs.docker.com/engine/install/" class="md-button" target="_blank">Install Docker</a>
-</div>
-
-<div class="oak-card" markdown="1">
-
-:material-expansion-card:{ .oak-card-icon }
-
-<h3>NVIDIA Container Toolkit</h3>
-<p>Optional but strongly recommended for GPU-accelerated sensing and perception.</p>
-<a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html" class="md-button" target="_blank">Install Toolkit</a>
-</div>
-
-<div class="oak-card" markdown="1">
-
-:material-package-variant-closed:{ .oak-card-icon }
-
-<h3>Autoware Artifacts</h3>
-<p>Required for sensing and perception deployments such as Logging Simulation.</p>
-</div>
-
-</div>
-
-!!! tip "Quick Setup"
-    All the above requirements can be installed automatically by running the **`setup.sh`** script included in the repository.
+| Component | When you need it | How to install |
+|-----------|------------------|----------------|
+| **Docker Engine** | All deployments | `sudo ./setup.sh` |
+| **NVIDIA Container Toolkit** | GPU-accelerated sensing and perception | Included by default; use `--no-nvidia` to skip |
+| **Autoware artifacts** | Sensing and perception samples (for example, [Logging Simulation](../deployment/samples/logging-simulation/index.md)) | `sudo ./setup.sh --download-artifacts` |
 
 ## Installation
 

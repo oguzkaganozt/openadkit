@@ -1,13 +1,8 @@
 # Open AD Kit
 
 <p class="oak-hero-lead">
-A modular, container-based distribution of <a href="https://github.com/autowarefoundation/autoware">Autoware</a> for building autonomous driving systems — from development laptops to vehicle edge deployment.
+A modular, container-based distribution of <a href="https://github.com/autowarefoundation/autoware">Autoware</a> for building autonomous driving systems from simulation and development through to in-vehicle deployment.
 </p>
-
-<div class="oak-hero-actions">
-<a href="getting-started/" class="md-button md-button--primary">Get Started</a>
-<a href="deployment/samples/planning-simulation/" class="md-button">Run Planning Simulation</a>
-</div>
 
 ## Explore
 
@@ -37,7 +32,7 @@ A modular, container-based distribution of <a href="https://github.com/autowaref
 
 <h3>Deployment</h3>
 <p>Ready-to-run samples and multi-machine demos for simulation and AD stacks.</p>
-<a href="deployment/" class="md-button">View deployment</a>
+<a href="deployment/samples/" class="md-button">View samples</a>
 </div>
 
 <div class="oak-card oak-nav-card" markdown="1">
