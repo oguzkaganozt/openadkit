@@ -11,7 +11,7 @@ Open AD Kit packages the [Autoware](https://github.com/autowarefoundation/autowa
 Its mission is **containerization**: taking what Autoware produces upstream and delivering it as clean, composable, production-ready images that run consistently everywhere — from a development laptop, to cloud simulation, to a vehicle's edge compute. The autonomy algorithms come from Autoware; Open AD Kit owns how they are built, packaged, tested, and deployed.
 
 !!! abstract "SOAFEE Blueprint"
-    The first [SOAFEE](https://soafee.io/) blueprint for the software-defined vehicle, co-developed with the [eSync Alliance](https://www.esyncalliance.com/). Learn more on the [Platforms](../platforms/index.md) page.
+    The first [SOAFEE](https://soafee.io/) blueprint for the software-defined vehicle, co-developed with the [eSync Alliance](https://www.esyncalliance.com/). Learn more on the [Platforms](platforms/index.md) page.
 
 ## Why Open AD Kit
 
@@ -53,6 +53,6 @@ Its mission is **containerization**: taking what Autoware produces upstream and 
 
 ## Related
 
-- [Getting Started](../getting-started/index.md) — Set up your environment
-- [Deployment](../deployment/index.md) — Run your first sample
-- [Platforms](../platforms/index.md) — Choose a deployment target
+- [Getting Started](getting-started/index.md) — Set up your environment
+- [Deployment](deployment/index.md) — Run your first sample
+- [Platforms](platforms/index.md) — Choose a deployment target

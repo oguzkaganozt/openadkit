@@ -9,6 +9,8 @@ A modular, container-based distribution of <a href="https://github.com/autowaref
 <a href="deployment/samples/planning-simulation/" class="md-button">Run Planning Simulation</a>
 </div>
 
+New here? Read the [Overview](overview.md) to learn *what* Open AD Kit is and *why* it exists.
+
 ## Explore
 
 <div class="oak-card-grid oak-nav-grid" markdown="1">
@@ -39,5 +41,17 @@ A modular, container-based distribution of <a href="https://github.com/autowaref
 <p>Build from source, contribute code, and help shape the Open AD Kit roadmap.</p>
 <a href="development/" class="md-button">Contribute</a>
 </div>
+
+</div>
+
+## Using these docs
+
+<div class="oak-steps" markdown="1">
+
+1. **[Getting Started](getting-started/index.md)** — Set up Docker and run your first deployment
+2. **[Deployment](deployment/index.md)** — Run sample simulations or a full autonomous driving stack
+3. **[Components](components/index.md)** — Understand the container images that make up the stack
+4. **[Platforms](platforms/index.md)** — Deploy to AutoSD, EWAOL, or your own hardware
+5. **[Development](development/index.md)** — Build from source and contribute
 
 </div>
