@@ -35,5 +35,5 @@ flowchart TB
 
 ## Related
 
-- [Open AD Kit Deployments](https://autowarefoundation.github.io/openadkit/deployments/)
+- [Open AD Kit Deployments](https://autowarefoundation.github.io/openadkit/deployment/)
 - [Getting Started](https://autowarefoundation.github.io/openadkit/getting-started/)
