@@ -32,26 +32,21 @@ For running a full Autoware stack on a verified edge platform, the requirements 
 | Architecture | arm64 |
 
 !!! info "Why the difference?"
-    The 40-core Neoverse N1 requirement reflects the verified Open AD Kit v3.0 platform (ADLINK AADP-AVA), which runs the full Autoware stack with real-time constraints. Local development with sample simulations has lower requirements.
+    The 40-core Neoverse N1 requirement reflects the verified ADLINK AADP-AVA platform, which runs the full Autoware stack with real-time constraints. Local development with sample simulations has lower requirements.
 
 ## Tested Hardware
 
 | Platform | Architecture | Status | Notes |
 |----------|--------------|--------|-------|
-| ADLINK AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary verified platform for Open AD Kit v3.0 edge deployment |
+| ADLINK AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary verified platform for edge deployment |
 | ADLINK ADM-AL30 | arm64 | <span class="oak-badge oak-badge--verified">Verified</span> | Used in Zenoh multi-vehicle fleet management demos |
+| AWS EC2 G5.4XLarge | amd64 | <span class="oak-badge oak-badge--verified">Verified</span> | GPU-enabled cloud instance for simulation workloads |
 
 ## Tests Ongoing
 
 | Platform | Architecture | Status | Notes |
 |----------|--------------|--------|-------|
 | NVIDIA Jetson Orin | arm64 | <span class="oak-badge oak-badge--testing">Tests Ongoing</span> | JetPack 6 validation in progress. Not yet fully verified for production use. |
-
-## Planned Validation
-
-| Platform | Architecture | Status | Notes |
-|----------|--------------|--------|-------|
-| AWS EC2 G5.4XLarge | amd64 | <span class="oak-badge oak-badge--planned">Planned</span> | GPU-enabled cloud instance for simulation workloads |
 
 ## Development Hosts
 
@@ -64,8 +59,8 @@ Other Linux distributions may work but are not actively tested.
 
 ## Related
 
-- [Supported Platforms](../platforms/index.md)
-- [Getting Started](../getting-started/index.md)
+- [Supported Platforms](../index.md)
+- [Getting Started](../../getting-started/index.md)
 
 ```mermaid
 graph LR

@@ -258,6 +258,10 @@ The `-v` flag removes the `autoware_map` volume. Omit it to preserve extracted m
 
 **Solution:** Verify the `config` directory and file exist. On Linux/macOS, check file permissions to ensure Docker can read them.
 
+## Known Limitations
+
+The `autoware` service in this deployment uses the upstream `ghcr.io/autowarefoundation/autoware:universe` image rather than an Open AD Kit component image. This is a temporary monolithic fallback while Open AD Kit migrates from monolithic to component-based architecture. OAK component images for the full monolithic stack will be available in a future release.
+
 ## Related
 
 - [Zenoh Plugin ROS2 DDS](https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds)

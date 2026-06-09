@@ -142,37 +142,22 @@ Each Autoware function is packaged into a focused container image. Select a comp
 
 </div>
 
-## End-to-End Roadmap
+## Open AD Kit Roadmap
 
-Autoware is evolving toward end-to-end autonomous driving through a phased roadmap. While Open AD Kit currently packages the modular v1 architecture, the project is tracking these advancements:
+Open AD Kit tracks Autoware's architecture evolution upstream, but its own roadmap is focused on **containerization, platform support, and CI/CD** rather than on the autonomy algorithms themselves. The goal is to package whatever Autoware ships into clean, composable, production-ready images.
 
-<div class="oak-mermaid-dark" markdown="1">
+!!! note "Placeholder"
+    A detailed Open AD Kit roadmap is being prepared. Current focus areas include:
 
-```mermaid
-flowchart LR
-    P1["Phase 1<br/>Learned Planning"]:::roadmapPhase --> P2["Phase 2<br/>Learned Perception"]:::roadmapPhase
-    P2 --> P3["Phase 3<br/>Monolithic Network"]:::roadmapPhase
-    P3 --> P4["Phase 4<br/>Learned Hybrid"]:::roadmapPhase
+    - **Containerization** — Splitting the monolithic stack into focused component images and retiring `autoware:universe` fallbacks (see deployment *Known Limitations*).
+    - **Platform support** — Expanding verified coverage across edge and cloud targets (see [Platforms](../platforms/index.md)).
+    - **CI/CD** — Multi-architecture builds, image scanning, and a reproducible release flow (see [Release Flow](../getting-started/release-flow.md)).
 
-    classDef roadmapPhase fill:#1e3a5f,stroke:#3b82f6,color:#fff
-```
-
-</div>
-
-<ol class="oak-steps" markdown="1">
-
-1. **Phase 1 — Learned Planning** — Introduction of learned trajectory planning modules alongside classical planners.
-2. **Phase 2 — Learned Perception** — Integration of learned perception pipelines (detection, tracking, prediction) with traditional safety-critical modules.
-3. **Phase 3 — Monolithic Network** — A unified learned driving network handling perception through control.
-4. **Phase 4 — Learned Hybrid** — A monolithic learned network backed by dedicated safety perception modules for guaranteed collision avoidance.
-
-</ol>
-
-For the full roadmap, see the [Autoware Architecture v2 Roadmap](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v2/roadmap/).
+For Autoware's upstream autonomy direction, see the [Autoware architecture documentation](https://autowarefoundation.github.io/autoware-documentation/main/design/).
 
 ## Related
 
-- [Deployments](../deployments/index.md) — How to compose components into running systems
+- [Deployments](../deployment/index.md) — How to compose components into running systems
 - [Getting Started](../getting-started/index.md) — Quick start guide
 - [Supported Platforms](../platforms/index.md) — Where to deploy
 

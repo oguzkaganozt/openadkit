@@ -111,6 +111,10 @@ docker compose --env-file logging-simulation.env --profile rosbag down
 | Visualizer blank | Wait 10-30 seconds for containers to initialize, then refresh |
 | No objects detected | The rosbag lacks image data. This is expected for the sample rosbag. |
 
+## Known Limitations
+
+The `rosbag` service in this deployment uses the upstream `ghcr.io/autowarefoundation/autoware:universe` image rather than an Open AD Kit component image. This is a temporary measure while Open AD Kit migrates from monolithic to component-based architecture. An OAK component image for rosbag playback will be available in a future release.
+
 ## Related
 
 - [Planning Simulation](../planning-simulation/index.md) — Simpler planning-focused simulation

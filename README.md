@@ -23,7 +23,7 @@ The Autoware Foundation is a voting member of the [SOAFEE (Scalable Open Archite
 
 - **[Getting Started](https://autowarefoundation.github.io/openadkit/getting-started/)**
 - **[Documentation](https://autowarefoundation.github.io/openadkit/)**
-- **[Contributing](https://autowarefoundation.github.io/openadkit/contributing/)**
+- **[Development](https://autowarefoundation.github.io/openadkit/development/)** — Build from source and contribute
 
 ## Container Image Tags
 

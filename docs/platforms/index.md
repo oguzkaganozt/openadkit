@@ -59,7 +59,7 @@ Key capabilities:
 - **Virtualization**: Xen support for mixed-criticality separation
 - **Cloud-to-edge parity**: Arm Neoverse N1 architecture on both AVA platform and AWS Graviton
 
-EWAOL is verified upstream in Open AD Kit v3.0 with full build and runtime instructions for the ADLINK AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets — see the [EWAOL platform page](ewaol/index.md) and [`platforms/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/platforms/README.md) for current status.
+EWAOL is a verified platform with upstream build and runtime instructions for the ADLINK AADP-AVA platform. This repository is progressively adding EWAOL-specific deployment assets — see the [EWAOL platform page](ewaol/index.md) and [`platforms/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/platforms/README.md) for current status.
 
 ## Development Platforms
 
@@ -70,7 +70,7 @@ For local development and simulation, Open AD Kit supports:
 
 ## Related
 
-- [Hardware requirements and tested platforms](../hardware/index.md)
+- [Hardware requirements and tested platforms](hardware/index.md)
 - [Getting started guide](../getting-started/index.md)
 
 ```mermaid

@@ -7,9 +7,9 @@
 
 <span class="oak-badge oak-badge--verified">Verified upstream</span> <span class="oak-badge oak-badge--planned">Assets in progress</span>
 
-EWAOL is a verified platform in the Open AD Kit v3.0 ecosystem. The official upstream documentation provides step-by-step build, flash, and runtime instructions for the ADLINK AADP-AVA platform.
+EWAOL is a verified platform with upstream build and runtime instructions for the ADLINK AADP-AVA platform.
 
-**Platform status:** Verified upstream in Open AD Kit v3.0 (ADLINK AADP-AVA, K3s runtime).
+**Platform status:** Verified upstream (ADLINK AADP-AVA, K3s runtime).
 
 **This repository:** EWAOL-specific deployment assets and container orchestration files are still being added. For current repo status, see [`platforms/README.md`](https://github.com/autowarefoundation/openadkit/blob/main/platforms/README.md).
 
@@ -33,21 +33,22 @@ It provides runtime parity between edge hardware (ADLINK AVA with Ampere Altra /
 
 ## Build Overview
 
-The Open AD Kit v3.0 EWAOL workflow uses `kas` to build Yocto images:
+The EWAOL build uses `kas` to build Yocto images:
 
 ```bash
-# Clone the Open AD Kit v3.0 EWAOL configuration
-# Build the image with kas
+# Build the image with kas (requires kas configuration files)
 kas build kas/ewaol-ava.yml
 ```
+
+!!! note "Configuration files"
+    The `kas/ewaol-ava.yml` configuration file is not yet available in this repository. EWAOL-specific deployment assets are being added progressively.
 
 The build produces a bootable image that can be flashed to the AVA platform. After boot, Autoware components run as containerized workloads under K3s.
 
 ## Documentation
 
-For the complete EWAOL installation and runtime guide, see the official Open AD Kit v3.0 documentation:
+For the EWAOL installation and runtime guide, see the upstream documentation:
 
-- [Open AD Kit v3.0 Installation Guide](https://autowarefoundation.github.io/open-ad-kit-docs/openadkit_v3/version-3.0/start-guide/installation/)
 - [EWAOL User Guide](https://ewaol.docs.arm.com/en/kirkstone-dev/user_guide/reproduce.html)
 
 ## Tested Platform

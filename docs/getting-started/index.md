@@ -81,7 +81,7 @@ ls -la ~/autoware_data
 ```
 
 !!! success "Ready to Deploy"
-    If all checks pass, you are ready to run a sample deployment. See [Sample Deployments](../deployments/samples/index.md).
+    If all checks pass, you are ready to run a sample deployment. See [Sample Deployments](../deployment/samples/index.md).
 
 ## Reference
 
@@ -90,7 +90,7 @@ ls -la ~/autoware_data
 
 ## Next Steps
 
-- [Run your first deployment](../deployments/samples/planning-simulation/index.md) — Start with the Planning Simulation sample
+- [Run your first deployment](../deployment/samples/planning-simulation/index.md) — Start with the Planning Simulation sample
 - [Learn about components](../components/index.md) — Understand the Open AD Kit architecture
 - [Choose a platform](../platforms/index.md) — Deploy to AutoSD, EWAOL, or your local machine
 
