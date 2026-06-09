@@ -4,8 +4,7 @@
 group "default" {
   targets = [
     "common",
-    "component",
-    "universe-all"
+    "component"
   ]
 }
 
@@ -32,13 +31,6 @@ group "component" {
   ]
 }
 
-group "universe-all" {
-  targets = [
-    "universe",
-    "universe-cuda"
-  ]
-}
-
 // For docker/metadata-action
 target "docker-metadata-action-common-base" {}
 target "docker-metadata-action-common-base-cuda" {}
@@ -53,8 +45,6 @@ target "docker-metadata-action-api" {}
 target "docker-metadata-action-visualizer" {}
 target "docker-metadata-action-simulator" {}
 target "docker-metadata-action-carla-interface" {}
-target "docker-metadata-action-universe" {}
-target "docker-metadata-action-universe-cuda" {}
 
 target "common-base" {
   inherits = ["docker-metadata-action-common-base"]
@@ -134,14 +124,3 @@ target "carla-interface" {
   target = "carla-interface"
 }
 
-target "universe" {
-  inherits = ["docker-metadata-action-universe"]
-  dockerfile = "components/universe/Dockerfile"
-  target = "universe"
-}
-
-target "universe-cuda" {
-  inherits = ["docker-metadata-action-universe-cuda"]
-  dockerfile = "components/universe/Dockerfile.cuda"
-  target = "universe-cuda"
-}
