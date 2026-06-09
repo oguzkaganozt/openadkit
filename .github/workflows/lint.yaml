@@ -42,7 +42,7 @@ jobs:
       - name: Run actionlint
         uses: reviewdog/action-actionlint@be0761e4c1bab7cfdfca56cd03d4bb6253e39a4a # v1.72.0
         with:
-          reporter: local
+          reporter: github-pr-review
           fail_on_error: true
 
   hadolint:
