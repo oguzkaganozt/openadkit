@@ -1,7 +1,6 @@
 nav:
-  - Introduction:
-    - index.md
-    - Overview: introduction/overview.md
+  - Home: index.md
+  - Introduction: introduction
   - getting-started
   - Deployment: deployment
   - components
