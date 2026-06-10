@@ -13,7 +13,7 @@
 
 Open AD Kit is a collaborative project developed by the Autoware Foundation and its member companies and alliance partners. It aims to bring software-defined best practices to the Autoware project and to enhance the Autoware ecosystem and capabilities by partnering with other organizations that share the goal of creating software-defined vehicles.
 
-Open AD Kit aims to democratize autonomous driving (AD) systems by bringing the cloud and edge closer together. In doing so, Open AD Kit will lower the threshold for developing and deploying the Autoware software stack by providing an efficient and modernized CI/CD approach.
+Open AD Kit packages [Autoware](https://github.com/autowarefoundation/autoware) as a set of focused, independently deployable container images: Autoware provides the autonomy stack; Open AD Kit makes it deployable. It lowers the threshold for deploying Autoware across cloud and edge with composable images, ready-to-run deployment configurations, and a modernized CI/CD approach.
 
 ## The First SOAFEE Blueprint
 
@@ -23,6 +23,7 @@ The Autoware Foundation is a voting member of the [SOAFEE (Scalable Open Archite
 
 - **[Getting Started](https://autowarefoundation.github.io/openadkit/getting-started/)**
 - **[Documentation](https://autowarefoundation.github.io/openadkit/)**
+- **[Supported Platforms](https://autowarefoundation.github.io/openadkit/platforms/)** — Hardware and platform support status
 - **[Development](https://autowarefoundation.github.io/openadkit/development/)** — Build from source and contribute
 
 ## Container Image Tags
@@ -63,10 +64,10 @@ Open AD Kit is a microservice-based project designed to run on a variety of plat
 
 ### Mixed Criticality
 
-Open AD Kit supports mixed criticality deployment, enabling separation of safety-critical and non-critical components. This architecture allows flexible deployment strategies where critical autonomous driving functions can run on certified hardware while monitoring and development components operate on standard platforms.
+Open AD Kit supports mixed-criticality deployment, separating components by criticality assumption. This architecture allows flexible deployment strategies where higher-criticality driving functions can run on safety-qualified hardware while monitoring and development components operate on standard platforms.
 
-- **Flexible deployment** separating safety-critical and monitoring components
-- **Configurable criticality** from development testing to production safety systems
+- **Flexible deployment** separating components by criticality assumption
+- **Configurable criticality** across development, testing, and vehicle deployment scenarios
 - **Hardware abstraction** supporting safety-island compute architectures
 
 ![Mixed Criticality](docs/assets/images/mixed-criticality.png)
@@ -75,15 +76,15 @@ Open AD Kit supports mixed criticality deployment, enabling separation of safety
 
 Open AD Kit leverages modern cloud-native technologies to deliver a scalable, portable AD stack.
 
-- **Seamless scaling** from development laptops to production edge devices
-- **Hybrid cloud support** bridging development and production environments
+- **Seamless scaling** from development laptops to in-vehicle edge devices
+- **Hybrid cloud support** bridging development and deployment environments
 - **Containerized runtimes** using Docker Compose, Docker Bake, and platform-specific integrations such as AutoSD
 
 ![Cloud Native](docs/assets/images/cloud-native.png)
 
 ### Connected and Continuous
 
-Open AD Kit envisions an always-connected, complete autonomous driving development and deployment platform spanning data collection, calibration, and map annotation to machine learning operations, open-source simulation, and system validation.
+Open AD Kit works toward an always-connected deployment lifecycle for autonomous driving — building, deploying, testing, observing, and updating modular Autoware deployments from the cloud to the edge.
 
 - **Automated CI/CD** with GitHub Actions integration
 - **Optimized build caching** for faster deployment cycles
