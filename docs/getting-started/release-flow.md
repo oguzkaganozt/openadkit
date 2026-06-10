@@ -23,6 +23,13 @@ Published release details are listed on the [Releases](../releases/index.md) pag
 
 </div>
 
+```mermaid
+flowchart LR
+    A[Build All Images] --> B[Scan Images]
+    B --> C[Promote & Tag]
+    C --> D[Update Aliases]
+```
+
 ## Source of Truth
 
 The following artifacts are the canonical reference for release validation:
@@ -48,10 +55,3 @@ When a release workflow runs, the following tag aliases are updated:
 
 - [Container Image Tags](image-tags.md) — Understanding the tag schema
 - [Getting Started](index.md) — Quick start guide
-
-```mermaid
-flowchart LR
-    A[Build All Images] --> B[Scan Images]
-    B --> C[Promote & Tag]
-    C --> D[Update Aliases]
-```

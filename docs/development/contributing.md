@@ -116,6 +116,11 @@ Open a pull request against the `main` branch of the upstream repository. The PR
 
 </div>
 
+```mermaid
+flowchart LR
+    Fork --> Clone --> Branch --> Develop --> Commit --> Push --> PR
+```
+
 ## Community
 
 - [Autoware Foundation Discord](https://discord.gg/Q94UsPvReQ) — Real-time discussion and support
@@ -126,8 +131,3 @@ Open a pull request against the `main` branch of the upstream repository. The PR
 ## Code of Conduct
 
 All contributors are expected to adhere to the [Autoware Foundation Code of Conduct](https://github.com/autowarefoundation/openadkit/blob/main/CODE_OF_CONDUCT.md), which fosters an open, welcoming, and harassment-free environment.
-
-```mermaid
-flowchart LR
-    Fork --> Clone --> Branch --> Develop --> Commit --> Push --> PR
-```

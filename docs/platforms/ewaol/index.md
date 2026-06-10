@@ -33,17 +33,22 @@ It provides runtime parity between edge hardware (ADLINK AVA with Ampere Altra /
 
 ## Build Overview
 
-The EWAOL build uses `kas` to build Yocto images:
+EWAOL images are built with the Yocto [`kas`](https://kas.readthedocs.io/) tool. EWAOL-specific `kas` configuration files are **not yet available in this repository** — they are being added progressively. Once they land, the build will follow the standard `kas` pattern:
 
 ```bash
-# Build the image with kas (requires kas configuration files)
 kas build kas/ewaol-ava.yml
 ```
 
-!!! note "Configuration files"
-    The `kas/ewaol-ava.yml` configuration file is not yet available in this repository. EWAOL-specific deployment assets are being added progressively.
+The build produces a bootable image that can be flashed to the AVA platform. After boot, Autoware components run as containerized workloads under K3s. Until the repository assets land, follow the upstream EWAOL user guide linked below.
 
-The build produces a bootable image that can be flashed to the AVA platform. After boot, Autoware components run as containerized workloads under K3s.
+```mermaid
+flowchart LR
+    A[kas Configuration] --> B[Yocto Build]
+    B --> C[Flash AVA]
+    C --> D[Boot]
+    D --> E[K3s Cluster]
+    E --> F[Autoware Containers]
+```
 
 ## Documentation
 
@@ -62,12 +67,3 @@ For the EWAOL installation and runtime guide, see the upstream documentation:
 
 - [Supported Platforms overview](../index.md)
 - [AutoSD platform](../autosd/index.md)
-
-```mermaid
-flowchart LR
-    A[kas Configuration] --> B[Yocto Build]
-    B --> C[Flash AVA]
-    C --> D[Boot]
-    D --> E[K3s Cluster]
-    E --> F[Autoware Containers]
-```

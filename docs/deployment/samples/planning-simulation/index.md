@@ -98,11 +98,7 @@ docker compose --env-file planning-simulation.env down
 | Port 6080 in use | Modify the port mapping in `docker-compose.yaml` (e.g., `8080:6080`) |
 | Vehicle does not move after setting goal | Check that the initial pose is set correctly and the map is loaded in RViz |
 
-## Related
-
-- [Scenario Simulation](../scenario-simulation/index.md) — Test with predefined traffic scenarios
-- [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data
-- [Components Overview](../../../components/index.md) — Learn about the planning and control stack
+## Architecture
 
 ```mermaid
 graph LR
@@ -114,3 +110,9 @@ graph LR
     Map[~/autoware_map] --> PC
     PC <-->|ROS 2 DDS| VIZ
 ```
+
+## Related
+
+- [Scenario Simulation](../scenario-simulation/index.md) — Test with predefined traffic scenarios
+- [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data
+- [Components Overview](../../../components/index.md) — Learn about the planning and control stack

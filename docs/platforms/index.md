@@ -7,6 +7,12 @@ As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) bluepr
 
     Read more about the [benefits of open standards in automotive development](https://www.soafee.io/blog/2025/the-benefits-of-open-standards-in-automotive-development/).
 
+```mermaid
+graph LR
+    OAK[Open AD Kit<br/>First Blueprint] --> DENSO[DENSO AVP Blueprint]
+    OAK --> RH[Red Hat AutoSD Blueprint]
+```
+
 ## Platform Overview
 
 <div class="oak-card-grid" markdown="1">
@@ -72,9 +78,3 @@ For local development and simulation, Open AD Kit supports:
 
 - [Hardware requirements and tested platforms](hardware/index.md)
 - [Getting started guide](../getting-started/index.md)
-
-```mermaid
-graph LR
-    OAK[Open AD Kit<br/>First Blueprint] --> DENSO[DENSO AVP Blueprint]
-    OAK --> RH[Red Hat AutoSD Blueprint]
-```

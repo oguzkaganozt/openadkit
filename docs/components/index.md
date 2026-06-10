@@ -46,7 +46,7 @@ Autoware defines three formal interface categories that govern how components co
 
 <div class="oak-component-item">
 <strong>AD API</strong>
-<span>External interface for fleet management and HMI. Uses HTTP/MQTT and ROS topics for vehicle state queries and commands.</span>
+<span>External interface for fleet management and HMI. Exposed as ROS 2 services and topics for vehicle state queries and commands; external gateways (e.g. HTTP/MQTT) can be layered on top.</span>
 </div>
 
 <div class="oak-component-item">
@@ -64,7 +64,7 @@ Autoware defines three formal interface categories that govern how components co
 ```mermaid
 graph LR
     subgraph AD_API["AD API (External)"]
-        A1[HTTP / MQTT]
+        A1[ROS 2 Services / Topics]
     end
 
     subgraph Component_Interface["Component Interface"]

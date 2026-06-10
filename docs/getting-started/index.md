@@ -2,6 +2,12 @@
 
 This guide walks you through setting up your environment and running your first Open AD Kit deployment.
 
+```mermaid
+flowchart LR
+    A[Run setup.sh] --> B[Verify Installation] --> C[Download a deployment]
+    A -.->|Optional| D[--no-nvidia]
+```
+
 ## Prerequisites
 
 Open AD Kit runs on **Ubuntu** with Docker. Install everything with the included [`setup.sh`](https://github.com/autowarefoundation/openadkit/blob/main/setup.sh) script instead of following separate install guides:
@@ -59,9 +65,3 @@ ls -la ~/autoware_data
 - [Run your first deployment](../deployment/samples/planning-simulation/index.md) — Start with the Planning Simulation sample
 - [Learn about components](../components/index.md) — Understand the Open AD Kit architecture
 - [Choose a platform](../platforms/index.md) — Deploy to AutoSD, EWAOL, or your local machine
-
-```mermaid
-flowchart LR
-    A[Run setup.sh] --> B[Verify Installation] --> C[Download a deployment]
-    A -.->|Optional| D[--no-nvidia]
-```

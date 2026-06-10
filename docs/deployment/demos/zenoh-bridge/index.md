@@ -101,6 +101,17 @@ Zenoh supports **namespace-based multi-vehicle management** by assigning a uniqu
 
 This allows a single cloud visualizer or fleet management station to connect to multiple vehicles without reconfiguring ROS nodes on each vehicle. The `zenoh_autoware_fms` prototype demonstrates this pattern on ADLINK ADM-AL30 hardware.
 
+```mermaid
+graph TD
+    Cloud[Cloud Visualizer / FMS] --> Bridge1[Zenoh Bridge /bot1]
+    Cloud --> Bridge2[Zenoh Bridge /bot2]
+    Cloud --> Bridge3[Zenoh Bridge /bot3]
+
+    Bridge1 --> V1[Vehicle 1]
+    Bridge2 --> V2[Vehicle 2]
+    Bridge3 --> V3[Vehicle 3]
+```
+
 ## Prerequisites
 
 - Docker Engine + Docker Compose (set up via `setup.sh`, below)
@@ -131,8 +142,14 @@ cd zenoh-bridge
 .
 ├── README.md
 ├── docker-compose.yaml
+├── .env
 ├── cloud.sh
 ├── edge.sh
+├── common.sh
+├── run_teleop.sh
+├── fetch-sample-data.sh      # included in the release bundle
+├── teleop/
+│   └── teleop_config.yaml
 └── config/
     └── zenoh-bridge-ros2dds.json5
 ```
@@ -333,14 +350,3 @@ This demo also depends on third-party images that are **not** pinned to immutabl
 - [Managing Multiple Autoware Vehicles with Zenoh](https://autoware.org/managing-multiple-autoware-vehicles-with-zenoh/)
 - [Driving Autoware with Zenoh](https://autoware.org/driving-autoware-with-zenoh/)
 - [Sample Deployments](../../samples/index.md) — Single-machine simulations
-
-```mermaid
-graph TD
-    Cloud[Cloud Visualizer / FMS] --> Bridge1[Zenoh Bridge /bot1]
-    Cloud --> Bridge2[Zenoh Bridge /bot2]
-    Cloud --> Bridge3[Zenoh Bridge /bot3]
-
-    Bridge1 --> V1[Vehicle 1]
-    Bridge2 --> V2[Vehicle 2]
-    Bridge3 --> V3[Vehicle 3]
-```

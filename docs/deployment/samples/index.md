@@ -76,15 +76,6 @@ No `git clone` is needed — each sample is downloaded as a self-contained bundl
 
 </div>
 
-## Troubleshooting
-
-| Issue | Likely Cause | Solution |
-|-------|--------------|----------|
-| Visualizer shows blank screen | Containers still initializing | Wait 10-30 seconds and refresh |
-| `file not found` on startup | Map or rosbag not downloaded | Run `./fetch-sample-data.sh <sample>` |
-| Port already in use | Another service on 6080 | Change the port mapping in `docker-compose.yaml` |
-| Poor performance | No GPU acceleration | Install NVIDIA Container Toolkit or reduce workload |
-
 ```mermaid
 flowchart LR
     A[Get Bundle] --> B[Fetch Assets]
@@ -93,3 +84,12 @@ flowchart LR
     D --> E[Interact with Simulation]
     E --> F[Stop Deployment]
 ```
+
+## Troubleshooting
+
+| Issue | Likely Cause | Solution |
+|-------|--------------|----------|
+| Visualizer shows blank screen | Containers still initializing | Wait 10-30 seconds and refresh |
+| `file not found` on startup | Map or rosbag not downloaded | Run `./fetch-sample-data.sh <sample>` |
+| Port already in use | Another service on 6080 | Change the port mapping in `docker-compose.yaml` |
+| Poor performance | No GPU acceleration | Install NVIDIA Container Toolkit or reduce workload |

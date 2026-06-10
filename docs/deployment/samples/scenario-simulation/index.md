@@ -121,11 +121,7 @@ docker compose --env-file scenario-simulation.env down
 | Visualizer blank | Wait up to 90 seconds for full initialization; containers depend on each other sequentially |
 | Missing results | Verify `OUTPUT_HOST_PATH` exists and is writable |
 
-## Related Documentation
-
-- [Scenario test simulation](https://autowarefoundation.github.io/autoware-documentation/main/demos/scenario-simulation/scenario-simulator/scenario-test-simulation/) — Official Autoware scenario simulation guide
-- [Planning Simulation](../planning-simulation/index.md) — Simpler single-map simulation
-- [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data
+## Architecture
 
 ```mermaid
 graph LR
@@ -139,3 +135,9 @@ graph LR
     S <-->|ROS 2 DDS| A
     A <-->|ROS 2 DDS| V
 ```
+
+## Related Documentation
+
+- [Scenario test simulation](https://autowarefoundation.github.io/autoware-documentation/main/demos/scenario-simulation/scenario-simulator/scenario-test-simulation/) — Official Autoware scenario simulation guide
+- [Planning Simulation](../planning-simulation/index.md) — Simpler single-map simulation
+- [Logging Simulation](../logging-simulation/index.md) — Replay recorded sensor data

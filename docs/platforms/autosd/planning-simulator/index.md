@@ -48,6 +48,16 @@ The planning container launches `planning_simulator.launch.xml` with the extract
 
 4. Access the visualizer via the exposed noVNC endpoint and run the planning simulation workflow
 
+```mermaid
+graph LR
+    Host[AutoSD Host] --> MapSvc[awf-oak-map.service]
+    MapSvc --> Systemd[Systemd + Quadlet]
+    Systemd --> Podman[Podman Pod]
+    Podman --> PC[awf-oak-planning]
+    Podman --> SIM[awf-oak-simulator]
+    Podman --> VIZ[visualizer]
+```
+
 ## Expected Outcome
 
 Once all services are running, you can:
@@ -64,13 +74,3 @@ For a Docker Compose equivalent on a development laptop, see the [Planning Simul
 - [Planning Simulation sample deployment](../../../deployment/samples/planning-simulation/index.md)
 - [Open AD Kit Deployments](../../../deployment/index.md)
 - [Components Overview](../../../components/index.md)
-
-```mermaid
-graph LR
-    Host[AutoSD Host] --> MapSvc[awf-oak-map.service]
-    MapSvc --> Systemd[Systemd + Quadlet]
-    Systemd --> Podman[Podman Pod]
-    Podman --> PC[awf-oak-planning]
-    Podman --> SIM[awf-oak-simulator]
-    Podman --> VIZ[visualizer]
-```
