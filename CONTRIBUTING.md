@@ -49,7 +49,9 @@ hadolint **/Dockerfile*
 yamllint .github/workflows/ .github/actions/ deployments/ mkdocs.yaml docs/
 
 # Documentation (local build, from the repository root)
-pip install -r docs/requirements.txt && mkdocs build
+pip install -r docs/requirements.txt
+python3 docs/scripts/generate_release_notes.py  # optional: populates the Releases page (needs network)
+mkdocs build
 ```
 
 ### Testing Deployments

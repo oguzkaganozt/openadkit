@@ -17,9 +17,13 @@ help:
 serve: generate-release-notes
 	docker run --rm -p 8000:8000 -v $$(pwd):/app -e NO_MKDOCS_2_WARNING=1 mkdocs-dev
 
-# Refresh release notes from GitHub Releases
+# Refresh release notes from GitHub Releases (runs inside the docs container).
+# Non-fatal: when offline or rate-limited, the site still builds — the
+# Releases page is simply skipped until the next successful refresh.
 generate-release-notes:
-	python3 docs/scripts/generate_release_notes.py
+	@docker run --rm -v $$(pwd):/app --user $$(id -u):$$(id -g) -e GITHUB_TOKEN mkdocs-dev \
+		python docs/scripts/generate_release_notes.py \
+		|| echo "WARNING: could not refresh release notes (offline or rate-limited); continuing without them"
 
 # Build static documentation
 build: generate-release-notes
