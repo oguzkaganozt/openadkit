@@ -19,7 +19,7 @@ The `carla-interface` image bundles the following capabilities:
 - **Traffic light recognition support** — Publishes traffic light state data from CARLA to Autoware perception
 - **Lightweight sensor mapping option** — Reduces sensor load (single camera, lower frequencies) for machines with limited GPU/CPU resources
 - **Synchronous mode support** — Runs CARLA in lock-step with Autoware for deterministic, reproducible simulation
-- **Launch file available**: `autoware_carla_interface.launch.xml`
+- **Launch file:** `autoware_carla_interface.launch.xml`
 
 Typical resource usage:
 

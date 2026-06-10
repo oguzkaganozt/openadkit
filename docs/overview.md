@@ -1,7 +1,7 @@
 # Overview
 
 <p class="oak-hero-lead">
-A modular, container-based distribution of <a href="https://github.com/autowarefoundation/autoware">Autoware</a> for building autonomous driving systems from simulation and development through to in-vehicle deployment.
+  What Open AD Kit is, why it exists, and how it relates to Autoware — the autonomous driving stack it packages for cloud-native deployment.
 </p>
 
 ## What is Open AD Kit
@@ -11,7 +11,7 @@ Open AD Kit packages the [Autoware](https://github.com/autowarefoundation/autowa
 Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable container images, defines deployment configurations, integrates with target platforms and vehicle systems, and maintains the build, test, and release tooling needed to run consistently from simulation through in-vehicle deployment.
 
 !!! abstract "SOAFEE Blueprint"
-    The first [SOAFEE](https://soafee.io/) blueprint for the software-defined vehicle, co-developed with the [eSync Alliance](https://www.esyncalliance.com/). Learn more on the [Platforms](platforms/index.md) page.
+    The first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle, co-developed with the [eSync Alliance](https://esyncalliance.org/). Learn more on the [Platforms](platforms/index.md) page.
 
 ## Why Open AD Kit
 
@@ -51,7 +51,7 @@ Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packag
 
 </div>
 
-## Related
+<h2 class="oak-eyebrow" id="related">Related</h2>
 
 - [Getting Started](getting-started/index.md) — Set up your environment
 - [Deployment](deployment/index.md) — Run your first sample

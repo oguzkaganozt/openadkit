@@ -32,7 +32,10 @@ After boot, systemd starts the following services defined under `components/`:
 | `awf-oak-simulator.container` | Container | Runs the TIER IV Scenario Simulator with the bundled sample scenario |
 | `awf-oak.pod` | Pod | Shared Podman pod for co-located planning and simulator containers |
 
-The planning container launches `planning_simulator.launch.xml` with the extracted map mounted at `/etc/awf/map`. The simulator container runs `scenario_test_runner` against the bundled `sample.yaml` scenario.
+!!! note "Unit naming"
+    Quadlet `.container` files register with systemd as `.service` units. The table lists the source unit files (`awf-oak-planning.container`); when querying them with `systemctl`, use the generated service name (`awf-oak-planning.service`). Both names refer to the same unit.
+
+The planning container launches `planning_simulator.launch.xml` with the extracted map mounted at `/etc/awf/map`, including the noVNC RViz2 visualizer. The simulator container runs `scenario_test_runner` against the bundled `sample.yaml` scenario.
 
 ## Workflow
 
@@ -55,14 +58,14 @@ graph LR
     Systemd --> Podman[Podman Pod]
     Podman --> PC[awf-oak-planning]
     Podman --> SIM[awf-oak-simulator]
-    Podman --> VIZ[visualizer]
+    PC --> VIZ[noVNC RViz2]
 ```
 
 ## Expected Outcome
 
 Once all services are running, you can:
 
-- Set initial and goal poses in the noVNC RViz interface
+- Set initial and goal poses in the noVNC RViz2 interface
 - Observe the Autoware planning stack responding to the scenario simulator environment
 - Validate the AutoSD + Podman + Quadlet deployment path before moving to vehicle hardware
 

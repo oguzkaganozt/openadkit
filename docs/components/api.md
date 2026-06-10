@@ -20,7 +20,7 @@ The `api` image packages the Autoware AD API layer:
 - Route and goal setting services
 - Emergency stop and engage/disengage commands
 - Scenario simulation integration (auto-engage and auto-route setting)
-- Launch file: `tier4_autoware_api_component.launch.xml`
+- **Launch file:** `tier4_autoware_api_component.launch.xml`
 
 Typical resource usage:
 

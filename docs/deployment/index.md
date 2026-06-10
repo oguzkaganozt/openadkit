@@ -30,8 +30,8 @@ Deployments are defined using container orchestration files (typically `docker-c
 
 ## Choosing a Deployment
 
-| Deployment | Type | Purpose | Complexity |
-|-----------|------|---------|------------|
+| Deployment | Type | Purpose | Scope |
+|-----------|------|---------|-------|
 | [Planning Simulation](samples/planning-simulation/index.md) | Sample | Run Autoware planning stack with a sample map | Single machine |
 | [Scenario Simulation](samples/scenario-simulation/index.md) | Sample | Execute predefined scenarios with TIER IV Scenario Simulator | Single machine |
 | [Logging Simulation](samples/logging-simulation/index.md) | Sample | Replay recorded sensor data (rosbag) through the AD stack | Single machine |
@@ -53,6 +53,7 @@ graph LR
         S1[Planning Simulation]
         S2[Scenario Simulation]
         S3[Logging Simulation]
+        S4[CARLA Simulation]
     end
 
     subgraph Demos["Demos (Distributed)"]
@@ -64,5 +65,7 @@ graph LR
 ## Next Steps
 
 - [Run your first sample deployment](samples/planning-simulation/index.md)
+- [Explore distributed demos](demos/index.md)
+- [Build a custom deployment](custom-deployment.md)
 - [Learn about Open AD Kit components](../components/index.md)
 - [Understand container image tags](../getting-started/image-tags.md)

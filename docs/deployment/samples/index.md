@@ -42,7 +42,7 @@ Sample deployments are self-contained configurations designed for **learning, de
 
 <h3>CARLA Simulation</h3>
 <p>Closed-loop end-to-end simulation with the CARLA 0.9.16 simulator. The full Autoware stack perceives and drives a CARLA ego vehicle in a photorealistic world.</p>
-<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--recommended">GPU Required</span></p>
+<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--required">GPU Required</span></p>
 <a href="carla-simulation/" class="md-button">Run CARLA Simulation</a>
 </div>
 
@@ -53,24 +53,24 @@ Sample deployments are self-contained configurations designed for **learning, de
 All sample deployments require:
 
 1. **Docker Engine** installed and running (set up via `setup.sh`)
-2. **NVIDIA Container Toolkit** (optional but recommended for GPU acceleration)
+2. **NVIDIA Container Toolkit** — **required** for CARLA Simulation; optional but recommended for the other samples (GPU acceleration)
 3. **Autoware Data** — perception model weights and sample sensor data. Download with `setup.sh --download-artifacts` (required for logging-simulation; optional for planning/scenario simulation)
 
 No `git clone` is needed — each sample is downloaded as a self-contained bundle from the [latest release](https://github.com/autowarefoundation/openadkit/releases/latest).
 
 !!! tip "GPU Recommendation"
-    While planning and scenario simulations can run on CPU-only machines, the logging simulation benefits significantly from a GPU for sensing and perception tasks.
+    While planning and scenario simulations can run on CPU-only machines, the logging simulation benefits significantly from a GPU for sensing and perception tasks. **CARLA Simulation requires a GPU** and the NVIDIA Container Toolkit.
 
 ## Common Workflow
 
-<div class="oak-steps">
+<div class="oak-steps" markdown="1">
 
-- **Set up the environment** — `curl -fsSL …/setup.sh | sudo bash` (one-time)
+- **Set up the environment** — `curl -fsSL https://raw.githubusercontent.com/autowarefoundation/openadkit/main/setup.sh | sudo bash` (one-time)
 - **Get the deployment** — Download and extract the sample's `<sample>.tar.gz` bundle, then `cd <sample>`
 - **Download assets** — `./fetch-sample-data.sh <sample>` (maps/rosbags as required)
 - **Configure environment** — Edit the `.env` file for your setup (optional)
 - **Start the deployment** — Run `docker compose --env-file <sample>.env up -d`
-- **Open the visualizer** — Access RViz via noVNC at `http://localhost:6080/vnc.html`
+- **Open the visualizer** — Access RViz2 via noVNC at `http://localhost:6080/vnc.html`
 - **Interact with the simulation** — Set poses, launch scenarios, or play rosbags
 - **Stop the deployment** — Run `docker compose --env-file <sample>.env down`
 

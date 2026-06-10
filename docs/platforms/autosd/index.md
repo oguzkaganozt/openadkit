@@ -127,6 +127,9 @@ Otherwise, use the following sample QEMU command:
   -drive file=disk.qcow2,index=0,media=disk,format=qcow2,if=virtio,id=rootdisk,snapshot=off
 ```
 
+!!! note "Memory sizing"
+    The `-m 2G` value above is only enough to boot and explore the AutoSD OS image. Running the full Open AD Kit stack requires considerably more — see the [hardware requirements](../hardware/index.md) (16 GB minimum, 32 GB recommended) and raise `-m` accordingly.
+
 ## Architecture on AutoSD
 
 AutoSD's mixed-criticality architecture maps naturally to Open AD Kit's component model:

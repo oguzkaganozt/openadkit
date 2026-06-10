@@ -12,8 +12,13 @@ The localization component determines the vehicle's pose within the HD map by fu
 - **LiDAR localization** — Point cloud matching against the pre-built HD map
 - **Automatic pose initialization** — Initial pose estimation and reset handling
 - **EKF state estimation** — Gyro odometry fusion and multi-sensor state filtering
-- **Launch files available:** `tier4_localization_component.launch.xml`
-- **Typical resource usage:** CPU-based, memory usage scales with map size (typically 2–4 GB). No GPU required.
+- **Launch file:** `tier4_localization_component.launch.xml`
+
+Typical resource usage:
+
+- **CPU**: Moderate — runs entirely on CPU
+- **GPU**: Not required
+- **Memory**: Scales with map size (typically ~2–4 GB)
 
 ## Used In
 

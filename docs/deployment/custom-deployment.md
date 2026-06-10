@@ -18,7 +18,7 @@ The simplest useful deployment runs just planning and visualization:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz2 |
 | `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
 
 ### Full Simulation Stack
@@ -27,7 +27,7 @@ Add a simulator to test planning without real sensors:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz2 |
 | `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
 | `simulator` | `ghcr.io/autowarefoundation/openadkit:simulator` | Virtual vehicle and environment |
 
@@ -37,7 +37,7 @@ Run the complete Autoware pipeline with sensing and perception:
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
-| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz |
+| `visualizer` | `ghcr.io/autowarefoundation/openadkit:visualizer` | Browser-accessible RViz2 |
 | `sensing-perception` | `ghcr.io/autowarefoundation/openadkit:sensing-perception` | Sensor preprocessing and perception |
 | `localization-mapping` | `ghcr.io/autowarefoundation/openadkit:localization-mapping` | Localization and map serving |
 | `planning-control` | `ghcr.io/autowarefoundation/openadkit:planning-control` | Planning and control logic |
@@ -81,7 +81,7 @@ With host networking, the visualizer is reachable directly at `http://localhost:
 
 !!! warning "Patterns to keep"
     - Components are launched with `ros2 launch autoware_launch tier4_<component>_component.launch.xml component_wise_launch:=true ...` — there are no per-component ROS packages named after the images.
-    - Do **not** override the visualizer's `command`: its entrypoint starts the VNC/noVNC stack and RViz.
+    - Do **not** override the visualizer's `command`: its entrypoint starts the VNC/noVNC stack and RViz2.
     - All services need the same `RMW_IMPLEMENTATION` and `ROS_DOMAIN_ID` for DDS discovery; the samples use `network_mode: host` with CycloneDDS.
 
 !!! note "A runnable stack needs more services"

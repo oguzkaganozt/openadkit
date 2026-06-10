@@ -10,7 +10,7 @@ After starting the deployment, the CARLA server renders the `Town01` world and t
 - CARLA sensor data (LiDAR, cameras, IMU, GNSS) translated into Autoware ROS 2 messages
 - The full perception, localization, and planning pipeline operating on simulated sensors
 - Autoware control commands actuating the CARLA ego vehicle in closed loop
-- Full RViz visualization via the noVNC browser interface
+- Full RViz2 visualization via the noVNC browser interface
 
 ## Requirements
 
@@ -53,10 +53,10 @@ The helper script:
 - Downloads the official CARLA Autoware `Town01` map assets if missing
 - Starts the `carlasim/carla:0.9.16` server and preloads `Town01`
 - Starts the modular Open AD Kit containers (map, system, CARLA interface, sensing, perception, localization, planning, vehicle, control, API)
-- Starts the browser RViz/noVNC visualizer
+- Starts the browser RViz2/noVNC visualizer
 - Verifies localization, CARLA LiDAR data, and the CARLA ego actor
 
-The default behavior is **no-drive**: set a route and engage manually in RViz.
+The default behavior is **no-drive**: set a route and engage manually in RViz2.
 
 ## Access the Visualizer
 
@@ -73,7 +73,7 @@ ssh -L 8080:localhost:6080 <user>@<host>
 # then open http://localhost:8080/vnc.html
 ```
 
-In RViz:
+In RViz2:
 
 1. Use **2D Goal Pose** to set a route
 2. Wait for routing and planning to become available

@@ -136,7 +136,7 @@ graph LR
     A <-->|ROS 2 DDS| V
 ```
 
-## Related Documentation
+## Related
 
 - [Scenario test simulation](https://autowarefoundation.github.io/autoware-documentation/main/demos/scenario-simulation/scenario-simulator/scenario-test-simulation/) — Official Autoware scenario simulation guide
 - [Planning Simulation](../planning-simulation/index.md) — Simpler single-map simulation

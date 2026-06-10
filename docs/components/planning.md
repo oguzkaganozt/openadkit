@@ -20,7 +20,7 @@ The `planning-control` image includes the full Autoware planning and control sta
 - Motion planning with smooth, kinematically feasible trajectory generation
 - Goal planning for final approach, parking, and maneuvering near the destination
 - Emergency planning and fallback trajectory generation (MRM)
-- Launch file: `tier4_planning_component.launch.xml`
+- **Launch file:** `tier4_planning_component.launch.xml`
 
 Typical resource usage:
 

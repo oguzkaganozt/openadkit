@@ -60,8 +60,8 @@ For the EWAOL installation and runtime guide, see the upstream documentation:
 
 | Platform | Architecture | Status |
 |----------|--------------|--------|
-| ADLINK AADP-AVA | Arm64 (Ampere Altra, Neoverse N1) | Verified |
-| AWS EC2 Graviton | Arm64 (Neoverse N1 equivalent) | Runtime parity confirmed |
+| ADLINK AADP-AVA | arm64 (Ampere Altra, Neoverse N1) | Verified |
+| AWS EC2 Graviton | arm64 (Neoverse N1 equivalent) | Runtime parity confirmed |
 
 ## Related
 

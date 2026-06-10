@@ -104,7 +104,7 @@ Open a pull request against the `main` branch of the upstream repository. The PR
 
 ## Contribution Workflow Summary
 
-<div class="oak-steps">
+<div class="oak-steps" markdown="1">
 
 - **Fork** the repository on GitHub
 - **Clone** your fork and set up the development environment

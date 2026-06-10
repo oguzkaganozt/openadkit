@@ -11,8 +11,13 @@ The mapping component loads and serves HD map data to the rest of the Autoware s
 - **Occupancy grid mapping** — 2D grid-based environment representation construction
 - **Point cloud map construction** — 3D map building from LiDAR data
 - **Map transform management** — Coordinate frame transformations between map and vehicle frames
-- **Launch files available:** `tier4_map_component.launch.xml`
-- **Typical resource usage:** CPU-based, memory usage scales with map size (typically 2–4 GB for sample maps). No GPU required.
+- **Launch file:** `tier4_map_component.launch.xml`
+
+Typical resource usage:
+
+- **CPU**: Low — serves map data with minimal processing
+- **GPU**: Not required
+- **Memory**: Scales with map size (typically ~2–4 GB for sample maps)
 
 ## Used In
 

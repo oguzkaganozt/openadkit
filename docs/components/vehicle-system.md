@@ -13,7 +13,7 @@ The vehicle container provides the bridge between Autoware's generic control com
 - Vehicle actuation and state reporting
 - Raw vehicle command conversion (steering, throttle, brake, gear, turn signal)
 - Vehicle info parameter management (dimensions, limits, kinematics)
-- Launch file: `tier4_vehicle_launch/vehicle.launch.xml`
+- **Launch file:** `tier4_vehicle_launch/vehicle.launch.xml`
 
 ### System Services
 
@@ -23,7 +23,7 @@ The system container provides health monitoring, diagnostics, and orchestration:
 - Diagnostic aggregation and publishing
 - Emergency handling (MRM — Minimum Risk Maneuver)
 - System monitor for CPU, memory, and process health
-- Launch file: `tier4_system_component.launch.xml`
+- **Launch file:** `tier4_system_component.launch.xml`
 
 ### Difference Between Vehicle and System Services
 

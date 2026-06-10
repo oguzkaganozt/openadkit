@@ -20,7 +20,7 @@ The `simulator` image bundles the following capabilities:
 - **Map-based prediction** — Predictive modeling of agent behavior based on map topology
 - **Elevation map loading** — Ground elevation data handling for simulated environments
 - **Vehicle command conversion** — Raw vehicle command conversion and external command selection for simulation-specific control paths
-- **Launch file available**: `tier4_simulator_component.launch.xml`
+- **Launch file:** `tier4_simulator_component.launch.xml`
 
 Typical resource usage:
 

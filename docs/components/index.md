@@ -8,35 +8,28 @@ Autoware uses a **Core / Universe** architecture. **Core** contains rigorously r
 
 ## Build Pipeline
 
-<div class="oak-mermaid-dark oak-pipeline-diagram" markdown="1">
-
 ```mermaid
 flowchart TB
-    ROS["ros:humble-ros-base-jammy<br/>ros:jazzy-ros-base-noble"]:::rosBase --> CB["common-base"]:::commonBase
-    CB --> CD["common-devel"]:::commonBase
-
-    CD --> SP["sensing-perception"]:::componentImage
-    CD --> LM["localization-mapping"]:::componentImage
-    CD --> PC["planning-control"]:::componentImage
-    CD --> VS["vehicle-system"]:::componentImage
-    CD --> API["api"]:::componentImage
-    CD --> VIZ["visualizer"]:::componentImage
-    CD --> SIM["simulator"]:::componentImage
-    SIM --> CARLA["carla-interface"]:::componentImage
-
-    classDef rosBase fill:#334155,stroke:#64748b,color:#fff
-    classDef commonBase fill:#1e3a5f,stroke:#3b82f6,color:#fff
-    classDef componentImage fill:#14532d,stroke:#22c55e,color:#fff
+    ROS["ros:humble-ros-base-jammy<br/>ros:jazzy-ros-base-noble"] --> CB["common-base"]
+    CB --> CD["common-devel"]
+    CD --> SP["sensing-perception"]
+    CD --> LM["localization-mapping"]
+    CD --> PC["planning-control"]
+    CD --> VS["vehicle-system"]
+    CD --> API["api"]
+    CD --> VIZ["visualizer"]
+    CD --> SIM["simulator"]
+    SIM --> CARLA["carla-interface"]
 ```
-
-</div>
 
 ### Build Groups
 
 | Group | Description | Targets |
 |-------|-------------|---------|
 | `common` | Common base and development images | base, devel, base-cuda, devel-cuda |
-| `component` | Component images | sensing-perception, sensing-perception-cuda, localization-mapping, planning-control, vehicle-system, api, visualizer, simulator, carla-interface |
+| `component` | Component images | sensing-perception, sensing-perception-cuda, localization-mapping, planning-control, vehicle-system, api, visualizer, simulator |
+
+The `carla-interface` image is built separately, on top of the `simulator` image, and is not part of the `component` bake group.
 
 ## Interface Layers
 
@@ -98,7 +91,7 @@ Each Autoware function is packaged into a focused container image. Select a comp
 
 <div class="oak-component-item">
 <strong><a href="mapping/">Mapping</a></strong>
-<span>Occupancy grid and point cloud map construction.</span>
+<span>Loads and serves Lanelet2 vector maps and 3D point cloud maps.</span>
 </div>
 
 <div class="oak-component-item">
@@ -133,7 +126,7 @@ Each Autoware function is packaged into a focused container image. Select a comp
 
 <div class="oak-component-item">
 <strong><a href="visualizer/">Visualizer</a></strong>
-<span>Browser-accessible RViz via noVNC for remote monitoring.</span>
+<span>Browser-accessible RViz2 via noVNC for remote monitoring.</span>
 </div>
 
 <div class="oak-component-item">

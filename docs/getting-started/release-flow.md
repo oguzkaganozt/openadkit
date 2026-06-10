@@ -6,7 +6,7 @@ Published release details are listed on the [Releases](../releases/index.md) pag
 
 ## Release Process
 
-<div class="oak-steps">
+<div class="oak-steps" markdown="1">
 
 - **Build all images**
   Run `build-all-images` from `main`. Stable releases must use an Autoware `X.Y.Z` tag; pre-releases may use an Autoware tag or full 40-character SHA.
@@ -25,7 +25,8 @@ Published release details are listed on the [Releases](../releases/index.md) pag
 
 ```mermaid
 flowchart LR
-    A[Build All Images] --> B[Scan Images]
+    A[Build All Images] --> R[Record Build Tag]
+    R --> B[Scan Images]
     B --> C[Promote & Tag]
     C --> D[Update Aliases]
 ```
@@ -51,7 +52,7 @@ When a release workflow runs, the following tag aliases are updated:
 !!! info "Pre-Releases"
     Pre-release tags (e.g., `-rc.1`) are published but **do not update** latest stable aliases. This prevents prerelease images from being pulled by default aliases.
 
-## Related
+<h2 class="oak-eyebrow" id="related">Related</h2>
 
 - [Container Image Tags](image-tags.md) — Understanding the tag schema
 - [Getting Started](index.md) — Quick start guide

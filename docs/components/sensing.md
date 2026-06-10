@@ -12,8 +12,13 @@ The sensing component collects, preprocesses, and publishes data from the vehicl
 - **Ultrasonic sensing** — Short-range obstacle detection preprocessing
 - **GNSS-INS preprocessing** — Global positioning and inertial navigation data fusion
 - **Point cloud container** — Shared in-memory point cloud processing pipeline for efficient preprocessing
-- **Launch files available:** `tier4_sensing_component.launch.xml`
-- **Typical resource usage:** CPU-intensive without GPU; GPU strongly recommended for point cloud preprocessing. 4–8 GB RAM typical.
+- **Launch file:** `tier4_sensing_component.launch.xml`
+
+Typical resource usage:
+
+- **CPU**: High — point cloud preprocessing is CPU-intensive without a GPU
+- **GPU**: Strongly recommended for point cloud preprocessing (use the `sensing-perception-cuda` variant)
+- **Memory**: ~4–8 GB typical
 
 ## CUDA Variant
 

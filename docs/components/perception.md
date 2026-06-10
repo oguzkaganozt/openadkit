@@ -14,8 +14,13 @@ The perception component processes preprocessed sensor data to build an understa
 - **Cluster-based 3D detection** — Unsupervised LiDAR clustering for object detection
 - **Occupancy grid mapping** — 2D grid-based environment representation for navigation
 - **Traffic light recognition** — Camera-based traffic signal state detection
-- **Launch files available:** `tier4_perception_component.launch.xml`
-- **Typical resource usage:** Heavy GPU workload for neural network inference. 4 GB+ VRAM strongly recommended; falls back to CPU if GPU is unavailable with significantly degraded performance.
+- **Launch file:** `tier4_perception_component.launch.xml`
+
+Typical resource usage:
+
+- **CPU**: Moderate — used as a fallback when no GPU is available, with significantly degraded performance
+- **GPU**: Heavy — neural network inference; 4 GB+ VRAM strongly recommended (use the `sensing-perception-cuda` variant)
+- **Memory**: Scales with active detection models
 
 ## CUDA Variant
 

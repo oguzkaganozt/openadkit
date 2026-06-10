@@ -37,7 +37,7 @@ ghcr.io/autowarefoundation/openadkit
 
 ## Choosing a Tag
 
-<div class="oak-callout">
+<div class="oak-callout" markdown="1">
 
 **Production / reproducible deployments** — Use a stable release tag (`vX.Y.Z`).
 
@@ -45,21 +45,21 @@ ghcr.io/autowarefoundation/openadkit
 
 **Quick start / samples** — Use a default ROS distro alias (`<target>`).
 
-**Never pin to CI development aliases** (`amd64-*`) in committed deployment files — they are mutable and platform-specific.
+**Never pin to CI development aliases** (`*-amd64-*`) — Do not use mutable per-platform tags in committed deployment files.
 
 </div>
 
 ### Decision Flow
 
-```text
-Need fully reproducible deployment?
-├── Yes → Use stable release tag (vX.Y.Z)
-└── No → Need specific ROS distro?
-    ├── Yes → Use latest stable alias (<target>-<ros_distro>)
-    └── No → Use default alias (<target>)
+```mermaid
+flowchart TD
+    A[Need fully reproducible deployment?] -->|Yes| B[Use stable release tag<br>vX.Y.Z]
+    A -->|No| C[Need specific ROS distro?]
+    C -->|Yes| D[Use latest stable alias<br>&lt;target&gt;-&lt;ros_distro&gt;]
+    C -->|No| E[Use default alias<br>&lt;target&gt;]
 ```
 
-## Related
+<h2 class="oak-eyebrow" id="related">Related</h2>
 
 - [Getting Started](index.md) — Environment setup and first deployment
 - [Release Flow](release-flow.md) — How tags are created and promoted

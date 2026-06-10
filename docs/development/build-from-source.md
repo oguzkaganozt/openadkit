@@ -37,6 +37,8 @@ flowchart TB
 | `common` | `common-base`, `common-devel` (+ `-cuda` variants) | `ghcr.io/autowarefoundation/openadkit-common` |
 | `component` | `sensing-perception`, `localization-mapping`, `planning-control`, `vehicle-system`, `api`, `visualizer`, `simulator` (+ `sensing-perception-cuda`) | `ghcr.io/autowarefoundation/openadkit` |
 
+The `carla-interface` image is not part of the `component` group — it is built separately on top of the `simulator` image and published as `ghcr.io/autowarefoundation/openadkit:carla-interface`.
+
 ## Building
 
 Use the repository's [`build.sh`](https://github.com/autowarefoundation/openadkit/blob/main/build.sh) wrapper — it checks out the Autoware source tree (`git clone` + `vcs import` of `autoware.repos`) and then invokes Docker Bake with the right build context, base image, and tags. Building Bake directly will not work without that source tree (see the note below).

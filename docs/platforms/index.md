@@ -3,7 +3,7 @@
 As the Autoware Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle ecosystem, it tracks multiple platform directions aligned with cloud-native, software-defined vehicle principles.
 
 !!! abstract "SOAFEE and Open AD Kit"
-    The Autoware Foundation is a voting member of [SOAFEE](https://soafee.io/) (Scalable Open Architecture For the Embedded Edge). Open AD Kit was co-developed with SOAFEE and the [eSync Alliance](https://www.esyncalliance.com/) as the first blueprint, and has since seeded derived blueprints including DENSO's AVP blueprint and Red Hat's AutoSD blueprint.
+    The Autoware Foundation is a voting member of [SOAFEE](https://www.soafee.io/) (Scalable Open Architecture For the Embedded Edge). Open AD Kit was co-developed with SOAFEE and the [eSync Alliance](https://esyncalliance.org/) as the first blueprint, and has since seeded derived blueprints including DENSO's AVP blueprint and Red Hat's AutoSD blueprint.
 
     Read more about the [benefits of open standards in automotive development](https://www.soafee.io/blog/2025/the-benefits-of-open-standards-in-automotive-development/).
 

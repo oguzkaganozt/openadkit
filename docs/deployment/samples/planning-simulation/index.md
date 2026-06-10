@@ -5,7 +5,7 @@
 
 ## What You Will See
 
-After starting the deployment, you will access a noVNC-based RViz visualizer in your browser. From there you can:
+After starting the deployment, you will access a noVNC-based RViz2 visualizer in your browser. From there you can:
 
 - Set an initial pose for the ego vehicle
 - Set a goal pose on the map
@@ -67,12 +67,12 @@ Open your browser and navigate to:
 http://localhost:6080/vnc.html
 ```
 
-Use the default password **`openadkit`** to access the visualizer. The RViz interface may take a few additional seconds to fully load.
+Use the default password **`openadkit`** to access the visualizer. The RViz2 interface may take a few additional seconds to fully load.
 
 !!! tip "Remote Access"
     If running on a remote server, replace `localhost` with the server's IP address:
-    ```
-http://<your-server-ip>:6080/vnc.html
+    ```text
+    http://<your-server-ip>:6080/vnc.html
     ```
 
 ## Run the Simulation
@@ -96,7 +96,7 @@ docker compose --env-file planning-simulation.env down
 | Blank visualizer screen | Wait 10-30 seconds for containers to fully initialize, then refresh the browser |
 | `file not found` error | Re-run `./fetch-sample-data.sh planning-simulation` to (re)download the map into `~/autoware_map` |
 | Port 6080 in use | Modify the port mapping in `docker-compose.yaml` (e.g., `8080:6080`) |
-| Vehicle does not move after setting goal | Check that the initial pose is set correctly and the map is loaded in RViz |
+| Vehicle does not move after setting goal | Check that the initial pose is set correctly and the map is loaded in RViz2 |
 
 ## Architecture
 

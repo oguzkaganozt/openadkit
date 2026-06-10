@@ -19,7 +19,7 @@ The `planning-control` image includes the full Autoware planning and control sta
 - PID-based and MPC-based controller modes
 - Raw vehicle command conversion to vehicle-specific actuation limits
 - Emergency stop and external heartbeat monitoring
-- Launch file: `tier4_control_component.launch.xml`
+- **Launch file:** `tier4_control_component.launch.xml`
 
 Typical resource usage:
 

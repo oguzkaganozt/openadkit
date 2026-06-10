@@ -10,7 +10,7 @@ After starting the deployment and playing the rosbag, you will observe the Autow
 - Perception outputs (detected objects, lane boundaries) overlaid on the recorded scene
 - Localization estimates as the vehicle traverses the logged route
 - Planning and control outputs responding to the replayed environment
-- Full RViz visualization via the noVNC browser interface
+- Full RViz2 visualization via the noVNC browser interface
 
 ## Requirements
 
@@ -94,7 +94,7 @@ To begin replaying the recorded sensor data, start the rosbag container:
 docker compose --env-file logging-simulation.env up rosbag -d
 ```
 
-Watch the RViz display as Autoware processes the replayed data in real time.
+Watch the RViz2 display as Autoware processes the replayed data in real time.
 
 ## Stop the Deployment
 
@@ -126,7 +126,7 @@ flowchart LR
 
 ## Known Limitations
 
-The `rosbag` service in this deployment uses the upstream `ghcr.io/autowarefoundation/autoware:universe` image rather than an Open AD Kit component image. This is a temporary measure while Open AD Kit migrates from monolithic to component-based architecture. An OAK component image for rosbag playback will be available in a future release.
+The `rosbag` service in this deployment uses the upstream `ghcr.io/autowarefoundation/autoware:universe` image rather than an Open AD Kit component image. This is a temporary measure while Open AD Kit migrates from monolithic to component-based architecture. An Open AD Kit component image for rosbag playback will be available in a future release.
 
 ## Related
 
