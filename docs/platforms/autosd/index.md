@@ -135,7 +135,7 @@ AutoSD's mixed-criticality architecture maps naturally to Open AD Kit's componen
 
 <div class="oak-component-item">
 <strong>Root Partition</strong>
-<span>Safety-critical Open AD Kit components (planning, control, vehicle interface) run in the privileged root partition with RT scheduling.</span>
+<span>Open AD Kit components with higher criticality assumptions (planning, control, vehicle interface) map to the privileged root partition with RT scheduling.</span>
 </div>
 
 <div class="oak-component-item">

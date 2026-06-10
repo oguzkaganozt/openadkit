@@ -16,7 +16,7 @@ Published release details are listed on the [Releases](../releases/index.md) pag
 
 - **Scan the images**
   Ensure `scan-images` completes successfully for that `build_tag`. Scheduled builds request scans automatically; otherwise run `scan-images` manually.
-  Scans validate SBOMs and check for known CVEs.
+  Scans check images for known CVEs.
 
 - **Promote and tag**
   Run the `release` workflow with the Open AD Kit `version` and the validated `build_tag`. This promotes the scanned images to stable release tags and updates latest aliases.
@@ -44,8 +44,8 @@ When a release workflow runs, the following tag aliases are updated:
 
 | From | To | Example |
 |------|-----|---------|
-| Build tag | Stable release | `planning-control-humble-123456789-1` → `planning-control-humble-v1.0.0` |
-| Stable release | Latest alias | `planning-control-humble-v1.0.0` → `planning-control-humble` |
+| Build tag | Stable release | `planning-control-humble-123456789-1` → `planning-control-humble-v2.0.0` |
+| Stable release | Latest alias | `planning-control-humble-v2.0.0` → `planning-control-humble` |
 | Latest alias | Default alias | `planning-control-humble` → `planning-control` |
 
 !!! info "Pre-Releases"

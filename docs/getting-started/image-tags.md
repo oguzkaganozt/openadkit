@@ -6,17 +6,17 @@ Open AD Kit publishes images to the GitHub Container Registry (`ghcr.io/autoware
 
 | Tag Pattern | Example | Description |
 |-------------|---------|-------------|
-| **Stable release** | `planning-control-humble-v1.0.0` | Immutable release tag. Use this when you need a fully reproducible deployment. |
+| **Stable release** | `planning-control-humble-v2.0.0` | Immutable release tag. Use this when you need a fully reproducible deployment. |
 | **Latest stable alias** | `planning-control-humble` | Always resolves to the latest stable release for the specified ROS distro. |
 | **Latest stable + suffix** | `planning-control-humble-latest` | Same as above, explicit. |
 | **Default ROS distro alias** | `planning-control` | Convenience alias that resolves to the current default ROS distro (Humble). |
 | **Default + latest suffix** | `planning-control-latest` | Explicit default-distro latest alias. |
 | **Immutable build tag** | `planning-control-humble-123456789-1` | Pin to a specific CI build. Format: `<target>-<ros_distro>-<run_id>-<run_attempt>`. |
 | **CI development alias** | `planning-control-amd64-humble` | Per-platform mutable tag used during CI. **Do not use for pinned deployments.** |
-| **Pre-release** | `planning-control-humble-v1.0.0-rc.1` | Pre-release tag for testing. Pre-releases do not update latest stable aliases. |
+| **Pre-release** | `planning-control-humble-v2.0.0-rc.1` | Pre-release tag for testing. Pre-releases do not update latest stable aliases. |
 
 !!! note "ROS 2 distributions"
-    Examples use **Humble** (the current default). **Jazzy** images are published in parallel — substitute `-jazzy` for `-humble` in any tag (e.g. `planning-control-jazzy`, `planning-control-jazzy-v1.0.0`).
+    Examples use **Humble** (the current default). **Jazzy** images are published in parallel — substitute `-jazzy` for `-humble` in any tag (e.g. `planning-control-jazzy`, `planning-control-jazzy-v2.0.0`).
 
 ## CUDA Images
 
@@ -24,7 +24,7 @@ CUDA-enabled variants follow the same patterns but are **amd64-only**:
 
 | Tag Pattern | Example |
 |-------------|---------|
-| Stable release | `sensing-perception-cuda-humble-v1.0.0` |
+| Stable release | `sensing-perception-cuda-humble-v2.0.0` |
 | Latest alias | `sensing-perception-cuda-humble` |
 
 ## Common Prefix

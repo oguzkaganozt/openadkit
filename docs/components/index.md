@@ -145,14 +145,14 @@ Each Autoware function is packaged into a focused container image. Select a comp
 
 ## Open AD Kit Roadmap
 
-Open AD Kit tracks Autoware's architecture evolution upstream, but its own roadmap is focused on **containerization, platform support, and CI/CD** rather than on the autonomy algorithms themselves. The goal is to package whatever Autoware ships into clean, composable, production-ready images.
+Open AD Kit tracks Autoware's architecture evolution upstream, but its own roadmap is focused on **deployment** — containerization, platform support, release trust, and CI/CD — rather than on the autonomy algorithms themselves. The goal is to package whatever Autoware ships into clean, composable, deployment-ready images.
 
-!!! note "Placeholder"
-    A detailed Open AD Kit roadmap is being prepared. Current focus areas include:
+!!! note "Roadmap"
+    The 2026–2027 Open AD Kit roadmap is being ratified through the Open AD Kit working group (June 2026) and will be published in this repository. Current focus areas include:
 
     - **Containerization** — Splitting the monolithic stack into focused component images and retiring `autoware:universe` fallbacks (see deployment *Known Limitations*).
     - **Platform support** — Expanding verified coverage across edge and cloud targets (see [Platforms](../platforms/index.md)).
-    - **CI/CD** — Multi-architecture builds, image scanning, and a reproducible release flow (see [Release Flow](../getting-started/release-flow.md)).
+    - **Release trust and CI/CD** — Multi-architecture builds, image scanning, and a reproducible release flow (see [Release Flow](../getting-started/release-flow.md)).
 
 For Autoware's upstream autonomy direction, see the [Autoware architecture documentation](https://autowarefoundation.github.io/autoware-documentation/main/design/).
 
