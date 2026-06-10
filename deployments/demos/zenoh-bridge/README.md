@@ -44,7 +44,12 @@ docker compose up -d
 
 ## Teleoperation Controls
 
-Launch the teleop interface with `./run_teleop.sh`.
+The teleop backend only runs when the cloud side is started with `--with-teleop`:
+
+```bash
+./cloud.sh up --with-teleop -d
+./run_teleop.sh
+```
 
 | Key | Function |
 |-----|----------|

@@ -603,13 +603,17 @@ jobs:
             "planning-simulation:src/deployments/samples/planning-simulation" \
             "scenario-simulation:src/deployments/samples/scenario-simulation" \
             "logging-simulation:src/deployments/samples/logging-simulation" \
+            "carla-simulation:src/deployments/samples/carla-simulation" \
             "zenoh-bridge:src/deployments/demos/zenoh-bridge"; do
             name="${entry%%:*}"
             dir="${entry#*:}"
             rm -rf "staging/${name}"
             cp -a "${dir}" "staging/${name}"
-            cp "${fetch}" "staging/${name}/fetch-sample-data.sh"
-            chmod +x "staging/${name}/fetch-sample-data.sh"
+            # carla-simulation downloads its own assets via start-carla-e2e-demo.sh
+            if [ "${name}" != "carla-simulation" ]; then
+              cp "${fetch}" "staging/${name}/fetch-sample-data.sh"
+              chmod +x "staging/${name}/fetch-sample-data.sh"
+            fi
             tar -C staging -czf "dist/${name}.tar.gz" "${name}"
             echo "packaged dist/${name}.tar.gz"
           done

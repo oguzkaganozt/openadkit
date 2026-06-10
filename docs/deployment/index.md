@@ -35,6 +35,7 @@ Deployments are defined using container orchestration files (typically `docker-c
 | [Planning Simulation](samples/planning-simulation/index.md) | Sample | Run Autoware planning stack with a sample map | Single machine |
 | [Scenario Simulation](samples/scenario-simulation/index.md) | Sample | Execute predefined scenarios with TIER IV Scenario Simulator | Single machine |
 | [Logging Simulation](samples/logging-simulation/index.md) | Sample | Replay recorded sensor data (rosbag) through the AD stack | Single machine |
+| [CARLA Simulation](samples/carla-simulation/index.md) | Sample | Closed-loop end-to-end simulation with the CARLA simulator | Single machine |
 | [Zenoh Bridge](demos/zenoh-bridge/index.md) | Demo | Distributed cloud-edge visualization with ROS 2 bridging | Multi-machine |
 
 ## Architecture

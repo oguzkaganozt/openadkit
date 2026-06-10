@@ -3,3 +3,4 @@ nav:
   - planning-simulation
   - scenario-simulation
   - logging-simulation
+  - carla-simulation

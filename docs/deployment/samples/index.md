@@ -36,6 +36,16 @@ Sample deployments are self-contained configurations designed for **learning, de
 <a href="logging-simulation/" class="md-button">Run Logging Simulation</a>
 </div>
 
+<div class="oak-card" markdown="1">
+
+:material-car-sports:{ .oak-card-icon }
+
+<h3>CARLA Simulation</h3>
+<p>Closed-loop end-to-end simulation with the CARLA 0.9.16 simulator. The full Autoware stack perceives and drives a CARLA ego vehicle in a photorealistic world.</p>
+<p><span class="oak-badge oak-badge--neutral">Single Machine</span> <span class="oak-badge oak-badge--recommended">GPU Required</span></p>
+<a href="carla-simulation/" class="md-button">Run CARLA Simulation</a>
+</div>
+
 </div>
 
 ## Before You Start

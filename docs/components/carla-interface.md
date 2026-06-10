@@ -2,10 +2,7 @@
 
 ## Overview
 
-!!! info "Availability"
-    The `carla-interface` image is being added in **PR #73** and is not yet available in the current release.
-
-The `carla-interface` image packages the `autoware_carla_interface` bridge, enabling **closed-loop end-to-end simulation** with the [CARLA](https://carla.org/) simulator. It acts as a bidirectional gateway between Autoware and CARLA: translating Autoware control outputs into CARLA ego vehicle commands, and converting CARLA sensor data into Autoware-compatible ROS 2 messages. This allows the full Autoware stack to drive and perceive within a photorealistic CARLA world.
+The `carla-interface` image packages the `autoware_carla_interface` bridge, enabling **closed-loop end-to-end simulation** with the [CARLA](https://carla.org/) simulator. It is built on top of the `simulator` image and published as `ghcr.io/autowarefoundation/openadkit:carla-interface`. It acts as a bidirectional gateway between Autoware and CARLA: translating Autoware control outputs into CARLA ego vehicle commands, and converting CARLA sensor data into Autoware-compatible ROS 2 messages. This allows the full Autoware stack to drive and perceive within a photorealistic CARLA world.
 
 ## What This Image Contains
 
@@ -32,7 +29,7 @@ Typical resource usage:
 
 ## Used In
 
-- CARLA-based deployments (e.g., `carla-simulation` sample) — Connects the full Autoware stack to the CARLA simulator for end-to-end autonomous driving simulation
+- [CARLA Simulation](../deployment/samples/carla-simulation/index.md) — Connects the full Autoware stack to the CARLA simulator for end-to-end autonomous driving simulation
 
 ## Related
 

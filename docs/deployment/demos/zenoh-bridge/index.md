@@ -82,8 +82,8 @@ graph TD
 
 ### Zenoh Bridge Configuration
 
-- **`cloud_zenoh_bridge`** — Acts as a **Router**, listening for client connections. In recent versions of `zenoh-bridge-ros2dds` (v0.11.0+), the default listen port is **TCP 7447**.
-- **`edge_zenoh_bridge`** — Acts as a **Client**, connecting to the cloud router via `zenoh_net`. It scans ROS 2 topics in `edge_net`, converts them to Zenoh, and forwards to the router.
+- **`cloud_zenoh_bridge`** — Acts as a **Router**, listening for client connections on **TCP 7448** (configured via `-l tcp/0.0.0.0:7448` in `docker-compose.yaml`).
+- **`edge_zenoh_bridge`** — Acts as a **Client**, connecting to the cloud router on port `7448` via `zenoh_net` (or `${CLOUD_IP}:7448` in multi-machine setups). It scans ROS 2 topics in `edge_net`, converts them to Zenoh, and forwards to the router. Its own local listener uses TCP 7447.
 - **`config/zenoh-bridge-ros2dds.json5`** — Defines bridge mode, endpoints, and topic filtering rules. Filtering allows precise bandwidth control by excluding high-frequency or irrelevant topics.
 
 !!! warning "Prevent DDS Cross-Traffic"
@@ -246,6 +246,47 @@ docker compose down
 
 The map is mounted read-only from `~/autoware_map/kashiwanoha_map` on the host, so stopping the stack leaves it untouched. Re-fetch it any time with `./fetch-sample-data.sh zenoh-bridge`.
 
+## Teleoperation (Optional)
+
+A containerized terminal-based teleoperation interface lets you drive the vehicle manually from the cloud side.
+
+### 1. Start the Teleop Backend
+
+The teleop service only starts when the cloud side is launched with `--with-teleop`:
+
+```bash
+./cloud.sh up --with-teleop -d
+```
+
+For the edge side, the default simulation mode works, but pure control testing without scenario interference is cleaner with `--no-sim`:
+
+```bash
+./edge.sh --no-sim up -d
+```
+
+### 2. Launch the Interface
+
+```bash
+./run_teleop.sh
+```
+
+### 3. Controls
+
+| Key | Function | Description |
+|-----|----------|-------------|
+| **W** | Throttle | Accelerate |
+| **S** | Brake | Decelerate |
+| **A** | Turn Left | Steer left |
+| **D** | Turn Right | Steer right |
+| **Z** | Auto/Local | **Toggle control mode** (must be in Local/External to drive) |
+| **M** | Switch Mode | Cycle modes: `STOP` → `PHYSICS` → `CRUISE` |
+| **X** | Gear: Drive | Shift to Drive (D) |
+| **C** | Gear: Reverse | Shift to Reverse (R) |
+| **V** | Gear: Park | Shift to Park (P) |
+| **Space** | Emergency Stop | Immediate max braking / resume |
+| **R** | Reset Pose | Reset to initial position |
+| **Q** | Quit | Exit the interface |
+
 ## Troubleshooting
 
 ### Visualizer Shows "Global Status: Warning" or Blank Screen
@@ -270,7 +311,7 @@ The map is mounted read-only from `~/autoware_map/kashiwanoha_map` on the host, 
 
 ### Port Conflict (Port is already allocated)
 
-**Cause:** Ports `6081` or `7447`/`7448` are in use.
+**Cause:** Ports `6081` (noVNC), `7448` (cloud Zenoh router), or `7447` (edge Zenoh bridge) are in use.
 
 **Solution:** Stop the conflicting program, or modify `docker-compose.yaml`. For example, change `6081:6080` to `8080:6080` and access via `http://localhost:8080`.
 

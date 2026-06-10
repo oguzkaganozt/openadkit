@@ -32,9 +32,9 @@ The following environment variables can be configured when launching the visuali
 
 | Variable | Default Value | Possible Values | Description |
 |----------|---------------|-----------------|-------------|
-| `RVIZ_CONFIG` | `/autoware/rviz/autoware.rviz` | Any valid path | The full path to the RViz configuration file inside the container |
+| `RVIZ_CONFIG` | `/opt/autoware/share/autoware_launch/rviz/autoware.rviz` | Any valid path | The full path to the RViz configuration file inside the container |
 | `REMOTE_DISPLAY` | `true` | `true`, `false` | **(Recommended)** Browser-based RViz display accessible from any device. Set to `false` to launch a local RViz2 display |
-| `REMOTE_PASSWORD` | — (required) | Any string without special characters | Password for the remote display (only used when `REMOTE_DISPLAY=true`); the container exits if unset |
+| `REMOTE_PASSWORD` | — (required) | Any string without special characters | Password for the remote display. Required when `REMOTE_DISPLAY=true` (the default); the container exits if unset |
 
 ## Used In
 

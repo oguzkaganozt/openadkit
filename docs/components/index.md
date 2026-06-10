@@ -22,6 +22,7 @@ flowchart TB
     CD --> API["api"]:::componentImage
     CD --> VIZ["visualizer"]:::componentImage
     CD --> SIM["simulator"]:::componentImage
+    SIM --> CARLA["carla-interface"]:::componentImage
 
     classDef rosBase fill:#334155,stroke:#64748b,color:#fff
     classDef commonBase fill:#1e3a5f,stroke:#3b82f6,color:#fff
@@ -35,7 +36,7 @@ flowchart TB
 | Group | Description | Targets |
 |-------|-------------|---------|
 | `common` | Common base and development images | base, devel, base-cuda, devel-cuda |
-| `component` | Component images | sensing-perception, sensing-perception-cuda, localization-mapping, planning-control, vehicle-system, api, visualizer, simulator |
+| `component` | Component images | sensing-perception, sensing-perception-cuda, localization-mapping, planning-control, vehicle-system, api, visualizer, simulator, carla-interface |
 
 ## Interface Layers
 

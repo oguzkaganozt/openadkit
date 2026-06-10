@@ -49,28 +49,43 @@ Run the complete Autoware pipeline with sensing and perception:
 
 ## Example Compose File
 
-Here is a minimal `docker-compose.yaml` for a Planning Simulation-like stack:
+Here is a minimal `docker-compose.yaml` showing the two essential patterns — an Autoware component launched via its `autoware_launch` per-component launch file, and the visualizer running its built-in noVNC entrypoint:
 
 ```yaml
 services:
-  planning-control:
+  planning:
     image: ghcr.io/autowarefoundation/openadkit:planning-control
-    volumes:
-      - ~/autoware_map:/autoware_map:ro
+    network_mode: host
+    ipc: host
     environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=0
     command: >
-      ros2 launch tier4_planning_component tier4_planning_component.launch.xml
+      ros2 launch autoware_launch tier4_planning_component.launch.xml
+      component_wise_launch:=true
+      use_sim_time:=true
+      vehicle_model:=sample_vehicle
 
   visualizer:
     image: ghcr.io/autowarefoundation/openadkit:visualizer
-    ports:
-      - "6080:6080"
+    network_mode: host
+    ipc: host
     environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=0
-    command: >
-      ros2 launch tier4_visualizer_component tier4_visualizer_component.launch.xml
+      - REMOTE_PASSWORD=openadkit # required — the container exits if unset
+      - USE_SIM_TIME=true
 ```
+
+With host networking, the visualizer is reachable directly at `http://localhost:6080/vnc.html`.
+
+!!! warning "Patterns to keep"
+    - Components are launched with `ros2 launch autoware_launch tier4_<component>_component.launch.xml component_wise_launch:=true ...` — there are no per-component ROS packages named after the images.
+    - Do **not** override the visualizer's `command`: its entrypoint starts the VNC/noVNC stack and RViz.
+    - All services need the same `RMW_IMPLEMENTATION` and `ROS_DOMAIN_ID` for DDS discovery; the samples use `network_mode: host` with CycloneDDS.
+
+!!! note "A runnable stack needs more services"
+    A planning stack that actually does something also needs map serving, a simulator or vehicle interface, system services, and the API container. Use the [planning-simulation `docker-compose.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/deployments/samples/planning-simulation/docker-compose.yaml) as the reference and prune from there.
 
 ## Environment Configuration
 

@@ -1,9 +1,7 @@
-docs/** @RyohaMitsudome @oguzkaganozt
-components/** @RyohaMitsudome @oguzkaganozt
-deployments/** @RyohaMitsudome @oguzkaganozt
+docs/** @mitsudome-r @oguzkaganozt
+components/** @mitsudome-r @oguzkaganozt
+deployments/** @mitsudome-r @oguzkaganozt
+platforms/** @mitsudome-r @oguzkaganozt
 
-.devcontainer/** @oguzkaganozt @yutakondo
-.github/** @oguzkaganozt @yutakondo
-ansible/** @oguzkaganozt @yutakondo
-docker/** @oguzkaganozt @yutakondo
-mkdocs.yaml @RyohaMitsudome @oguzkaganozt
+.github/** @oguzkaganozt @youtalk
+mkdocs.yaml @mitsudome-r @oguzkaganozt
