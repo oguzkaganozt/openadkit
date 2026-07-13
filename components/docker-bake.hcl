@@ -200,7 +200,14 @@ target "sensing-perception-cuda" {
 }
 
 target "carla-interface" {
-  inherits = ["docker-metadata-action-carla-interface"]
+  inherits   = ["docker-metadata-action-carla-interface"]
   dockerfile = "components/carla-interface/Dockerfile"
-  target = "carla-interface"
+  target     = "carla-interface"
+  contexts = {
+    simulator = ctx("simulator")
+  }
+  args = {
+    SIMULATOR_IMAGE = "simulator"
+    ROS_DISTRO      = ROS_DISTRO
+  }
 }
