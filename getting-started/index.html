@@ -2169,6 +2169,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="2. Get the Deployment Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-checkout-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source checkout files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-bundle-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release bundle files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2179,6 +2207,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="3. Start It">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-the-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start the source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-the-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start the release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2256,8 +2312,8 @@
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
 <span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
 <span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/b15e36344b3cdab583b82d0cc9cf693900308486/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;0229f9b716e3adba1e33f11ec6545d8f346c1aae8c88fdd81f655e04273c2bce&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
+<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
 <span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
 <span class="o">)</span>
 install_openadkit
@@ -2266,24 +2322,30 @@ install_openadkit
 <p class="admonition-title">Skip NVIDIA Toolkit</p>
 <p>Append <code>--no-nvidia</code> to the final command (<code>install_openadkit --no-nvidia</code>) if you do not have an NVIDIA GPU. The toolkit is only needed for GPU-accelerated deployments.</p>
 </div>
+<p>Activate the Docker group membership added by the installer before running
+Docker without <code>sudo</code>. Either log out and back in, or run:</p>
+<div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
+</code></pre></div>
 <p>Confirm the environment is ready:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>version
 </code></pre></div>
 <h2 id="2-get-the-deployment-files">2. Get the Deployment Files<a class="headerlink" href="#2-get-the-deployment-files" title="Permanent link">#</a></h2>
+<h3 id="source-checkout-files">Source checkout files<a class="headerlink" href="#source-checkout-files" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
 <span class="nb">cd</span><span class="w"> </span>openadkit/deployments/planning-simulation
+../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
 </code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Prefer a release bundle?</p>
-<p>Once a release is published, you can download a self-contained <code>.tar.gz</code> instead of cloning:
-<code>curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz | tar xz</code>
-Bundles include <code>install.sh</code> and a merged env file so every command runs from the extracted directory. See each <a href="../deployment/">deployment page</a> for details.</p>
-</div>
-<p>Then fetch the demo map (~500 MB download):</p>
-<div class="highlight"><pre><span></span><code>../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
+<h3 id="release-bundle-files">Release bundle files<a class="headerlink" href="#release-bundle-files" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz
+<span class="nb">cd</span><span class="w"> </span>planning-simulation
+./install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
 </code></pre></div>
 <h2 id="3-start-it">3. Start It<a class="headerlink" href="#3-start-it" title="Permanent link">#</a></h2>
+<h3 id="start-the-source-checkout">Start the source checkout<a class="headerlink" href="#start-the-source-checkout" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<h3 id="start-the-release-bundle">Start the release bundle<a class="headerlink" href="#start-the-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 <p>Wait about 10 seconds for the containers to initialize.</p>
 <h2 id="access-the-visualizer">Access the Visualizer<a class="headerlink" href="#access-the-visualizer" title="Permanent link">#</a></h2>
@@ -2308,14 +2370,6 @@ Bundles include <code>install.sh</code> and a merged env file so every command r
 </ol>
 <p>That's it — you are running Autoware. The full guide with configuration, architecture, and cloned-repo usage is at <a href="../deployment/planning-simulation/">Planning Simulation</a>.</p>
 <p>If something goes wrong, see <a href="troubleshooting/">Troubleshooting</a>.</p>
-<div class="admonition tip">
-<p class="admonition-title">Release Bundles</p>
-<p>Once a release is published, you can download a self-contained bundle and skip the <code>git clone</code>:
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz
-<span class="nb">cd</span><span class="w"> </span>planning-simulation
-</code></pre></div>
-The bundle includes <code>install.sh</code> and a merged env file, so every command runs from the extracted directory.</p>
-</div>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <p><strong><a href="../deployment/">Explore the other deployments</a></strong> — scenario testing, rosbag replay, closed-loop CARLA, and distributed cloud-edge operation with Zenoh.</p>
 <ul>

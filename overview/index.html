@@ -2437,6 +2437,10 @@
 </div>
 <h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
 <p>Open AD Kit runs Autoware as a pipeline of containerized components. Each container handles one stage of autonomous driving, and the stages communicate over ROS 2 DDS on the host network:</p>
+<p>Single-host deployments bind CycloneDDS to loopback by default. Set
+<code>CYCLONEDDS_NETWORK_INTERFACE</code> to an exact LAN or VPN interface name only when
+cross-host DDS is required. <code>ROS_DOMAIN_ID</code> separates domains but does not
+provide authentication or encryption.</p>
 <ol>
 <li><a href="../components/sensing-perception/"><strong>Sensing</strong></a> captures and preprocesses raw sensor data (LiDAR, camera, IMU).</li>
 <li><a href="../components/sensing-perception/"><strong>Perception</strong></a> detects and tracks objects, traffic lights, and drivable space.</li>
@@ -2446,7 +2450,7 @@
 <li><a href="../components/planning-control/"><strong>Control</strong></a> converts that trajectory into throttle, brake, and steering commands.</li>
 <li><a href="../components/vehicle-system/"><strong>Vehicle System</strong></a> bridges those commands to the actual vehicle or simulator.</li>
 </ol>
-<p>A <strong>deployment</strong> is a Docker Compose file that starts the subset of these containers needed for a specific task — for example, planning simulation starts only planning, control, and visualization, while logging simulation adds sensing and perception to replay real sensor data. For the full picture, see <a href="../components/">Components</a> and <a href="../deployment/">Deployment</a>.</p>
+<p>A <strong>deployment</strong> combines the shared base services with task-specific overrides. Planning Simulation uses the base map, planning, vehicle, system, control, simulator, API, and visualizer services; Logging Simulation adds sensing, perception, and localization for recorded sensor data. For the full picture, see <a href="../components/">Components</a> and <a href="../deployment/">Deployment</a>.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../getting-started/">Getting Started</a> — Set up your environment</li>

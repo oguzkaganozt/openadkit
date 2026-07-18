@@ -803,10 +803,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#perception-is-very-slow" class="md-nav__link">
+  <a href="#perception-is-very-slow-or-the-gpu-overlay-does-not-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Perception is very slow
+        Perception is very slow or the GPU overlay does not start
       
     </span>
   </a>
@@ -2400,10 +2400,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#perception-is-very-slow" class="md-nav__link">
+  <a href="#perception-is-very-slow-or-the-gpu-overlay-does-not-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Perception is very slow
+        Perception is very slow or the GPU overlay does not start
       
     </span>
   </a>
@@ -2533,15 +2533,15 @@
 <li>Restart Docker: <code>sudo systemctl restart docker</code></li>
 <li>Check GPU availability: <code>nvidia-smi</code></li>
 </ul>
-<h3 id="perception-is-very-slow">Perception is very slow<a class="headerlink" href="#perception-is-very-slow" title="Permanent link">#</a></h3>
+<h3 id="perception-is-very-slow-or-the-gpu-overlay-does-not-start">Perception is very slow or the GPU overlay does not start<a class="headerlink" href="#perception-is-very-slow-or-the-gpu-overlay-does-not-start" title="Permanent link">#</a></h3>
 <ul>
-<li>The sensing and perception pipeline is falling back to CPU. Install the NVIDIA Container Toolkit (<code>install.sh</code> does this by default) and, for Logging Simulation, start with the GPU overlay described on that page.</li>
+<li>The default sensing and perception image runs on CPU. For GPU acceleration, install the NVIDIA Container Toolkit (<code>install.sh</code> does this by default) and start Logging Simulation with its GPU overlay. The CUDA image requires a working NVIDIA runtime and does not automatically fall back to CPU.</li>
 </ul>
 <h2 id="deployment-issues">Deployment Issues<a class="headerlink" href="#deployment-issues" title="Permanent link">#</a></h2>
 <h3 id="visualizer-shows-blank-screen">Visualizer shows blank screen<a class="headerlink" href="#visualizer-shows-blank-screen" title="Permanent link">#</a></h3>
 <ul>
 <li>Wait 10–30 seconds for containers to fully initialize</li>
-<li>Check container logs: <code>docker compose --env-file &lt;deployment&gt;.env logs -f</code> (replace <code>&lt;deployment&gt;</code> with the actual env file name, e.g. <code>planning-simulation.env</code>)</li>
+<li>From a source checkout, check container logs with both env files: <code>docker compose --env-file ../base/base.env --env-file &lt;deployment&gt;.env logs -f</code>. From a release bundle, use only its merged env file: <code>docker compose --env-file &lt;deployment&gt;.env logs -f</code>.</li>
 <li>Verify all required map files are present</li>
 </ul>
 <h3 id="port-6080-or-6081-already-in-use">Port 6080 or 6081 already in use<a class="headerlink" href="#port-6080-or-6081-already-in-use" title="Permanent link">#</a></h3>
@@ -2550,7 +2550,7 @@
 </ul>
 <h3 id="sample-data-file-not-found">Sample data <code>file not found</code><a class="headerlink" href="#sample-data-file-not-found" title="Permanent link">#</a></h3>
 <ul>
-<li>Re-run the fetch with <code>--force</code> from the deployment directory: <code>./install.sh sample-data &lt;deployment&gt; --force</code> (e.g. <code>planning-simulation</code>). Data lands in <code>~/autoware_map</code>.</li>
+<li>From a source checkout, re-run the fetch from the deployment directory with <code>../../install.sh sample-data &lt;deployment&gt; --force</code>. From a release bundle, use <code>./install.sh sample-data &lt;deployment&gt; --force</code>. Data lands in <code>~/autoware_map</code>.</li>
 </ul>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">#</a></h2>
 <ul>

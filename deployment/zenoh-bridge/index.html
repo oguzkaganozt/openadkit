@@ -2712,11 +2712,15 @@
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
 <span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
 <span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/b15e36344b3cdab583b82d0cc9cf693900308486/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;0229f9b716e3adba1e33f11ec6545d8f346c1aae8c88fdd81f655e04273c2bce&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
+<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
 <span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
 <span class="o">)</span>
 install_openadkit
+</code></pre></div>
+<p>Activate the Docker group membership added by the installer before running
+Docker without <code>sudo</code>. Either log out and back in, or run:</p>
+<div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
 </code></pre></div>
 <h3 id="2-clone-the-repository-and-download-the-demo-map">2. Clone the repository and download the demo map<a class="headerlink" href="#2-clone-the-repository-and-download-the-demo-map" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
@@ -2851,7 +2855,7 @@ cp<span class="w"> </span>.env.example<span class="w"> </span>.env
 <span class="c1"># Stop everything</span>
 docker<span class="w"> </span>compose<span class="w"> </span>down
 </code></pre></div>
-<p>The map is mounted read-only from <code>~/autoware_map/kashiwanoha_map</code> on the host, so stopping the stack leaves it untouched. Re-fetch it any time with <code>./install.sh sample-data zenoh-bridge --force</code>.</p>
+<p>The map is mounted read-only from <code>~/autoware_map/kashiwanoha_map</code> on the host, so stopping the stack leaves it untouched. From a source checkout, re-fetch it with <code>../../install.sh sample-data zenoh-bridge --force</code>; from a release bundle, use <code>./install.sh sample-data zenoh-bridge --force</code>.</p>
 <h2 id="teleoperation-optional">Teleoperation (Optional)<a class="headerlink" href="#teleoperation-optional" title="Permanent link">#</a></h2>
 <p>A containerized terminal-based teleoperation interface lets you drive the vehicle manually from the cloud side.</p>
 <h3 id="1-start-the-teleop-backend">1. Start the Teleop Backend<a class="headerlink" href="#1-start-the-teleop-backend" title="Permanent link">#</a></h3>
@@ -2938,31 +2942,35 @@ docker<span class="w"> </span>compose<span class="w"> </span>down
 </table>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
 <h3 id="visualizer-shows-global-status-warning-or-blank-screen">Visualizer Shows "Global Status: Warning" or Blank Screen<a class="headerlink" href="#visualizer-shows-global-status-warning-or-blank-screen" title="Permanent link">#</a></h3>
-<p><strong>Cause:</strong> Race condition where ROS 2 nodes start before the Zenoh bridge connection is fully established. <code>depends_on</code> helps but does not guarantee readiness.</p>
+<p><strong>Cause:</strong> The bounded <code>cloud_zenoh_ready</code> or <code>edge_zenoh_ready</code> check could not
+reach its required Zenoh listener before <code>ZENOH_READY_TIMEOUT</code> expired.</p>
 <p><strong>Solutions:</strong></p>
 <ol>
 <li>
-<p><strong>Restart:</strong></p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>restart
+<p><strong>Inspect readiness logs:</strong></p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>cloud_zenoh_ready<span class="w"> </span>edge_zenoh_ready
 </code></pre></div>
 </li>
 <li>
-<p><strong>Staged Startup:</strong> Start the cloud side first, wait, then start the edge side.</p>
+<p><strong>Verify ordering and connectivity:</strong> Start the cloud side first, then start
+   the edge side. The edge readiness check verifies both bridge listeners before
+   Autoware starts.</p>
 <div class="highlight"><pre><span></span><code>./cloud.sh<span class="w"> </span>up<span class="w"> </span>-d
-sleep<span class="w"> </span><span class="m">15</span>
 ./edge.sh<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 </li>
 </ol>
 <h3 id="port-conflict-port-is-already-allocated">Port Conflict (Port is already allocated)<a class="headerlink" href="#port-conflict-port-is-already-allocated" title="Permanent link">#</a></h3>
 <p><strong>Cause:</strong> Ports <code>6081</code> (noVNC), <code>7448</code> (cloud Zenoh router), or <code>7447</code> (edge Zenoh bridge) are in use.</p>
-<p><strong>Solution:</strong> Stop the conflicting program, or modify <code>docker-compose.yaml</code>. For example, change <code>6081:6080</code> to <code>8080:6080</code> and access via <code>https://localhost:8080/vnc.html</code>.</p>
+<p><strong>Solution:</strong> Stop the conflicting program, or modify <code>docker-compose.yaml</code>. For example, change <code>127.0.0.1:6081:6080</code> to <code>127.0.0.1:8080:6080</code> and access via <code>https://localhost:8080/vnc.html</code>.</p>
 <h3 id="container-fails-to-start-with-file-not-found">Container Fails to Start with <code>file not found</code><a class="headerlink" href="#container-fails-to-start-with-file-not-found" title="Permanent link">#</a></h3>
 <p><strong>Cause:</strong> <code>config/zenoh-bridge-ros2dds.json5</code> is missing or inaccessible.</p>
 <p><strong>Solution:</strong> Verify the <code>config</code> directory and file exist. On Linux/macOS, check file permissions to ensure Docker can read them.</p>
 <h2 id="known-limitations">Known Limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <p>The <code>autoware</code> service in this deployment uses the upstream <code>ghcr.io/autowarefoundation/autoware:universe</code> image rather than an Open AD Kit component image. This is a temporary measure while Open AD Kit migrates from monolithic to component-based architecture; a component-based replacement will ship in a future release.</p>
-<p>This demo also depends on third-party images that are <strong>not</strong> pinned to immutable tags: <code>eclipse/zenoh-bridge-ros2dds:latest</code> and the community <code>ghcr.io/evshary/autoware_manual_control</code> teleop image. They may change upstream without notice — pin them to a specific digest if you need a fully reproducible demo.</p>
+<p>Source checkouts use readable third-party tags for the Zenoh bridge and teleop
+images. Release packaging resolves and writes their manifest digests into the
+bundle so released deployments remain reproducible.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds">Zenoh Plugin ROS2 DDS</a></li>

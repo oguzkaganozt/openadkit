@@ -2199,21 +2199,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-clone-the-repository" class="md-nav__link">
+  <a href="#2-choose-a-deployment-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Clone the repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-download-the-demo-map-and-rosbag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Download the demo map and rosbag
+        2. Choose a deployment layout
       
     </span>
   </a>
@@ -2233,6 +2222,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Start the Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-from-a-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start from a source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-from-a-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start from a release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2256,6 +2273,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Start the Rosbag Playback">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#play-a-rosbag-from-a-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Play a rosbag from a source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#play-a-rosbag-from-a-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Play a rosbag from a release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="View Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-source-checkout-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View source checkout logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-release-bundle-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View release bundle logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2266,6 +2350,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Stop the Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop-a-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop a source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-a-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop a release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2367,23 +2479,27 @@
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
 <span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
 <span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/b15e36344b3cdab583b82d0cc9cf693900308486/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;0229f9b716e3adba1e33f11ec6545d8f346c1aae8c88fdd81f655e04273c2bce&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
+<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
 <span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
 <span class="o">)</span>
 install_openadkit<span class="w"> </span>--download-artifacts
 </code></pre></div>
+<p>Activate the Docker group membership added by the installer before running
+Docker without <code>sudo</code>. Either log out and back in, or run:</p>
+<div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
+</code></pre></div>
 <p>This installs Docker / the NVIDIA Container Toolkit and downloads the perception artifacts into <code>${HOME}/autoware_data</code> (mounted into the sensing and perception containers).</p>
-<h3 id="2-clone-the-repository">2. Clone the repository<a class="headerlink" href="#2-clone-the-repository" title="Permanent link">#</a></h3>
+<h3 id="2-choose-a-deployment-layout">2. Choose a deployment layout<a class="headerlink" href="#2-choose-a-deployment-layout" title="Permanent link">#</a></h3>
+<h4 id="source-checkout-setup">Source checkout setup<a class="headerlink" href="#source-checkout-setup" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
 <span class="nb">cd</span><span class="w"> </span>openadkit/deployments/logging-simulation
+../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>logging-simulation
 </code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Release bundles</p>
-<p>Once a release is published, you can download a self-contained <code>.tar.gz</code> via <code>curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/&lt;deployment&gt;.tar.gz | tar xz</code>. Bundles are self-contained and every command runs from the extracted directory.</p>
-</div>
-<h3 id="3-download-the-demo-map-and-rosbag">3. Download the demo map and rosbag<a class="headerlink" href="#3-download-the-demo-map-and-rosbag" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>logging-simulation
+<h4 id="release-bundle-setup">Release bundle setup<a class="headerlink" href="#release-bundle-setup" title="Permanent link">#</a></h4>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/logging-simulation.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz
+<span class="nb">cd</span><span class="w"> </span>logging-simulation
+./install.sh<span class="w"> </span>sample-data<span class="w"> </span>logging-simulation
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">About the rosbag</p>
@@ -2394,15 +2510,26 @@ install_openadkit<span class="w"> </span>--download-artifacts
 </ul>
 </div>
 <h2 id="start-the-deployment">Start the Deployment<a class="headerlink" href="#start-the-deployment" title="Permanent link">#</a></h2>
-<p>From the <code>logging-simulation</code> directory, start the base containers:</p>
+<p>From the <code>logging-simulation</code> directory, use the command for your layout.</p>
+<h3 id="start-from-a-source-checkout">Start from a source checkout<a class="headerlink" href="#start-from-a-source-checkout" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
-<p>Wait approximately 10 seconds for the containers to initialize.</p>
+<h3 id="start-from-a-release-bundle">Start from a release bundle<a class="headerlink" href="#start-from-a-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>You can start rosbag playback immediately after this command. The rosbag
+container waits up to <code>ROSBAG_READY_TIMEOUT</code> seconds for a subscriber on
+<code>ROSBAG_READY_TOPIC</code> before beginning the one-shot playback.</p>
 <div class="admonition tip">
 <p class="admonition-title">GPU acceleration (recommended)</p>
 <p>To run sensing and perception on an NVIDIA GPU, layer the GPU compose overlay and its env file on top of the base ones (both <code>--env-file</code> flags apply, the later overriding the former):</p>
+<p>Source checkout:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yaml<span class="w"> </span>-f<span class="w"> </span>docker-compose.gpu.yaml<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.gpu.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>Release bundle:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yaml<span class="w"> </span>-f<span class="w"> </span>docker-compose.gpu.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.gpu.env<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 <p>This swaps in the <code>sensing-perception-cuda</code> image and reserves the GPU for the <code>sensing</code> and <code>perception</code> services. It requires the NVIDIA Container Toolkit (installed by <code>install.sh</code> by default). The <code>sensing-perception-cuda</code> image is published for <code>linux/amd64</code> only.</p>
 </div>
@@ -2421,12 +2548,37 @@ install_openadkit<span class="w"> </span>--download-artifacts
 </div>
 <h2 id="start-the-rosbag-playback">Start the Rosbag Playback<a class="headerlink" href="#start-the-rosbag-playback" title="Permanent link">#</a></h2>
 <p>To begin replaying the recorded sensor data, start the rosbag container:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>up<span class="w"> </span>rosbag<span class="w"> </span>-d
+<h3 id="play-a-rosbag-from-a-source-checkout">Play a rosbag from a source checkout<a class="headerlink" href="#play-a-rosbag-from-a-source-checkout" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>rosbag
+</code></pre></div>
+<h3 id="play-a-rosbag-from-a-release-bundle">Play a rosbag from a release bundle<a class="headerlink" href="#play-a-rosbag-from-a-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>rosbag
 </code></pre></div>
 <p>Watch the RViz2 display as Autoware processes the replayed data in real time.</p>
+<h2 id="view-logs">View Logs<a class="headerlink" href="#view-logs" title="Permanent link">#</a></h2>
+<h3 id="view-source-checkout-logs">View source checkout logs<a class="headerlink" href="#view-source-checkout-logs" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Stack logs</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>logs<span class="w"> </span>-f
+
+<span class="c1"># Rosbag playback logs</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>rosbag
+</code></pre></div>
+<h3 id="view-release-bundle-logs">View release bundle logs<a class="headerlink" href="#view-release-bundle-logs" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Stack logs</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>logs<span class="w"> </span>-f
+
+<span class="c1"># Rosbag playback logs</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>rosbag
+</code></pre></div>
 <h2 id="stop-the-deployment">Stop the Deployment<a class="headerlink" href="#stop-the-deployment" title="Permanent link">#</a></h2>
 <p>To stop all containers including the rosbag profile:</p>
+<h3 id="stop-a-source-checkout">Stop a source checkout<a class="headerlink" href="#stop-a-source-checkout" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>down
+</code></pre></div>
+<h3 id="stop-a-release-bundle">Stop a release bundle<a class="headerlink" href="#stop-a-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>logging-simulation.env<span class="w"> </span>--profile<span class="w"> </span>rosbag<span class="w"> </span>down
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
 <table>
@@ -2443,7 +2595,7 @@ install_openadkit<span class="w"> </span>--download-artifacts
 </tr>
 <tr>
 <td><code>file not found</code> for map/rosbag</td>
-<td>Re-run <code>../../install.sh sample-data logging-simulation --force</code> to re-download into <code>~/autoware_map</code></td>
+<td>Re-download the sample data using the command below</td>
 </tr>
 <tr>
 <td>No objects detected</td>
@@ -2451,6 +2603,12 @@ install_openadkit<span class="w"> </span>--download-artifacts
 </tr>
 </tbody>
 </table>
+<div class="highlight"><pre><span></span><code><span class="c1"># Source checkout</span>
+../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>logging-simulation<span class="w"> </span>--force
+
+<span class="c1"># Release bundle</span>
+./install.sh<span class="w"> </span>sample-data<span class="w"> </span>logging-simulation<span class="w"> </span>--force
+</code></pre></div>
 <p>For Docker, GPU, and visualizer issues common to all deployments, see <a href="../../getting-started/troubleshooting/">Troubleshooting</a>.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <pre class="mermaid"><code>flowchart LR
@@ -2461,7 +2619,7 @@ install_openadkit<span class="w"> </span>--download-artifacts
     C --&gt; Viz[visualizer]</code></pre>
 <p>Simplified data flow above; the full stack also runs <code>map</code>, <code>system</code>, <code>vehicle</code>, <code>simulator</code>, and <code>api</code> support services.</p>
 <h2 id="known-limitations">Known Limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
-<p>The <code>rosbag</code> service in this deployment uses the upstream <code>ghcr.io/autowarefoundation/autoware:universe</code> image rather than an Open AD Kit component image. This is a temporary measure while Open AD Kit migrates from monolithic to component-based architecture; a component-based replacement will ship in a future release.</p>
+<p>The <code>rosbag</code> service in this deployment uses the upstream <code>ghcr.io/autowarefoundation/autoware:universe</code> image rather than an Open AD Kit component image. Release bundles pin the selected manifest digest; source checkouts retain the readable upstream tag. A component-based replacement will ship in a future release.</p>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../planning-simulation/">Planning Simulation</a> — Simpler planning-focused simulation</li>

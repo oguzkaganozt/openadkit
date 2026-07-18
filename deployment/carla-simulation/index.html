@@ -2361,7 +2361,7 @@
 <li>An <strong>amd64 (x86_64)</strong> host with Docker — the <code>carla-interface</code> image is published for <strong>amd64 and ROS 2 Humble only</strong>; there is no arm64 image</li>
 <li>Docker Engine with the NVIDIA Container Toolkit (set up via <code>install.sh</code>)</li>
 <li>An NVIDIA GPU — the CARLA server requires GPU rendering</li>
-<li>A working host X display (usually <code>DISPLAY=:0</code>) with X access for local containers (e.g. <code>xhost +SI:localuser:root</code>)</li>
+<li>A working host X display with container access (e.g. <code>xhost +SI:localuser:root</code>) only for optional windowed rendering; the default <code>-RenderOffScreen</code> mode does not require X</li>
 <li>Host NVIDIA Vulkan ICD at <code>/usr/share/vulkan/icd.d/nvidia_icd.json</code></li>
 <li><strong>Ubuntu 22.04</strong> — CARLA 0.9.16 is built on Unreal Engine 4.26, which has not been tested on Ubuntu 24.04 (see the <a href="https://carla.readthedocs.io/en/0.9.16/build_linux">CARLA build docs</a>). Users on 24.04 have reported segfaults (Signal 11) at startup.</li>
 </ul>
@@ -2375,11 +2375,15 @@
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
 <span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
 <span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/b15e36344b3cdab583b82d0cc9cf693900308486/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;0229f9b716e3adba1e33f11ec6545d8f346c1aae8c88fdd81f655e04273c2bce&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
+<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
 <span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
 <span class="o">)</span>
 install_openadkit
+</code></pre></div>
+<p>Activate the Docker group membership added by the installer before running
+Docker without <code>sudo</code>. Either log out and back in, or run:</p>
+<div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
 </code></pre></div>
 <h3 id="2-clone-the-repository">2. Clone the repository<a class="headerlink" href="#2-clone-the-repository" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
@@ -2398,17 +2402,20 @@ install_openadkit
 </div>
 <p>The helper script:</p>
 <ul>
-<li>Downloads the official CARLA Autoware <code>Town01</code> map assets if missing</li>
+<li>Downloads the commit-pinned CARLA Autoware <code>Town01</code> map assets, verifies their SHA-256 checksums, and publishes them atomically</li>
+<li>Validates Ubuntu, Docker, NVIDIA, Vulkan, and kernel prerequisites before starting containers</li>
 <li>Starts the <code>carlasim/carla:0.9.16</code> server and preloads <code>Town01</code></li>
 <li>Starts the modular Open AD Kit containers (map, system, CARLA interface, sensing, perception, localization, planning, vehicle, control, API)</li>
 <li>Starts the browser RViz2/noVNC visualizer</li>
 <li>Verifies localization, CARLA LiDAR data, and the CARLA ego actor</li>
+<li>Removes only the services started by the invocation if startup or verification fails</li>
 </ul>
 <p>The default behavior is <strong>no-drive</strong>: set a route and engage manually in RViz2.</p>
 <h3 id="sensor-configuration">Sensor Configuration<a class="headerlink" href="#sensor-configuration" title="Permanent link">#</a></h3>
 <p>The <code>sensor_mapping.yaml</code> file controls which CARLA sensors are bridged into Autoware. By default, only LiDAR, IMU, and GNSS are enabled. Cameras are defined but commented out — uncomment entries in <code>sensor_mapping.yaml</code> to enable them.</p>
 <h3 id="kernel-udp-buffers">Kernel UDP Buffers<a class="headerlink" href="#kernel-udp-buffers" title="Permanent link">#</a></h3>
-<p>The helper script automatically raises kernel UDP buffer limits. If you prefer to set them manually:</p>
+<p>The helper validates the required kernel UDP buffer limits but does not modify
+host-global sysctls. Set them explicitly before starting CARLA:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sysctl<span class="w"> </span>-w<span class="w"> </span>net.core.rmem_max<span class="o">=</span><span class="m">2147483647</span><span class="w"> </span>net.core.wmem_max<span class="o">=</span><span class="m">2147483647</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>net.core.rmem_default<span class="o">=</span><span class="m">134217728</span><span class="w"> </span>net.core.wmem_default<span class="o">=</span><span class="m">134217728</span>
 </code></pre></div>
@@ -2433,18 +2440,23 @@ install_openadkit
 </ol>
 <div class="admonition note">
 <p class="admonition-title">Auto button not available?</p>
-<p>If the <strong>Auto</strong> button does not enable, the <code>/system/command_mode/availability</code> topic may not be published. This is an upstream Autoware issue, not an Open AD Kit defect. As a workaround, publish the availability manually inside the system container:</p>
-<div class="highlight"><pre><span></span><code>ros2<span class="w"> </span>topic<span class="w"> </span>pub<span class="w"> </span>--once<span class="w"> </span>/system/command_mode/availability<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>tier4_system_msgs/msg/CommandModeAvailability<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s1">&#39;{items: [{mode: 1001, available: true}, {mode: 1002, available: true}, {mode: 1003, available: true}, {mode: 1004, available: true}]}&#39;</span>
-</code></pre></div>
+<p>The diagnostic graph publishes <code>/system/command_mode/availability</code>, but
+autonomous mode remains unavailable while any required subsystem reports a
+warning or error. Inspect that topic and <code>/diagnostics_graph/status</code> in the
+system container instead of overriding availability manually. The optional
+<code>--drive</code> check also waits for autonomous availability and fails with a
+bounded timeout.</p>
 </div>
 <h2 id="optional-drive-check">Optional Drive Check<a class="headerlink" href="#optional-drive-check" title="Permanent link">#</a></h2>
 <p>To automatically set a short forward route, engage autonomous mode, and verify movement:</p>
 <div class="highlight"><pre><span></span><code>./start-carla-e2e-demo.sh<span class="w"> </span>--drive
 </code></pre></div>
 <h2 id="stop-the-deployment">Stop the Deployment<a class="headerlink" href="#stop-the-deployment" title="Permanent link">#</a></h2>
+<p>From a source checkout:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>carla-simulation.env<span class="w"> </span>down
+</code></pre></div>
+<p>From a release bundle:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>carla-simulation.env<span class="w"> </span>down
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
 <table>

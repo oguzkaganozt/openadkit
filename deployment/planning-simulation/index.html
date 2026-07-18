@@ -2199,21 +2199,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-clone-the-repository" class="md-nav__link">
+  <a href="#2-choose-a-deployment-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Clone the repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-download-the-demo-map" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Download the demo map
+        2. Choose a deployment layout
       
     </span>
   </a>
@@ -2234,6 +2223,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Start the Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-from-a-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start from a source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-from-a-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start from a release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2244,6 +2261,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="View Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-source-checkout-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View source checkout logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-release-bundle-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View release bundle logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2266,6 +2322,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Stop the Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop-a-source-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop a source checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-a-release-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop a release bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2354,36 +2438,39 @@
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
 <span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
 <span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/b15e36344b3cdab583b82d0cc9cf693900308486/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;0229f9b716e3adba1e33f11ec6545d8f346c1aae8c88fdd81f655e04273c2bce&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
+<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
 <span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
 <span class="o">)</span>
 install_openadkit
 </code></pre></div>
-<h3 id="2-clone-the-repository">2. Clone the repository<a class="headerlink" href="#2-clone-the-repository" title="Permanent link">#</a></h3>
+<p>Activate the Docker group membership added by the installer before running
+Docker without <code>sudo</code>. Either log out and back in, or run:</p>
+<div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
+</code></pre></div>
+<h3 id="2-choose-a-deployment-layout">2. Choose a deployment layout<a class="headerlink" href="#2-choose-a-deployment-layout" title="Permanent link">#</a></h3>
+<h4 id="source-checkout-setup">Source checkout setup<a class="headerlink" href="#source-checkout-setup" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
 <span class="nb">cd</span><span class="w"> </span>openadkit/deployments/planning-simulation
+../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
 </code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Release bundles</p>
-<p>Once a release is published, you can download a self-contained <code>.tar.gz</code> via <code>curl -fL https://github.com/autowarefoundation/openadkit/releases/latest/download/&lt;deployment&gt;.tar.gz | tar xz</code>. Bundles are self-contained and every command runs from the extracted directory.</p>
-</div>
-<h3 id="3-download-the-demo-map">3. Download the demo map<a class="headerlink" href="#3-download-the-demo-map" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
+<h4 id="release-bundle-setup">Release bundle setup<a class="headerlink" href="#release-bundle-setup" title="Permanent link">#</a></h4>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz
+<span class="nb">cd</span><span class="w"> </span>planning-simulation
+./install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">About this map</p>
 <p>This demo map (Copyright 2020 TIER IV, Inc.) is provided for demonstration purposes only. For production use, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/creating-maps/">Autoware map creation guide</a>.</p>
 </div>
 <h2 id="start-the-deployment">Start the Deployment<a class="headerlink" href="#start-the-deployment" title="Permanent link">#</a></h2>
-<p>From the <code>planning-simulation</code> directory, start the containers:</p>
+<p>From the <code>planning-simulation</code> directory, use the command for your layout.</p>
+<h3 id="start-from-a-source-checkout">Start from a source checkout<a class="headerlink" href="#start-from-a-source-checkout" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
-<div class="admonition info">
-<p class="admonition-title">Environment file ordering</p>
-<p><strong>From a cloned repository</strong> — pass <code>--env-file ../base/base.env</code> before the deployment env file (as shown in the commands on this page). The base file provides shared defaults; the deployment file overrides them.</p>
-<p><strong>From a release bundle</strong> — omit <code>--env-file ../base/base.env</code>; the bundle's env file already contains the merged defaults. Run: <code>docker compose --env-file &lt;name&gt;.env up -d</code></p>
-</div>
+<h3 id="start-from-a-release-bundle">Start from a release bundle<a class="headerlink" href="#start-from-a-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
 <p>Wait approximately 10 seconds for the containers to initialize.</p>
 <h2 id="access-the-visualizer">Access the Visualizer<a class="headerlink" href="#access-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open your browser and navigate to:</p>
@@ -2399,6 +2486,13 @@ install_openadkit
 <p>or put a TLS-terminating reverse proxy in front of <code>127.0.0.1:6080</code> and set a strong <code>REMOTE_PASSWORD</code> in <code>base.env</code>. Editing <code>docker-compose.yaml</code> to add a <code>ports:</code> mapping has no effect under host networking.</p>
 </div>
 <p>The RViz2 interface may take a few additional seconds to fully load.</p>
+<h2 id="view-logs">View Logs<a class="headerlink" href="#view-logs" title="Permanent link">#</a></h2>
+<h3 id="view-source-checkout-logs">View source checkout logs<a class="headerlink" href="#view-source-checkout-logs" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>logs<span class="w"> </span>-f
+</code></pre></div>
+<h3 id="view-release-bundle-logs">View release bundle logs<a class="headerlink" href="#view-release-bundle-logs" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>logs<span class="w"> </span>-f
+</code></pre></div>
 <h2 id="run-the-simulation">Run the Simulation<a class="headerlink" href="#run-the-simulation" title="Permanent link">#</a></h2>
 <p>Once the visualizer is open, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation instructions</a> to:</p>
 <ol>
@@ -2407,7 +2501,11 @@ install_openadkit
 <li>Observe the vehicle autonomously plan and execute the route</li>
 </ol>
 <h2 id="stop-the-deployment">Stop the Deployment<a class="headerlink" href="#stop-the-deployment" title="Permanent link">#</a></h2>
+<h3 id="stop-a-source-checkout">Stop a source checkout<a class="headerlink" href="#stop-a-source-checkout" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>down
+</code></pre></div>
+<h3 id="stop-a-release-bundle">Stop a release bundle<a class="headerlink" href="#stop-a-release-bundle" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>down
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
 <table>
@@ -2424,17 +2522,33 @@ install_openadkit
 </tr>
 </tbody>
 </table>
+<p>To re-download the map:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Source checkout</span>
+../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation<span class="w"> </span>--force
+
+<span class="c1"># Release bundle</span>
+./install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation<span class="w"> </span>--force
+</code></pre></div>
 <p>For Docker, GPU, and visualizer issues common to all deployments, see <a href="../../getting-started/troubleshooting/">Troubleshooting</a>.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <pre class="mermaid"><code>flowchart LR
     subgraph Host["Single Host"]
+        M[map]
         P[planning]
         C[control]
+        V[vehicle]
+        S[system]
+        SIM[simulator]
+        API[API]
         VIZ[visualizer]
     end
 
-    Map[~/autoware_map] --&gt; P
+    Map[~/autoware_map] --&gt; M
+    M --&gt; P
     P --&gt; C
+    C --&gt; V
+    SIM &lt;--&gt;|ROS 2 DDS| V
+    S &lt;--&gt;|ROS 2 DDS| API
     P &lt;--&gt;|ROS 2 DDS| VIZ</code></pre>
 <h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
 <ul>

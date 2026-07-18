@@ -2294,7 +2294,7 @@
 </table>
 <div class="admonition tip">
 <p class="admonition-title">GPU Recommendation</p>
-<p>An NVIDIA GPU is highly recommended for sensing and perception tasks. Without a GPU, CUDA-accelerated components will fall back to CPU execution, which significantly impacts performance.</p>
+<p>An NVIDIA GPU is highly recommended for sensing and perception tasks. CUDA images require a working NVIDIA runtime; they do not automatically fall back to CPU. Use the standard CPU image or deployment configuration on hosts without a GPU.</p>
 </div>
 <h3 id="verified-edge-deployment">Verified Edge Deployment<a class="headerlink" href="#verified-edge-deployment" title="Permanent link">#</a></h3>
 <p>For running a full Autoware stack on a verified edge platform, the requirements are higher:</p>
@@ -2316,7 +2316,7 @@
 </tr>
 <tr>
 <td>GPU</td>
-<td>NVIDIA with CUDA support (for sensing/perception)</td>
+<td>NVIDIA with CUDA support (hardware capability; see the ARM64 image note below)</td>
 </tr>
 <tr>
 <td>Architecture</td>
@@ -2324,6 +2324,13 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="admonition-title">ARM64 sensing and perception</p>
+<p>ARM64 edge hardware may include a CUDA-capable NVIDIA GPU, but the published
+<code>sensing-perception-cuda</code> image currently supports <code>linux/amd64</code> only. On
+ARM64, use the standard <code>sensing-perception</code> image; sensing and perception
+run on CPU and do not use the available GPU.</p>
+</div>
 <div class="admonition info">
 <p class="admonition-title">Why the difference?</p>
 <p>The 40-core Neoverse N1 requirement reflects the verified ADLINK AADP-AVA platform, which runs the full Autoware stack with real-time constraints. Local development with demo simulations has lower requirements.</p>
