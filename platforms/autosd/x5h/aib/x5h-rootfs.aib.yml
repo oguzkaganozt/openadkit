@@ -44,13 +44,16 @@ content:
     # package is installed anyway, because the board has no `dnf` and no
     # `rpm-ostree`: a tool that is absent mid-session cannot be installed,
     # only worked around or misread, and tap0 is a link whose failures
-    # (silent oversize drops at MTU 462, RTPS fragments that never
+    # (silent oversize drops at MTU 1500, RTPS fragments that never
     # reassemble) are diagnosed by looking at frames rather than at
     # counters. Note a board
     # flashed from an image built BEFORE this entry existed will not have
     # tcpdump; check with `command -v tcpdump` before relying on it, rather
     # than concluding from an empty capture that the link is dead.
     - tcpdump
+    # stage-board.sh stages the NPU payload with rsync --delete so re-staging
+    # is idempotent; the image has no tar.
+    - rsync
   # add_files (org.osbuild.copy) does not create parent directories, and
   # nothing else in the pipeline creates /etc/containers/containers.conf.d
   # (init_rootfs_dirs_stage creates /etc itself, but not this subtree).
@@ -89,6 +92,18 @@ content:
       parents: true
       exist_ok: true
     - path: /var/log/awf
+      parents: true
+      exist_ok: true
+    - path: /etc/systemd/system.conf.d
+      parents: true
+      exist_ok: true
+    - path: /etc/modules-load.d
+      parents: true
+      exist_ok: true
+    - path: /etc/x5h
+      parents: true
+      exist_ok: true
+    - path: /etc/motd.d
       parents: true
       exist_ok: true
   # NOT in make_dirs, deliberately, and do not "fix" these back:
@@ -177,6 +192,66 @@ content:
       path: /etc/udev/rules.d/52-x5h-cmem.rules
     - source_path: ../config/80-x5h.preset
       path: /etc/systemd/system-preset/80-x5h.preset
+    # --- role machinery (selfboot.md, "Roles") -----------------------------
+    - source_path: ../scripts/x5h-role
+      path: /usr/sbin/x5h-role
+    - source_path: ../scripts/x5h-role-banner.sh
+      path: /usr/sbin/x5h-role-banner.sh
+    - source_path: ../config/x5h-role-banner.service
+      path: /etc/systemd/system/x5h-role-banner.service
+    # --- cr52 role: previously hand-installed per rpmsg-dualboot.md --------
+    - source_path: ../scripts/cr52-rproc-up.sh
+      path: /usr/sbin/cr52-rproc-up.sh
+    - source_path: ../config/cr52-remoteproc.service
+      path: /etc/systemd/system/cr52-remoteproc.service
+    - source_path: ../config/x5h-rpmsg-modules.conf
+      path: /etc/modules-load.d/x5h-rpmsg.conf
+    - source_path: ../config/60-nftables.conf
+      path: /etc/containers/containers.conf.d/60-nftables.conf
+    # --- npu role ----------------------------------------------------------
+    - source_path: ../scripts/x5h-npu-up.sh
+      path: /usr/sbin/x5h-npu-up.sh
+    - source_path: ../config/x5h-npu.service
+      path: /etc/systemd/system/x5h-npu.service
+    - source_path: ../config/var-opt-npu.mount
+      path: /etc/systemd/system/var-opt-npu.mount
+    - source_path: ../scripts/npu-contract-smoke.sh
+      path: /usr/sbin/npu-contract-smoke.sh
+    - source_path: ../scripts/ort-rootfs.containerfile
+      path: /usr/sbin/ort-rootfs.containerfile
+    - source_path: ../scripts/ort-rootfs.containerignore
+      path: /usr/sbin/ort-rootfs.containerignore
+    # --- demo role: CES 2027 single-ECU stack (issue #120, this milestone) --
+    - source_path: ../config/x5h-si-link.service
+      path: /etc/systemd/system/x5h-si-link.service
+    - source_path: ../scripts/x5h-demo-up.sh
+      path: /usr/sbin/x5h-demo-up.sh
+    - source_path: ../config/x5h-demo.service
+      path: /etc/systemd/system/x5h-demo.service
+    # Gate D5's instrument (see README.md, "CES 2027 demo role"): its default
+    # log source is `podman logs x5h-vp`, so it only runs on the board and
+    # has to ship in the image rather than be hand-copied on.
+    - source_path: ../scripts/vp-npu-gate.sh
+      path: /usr/sbin/vp-npu-gate.sh
+    # --- role-independent: container store, watchdog, manifest -------------
+    - source_path: ../config/var-lib-containers.mount
+      path: /etc/systemd/system/var-lib-containers.mount
+    - source_path: ../config/10-watchdog.conf
+      path: /etc/systemd/system.conf.d/10-watchdog.conf
+    - source_path: ../scripts/x5h-manifest.sh
+      path: /usr/sbin/x5h-manifest.sh
+    # selfboot-smoke.sh is the branch's primary acceptance instrument:
+    # SELFBOOT_SMOKE_PASS is one of the four markers selfboot.md names, and
+    # both selfboot.md and companion-host.md tell the operator to run it
+    # straight after a self-boot. Until this entry existed it was in neither
+    # the image nor stage-board.sh's prepare-root, so a board freshly written
+    # by `write-root` did not have it at all and the acceptance step could
+    # only be performed by hand-copying a checker -- exactly the staleness
+    # trap the x5h-stack-smoke.sh note at the bottom of this block describes.
+    # /usr/sbin, not /usr/local/bin, because aib refuses /usr/local and /opt
+    # outright (see the make_dirs commentary above).
+    - source_path: ../scripts/selfboot-smoke.sh
+      path: /usr/sbin/selfboot-smoke.sh
     # Component stack (issue #120 M7). Quadlet reads /etc/containers/systemd.
     #
     # The bring-up sequence below only works because aib/vars.yml keeps
@@ -260,6 +335,8 @@ content:
       path: /etc/containers/systemd/awf-oak-x5h.env
     - source_path: ../components/bridge/bridge-config.yaml
       path: /etc/containers/systemd/bridge-config.yaml
+    - source_path: ../components/demo/bridge-demo.yaml
+      path: /etc/containers/systemd/bridge-demo.yaml
     # EVERY mounted asset lands FLAT in /etc/containers/systemd/<basename>,
     # whatever subdirectory the repository keeps it in: launch/, nodes/ and
     # scenario/ group these files for human readers and have no meaning on
@@ -274,12 +351,30 @@ content:
       path: /etc/containers/systemd/control.launch.xml
     - source_path: ../components/nodes/control_restamp.py
       path: /etc/containers/systemd/control_restamp.py
+    - source_path: ../components/demo/cyclonedds-x5h-demo.xml
+      path: /etc/containers/systemd/cyclonedds-x5h-demo.xml
     - source_path: ../components/cyclonedds-x5h.xml
       path: /etc/containers/systemd/cyclonedds-x5h.xml
     - source_path: ../components/scenario/mrm-scenario.yaml
       path: /etc/containers/systemd/mrm-scenario.yaml
     - source_path: ../components/nodes/traj_relay.py
       path: /etc/containers/systemd/traj_relay.py
+    - source_path: ../components/demo/vision_pilot.conf
+      path: /etc/containers/systemd/vision_pilot.conf
+    - source_path: ../components/demo/vision_pilot_ros2.conf
+      path: /etc/containers/systemd/vision_pilot_ros2.conf
+    - source_path: ../components/nodes/vp_heartbeat.py
+      path: /etc/containers/systemd/vp_heartbeat.py
+    - source_path: ../components/demo/x5h-demo-bridge.container
+      path: /etc/containers/systemd/x5h-demo-bridge.container
+    - source_path: ../components/demo/x5h-demo-hb.container
+      path: /etc/containers/systemd/x5h-demo-hb.container
+    - source_path: ../components/demo/x5h-demo-restamp.container
+      path: /etc/containers/systemd/x5h-demo-restamp.container
+    - source_path: ../components/demo/x5h-vp.container
+      path: /etc/containers/systemd/x5h-vp.container
+    - source_path: ../components/demo/x5h-image-republish.container
+      path: /etc/containers/systemd/x5h-image-republish.container
     # /var/lib/awf/scenario-sim{,/map} -- the scenario working directory
     # awf-oak-autoware and awf-oak-simulator mount, and the directory the
     # map is staged into -- are created at boot by systemd-tmpfiles rather
@@ -296,6 +391,14 @@ content:
     # and is deliberately NOT checked into the repo or copied by this
     # manifest -- it is staged onto the board separately, per the manual
     # install procedure documented in rpmsg-dualboot.md.
+    #
+    # The cr52-remoteproc trio (cr52-rproc-up.sh, cr52-remoteproc.service,
+    # x5h-rpmsg-modules.conf -- see the "cr52 role" block above) was
+    # previously hand-installed per that same doc; it is now installed by
+    # this manifest instead, because its script ships in the image. The
+    # rpmsg-eth daemon binary above is the only piece of this chain that
+    # remains hand-staged, and it is staged by stage-board.sh, not by the
+    # manual procedure rpmsg-dualboot.md describes.
     #
     # 80-x5h.preset below does NOT enable rpmsg-eth.service, but that does
     # not keep the unit out of a normal boot: awf-oak-bridge.container
@@ -322,6 +425,15 @@ content:
       path: /etc/systemd/system/rpmsg-eth.service
     - source_path: ../scripts/rpmsg-eth-ifup.sh
       path: /usr/sbin/rpmsg-eth-ifup.sh
+    # The cr52 role's link check, named by selfboot.md as the per-role
+    # companion to selfboot-smoke.sh. Same argument as selfboot-smoke.sh
+    # above: a check the documents route the operator to must be ON the board
+    # a `write-root` produces, not hand-copied into /var/tmp where it goes
+    # stale against the contract it grades. It only reads state (rpmsg bus,
+    # tap0 attributes, one ping run) and drives no remoteproc, so shipping it
+    # adds nothing to the boot path.
+    - source_path: ../scripts/rpmsg-eth-smoke.sh
+      path: /usr/sbin/rpmsg-eth-smoke.sh
     # The board smoke, installed BY THE IMAGE rather than copied onto the
     # board by hand. component-stack.md calls this manifest the source of
     # truth for every file on the board and says the mapping installs the
@@ -334,12 +446,61 @@ content:
     # things the units mount.
     - source_path: ../scripts/x5h-stack-smoke.sh
       path: /usr/sbin/x5h-stack-smoke.sh
+    # Gate D1a's judge: same staleness argument as the three smokes above, so
+    # it ships in the image instead of being hand-copied onto the board.
+    - source_path: ../scripts/demo-role-smoke.sh
+      path: /usr/sbin/demo-role-smoke.sh
     # Same directory as the smoke, and that is a requirement rather than
     # tidiness: `drive` locates this file as $(dirname "$0")/x5h-stop-
     # metrics.awk, so the pair has to be installed together or the metric
     # fails as mrm_no_stop_metrics on a board that looks fully staged.
     - source_path: ../scripts/x5h-stop-metrics.awk
       path: /usr/sbin/x5h-stop-metrics.awk
+
+  # --- executable bits -----------------------------------------------------
+  # add_files copies CONTENT ONLY: its schema has no mode field, and every
+  # file it installs lands 0644 whatever the source file's mode is in git.
+  # For a config file that is right; for the ten scripts above it is a boot
+  # failure. Confirmed on board 2 on 2026-09-02 by reading the written
+  # x5h-root: /usr/sbin/x5h-role, x5h-npu-up.sh and cr52-rproc-up.sh were all
+  # 0644, so x5h-npu.service, cr52-remoteproc.service and
+  # x5h-role-banner.service would each have died 203/EXEC on the first boot,
+  # and `ssh root@board x5h-manifest.sh` -- the parity instrument -- would
+  # have been "permission denied".
+  #
+  # chmod_files is the only lever aib offers for this, and it must list every
+  # /usr/sbin script the add_files block installs. tests/test-aib-manifest.sh
+  # asserts that correspondence in both directions, so a script added above
+  # without a line here fails the host tests rather than the next board boot.
+  # The two ort-rootfs.container* files are deliberately absent: they are data
+  # read by `podman build`, not programs.
+  chmod_files:
+    - path: /usr/sbin/x5h-role
+      mode: "0755"
+    - path: /usr/sbin/x5h-role-banner.sh
+      mode: "0755"
+    - path: /usr/sbin/cr52-rproc-up.sh
+      mode: "0755"
+    - path: /usr/sbin/x5h-npu-up.sh
+      mode: "0755"
+    - path: /usr/sbin/npu-contract-smoke.sh
+      mode: "0755"
+    - path: /usr/sbin/x5h-manifest.sh
+      mode: "0755"
+    - path: /usr/sbin/selfboot-smoke.sh
+      mode: "0755"
+    - path: /usr/sbin/rpmsg-eth-ifup.sh
+      mode: "0755"
+    - path: /usr/sbin/rpmsg-eth-smoke.sh
+      mode: "0755"
+    - path: /usr/sbin/x5h-stack-smoke.sh
+      mode: "0755"
+    - path: /usr/sbin/demo-role-smoke.sh
+      mode: "0755"
+    - path: /usr/sbin/x5h-demo-up.sh
+      mode: "0755"
+    - path: /usr/sbin/vp-npu-gate.sh
+      mode: "0755"
 
 auth:
   # root password "autosd" — dev/bench image only, never a board deliverable.
