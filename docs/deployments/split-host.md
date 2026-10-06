@@ -11,6 +11,14 @@ Each workload keeps its catalog name and declares its **nodes** in
 
 Omitting `--node` keeps today's single-host graph.
 
+The manifest selects `compose.<node>.yaml`. Each entrypoint explicitly includes
+its workload services and `../shared/compose.zenoh.yaml`, and mounts its own
+`config/zenoh.json5` allowlist. The CLI adds no services or Zenoh-specific paths.
+The allowlist is an explicit node `requiredFiles` entry: missing or symlinked
+files fail validation before starting containers, without Zenoh-specific CLI logic.
+It selects the declared files, image references and env files, and supplies the
+node's `rosDomainId` as `OPENADKIT_ROS_DOMAIN_ID`.
+
 Each node is isolated: its own Compose project (`openadkit-<deployment>-<node>`),
 its own container names, and its own ROS domain (`rosDomainId` in the
 manifest). The nodes only see each other through the Zenoh bridge, so both

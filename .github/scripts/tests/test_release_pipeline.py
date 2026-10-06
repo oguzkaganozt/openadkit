@@ -759,7 +759,7 @@ def test_release_bundle_is_unified_verified_and_reproducible(tmp_path):
     ]
     assert release_metadata["release_plan_sha256"] == first_plan
     assert release_metadata["evidence"]["result"] == "PASSED"
-    assert len(release_metadata["evidence"]["cells"]) == 8
+    assert len(release_metadata["evidence"]["statement"]["predicate"]["configuration"]) == 8
     assert release_metadata["default_ros_distro_decision"]["selected"] == "humble"
     notes = (tmp_path / "release-notes.md").read_text()
     assert "## Open AD Kit Bundle" in notes

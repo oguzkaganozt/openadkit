@@ -208,11 +208,6 @@ def build_parser() -> argparse.ArgumentParser:
         default="missing",
         help="image pull policy (default: missing)",
     )
-    run.add_argument(
-        "--force",
-        action="store_true",
-        help="replace existing data even if it already validates",
-    )
     for catalog in (validate, fetch, run):
         catalog.help_inventory = "catalog"
 
@@ -586,7 +581,7 @@ def main() -> int:
         conflict = compose.live_state_conflict(deployment, selection)
         if conflict:
             raise OpenADKitError(conflict)
-        data.install_data(deployment, selection, args.force)
+        data.install_data(deployment, selection, force=False)
         compose.create_writable_mounts(deployment, selection)
         compose.start(deployment, selection, args.pull)
         print_run_next_steps(

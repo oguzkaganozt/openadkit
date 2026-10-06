@@ -380,8 +380,9 @@ def check_overlay(
     original = compose_model(base, baseline, environment_from=deployment)
     current = compose_model(deployment, selection)
     declared = set(selection.injections)
-    for path in base._own_env_files(selection.gpu):
-        declared.update(parse_dotenv(path))
+    for layer in base.env_layers:
+        for path in layer.files(selection.gpu):
+            declared.update(parse_dotenv(path))
     declared.update(item["destinationEnv"] for item in deployment.data)
     # Include variables used by shared services, including host values such as
     # HOME. This remains static: no image pull or inspection is needed.

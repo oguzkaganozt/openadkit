@@ -302,6 +302,7 @@ jq -n \
     --argjson scenario "${scenario_json}" \
     --argjson overlay_conformant "${overlay_conformant}" \
     '{
+        schemaVersion: 1,
         name: $name,
         deployment: $deployment,
         distro: $distro,

@@ -15,14 +15,16 @@
     "autoware": {
       "backend": "compose",
       "rosDomainId": 1,
-      "files": ["services.autoware.yaml"],
+      "files": ["compose.autoware.yaml"],
+      "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "carla": {
       "backend": "compose",
       "rosDomainId": 2,
-      "files": ["services.carla.yaml"],
+      "files": ["compose.carla.yaml"],
+      "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["carla-map-loader"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }

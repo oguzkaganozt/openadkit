@@ -1,0 +1,9 @@
+# Full Autoware node graph, including its explicit LAN bridge.
+include:
+  - services.autoware.yaml
+  - ../shared/compose.zenoh.yaml
+
+services:
+  zenoh-bridge:
+    volumes:
+      - ./config/zenoh.json5:/config/zenoh.json5:ro

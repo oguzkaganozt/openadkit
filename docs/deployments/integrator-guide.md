@@ -22,6 +22,10 @@ can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.
 
+The loader resolves the inherited image/artifact set and ordered env, GPU and
+config layers once. Runtime selection consumes that resolved model. The base
+is retained only for provenance and comparison against the overlay contract.
+
 ## Extension Points
 
 ### 1. Values
@@ -37,7 +41,8 @@ reads these files in order (later wins):
 
 Container ROS/DDS defaults come from the included services' `runtime.env`.
 Shell exports do not hide values in the configuration files. The CLI injects
-the ROS distro, host UID/GID, overlay mount paths and `KIT_openadkit`; release
+the ROS distro, host UID/GID, overlay mount paths, `KIT_openadkit` (the base root)
+and `OPENADKIT_BASE_DEPLOYMENT` (the directory selected by `base`); release
 component images and artifact references remain pinned.
 
 ### 2. Config Differences

@@ -284,8 +284,8 @@ jobs:
             .github/scripts/manage_github_release.sh
             .github/scripts/release_tag.sh
             .github/scripts/write_release_notes.sh
-            .github/scripts/evidence/upgrade_report.py
-            .github/scripts/evidence/fetch_baseline.py
+            .github/scripts/evidence/report.py
+            .github/scripts/evidence/cells.py
 
       - name: Download validated release metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -305,19 +305,6 @@ jobs:
         run: |
           test "$(sha256sum release-plan.json | cut -d ' ' -f1)" \
             = "${EXPECTED_PLAN_SHA256}"
-
-      - name: Fetch previous release evidence
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          python3 .github/scripts/evidence/fetch_baseline.py \
-            --plan release-plan.json --repository "${GITHUB_REPOSITORY}" \
-            --output evidence/previous.json
-          if [ -f evidence/previous.json ]; then
-            echo "EVIDENCE_PREVIOUS_SUMMARY=evidence/previous.json" >> "$GITHUB_ENV"
-          fi
-        shell: bash
 
       - name: Create release metadata and notes
         env:

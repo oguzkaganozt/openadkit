@@ -16,6 +16,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cells import normalize_cell  # noqa: E402
 from subjects import build_subjects, write_subjects  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -123,7 +124,7 @@ def main():
 
     cells = []
     for path in sorted(Path(args.cells_dir).rglob("cell.json")):
-        cells.append(load(path))
+        cells.append(normalize_cell(load(path)))
     cells.sort(key=lambda cell: cell.get("name", ""))
 
     subjects = build_subjects(metadata, Path(args.source_root).resolve())
@@ -145,32 +146,11 @@ def main():
         state = "expired" if note["expired"] else "quarantined"
         print(f"::warning title=evidence {state}::{note['cell']}: {note['reason']} (expires {note['expires']})")
 
-    configuration = []
-    for cell in cells:
-        levels = {name: data.get("ok") is True for name, data in cell.get("levels", {}).items()}
-        configuration.append(
-            {
-                "name": cell["name"],
-                "annotations": {
-                    "buildTag": cell.get("build_tag"),
-                    "sourceSha": cell.get("source_sha"),
-                    "kit": cell.get("kit") or None,
-                    "deployment": cell.get("deployment"),
-                    "rosDistro": cell.get("distro"),
-                    "node": cell.get("node") or None,
-                    "platform": cell.get("platform"),
-                    "levels": levels,
-                    "overlayConformant": cell.get("overlayConformant"),
-                    "readyS": cell.get("metrics", {}).get("ready_s"),
-                    "arrivalS": cell.get("metrics", {}).get("arrival_s"),
-                    "peakMib": cell.get("metrics", {}).get("peak_mib"),
-                },
-            }
-        )
-
     predicate = {
         "result": result,
-        "configuration": configuration,
+        "configuration": [
+            {"name": cell["name"], "annotations": {"openadkitCell": cell}} for cell in cells
+        ],
         "passedTests": passed,
         "warnedTests": warned,
         "failedTests": failed,
@@ -183,27 +163,13 @@ def main():
     )
 
     summary = {
+        "schemaVersion": 2,
         "build_tag": metadata.get("build_tag", "unknown"),
         "source_sha": metadata.get("openadkit_sha"),
         "result": result,
         "quarantine": quarantine_notes,
         "missing": missing,
-        "cells": [
-            {
-                "name": cell["name"],
-                "deployment": cell.get("deployment"),
-                "distro": cell.get("distro"),
-                "node": cell.get("node"),
-                "platform": cell.get("platform"),
-                "result": cell.get("result"),
-                "overlayConformant": cell.get("overlayConformant"),
-                "ready_s": cell.get("metrics", {}).get("ready_s"),
-                "arrival_s": cell.get("metrics", {}).get("arrival_s"),
-                "peak_mib": cell.get("metrics", {}).get("peak_mib"),
-                "scenario": cell.get("levels", {}).get("L2", {}).get("scenario"),
-            }
-            for cell in cells
-        ],
+        "cells": cells,
     }
     (output / "evidence-summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"

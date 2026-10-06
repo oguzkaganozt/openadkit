@@ -1,9 +1,7 @@
 # Zenoh bridge fragment for split-host deployments.
 #
-# The CLI appends this file (via --file) only when a node is selected, after
-# the node's service file. The default single-host graph never includes it.
-# The CLI also injects ZENOH_CONFIG_PATH pointing at the deployment's
-# config/zenoh.json5; `-c` below must match the mounted target path.
+# Node Compose entrypoints explicitly include this fragment and mount their
+# own config/zenoh.json5 allowlist. The single-host graph never includes it.
 #
 # Host networking is required so the bridge can reach the LAN listen address
 # and so its DDS participant shares the host Cyclone environment. DDS stays
@@ -23,11 +21,10 @@ services:
     restart: unless-stopped
     # Runtime env (RMW_IMPLEMENTATION, ROS_DOMAIN_ID, CYCLONEDDS_URI,
     # CYCLONEDDS_NETWORK_INTERFACE=lo). Without the URI the interface pin is a
-    # no-op and DDS would leak onto the LAN. Absolute paths: this file is passed
-    # with --file, where relative paths would resolve against the deployment
-    # project directory instead of deployments/shared.
+    # no-op and DDS would leak onto the LAN. Native include resolves these paths
+    # relative to this shared fragment, not the deployment entrypoint.
     env_file:
-      - ${ZENOH_BASE_DIR}/runtime.env
+      - ./runtime.env
     environment:
       # Must match the ROS graph this bridge joins. Without it the plugin
       # assumes iron and drops Humble discovery info (24-byte GIDs), leaving
@@ -40,10 +37,7 @@ services:
       - ZENOH_LISTEN=${ZENOH_LISTEN:-}
       - ZENOH_PEER=${ZENOH_PEER:-}
     volumes:
-      - ${ZENOH_BASE_DIR}/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Workload allowlist. ZENOH_CONFIG_PATH is injected by the CLI as an
-      # absolute path; relative binds would resolve under the project directory.
-      - ${ZENOH_CONFIG_PATH}:/config/zenoh.json5:ro
+      - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     # The image entrypoint is /entrypoint.sh (Alpine ash) exec'ing
     # /zenoh-bridge-ros2dds, which is not on PATH. Replace it with a wrapper
     # that turns the environment into argv for the binary.

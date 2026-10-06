@@ -465,10 +465,10 @@ def test_top_level_help_and_usage():
         ("uninstall", ("--all",), ()),
         (
             "run",
-            ("planning-simulation", "--gpu", "--ros-distro", "--force",
-             "replace existing data", "image pull policy", "GPU compose overlay",
+            ("planning-simulation", "--gpu", "--ros-distro",
+             "image pull policy", "GPU compose overlay",
              "--node"),
-            (),
+            ("--force", "replace existing data"),
         ),
         ("validate", ("--ros-distro", "--node"), ()),
         ("fetch", ("--ros-distro", "--force"), ("--gpu", "--node")),
@@ -1299,7 +1299,7 @@ def test_fetch_includes_gpu_data_without_docker(tmp_path, http):
     assert not calls.exists()
 
 
-def test_run_force_reinstalls_incomplete_data(tmp_path, http):
+def test_only_fetch_force_reinstalls_incomplete_managed_data(tmp_path, http):
     root, _ = runtime_tree(tmp_path, manifest=minimal_manifest(data=[served_resource(http, "replaced")]))
     target = tmp_path / "home/data/example"
     target.mkdir(parents=True)
@@ -1307,15 +1307,20 @@ def test_run_force_reinstalls_incomplete_data(tmp_path, http):
     blocked = run_cli(root, "run", "example", "--pull", "never")
     assert blocked.returncode != 0
     assert "incomplete data" in blocked.stderr
-    assert "rerun with --force" in blocked.stderr
-    # --force replaces only data the CLI installed.
+    assert "openadkit fetch example --force" in blocked.stderr
+    # Starting a deployment cannot opt in to replacement.
     refused = run_cli(root, "run", "example", "--pull", "never", "--force")
+    assert refused.returncode == 2
+    assert "unrecognized arguments: --force" in refused.stderr
+    # Explicit replacement is still restricted to managed data.
+    refused = run_cli(root, "fetch", "example", "--force")
     assert refused.returncode != 0
     assert "refusing to replace" in refused.stderr
     mark_managed(target)
-    result = run_cli(root, "run", "example", "--pull", "never", "--force")
+    result = run_cli(root, "fetch", "example", "--force")
     assert result.returncode == 0, result.stderr
     assert (target / "required.txt").read_text() == "replaced"
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
 
 
 def test_run_without_gpu_skips_gpu_only_data(tmp_path):
@@ -1606,7 +1611,7 @@ def test_node_is_its_own_project_with_its_own_domain(tmp_path):
     assert "compose.secondary.yaml" in text
     assert "compose.primary.yaml" not in text
     assert "docker-compose.yaml" not in text
-    assert "deployments/shared/compose.zenoh.yaml" in text
+    assert "deployments/shared/compose.zenoh.yaml" not in text
     assert set((tmp_path / "docker-domains").read_text().split()) == {"2"}
 
     calls.write_text("")
@@ -1749,7 +1754,7 @@ def test_node_data_applicability_skips_other_nodes(tmp_path):
     fake_docker(tmp_path)
 
     result = run_cli(
-        root, "run", "example", "--node", "secondary", "--pull", "never", "--force",
+        root, "run", "example", "--node", "secondary", "--pull", "never",
         NODE_TOKEN="token",
     )
     assert result.returncode == 0, result.stderr
@@ -1795,8 +1800,6 @@ def test_node_scoped_data_cannot_share_a_destination(tmp_path):
          "nodes.secondary.rosDomainId 1 is used by another node"),
         (lambda m: m.update(data=[files_resource("node-map", nodes=["ghost"])]),
          "undeclared node(s): ghost"),
-        (lambda m: m.update(shared=[]),
-         "nodes require the shared deployment assets"),
     ],
 )
 def test_node_schema_errors_are_reported(tmp_path, change, message):
@@ -2144,6 +2147,104 @@ def test_a_kit_artifact_replaces_a_component_image(tmp_path):
     result = run_in(kit, root, "validate", "custom")
     assert result.returncode == 0, result.stderr
     assert seen.read_text().splitlines()[0].split("|")[1] == vehicle
+
+
+@pytest.mark.parametrize("release", [False, True])
+def test_kit_effective_artifacts_and_pinning_are_resolved_together(tmp_path, release):
+    root, _ = runtime_tree(tmp_path, release=release)
+    inherited = {"workload": "simulator", "ref": JAZZY_ARTIFACT}
+    edit_kit(root, lambda document: document.update(artifacts={"SIMULATOR_ARTIFACT": inherited}))
+    replacement = f"registry.example/acme-api@sha256:{'f' * 64}"
+    kit = integrator_kit(tmp_path, root, artifacts={"API_IMAGE": {"workload": "api", "ref": replacement}})
+    seen = recording_docker(tmp_path)
+    result = run_in(kit, root, "validate", "custom")
+    assert result.returncode == 0, result.stderr
+    assert seen.read_text().splitlines()[0].split("|")[1] == replacement
+    bom = json.loads(run_in(kit, root, "version", "--json").stdout)["bom"]
+    assert bom["artifacts"]["SIMULATOR_ARTIFACT"] == inherited
+    assert bom["artifacts"]["API_IMAGE"]["ref"] == replacement
+    assert (bom["images"] is not None) is release
+
+
+@pytest.mark.parametrize("base_refs", [{"ref": JAZZY_ARTIFACT}, {"distros": {"humble": JAZZY_ARTIFACT, "jazzy": JAZZY_ARTIFACT}}])
+def test_kit_partial_distro_artifact_override_keeps_the_base_fallback(tmp_path, base_refs):
+    root, _ = runtime_tree(tmp_path)
+    edit_kit(root, lambda document: document.update(artifacts={"API_IMAGE_FALLBACK": {"workload": "api", **base_refs}}))
+    replacement = f"registry.example/acme-api@sha256:{'f' * 64}"
+    kit = integrator_kit(tmp_path, root, artifacts={
+        "API_IMAGE_FALLBACK": {"workload": "api", "distros": {"humble": replacement}},
+    })
+    context = cli_manifest.load_kit(kit)
+    assert context.artifact_environment("humble")["API_IMAGE_FALLBACK"] == replacement
+    assert context.artifact_environment("jazzy")["API_IMAGE_FALLBACK"] == JAZZY_ARTIFACT
+    # A wildcard override, unlike a partial distro override, replaces all refs.
+    edit_kit(kit, lambda document: document.update(artifacts={
+        "API_IMAGE_FALLBACK": {"workload": "api", "ref": replacement},
+    }))
+    context = cli_manifest.load_kit(kit)
+    assert context.artifact_environment("jazzy")["API_IMAGE_FALLBACK"] == replacement
+
+
+def test_kit_gpu_layer_preserves_env_priority_and_base_gpu_files(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for name in USER_ROOT_ENV:
+        monkeypatch.delenv(name, raising=False)
+    root, base = runtime_tree(tmp_path, manifest=gpu_manifest(), config_env="VALUE=base\n")
+    (base / "config.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
+    kit = integrator_kit(tmp_path, root)
+    (kit / "deployments/custom/config.gpu.env").write_text("VALUE=kit-gpu\n")
+    site_config(root, "VALUE=site\n", name="custom")
+    recording_docker(tmp_path)
+    result = run_in(kit, root, "validate", "custom", "--gpu", "--json")
+    assert result.returncode == 0, result.stderr
+    context = cli_manifest.load_kit(kit)
+    deployment = cli_manifest.get_deployment(kit, context, "custom")
+    assert deployment.has_gpu_files
+    assert deployment.compose_files(True) == [
+        kit / "deployments/custom/docker-compose.yaml", base / "docker-compose.gpu.yaml",
+    ]
+    # Inspect through the process env, which uses the same authoritative order
+    # as Compose rather than shell values.
+    selection = deployment.select(context, "humble", True)
+    assert selection.environment["VALUE"] == "site"
+    assert selection.environment["BASE_GPU"] == "1"
+    assert selection.injections["OPENADKIT_BASE_DEPLOYMENT"] == str(base)
+
+
+def test_node_graph_needs_no_implicit_zenoh_assets(tmp_path):
+    manifest = node_manifest()
+    manifest["shared"] = []
+    root, directory = runtime_tree(tmp_path, manifest=manifest)
+    (directory / "config/zenoh.json5").unlink()
+    _, calls = fake_docker(tmp_path)
+    result = run_cli(root, "validate", "example", "--node", "primary", NODE_TOKEN="token")
+    assert result.returncode == 0, result.stderr
+    assert "compose.primary.yaml" in calls.read_text()
+    assert "zenoh" not in calls.read_text()
+    context = cli_manifest.load_kit(root)
+    deployment = cli_manifest.get_deployment(root, context, "example")
+    selection = deployment.select(context, "humble", False, node="primary", operational=True)
+    assert not any(name.startswith("ZENOH_") for name in selection.injections)
+
+
+@pytest.mark.parametrize("unsafe", ["missing", "symlink", "escape"])
+def test_declared_node_assets_are_checked_before_compose(tmp_path, unsafe):
+    manifest = node_manifest()
+    manifest["nodes"]["primary"]["requiredFiles"] = [
+        "../outside.json" if unsafe == "escape" else "config/zenoh.json5",
+    ]
+    root, directory = runtime_tree(tmp_path, manifest=manifest)
+    path = directory / "config/zenoh.json5"
+    path.unlink()
+    if unsafe == "symlink":
+        target = tmp_path / "outside.json"
+        target.write_text("{}")
+        path.symlink_to(target)
+    _, calls = fake_docker(tmp_path)
+    result = run_cli(root, "validate", "example", "--node", "primary", NODE_TOKEN="token")
+    assert result.returncode != 0
+    assert not calls.exists()
+    assert {"missing": "missing required node file", "symlink": "symlinked required node file", "escape": "safe relative path"}[unsafe] in result.stderr
 
 
 def test_a_kit_pinned_to_a_missing_release_says_how_to_install_it(tmp_path):

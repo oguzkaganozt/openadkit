@@ -238,13 +238,10 @@ def _compose_config(files, directory, extra_env=None):
 
 
 def _node_compose_env(directory, node):
-    shared = ROOT / "deployments/shared"
     manifest = json.loads((directory / "deployment.json").read_text())
     return {
         "ROS_DISTRO": "humble",
         "OPENADKIT_ROS_DOMAIN_ID": str(manifest["nodes"][node]["rosDomainId"]),
-        "ZENOH_BASE_DIR": str(shared),
-        "ZENOH_CONFIG_PATH": str(directory / "config/zenoh.json5"),
         "ZENOH_LISTEN": "tcp/127.0.0.1:7447",
         "ZENOH_PEER": "tcp/127.0.0.1:7447",
         "REMOTE_PASSWORD": "ci-validate",
@@ -260,10 +257,7 @@ def test_real_compose_views_keep_default_and_node_graphs_isolated():
     assert "map" in default["services"]
 
     autoware = _compose_config(
-        [
-            scenario / "services.autoware.yaml",
-            ROOT / "deployments/shared/compose.zenoh.yaml",
-        ],
+        [scenario / "compose.autoware.yaml"],
         scenario,
         _node_compose_env(scenario, "autoware"),
     )
@@ -272,10 +266,7 @@ def test_real_compose_views_keep_default_and_node_graphs_isolated():
     assert "map" in autoware["services"]
 
     scenario_node = _compose_config(
-        [
-            scenario / "services.scenario.yaml",
-            ROOT / "deployments/shared/compose.zenoh.yaml",
-        ],
+        [scenario / "compose.scenario.yaml"],
         scenario,
         _node_compose_env(scenario, "scenario"),
     )
@@ -286,6 +277,9 @@ def test_real_compose_views_keep_default_and_node_graphs_isolated():
         bridge = view["services"]["zenoh-bridge"]
         assert "container_name" not in bridge
         assert bridge["environment"]["ROS_DOMAIN_ID"] == domain
+        mounts = {item["target"]: item["source"] for item in bridge["volumes"]}
+        assert mounts["/config/zenoh.json5"] == str(scenario / "config/zenoh.json5")
+        assert mounts["/etc/cyclonedds/cyclonedds.xml"] == str(ROOT / "deployments/shared/cyclonedds.xml")
     assert default["services"]["map"]["environment"]["ROS_DOMAIN_ID"] == "1"
 
     carla = ROOT / "deployments/carla-simulation"
@@ -300,10 +294,7 @@ def test_real_compose_views_keep_default_and_node_graphs_isolated():
     assert "map" in carla_default["services"]
 
     carla_autoware = _compose_config(
-        [
-            carla / "services.autoware.yaml",
-            ROOT / "deployments/shared/compose.zenoh.yaml",
-        ],
+        [carla / "compose.autoware.yaml"],
         carla,
         _node_compose_env(carla, "autoware"),
     )
@@ -314,10 +305,7 @@ def test_real_compose_views_keep_default_and_node_graphs_isolated():
     assert "carla-interface" not in vehicle_deps
 
     carla_node = _compose_config(
-        [
-            carla / "services.carla.yaml",
-            ROOT / "deployments/shared/compose.zenoh.yaml",
-        ],
+        [carla / "compose.carla.yaml"],
         carla,
         _node_compose_env(carla, "carla"),
     )

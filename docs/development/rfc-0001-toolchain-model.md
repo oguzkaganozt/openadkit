@@ -171,10 +171,10 @@ Autoware tag and record the resolved source/lock and upstream image digests.
 
 The immutable plan embeds the selected verified report and BOM. Release notes
 derive current metrics from it. Bundle, installer, plan and metadata receive
-release-workflow provenance. The minimal upgrade report compares passing-cell
-count, readiness/arrival time and memory against the previous stable release,
-or an available previous successful `main` run when there is no stable release.
-Historical metrics describe change; they are not a safety or performance SLA.
+release-workflow provenance. The verification report shows current passing-cell
+count, readiness/arrival time and memory. Release never looks up historical
+runs; an optional local comparison takes explicitly selected input files.
+Historical metrics are not an upgrade acceptance test or a safety/performance SLA.
 
 `workflow_call` currently reuses the reference-build verifier in the repository
 owning the build, including its example kits. Arbitrary external kit intake is
@@ -252,13 +252,13 @@ breaking change and follows SemVer. Internal paths are not extension contracts.
 
 Release maintainers review exceptions, distro/default changes and upstream pins
 as source changes before a new build. The AWF release team and working group
-must review how RC evidence and upgrade reports enter their process; this RFC
+must review how RC evidence and verification reports enter their process; this RFC
 does not assert that organizational agreement has already happened.
 
 ## Roadmap and non-goals
 
 - **v2.0:** pinned/reference kit, user-data boundaries, Compose nodes, L0-L2
-  evidence, blocking release policy and minimal upgrade report
+  evidence, blocking release policy and minimal verification report
 - **v2.0.x:** evidence-backed upstream updates, richer scenario/upgrade metrics
   and image SBOM work
 - **v2.1:** OCI delivery and the first vehicle backend; upstream application

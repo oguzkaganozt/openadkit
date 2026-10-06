@@ -102,6 +102,10 @@ openadkit clean planning-simulation --data     # delete
 Simulation's Kashiwanoha map is removed, restore it with
 `openadkit fetch scenario-simulation --force`.
 
+`run` downloads missing data, but never replaces an existing data directory.
+Replace incomplete or outdated managed data explicitly with `fetch --force`;
+`run --force` is not supported.
+
 The CLI marks the data it installs with a `.openadkit-resource.json` file.
 `clean --data` and `--force` only delete or replace marked data. Data that was
 already there, such as a map you copied yourself, is still used when it is
@@ -113,6 +117,11 @@ complete, but the CLI never deletes or replaces it; move or remove it yourself.
 [split-host simulation](../deployments/split-host.md). `status`, `logs`, and
 `stop` find the live node from its Compose project; pass `--node` only when
 several nodes of one deployment run on the same machine.
+
+Each node's declared Compose entrypoint owns its full service graph, including
+any bridge. The CLI selects those files and the node's ROS domain; it never
+adds a networking service behind the scenes. The printed Compose command shows
+the selected files, env files and project name.
 
 ## Verify a Release Bundle Manually
 

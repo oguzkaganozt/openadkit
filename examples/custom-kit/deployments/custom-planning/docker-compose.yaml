@@ -1,7 +1,7 @@
 # Include the pinned Planning Simulation and add services (extension point 4).
-# The CLI sets KIT_openadkit to the Open AD Kit this kit extends.
+# The resolver selects this directory from deployment.json's base field.
 include:
-  - ${KIT_openadkit}/deployments/planning-simulation/docker-compose.yaml
+  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
 
 services:
   heartbeat:

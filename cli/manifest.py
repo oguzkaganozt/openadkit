@@ -69,6 +69,7 @@ ALLOWED_NODE_KEYS = {
     "files",
     "resetServices",
     "requiredEnv",
+    "requiredFiles",
     "rosDomainId",
 }
 NODE_BACKENDS = {"compose"}
@@ -296,9 +297,7 @@ class RuntimeContext:
     @property
     def pinned(self) -> bool:
         """Release images cannot be overridden from env files; source images can."""
-        if self.base is not None:
-            return self.base.pinned
-        return self.kind == "release"
+        return self.image_prefix_component is None
 
     def bom(self) -> dict[str, Any]:
         """What this kit runs: Autoware, component images and artifacts."""
@@ -314,11 +313,10 @@ class RuntimeContext:
         In an integrator kit its own artifacts come last, so one named like a
         component image replaces that component.
         """
-        environment = (
-            self.base.artifact_environment(ros_distro) if self.base is not None else {}
-        )
+        environment = {}
         for name, artifact in self.artifacts.items():
-            reference = artifact.get("ref") or artifact.get("distros", {}).get(ros_distro)
+            # A resolved kit can have per-distro overrides and a base fallback.
+            reference = artifact.get("distros", {}).get(ros_distro) or artifact.get("ref")
             if reference:
                 environment[name] = reference
         return environment
@@ -326,15 +324,12 @@ class RuntimeContext:
     def component_environment(
         self, ros_distro: str, architecture: str, gpu: bool
     ) -> dict[str, str]:
-        if self.base is not None:
-            return self.base.component_environment(ros_distro, architecture, gpu)
         applicable = {
             name: target
             for name, target in self.component_images.items()
             if gpu or name != GPU_COMPONENT_IMAGE
         }
-        if self.kind == "repository":
-            assert self.image_prefix_component is not None
+        if self.image_prefix_component is not None:
             return {
                 name: (
                     f"{self.image_prefix_component}:{target}-{architecture}-{ros_distro}"
@@ -369,6 +364,24 @@ class Selection:
     environment: dict[str, str]
 
 
+@dataclass(frozen=True)
+class EnvironmentLayer:
+    directory: Path
+    required: bool
+    gpu_required: bool
+
+    def files(self, gpu: bool) -> list[Path]:
+        result = []
+        names = [("config.env", self.required)]
+        if gpu:
+            names.append(("config.gpu.env", self.gpu_required))
+        for name, required in names:
+            candidate = self.directory / name
+            if required or candidate.exists() or candidate.is_symlink():
+                result.append(ensure_safe_existing(self.directory, name, "environment file"))
+        return result
+
+
 class Deployment:
     def __init__(
         self,
@@ -378,7 +391,8 @@ class Deployment:
         base: Deployment | None = None,
     ) -> None:
         self.root = root
-        # An integrator deployment builds on this pinned deployment.
+        # Retained only as provenance and the static overlay-contract baseline.
+        # Runtime layers below are resolved once; they never delegate to base.
         self.base = base
         self.directory = directory
         self.manifest_path = directory / "deployment.json"
@@ -392,6 +406,25 @@ class Deployment:
         # Why CI cannot produce evidence for this deployment, if it cannot.
         self.evidence_exemption: str | None = manifest["evidence"].get("exempt")
         self.project = f"openadkit-{self.name}"
+        own_layer = EnvironmentLayer(directory, base is None, bool(self.compose["gpuFiles"]))
+        self.env_layers: tuple[EnvironmentLayer, ...] = (*(base.env_layers if base else ()), own_layer)
+        # Kit GPU patches follow its Compose entrypoint, as before.
+        self.gpu_files: list[tuple[Path, str]] = [
+            (directory, name) for name in self.compose["gpuFiles"]
+        ] + (base.gpu_files if base else [])
+        owner = base if base else self
+        self.overlay_paths = {
+            "OPENADKIT_CONFIG_SHARED": (
+                owner.root / "deployments/shared/config" if "shared" in owner.shared else None
+            ),
+            "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
+            "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
+            "OPENADKIT_OVERLAY_WS": directory / "overlay_ws",
+        }
+        self.kit_environment = {
+            BASE_KIT_ENV: str(base.root),
+            "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
+        } if base else {}
 
     def project_name(self, node: str | None = None) -> str:
         """Each node is its own Compose project, so nodes never share state."""
@@ -408,48 +441,16 @@ class Deployment:
 
     @property
     def has_gpu_files(self) -> bool:
-        return bool(self.compose["gpuFiles"]) or (
-            self.base is not None and self.base.has_gpu_files
-        )
+        return bool(self.gpu_files)
 
     def env_files(self, gpu: bool = False) -> list[Path]:
         """Base env files, then this deployment's, then the host's site file."""
-        result = self.base._own_env_files(gpu) if self.base is not None else []
-        result.extend(self._own_env_files(gpu))
+        result = [path for layer in self.env_layers for path in layer.files(gpu)]
         site = self.site_config
         if site.exists():
             if not site.is_file():
                 raise OpenADKitError(f"site configuration is not a regular file: {site}")
             result.append(site)
-        return result
-
-    def _own_env_files(self, gpu: bool) -> list[Path]:
-        result: list[Path] = []
-
-        def add_optional(name: str) -> None:
-            candidate = self.directory / name
-            if candidate.exists() or candidate.is_symlink():
-                result.append(
-                    ensure_safe_existing(self.directory, name, "environment file")
-                )
-
-        # An integrator deployment may leave every base value as it is.
-        if self.base is None:
-            result.append(
-                ensure_safe_existing(self.directory, "config.env", "environment file")
-            )
-        else:
-            add_optional("config.env")
-
-        if gpu:
-            if self.compose["gpuFiles"]:
-                result.append(
-                    ensure_safe_existing(
-                        self.directory, "config.gpu.env", "environment file"
-                    )
-                )
-            else:
-                add_optional("config.gpu.env")
         return result
 
     def configuration_environment(self, gpu: bool = False) -> dict[str, str]:
@@ -465,34 +466,16 @@ class Deployment:
         return values
 
     def compose_files(self, gpu: bool, node: str | None = None) -> list[Path]:
-        if node is None:
-            names = list(self.compose["files"])
-            if gpu:
-                names.extend(self.compose["gpuFiles"])
-            files = [
-                ensure_safe_existing(self.directory, name, "Compose file")
-                for name in names
-            ]
-            if gpu and self.base is not None:
-                # The base's GPU overlay patches the services the kit includes.
-                files.extend(
-                    ensure_safe_existing(self.base.directory, name, "Compose file")
-                    for name in self.base.compose["gpuFiles"]
-                )
-            return files
-        names = list(self.nodes[node]["files"])
-        if gpu:
-            names.extend(self.compose["gpuFiles"])
+        """Only explicitly selected files; each entrypoint owns its whole graph."""
+        names = self.compose["files"] if node is None else self.nodes[node]["files"]
         files = [
             ensure_safe_existing(self.directory, name, "Compose file") for name in names
         ]
-        files.append(
-            ensure_safe_existing(
-                self.root / "deployments",
-                "shared/compose.zenoh.yaml",
-                "Compose file",
+        if gpu:
+            files.extend(
+                ensure_safe_existing(directory, name, "Compose file")
+                for directory, name in self.gpu_files
             )
-        )
         return files
 
     def reset_services(self, node: str | None = None) -> list[str]:
@@ -507,9 +490,7 @@ class Deployment:
             "OPENADKIT_OUTPUT_DIR": str(self.output_directory),
             **host_user_environment(),
         }
-        if self.base is not None:
-            # The kit's Compose file includes the base by this path.
-            injections[BASE_KIT_ENV] = str(self.base.root)
+        injections.update(self.kit_environment)
         injections.update(self._overlay_mounts())
         return injections
 
@@ -529,30 +510,11 @@ class Deployment:
             empty.mkdir(parents=True, exist_ok=True)
             return str(empty)
 
-        owner = self.base if self.base is not None else self
-        shared = (
-            owner.root / "deployments" / "shared" / "config"
-            if "shared" in owner.shared
-            else None
-        )
-        return {
-            "OPENADKIT_CONFIG_SHARED": layer(shared),
-            "OPENADKIT_CONFIG_BASE": layer(
-                self.base.directory / "config" if self.base is not None else None
-            ),
-            "OPENADKIT_CONFIG_DEPLOYMENT": layer(self.directory / "config"),
-            "OPENADKIT_OVERLAY_WS": layer(self.directory / "overlay_ws"),
-        }
+        return {name: layer(path) for name, path in self.overlay_paths.items()}
 
     def _node_injections(self, node: str | None, injections: dict[str, str]) -> dict[str, str]:
         if node is None:
             return injections
-        injections["ZENOH_BASE_DIR"] = str(
-            (self.root / "deployments" / "shared").resolve()
-        )
-        injections["ZENOH_CONFIG_PATH"] = str(
-            (self.directory / "config" / "zenoh.json5").resolve()
-        )
         # runtime.env reads this, so each node joins its own DDS domain and
         # two nodes on one host stay isolated until the Zenoh bridge links them.
         injections["OPENADKIT_ROS_DOMAIN_ID"] = str(self.nodes[node]["rosDomainId"])
@@ -861,6 +823,11 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
         node["requiredEnv"] = require_string_list(
             node.get("requiredEnv", []), f"{where}.requiredEnv"
         )
+        node["requiredFiles"] = require_string_list(
+            node.get("requiredFiles", []), f"{where}.requiredFiles"
+        )
+        for file_name in node["requiredFiles"]:
+            ensure_safe_existing(directory, file_name, "required node file")
         invalid_node_env = [
             item for item in node["requiredEnv"] if not ENV_NAME_RE.fullmatch(item)
         ]
@@ -883,13 +850,6 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
         domain_ids.add(domain_id)
         for file_name in node["files"]:
             ensure_safe_existing(directory, file_name, "Compose file")
-    if nodes:
-        if "shared" not in shared:
-            raise OpenADKitError("nodes require the shared deployment assets")
-        ensure_safe_existing(
-            root / "deployments", "shared/compose.zenoh.yaml", "Zenoh Compose file"
-        )
-        ensure_safe_existing(directory, "config/zenoh.json5", "Zenoh configuration")
     manifest["nodes"] = nodes
 
     evidence = manifest.get("evidence", {})
@@ -1131,7 +1091,17 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
     base_root = resolve_extends(root, extends)
     base = load_kit(base_root)
     # A kit artifact may reuse a component image name to replace that component.
-    artifacts = _parse_artifacts(value.get("artifacts", {}), {})
+    own_artifacts = _parse_artifacts(value.get("artifacts", {}), {})
+    artifacts = dict(base.artifacts)
+    for name, artifact in own_artifacts.items():
+        if name in artifacts and "distros" in artifact:
+            inherited = artifacts[name]
+            artifacts[name] = {
+                **inherited, **artifact,
+                "distros": {**inherited.get("distros", {}), **artifact["distros"]},
+            }
+        else:
+            artifacts[name] = artifact
     return RuntimeContext(
         kind="kit",
         default_ros_distro=base.default_ros_distro,

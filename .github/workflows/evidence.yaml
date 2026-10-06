@@ -281,39 +281,8 @@ jobs:
           {
             echo "## Evidence for build \`${{ needs.prepare.outputs.build_tag }}\`"
             echo
-            python3 - <<'PY'
-          import json
-          summary = json.load(open("attestation/evidence-summary.json", encoding="utf-8"))
-          print(f"Result: **{summary['result']}**")
-          print()
-          print("| Cell | Deployment | Distro | Node | Ready (s) | Arrival (s) | Peak MiB | Overlay conformant | Result |")
-          print("|---|---|---|---|---|---|---|---|---|")
-          for cell in summary["cells"]:
-              print(
-                  "| {name} | {deployment} | {distro} | {node} | {ready_s} | {arrival_s} | {peak_mib} | {overlay} | {result} |".format(
-                      name=cell["name"],
-                      deployment=cell["deployment"],
-                      distro=cell["distro"],
-                      node=cell["node"] or "-",
-                      ready_s=cell["ready_s"] if cell["ready_s"] is not None else "-",
-                      arrival_s=cell["arrival_s"] if cell["arrival_s"] is not None else "-",
-                      peak_mib=cell["peak_mib"],
-                      overlay=cell["overlayConformant"],
-                      result=cell["result"],
-                  )
-              )
-          if summary.get("quarantine"):
-              print()
-              print("Quarantined cells:")
-              for note in summary["quarantine"]:
-                  state = "expired" if note["expired"] else "quarantined"
-                  print(f"- {note['cell']} ({state}, expires {note['expires']}): {note['reason']}")
-          if summary.get("missing"):
-              print()
-              print("Missing cells:")
-              for name in summary["missing"]:
-                  print(f"- {name}")
-          PY
+            python3 .github/scripts/evidence/report.py \
+              --current attestation/evidence-summary.json
           } >> "$GITHUB_STEP_SUMMARY"
         shell: bash
 

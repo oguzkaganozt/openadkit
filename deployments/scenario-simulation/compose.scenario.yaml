@@ -1,0 +1,9 @@
+# Full simulator node graph, including its explicit LAN bridge.
+include:
+  - services.scenario.yaml
+  - ../shared/compose.zenoh.yaml
+
+services:
+  zenoh-bridge:
+    volumes:
+      - ./config/zenoh.json5:/config/zenoh.json5:ro

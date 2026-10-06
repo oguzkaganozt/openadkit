@@ -15,6 +15,12 @@ sys.path.insert(0, str(ROOT / ".github/scripts"))
 from evidence_fixtures import passing_statement  # noqa: E402
 
 from evidence import release_gate  # noqa: E402
+from evidence.cells import (  # noqa: E402
+    legacy_release_cells,
+    predicate_cells,
+    report_cells,
+)
+from evidence.report import render  # noqa: E402
 
 # Load existing subprocess fixtures without coupling tests to collection order.
 spec = importlib.util.spec_from_file_location("release_pipeline_fixtures", Path(__file__).with_name("test_release_pipeline.py"))
@@ -36,7 +42,8 @@ def verify(statement, metadata):
 def test_complete_passing_statement_produces_release_metadata(metadata):
     report = verify(passing_statement(metadata), metadata)
     assert report["result"] == "PASSED"
-    assert len(report["cells"]) == 8
+    assert "cells" not in report
+    assert len(report_cells(report)) == 8
     assert {row["deployment"] for row in report["exempt"]} == {"carla-simulation", "logging-simulation"}
     assert report["defaultRosDistroDecision"]["selected"] == "humble"
     release_gate.validate_report(report, metadata, ROOT, "humble")
@@ -111,6 +118,16 @@ def test_empty_or_malformed_verification_cannot_pass(metadata, verified):
 
 def test_plan_rejects_tampered_validated_report(metadata):
     report = verify(passing_statement(metadata), metadata)
+    report["statement"]["predicate"]["configuration"][0]["annotations"]["readyS"] = 0
+    with pytest.raises(ValueError, match="differs"):
+        release_gate.validate_report(report, metadata, ROOT, "humble")
+
+
+def test_legacy_validated_report_is_rechecked_without_trusting_its_cell_copy(metadata):
+    report = verify(passing_statement(metadata), metadata)
+    report["schemaVersion"] = 1
+    report["cells"] = legacy_release_cells(report_cells(report))
+    release_gate.validate_report(report, metadata, ROOT, "humble")
     report["cells"][0]["ready_s"] = 0
     with pytest.raises(ValueError, match="differs"):
         release_gate.validate_report(report, metadata, ROOT, "humble")
@@ -163,6 +180,27 @@ def test_release_notes_cannot_replace_verified_current_metrics_with_unsigned_sum
     assert "Evidence result: **PASSED**" in notes
     assert "Passing cells: **8/8**" in notes
     assert "Evidence result: **FAILED**" not in notes
+    # A historical input cannot change notes from the same sealed plan, even
+    # when old caller environments still set this removed integration variable.
+    result = subprocess.run(["bash", str(pipeline.WRITE_NOTES)], cwd=tmp_path,
+                            env=env | {"EVIDENCE_PREVIOUS_SUMMARY": str(unsigned)}, text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "release-notes.md").read_text() == notes
+
+
+def test_release_workflow_has_no_history_lookup_and_report_dependencies_are_present(tmp_path):
+    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yaml").read_text())
+    job = workflow["jobs"]["prepare-github-release"]
+    patterns = job["steps"][0]["with"]["sparse-checkout"].splitlines()
+    for path in patterns:
+        source = ROOT / path
+        target = tmp_path / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        pipeline.shutil.copy2(source, target)
+    result = subprocess.run(["python3", str(tmp_path / ".github/scripts/evidence/report.py"), "--help"],
+                            cwd=tmp_path, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert all("previous" not in step.get("run", "").lower() for step in job["steps"])
 
 
 def test_release_source_is_archived_from_promoted_sha_without_changing_dispatch_checkout(tmp_path):
@@ -215,6 +253,7 @@ def test_real_aggregator_output_passes_the_gate_with_workflow_matrix(tmp_path, m
             "node": row.get("node") or "", "kit": row.get("kit") or "", "platform": "linux/amd64",
             "build_tag": metadata["build_tag"], "source_sha": metadata["openadkit_sha"],
             "result": "PASSED", "overlayConformant": True,
+            "metrics": {"ready_s": 12, "arrival_s": 45, "peak_mib": 1024},
             "levels": {level: {"ok": True} for level in ("L0", "L1", "L2")},
         }))
     metadata_path = tmp_path / "metadata.json"
@@ -228,7 +267,36 @@ def test_real_aggregator_output_passes_the_gate_with_workflow_matrix(tmp_path, m
     assert result.returncode == 0, result.stderr
     statement = passing_statement(metadata)
     statement["predicate"] = json.loads((output / "evidence-predicate.json").read_text())
-    assert verify(statement, metadata)["result"] == "PASSED"
+    report = verify(statement, metadata)
+    assert report["result"] == "PASSED"
+    summary = json.loads((output / "evidence-summary.json").read_text())
+    assert summary["cells"] == predicate_cells(statement["predicate"])
+    assert render(summary) == render(report)
+    assert report_cells(report)[0]["metrics"]["peak_mib"] == 1024
+
+
+@pytest.mark.parametrize("case", ["name", "build_tag", "source_sha", "distro", "node", "platform", "kit", "result", "levels", "overlay", "schemaVersion", "payload"])
+def test_versioned_cell_cannot_bypass_the_release_policy(metadata, case):
+    statement = passing_statement(metadata)
+    predicate = statement["predicate"]
+    predicate["configuration"] = [
+        {"name": cell["name"], "annotations": {"openadkitCell": cell}}
+        for cell in predicate_cells(predicate)
+    ]
+    cell = predicate["configuration"][0]["annotations"]["openadkitCell"]
+    if case == "levels":
+        cell["levels"]["L2"]["ok"] = False
+    elif case == "overlay":
+        next(entry["annotations"]["openadkitCell"] for entry in predicate["configuration"]
+             if entry["annotations"]["openadkitCell"]["kit"])["overlayConformant"] = False
+    elif case == "schemaVersion":
+        cell["schemaVersion"] = 99
+    elif case == "payload":
+        predicate["configuration"][0]["annotations"]["openadkitCell"] = None
+    else:
+        cell[case] = "wrong"
+    with pytest.raises(ValueError):
+        verify(statement, metadata)
 
 
 @pytest.mark.parametrize("gh_status", [0, 1])

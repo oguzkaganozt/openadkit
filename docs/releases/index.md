@@ -18,7 +18,7 @@ metadata. Each stable release publishes:
 Installed releases move to the latest stable version with `openadkit upgrade`.
 Tag naming is documented in
 [Container Images & Versioning](../getting-started/container-images.md).
-See [Evidence Policy](evidence.md) for the blocking gate and upgrade report, and
+See [Evidence Policy](evidence.md) for the blocking gate and verification report, and
 [Verify a Release](verification.md) before executing downloaded artifacts.
 
 ## Roadmap

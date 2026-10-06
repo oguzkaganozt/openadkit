@@ -88,5 +88,5 @@ def test_test_result_preserves_overlay_conformance(tmp_path):
     ], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     predicate = json.loads((output / "evidence-predicate.json").read_text())
-    assert predicate["configuration"][0]["annotations"]["overlayConformant"] is False
+    assert predicate["configuration"][0]["annotations"]["openadkitCell"]["overlayConformant"] is False
     assert json.loads((output / "evidence-summary.json").read_text())["cells"][0]["overlayConformant"] is False

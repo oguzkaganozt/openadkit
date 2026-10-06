@@ -155,12 +155,7 @@ build_tag=$(jq -r '.build_tag' release-metadata.json)
   echo "## Verification"
   echo ""
   jq '.evidence' "${plan_file}" >"${temporary}/current.json"
-  report_args=(--current "${temporary}/current.json" --output "${temporary}/upgrade-report.md")
-  if [ -n "${EVIDENCE_PREVIOUS_SUMMARY:-}" ] && [ -f "${EVIDENCE_PREVIOUS_SUMMARY}" ]; then
-    report_args+=(--previous "${EVIDENCE_PREVIOUS_SUMMARY}")
-  fi
-  python3 "${script_dir}/evidence/upgrade_report.py" "${report_args[@]}"
-  cat "${temporary}/upgrade-report.md"
+  python3 "${script_dir}/evidence/report.py" --current "${temporary}/current.json"
   echo ""
   echo "Default ROS distro: \`${DEFAULT_ROS_DISTRO}\`, explicitly selected in the release source manifest and covered by passing evidence."
   echo ""

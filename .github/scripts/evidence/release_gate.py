@@ -17,6 +17,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import validation_matrix  # noqa: E402
+from evidence.cells import legacy_release_cells, predicate_cells  # noqa: E402
 from evidence.subjects import build_subjects  # noqa: E402
 
 PREDICATE_TYPE = "https://in-toto.io/attestation/test-result/v0.1"
@@ -85,33 +86,24 @@ def statement_report(
     kit = runtime.load_kit(source_root)
     require(default_distro == kit.default_ros_distro, "default distro must match the release source manifest")
     require(any(cell["distro"] == default_distro for cell in expected.values()), "default distro has no required runtime evidence")
-    cells = []
-    for cell in sorted(configuration, key=lambda item: item["name"]):
+    cells = predicate_cells(predicate)
+    for cell in cells:
         row = expected[cell["name"]]
-        annotations = cell.get("annotations")
-        require(isinstance(annotations, dict), f"{cell['name']}: missing annotations")
         identity = {
-            "deployment": row["deployment"], "rosDistro": row["distro"],
+            "deployment": row["deployment"], "distro": row["distro"],
             "node": row.get("node") or None, "platform": "linux/amd64",
             "kit": row.get("kit") or None,
-            "buildTag": metadata["build_tag"], "sourceSha": metadata["openadkit_sha"],
+            "build_tag": metadata["build_tag"], "source_sha": metadata["openadkit_sha"],
         }
-        require(all(annotations.get(key) == value for key, value in identity.items()), f"{cell['name']}: cell does not match the build/matrix")
-        levels = annotations.get("levels")
-        require(isinstance(levels, dict) and all(levels.get(level) is True for level in ("L0", "L1", "L2")), f"{cell['name']}: L0-L2 must all pass")
+        require(all(cell.get(key) == value for key, value in identity.items()), f"{cell['name']}: cell does not match the build/matrix")
+        require(cell.get("result") == "PASSED", f"{cell['name']}: cell result must pass")
+        levels = cell.get("levels")
+        require(isinstance(levels, dict) and all(isinstance(levels.get(level), dict) and levels[level].get("ok") is True for level in ("L0", "L1", "L2")), f"{cell['name']}: L0-L2 must all pass")
         if row.get("kit"):
-            require(annotations.get("overlayConformant") is True, f"{cell['name']}: example overlay must conform")
-        cells.append({
-            "name": cell["name"], "deployment": row["deployment"],
-            "distro": row["distro"], "node": row.get("node") or "",
-            "kit": row.get("kit") or "", "platform": "linux/amd64", "result": "PASSED",
-            "levels": levels, "overlayConformant": annotations.get("overlayConformant"),
-            "ready_s": annotations.get("readyS"), "arrival_s": annotations.get("arrivalS"),
-            "peak_mib": annotations.get("peakMib"),
-        })
+            require(cell.get("overlayConformant") is True, f"{cell['name']}: example overlay must conform")
     canonical = json.dumps(statement, sort_keys=True, separators=(",", ":")).encode()
     return {
-        "schemaVersion": 1, "result": "PASSED", "build_tag": metadata["build_tag"],
+        "schemaVersion": 2, "result": "PASSED", "build_tag": metadata["build_tag"],
         "source_sha": metadata["openadkit_sha"], "predicateType": PREDICATE_TYPE,
         "signerWorkflow": f"{repository}/.github/workflows/evidence.yaml",
         "sourceRef": "refs/heads/main", "url": predicate.get("url"),
@@ -121,7 +113,7 @@ def statement_report(
             "policy": "explicit-manifest-with-passing-evidence",
         },
         "exempt": validation_matrix.evidence_exemptions(runtime, source_root),
-        "cells": cells, "statement": statement,
+        "statement": statement,
     }
 
 
@@ -142,11 +134,15 @@ def verified_report(
 
 def validate_report(report: dict[str, Any], metadata: dict[str, Any], source_root: Path, default_distro: str) -> None:
     """Recheck the validated input before embedding it in an immutable plan."""
+    require(type(report.get("schemaVersion")) is int and report["schemaVersion"] in (1, 2), "unsupported evidence report schemaVersion")
     signer = report.get("signerWorkflow", "")
     require(isinstance(signer, str) and signer.endswith("/.github/workflows/evidence.yaml"), "invalid evidence signer")
     repository = signer.removesuffix("/.github/workflows/evidence.yaml")
     require(bool(repository), "missing evidence repository")
     expected = statement_report(report.get("statement", {}), metadata, source_root, default_distro, repository)
+    if report.get("schemaVersion") == 1:
+        expected["schemaVersion"] = 1
+        expected["cells"] = legacy_release_cells(predicate_cells(expected["statement"]["predicate"]))
     require(report == expected, "evidence report differs from its validated statement/source")
 
 
@@ -167,7 +163,7 @@ def main() -> int:
         args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.exit(1, f"evidence gate: {error}\n")
-    print(f"evidence gate: PASSED ({len(report['cells'])} required cells)")
+    print(f"evidence gate: PASSED ({len(report['statement']['predicate']['configuration'])} required cells)")
     return 0
 
 

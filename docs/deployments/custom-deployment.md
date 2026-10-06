@@ -61,10 +61,12 @@ Create `deployments/my-simulation/docker-compose.yaml`:
 
 ```yaml
 include:
-  - ${KIT_openadkit}/deployments/planning-simulation/docker-compose.yaml
+  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
 ```
 
-The CLI sets `KIT_openadkit` to the resolved base. Add only settings that differ
+The resolver sets `OPENADKIT_BASE_DEPLOYMENT` from `deployment.json`'s `base`,
+so the deployment name is not repeated in Compose. `KIT_openadkit` still names
+the base root for shared assets. Add only settings that differ
 in `config.env`, for example `VEHICLE_ID=my-vehicle`. Add your own services under
 `services:` in the same Compose file. A block for an included service overrides
 that service rather than creating another container.

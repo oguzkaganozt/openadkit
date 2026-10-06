@@ -4,7 +4,7 @@
 # single-host wiring: scenario_simulator waits for Autoware, including the
 # local /map/pointcloud_map topic, and joins the map PID namespace.
 # Split-host runs use --node autoware / --node scenario, where the CLI
-# selects one service file plus the shared Zenoh fragment. This file never
+# selects a compose.<node>.yaml entrypoint with an explicit bridge. This file never
 # includes the Zenoh bridge.
 include:
   - services.autoware.yaml

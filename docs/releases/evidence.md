@@ -75,7 +75,7 @@ The gate does not automatically switch from Humble to Jazzy or remove a failing
 distro. To change supported distros, update the manifests in a reviewed source
 change and build/test that revision. Humble remains the initial default.
 
-## Metadata and upgrade report
+## Metadata and verification report
 
 `release-plan.json` seals the validated `evidence` report before packaging.
 `release-metadata.json` includes that same report, the BOM, CI exemptions and
@@ -83,13 +83,21 @@ change and build/test that revision. Humble remains the initial default.
 selected signed statement, not an independently downloaded, unsigned summary.
 Bundle, installer, plan and metadata receive release-workflow build provenance.
 
-The upgrade table shows passing-cell count, readiness time, arrival time and
-peak memory for each cell. Its baseline is the previous stable version below
-the target; if none exists, the latest available successful evidence run on
-`main` for a different build. Historical metrics are informational, not a
-performance-regression or safety gate. Missing baselines/metrics are shown
-explicitly, never replaced with zeroes. Positive timing/memory deltas mean an
-increase, not automatically a failure.
+The verification table shows passing-cell count, readiness time, arrival time
+and peak memory for the current build. Release never searches older runs or
+releases; its notes depend only on the sealed plan. Missing metrics are shown
+as `-`, never replaced with zeroes.
+
+Historical comparison is optional, outside release. With two explicitly chosen
+local summaries, run:
+
+```bash
+python3 .github/scripts/evidence/report.py \
+  --current current.json --previous previous.json --output comparison.md
+```
+
+This is a timing/memory comparison, not an `openadkit upgrade` acceptance test,
+performance SLA or safety gate.
 
 See [Verify a Release](verification.md) and
 [Run the Evidence Workflow](../development/evidence-workflow.md).

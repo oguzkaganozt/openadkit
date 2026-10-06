@@ -305,7 +305,9 @@ def validate_install_targets(
                 raise OpenADKitError(f"unsafe data target: {target}")
             refuse_unmanaged(target, "replace")
         elif not validate_dataset(target, resource["requiredFiles"]):
-            raise OpenADKitError(f"incomplete data at {target}; rerun with --force")
+            raise OpenADKitError(
+                f"incomplete data at {target}; run: openadkit fetch {deployment.name} --force"
+            )
 
 
 def resource_destination(resource: dict[str, Any], selection: Selection) -> Path:
@@ -327,7 +329,9 @@ def install_resource(
             if validate_dataset(target, required):
                 print(f"data already present: {target}")
                 return
-            raise OpenADKitError(f"incomplete data at {target}; rerun with --force")
+            raise OpenADKitError(
+                f"incomplete data at {target}; run: openadkit fetch <deployment> --force"
+            )
         if target.is_symlink() or not target.is_dir():
             raise OpenADKitError(f"unsafe data target: {target}")
         refuse_unmanaged(target, "replace")
