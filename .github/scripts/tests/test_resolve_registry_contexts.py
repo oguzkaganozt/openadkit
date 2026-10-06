@@ -150,6 +150,7 @@ fi
         "USE_LOCAL_COMMON": "false",
         "USE_LOCAL_SIMULATOR": "false",
         "ROS_DISTRO": "humble",
+        "REGISTRY_LOOKUP_RETRY_DELAY_SECONDS": "0",
     }
     result = subprocess.run(
         ["bash", str(SCRIPT)], cwd=repo, env=env, text=True, capture_output=True

@@ -1,13 +1,15 @@
 """Release policy: signature verification is necessary, never sufficient."""
 
 import copy
-import importlib.util
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+import release_fixtures as pipeline
 import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -21,11 +23,6 @@ from evidence.cells import (  # noqa: E402
     report_cells,
 )
 from evidence.report import render  # noqa: E402
-
-# Load existing subprocess fixtures without coupling tests to collection order.
-spec = importlib.util.spec_from_file_location("release_pipeline_fixtures", Path(__file__).with_name("test_release_pipeline.py"))
-pipeline = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(pipeline)
 
 
 @pytest.fixture
@@ -136,9 +133,9 @@ def test_legacy_validated_report_is_rechecked_without_trusting_its_cell_copy(met
 def test_changed_release_source_cannot_reuse_old_evidence(tmp_path, metadata):
     source = tmp_path / "source"
     source.mkdir()
-    pipeline.shutil.copy2(ROOT / "openadkit.json", source / "openadkit.json")
+    shutil.copy2(ROOT / "openadkit.json", source / "openadkit.json")
     for directory in ("cli", "deployments", "examples"):
-        pipeline.shutil.copytree(ROOT / directory, source / directory)
+        shutil.copytree(ROOT / directory, source / directory)
     statement = passing_statement(metadata)
     path = source / "examples/custom-kit/README.md"
     path.write_text(path.read_text() + "\nchanged kit\n")
@@ -196,7 +193,7 @@ def test_release_workflow_has_no_history_lookup_and_report_dependencies_are_pres
         source = ROOT / path
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        pipeline.shutil.copy2(source, target)
+        shutil.copy2(source, target)
     result = subprocess.run(["python3", str(tmp_path / ".github/scripts/evidence/report.py"), "--help"],
                             cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
@@ -235,9 +232,9 @@ def test_actual_workflow_sparse_paths_include_python_dependencies(tmp_path, job,
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         if source.is_dir():
-            pipeline.shutil.copytree(source, target, dirs_exist_ok=True)
+            shutil.copytree(source, target, dirs_exist_ok=True)
         else:
-            pipeline.shutil.copy2(source, target)
+            shutil.copy2(source, target)
     result = subprocess.run(["python3", str(tmp_path / ".github/scripts" / script), "--help"],
                             cwd=tmp_path, text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
@@ -315,7 +312,7 @@ def test_shell_gate_requires_verifier_success_and_trusted_identity(tmp_path, met
     report_path.write_text('{"result":"PASSED"}')
     result = pipeline.run_validator(
         tmp_path, "verify_evidence", RELEASE_SOURCE_ROOT=str(ROOT),
-        PATH=f"{bin_dir}:{pipeline.os.environ['PATH']}",
+        PATH=f"{bin_dir}:{os.environ['PATH']}",
     )
     assert (result.returncode == 0) is (gh_status == 0), result.stderr
     assert report_path.exists() is (gh_status == 0)

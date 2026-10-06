@@ -1,131 +1,54 @@
-"""Quarantine handling in the evidence Test Result aggregation."""
-import importlib.util
+"""Quarantine classification does not turn a failed claim into PASSED."""
+
 import sys
 from datetime import date
 from pathlib import Path
 
 import pytest
 
-EVIDENCE = Path(__file__).resolve().parents[1] / "evidence"
-
-
-def load_module(name, path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-test_result = load_module("evidence_test_result", EVIDENCE / "test_result.py")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from evidence import test_result  # noqa: E402
 
 TODAY = date(2026, 10, 1)
 
 
-def cell(name, result):
-    return {"name": name, "result": result}
-
-
-def test_all_passing_cells_pass():
-    result, passed, warned, failed, notes = test_result.classify_cells(
-        [cell("planning-simulation-humble-linux-amd64", "PASSED")], [], TODAY
-    )
-    assert result == "PASSED"
-    assert passed == ["planning-simulation-humble-linux-amd64"]
-    assert warned == []
-    assert failed == []
-    assert notes == []
-
-
-def test_failure_without_quarantine_fails():
-    result, _, warned, failed, _ = test_result.classify_cells(
-        [cell("planning-simulation-humble-linux-amd64", "FAILED")], [], TODAY
-    )
-    assert result == "FAILED"
-    assert warned == []
-    assert failed == ["planning-simulation-humble-linux-amd64"]
-
-
-def test_unexpired_quarantine_warns_instead_of_failing():
-    quarantine = [{"cell": "scenario-*", "reason": "known flake", "expires": "2026-11-01"}]
-    result, _, warned, failed, notes = test_result.classify_cells(
-        [cell("scenario-simulation-jazzy-split-linux-amd64", "FAILED")], quarantine, TODAY
-    )
-    assert result == "WARNED"
-    assert warned == ["scenario-simulation-jazzy-split-linux-amd64"]
-    assert failed == []
-    assert notes == [
-        {
-            "cell": "scenario-simulation-jazzy-split-linux-amd64",
-            "reason": "known flake",
-            "expires": "2026-11-01",
-            "expired": False,
-        }
-    ]
-
-
-def test_expired_quarantine_no_longer_suppresses_failure():
-    quarantine = [{"cell": "scenario-*", "reason": "known flake", "expires": "2026-09-01"}]
-    result, _, warned, failed, notes = test_result.classify_cells(
-        [cell("scenario-simulation-jazzy-split-linux-amd64", "FAILED")], quarantine, TODAY
-    )
-    assert result == "FAILED"
-    assert warned == []
-    assert failed == ["scenario-simulation-jazzy-split-linux-amd64"]
-    assert notes[0]["expired"] is True
+@pytest.mark.parametrize(("status", "expires", "expected", "passed", "warned", "failed", "expired"), [
+    ("PASSED", None, "PASSED", ["flaky-cell"], [], [], None),
+    ("FAILED", None, "FAILED", [], [], ["flaky-cell"], None),
+    ("FAILED", "2026-11-01", "WARNED", [], ["flaky-cell"], [], False),
+    ("FAILED", "2026-09-01", "FAILED", [], [], ["flaky-cell"], True),
+    ("PASSED", "2026-11-01", "PASSED", ["flaky-cell"], [], [], None),
+])
+def test_classification(status, expires, expected, passed, warned, failed, expired):
+    quarantine = [{"cell": "flaky-*", "reason": "known flake", "expires": expires}] if expires else []
+    result = test_result.classify_cells([{"name": "flaky-cell", "result": status}], quarantine, TODAY)
+    assert result[:4] == (expected, passed, warned, failed)
+    assert result[4] == ([] if expired is None else [{
+        "cell": "flaky-cell", "reason": "known flake", "expires": expires, "expired": expired,
+    }])
 
 
 def test_real_failure_beats_quarantined_failure():
+    cells = [{"name": name, "result": "FAILED"} for name in ("flaky-cell", "solid-cell")]
     quarantine = [{"cell": "flaky-*", "reason": "known flake", "expires": "2026-11-01"}]
-    result, _, warned, failed, _ = test_result.classify_cells(
-        [cell("flaky-cell", "FAILED"), cell("solid-cell", "FAILED")], quarantine, TODAY
-    )
-    assert result == "FAILED"
-    assert warned == ["flaky-cell"]
-    assert failed == ["solid-cell"]
+    assert test_result.classify_cells(cells, quarantine, TODAY)[:4] == ("FAILED", [], ["flaky-cell"], ["solid-cell"])
 
 
-def test_quarantined_cell_that_passes_counts_as_passed():
-    quarantine = [{"cell": "flaky-*", "reason": "known flake", "expires": "2026-11-01"}]
-    result, passed, warned, failed, notes = test_result.classify_cells(
-        [cell("flaky-cell", "PASSED")], quarantine, TODAY
-    )
-    assert result == "PASSED"
-    assert passed == ["flaky-cell"]
-    assert warned == []
-    assert notes == []
-
-
-def test_malformed_quarantine_entry_fails_loudly(tmp_path):
+def test_quarantine_is_optional_but_invalid_expiry_fails(tmp_path):
     path = tmp_path / "quarantine.json"
-    path.write_text(
-        '{"quarantine": [{"cell": "x", "reason": "why", "expires": "soon"}]}', encoding="utf-8"
-    )
-    with pytest.raises(SystemExit):
+    assert test_result.load_quarantine(path) == test_result.load_quarantine(None) == []
+    path.write_text('{"quarantine":[{"cell":"x","reason":"why","expires":"soon"}]}')
+    with pytest.raises(SystemExit, match="YYYY-MM-DD"):
         test_result.load_quarantine(path)
 
 
-def test_missing_quarantine_file_is_allowed(tmp_path):
-    assert test_result.load_quarantine(tmp_path / "missing.json") == []
-    assert test_result.load_quarantine(None) == []
-
-
-def test_expected_cell_names_match_workflow_composition():
-    matrix = [
-        {"deployment": "planning-simulation", "distro": "humble"},
-        {"deployment": "scenario-simulation", "distro": "jazzy", "node": "split"},
-        {"deployment": "scenario-simulation", "distro": "humble", "node": None},
-    ]
-    assert test_result.expected_cell_names(matrix) == [
-        "planning-simulation-humble-linux-amd64",
-        "scenario-simulation-jazzy-split-linux-amd64",
+@pytest.mark.parametrize("include", [False, True])
+def test_expected_names_match_workflow_matrix(include):
+    matrix = [{"deployment": "planning-simulation", "distro": "humble"},
+              {"deployment": "scenario-simulation", "distro": "jazzy", "node": "split"},
+              {"deployment": "scenario-simulation", "distro": "humble", "node": None}]
+    assert test_result.expected_cell_names({"include": matrix} if include else matrix) == [
+        "planning-simulation-humble-linux-amd64", "scenario-simulation-jazzy-split-linux-amd64",
         "scenario-simulation-humble-linux-amd64",
     ]
-
-
-def test_expected_cell_names_empty_matrix():
-    assert test_result.expected_cell_names([]) == []
-
-
-def test_expected_cells_accepts_the_workflow_include_matrix():
-    assert test_result.expected_cell_names({"include": [{"deployment": "planning-simulation", "distro": "humble"}]}) == ["planning-simulation-humble-linux-amd64"]
+    assert test_result.expected_cell_names({"include": []} if include else []) == []

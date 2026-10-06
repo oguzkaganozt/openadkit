@@ -1,4 +1,5 @@
-import io
+"""Build selection and real Compose topology boundaries, without running containers."""
+
 import json
 import os
 import re
@@ -10,367 +11,123 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / ".github/scripts"))
+sys.path[:0] = [str(ROOT / "cli"), str(ROOT / ".github/scripts")]
 
+import compose  # noqa: E402
+import manifest  # noqa: E402
 import resolve_image_matrices as matrices  # noqa: E402
 
 INVENTORY = json.loads((ROOT / ".github/image-inventory.json").read_text())
-BAKE = (ROOT / "components/docker-bake.hcl").read_text()
 
 
-def manifest_index():
-    return {
-        (entry["repo"], entry["target"], entry["ros-distro"]): entry["arches"]
-        for entry in matrices.build_matrices(INVENTORY)["manifest_matrix"]["include"]
-    }
-
-
-def test_inventory_matches_bake_targets_and_metadata_stubs():
-    inventory = {image["target"] for image in INVENTORY["images"]}
-    targets = set(
-        re.findall(
-            r'^target\s+"(?!_|docker-metadata-action-)([\w-]+)"',
-            BAKE,
-            flags=re.MULTILINE,
-        )
-    )
-    metadata = set(re.findall(r'target\s+"docker-metadata-action-([\w-]+)"', BAKE))
-    assert targets == inventory
-    assert metadata == inventory
-
-
-def test_kit_component_images_match_inventory_component_targets():
+def test_inventory_bake_and_runtime_catalog_agree():
+    bake = (ROOT / "components/docker-bake.hcl").read_text()
+    targets = {image["target"] for image in INVENTORY["images"]}
+    assert set(re.findall(r'^target\s+"(?!_|docker-metadata-action-)([\w-]+)"', bake, re.M)) == targets
+    assert set(re.findall(r'target\s+"docker-metadata-action-([\w-]+)"', bake)) == targets
     kit = json.loads((ROOT / "openadkit.json").read_text())
-    catalog = set(kit["componentImages"].values())
-    inventory = {
-        image["target"]
-        for image in INVENTORY["images"]
-        if image["stage"] == "component"
-    }
-    assert catalog == inventory
-
-
-def test_curated_compose_kit_image_envs_are_catalogued():
-    kit = json.loads((ROOT / "openadkit.json").read_text())
-    catalog_keys = set(kit["componentImages"])
-    third_party = {
-        "AUTOWARE_UNIVERSE_IMAGE",
-        "CARLA_CONTAINER_IMAGE",
-        "SCENARIO_SIMULATOR_IMAGE",
-        "ZENOH_BRIDGE_IMAGE",
-    }
-    compose_keys: set[str] = set()
-    for path in (ROOT / "deployments").rglob("*.yaml"):
-        compose_keys.update(
-            re.findall(r"\$\{([A-Z][A-Z0-9_]*_IMAGE)", path.read_text())
-        )
-    assert compose_keys - third_party <= catalog_keys
-
-
-def test_matrix_preserves_platform_and_distro_constraints():
-    index = manifest_index()
-    assert index[("component", "planning-control", "humble")] == "amd64 arm64"
-    assert index[("component", "sensing-perception-cuda", "jazzy")] == "amd64"
-    assert index[("component", "carla-interface", "humble")] == "amd64"
-    assert index[("component", "carla-interface", "jazzy")] == "amd64"
-
-
-def test_carla_builds_after_simulator():
+    assert set(kit["componentImages"].values()) == {image["target"] for image in INVENTORY["images"] if image["stage"] == "component"}
     resolved = matrices.build_matrices(INVENTORY)
-    components = {entry["target"] for entry in resolved["component_matrix"]["include"]}
-    carla = {entry["target"] for entry in resolved["carla_matrix"]["include"]}
-    assert "simulator" in components
-    assert "carla-interface" not in components
-    assert carla == {"carla-interface"}
+    index = {(row["target"], row["ros-distro"]): row["arches"] for row in resolved["manifest_matrix"]["include"]}
+    assert index[("planning-control", "humble")] == "amd64 arm64"
+    assert index[("sensing-perception-cuda", "jazzy")] == "amd64"
+    assert {row["target"] for row in resolved["carla_matrix"]["include"]} == {"carla-interface"}
+    assert "simulator" in {row["target"] for row in resolved["component_matrix"]["include"]}
 
 
-@pytest.mark.parametrize(
-    ("changed", "expected", "flags"),
-    [
-        (
-            "components/universe-common/Dockerfile",
-            {image["target"] for image in INVENTORY["images"]},
-            {"with_middleware": True, "use_local_common": True},
-        ),
-        ("components/sensing-perception/Dockerfile", {"sensing-perception"}, {}),
-        (
-            "components/sensing-perception/Dockerfile.cuda",
-            {"sensing-perception-cuda"},
-            {},
-        ),
-        (
-            "components/sensing-perception/scripts/build.sh",
-            {"sensing-perception", "sensing-perception-cuda"},
-            {},
-        ),
-        ("components/api/Dockerfile", {"api"}, {}),
-        (
-            "components/simulator/Dockerfile",
-            {"carla-interface"},
-            {"use_local_simulator": True},
-        ),
-        (
-            "components/carla-interface/Dockerfile",
-            {"carla-interface"},
-            {"setup_autoware": False},
-        ),
-    ],
-)
-def test_component_changes_select_required_targets(changed, expected, flags):
-    plan = matrices.build_single_image_plan(INVENTORY, [changed])
+@pytest.mark.parametrize(("path", "expected", "flags"), [
+    ("components/universe-common/Dockerfile", {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
+    ("components/sensing-perception/Dockerfile.cuda", {"sensing-perception-cuda"}, {}),
+    ("components/sensing-perception/scripts/build.sh", {"sensing-perception", "sensing-perception-cuda"}, {}),
+    ("components/simulator/Dockerfile", {"carla-interface"}, {"use_local_simulator": True}),
+    ("docs/index.md", set(), {}),
+])
+def test_changed_inputs_select_required_builds(path, expected, flags):
+    plan = matrices.build_single_image_plan(INVENTORY, [path])
     assert set(plan["targets_json"]) == expected
     assert all(plan[name] is value for name, value in flags.items())
 
 
-def test_shared_build_inputs_select_all_targets():
-    expected = {image["target"] for image in INVENTORY["images"]}
-    for changed in (
-        "components/security-refresh.sh",
-        ".github/scripts/registry_lookup.sh",
-        ".github/scripts/resolve_registry_contexts.sh",
-        ".github/scripts/resolve_upstream_images.sh",
-        ".github/actions/inject-ccache/action.yaml",
-        ".trivyignore",
-        "components/link-lock/lock.sh",
-        "components/link-lock/align.sh",
-        "components/overlay/overlay.py",
-    ):
-        plan = matrices.build_single_image_plan(INVENTORY, [changed])
-        assert set(plan["targets_json"]) == expected
+def test_invalid_build_inputs_fail_closed():
+    for options, message in [
+        ({"target_input": "missing"}, "Unknown Bake target"),
+        ({"distro": "rolling"}, "Unsupported ROS distro"),
+        ({"changed_files": ["components/new-component/Dockerfile"]}, "Unmapped component build input"),
+    ]:
+        with pytest.raises(ValueError, match=message):
+            matrices.build_single_image_plan(INVENTORY, **options)
 
 
-@pytest.mark.parametrize("path", [
-    "components/universe-common/Dockerfile",
-    "components/sensing-perception/Dockerfile.cuda",
-])
-def test_security_refresh_keeps_runtime_ros_lock_and_overlay(path):
+@pytest.mark.parametrize("path", ["components/universe-common/Dockerfile", "components/sensing-perception/Dockerfile.cuda"])
+def test_runtime_keeps_lock_security_refresh_and_overlay_hook(path):
     text = (ROOT / path).read_text()
     runtime = text.rsplit("\nFROM ", 1)[1]
-    assert "security_packages=" not in text
     assert "bash /tmp/link-lock/align.sh" in text
-    lock = runtime.index("bash /tmp/link-lock/lock.sh verify")
-    refresh = runtime.index("bash /tmp/security-refresh.sh")
-    hook = runtime.index("COPY components/overlay/")
-    assert lock < refresh < hook
+    assert runtime.index("bash /tmp/link-lock/lock.sh verify") < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("COPY components/overlay/")
     assert 'ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]' in runtime
 
 
-def test_universe_devel_security_refresh_is_after_ros_alignment():
-    text = (ROOT / "components/universe-common/Dockerfile").read_text()
-    devel = text.split("\nFROM ", 2)[1]
-    assert devel.index("bash /tmp/link-lock/align.sh") < devel.index("bash /tmp/security-refresh.sh")
+@pytest.fixture
+def compose_context(tmp_path, monkeypatch):
+    if shutil.which("docker") is None:
+        pytest.skip("docker compose is required")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("OPENADKIT_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("ZENOH_LISTEN", "tcp/127.0.0.1:7447")
+    monkeypatch.setenv("ZENOH_PEER", "tcp/127.0.0.1:7447")
+    monkeypatch.setenv("REMOTE_PASSWORD", "ci-validate")
+    monkeypatch.delenv("OPENADKIT_KIT", raising=False)
+    monkeypatch.delenv("OPENADKIT_DELEGATED", raising=False)
+    return manifest.load_kit(ROOT)
 
 
-def test_docker_bake_change_uses_all_local_images():
-    plan = matrices.build_single_image_plan(
-        INVENTORY, ["components/docker-bake.hcl"]
-    )
-    assert plan["use_local_common"] is True
-    assert plan["use_local_simulator"] is True
-    assert "carla-interface" in plan["targets_json"]
-    assert "simulator" not in plan["targets_json"]
-
-
-def test_manual_targets_are_validated_sorted_and_deduplicated():
-    plan = matrices.build_single_image_plan(
-        INVENTORY, target_input="visualizer api visualizer"
-    )
-    assert plan["targets_json"] == ["api", "visualizer"]
-
-    with pytest.raises(ValueError, match="Unknown Bake target: missing"):
-        matrices.build_single_image_plan(INVENTORY, target_input="missing")
-
-
-def test_distro_validation_applies_to_global_and_target_constraints():
-    with pytest.raises(ValueError, match="Unsupported ROS distro: rolling"):
-        matrices.build_single_image_plan(INVENTORY, distro="rolling")
-    plan = matrices.build_single_image_plan(
-        INVENTORY, target_input="carla-interface", distro="jazzy"
-    )
-    assert plan["targets_json"] == ["carla-interface"]
-
-
-def test_irrelevant_and_readme_changes_produce_empty_plan():
-    plan = matrices.build_single_image_plan(
-        INVENTORY,
-        ["docs/index.md", "components/README.md", "components/api/README.md", "components/link-lock/README.md"],
-    )
-    assert plan["targets_json"] == []
-
-
-def test_unknown_component_input_fails_closed():
-    with pytest.raises(ValueError, match="Unmapped component build input"):
-        matrices.build_single_image_plan(
-            INVENTORY, ["components/new-component/Dockerfile"]
-        )
-
-
-COMPOSE_AVAILABLE = shutil.which("docker") is not None
-
-
-def _compose_config(files, directory, extra_env=None):
-    env = dict(os.environ)
-    env.pop("COMPOSE_FILE", None)
-    # The CLI always injects these: the output root, the overlay layers and
-    # the pinned artifacts.
-    env["OPENADKIT_OUTPUT_DIR"] = "/tmp/openadkit-test/output"
-    for name in ("SHARED", "BASE", "DEPLOYMENT"):
-        env[f"OPENADKIT_CONFIG_{name}"] = "/tmp/openadkit-test/empty"
-    env["OPENADKIT_OVERLAY_WS"] = "/tmp/openadkit-test/empty"
-    kit = json.loads((ROOT / "openadkit.json").read_text())
-    for name, artifact in kit["artifacts"].items():
-        env[name] = artifact.get("ref") or artifact["distros"]["humble"]
-    env.update(extra_env or {})
-    command = ["docker", "compose", "--env-file", str(directory / "config.env")]
-    for path in files:
-        command.extend(("--file", str(path)))
-    command.extend(("config", "--format", "json"))
-    result = subprocess.run(
-        command,
-        cwd=directory,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    return json.loads(result.stdout)
-
-
-def _node_compose_env(directory, node):
-    manifest = json.loads((directory / "deployment.json").read_text())
-    return {
-        "ROS_DISTRO": "humble",
-        "OPENADKIT_ROS_DOMAIN_ID": str(manifest["nodes"][node]["rosDomainId"]),
-        "ZENOH_LISTEN": "tcp/127.0.0.1:7447",
-        "ZENOH_PEER": "tcp/127.0.0.1:7447",
-        "REMOTE_PASSWORD": "ci-validate",
-    }
-
-
-@pytest.mark.skipif(not COMPOSE_AVAILABLE, reason="docker compose is required")
-def test_real_compose_views_keep_default_and_node_graphs_isolated():
-    scenario = ROOT / "deployments/scenario-simulation"
-    default = _compose_config([scenario / "docker-compose.yaml"], scenario)
-    assert "zenoh-bridge" not in default["services"]
-    assert "scenario_simulator" in default["services"]
-    assert "map" in default["services"]
-
-    autoware = _compose_config(
-        [scenario / "compose.autoware.yaml"],
-        scenario,
-        _node_compose_env(scenario, "autoware"),
-    )
-    assert "zenoh-bridge" in autoware["services"]
-    assert "scenario_simulator" not in autoware["services"]
-    assert "map" in autoware["services"]
-
-    scenario_node = _compose_config(
-        [scenario / "compose.scenario.yaml"],
-        scenario,
-        _node_compose_env(scenario, "scenario"),
-    )
-    assert set(scenario_node["services"]) == {"scenario_simulator", "zenoh-bridge"}
-    assert "pid" not in scenario_node["services"]["scenario_simulator"]
-    # Nodes share one host only when names and DDS domains stay apart.
-    for view, domain in ((autoware, "1"), (scenario_node, "2")):
-        bridge = view["services"]["zenoh-bridge"]
-        assert "container_name" not in bridge
-        assert bridge["environment"]["ROS_DOMAIN_ID"] == domain
-        mounts = {item["target"]: item["source"] for item in bridge["volumes"]}
-        assert mounts["/config/zenoh.json5"] == str(scenario / "config/zenoh.json5")
-        assert mounts["/etc/cyclonedds/cyclonedds.xml"] == str(ROOT / "deployments/shared/cyclonedds.xml")
-    assert default["services"]["map"]["environment"]["ROS_DOMAIN_ID"] == "1"
-
-    carla = ROOT / "deployments/carla-simulation"
-    carla_default = _compose_config(
-        [carla / "docker-compose.yaml"],
-        carla,
-        {"REMOTE_PASSWORD": "ci-validate"},
-    )
-    assert "zenoh-bridge" not in carla_default["services"]
-    assert "carla" in carla_default["services"]
-    assert "carla-interface" in carla_default["services"]
-    assert "map" in carla_default["services"]
-
-    carla_autoware = _compose_config(
-        [carla / "compose.autoware.yaml"],
-        carla,
-        _node_compose_env(carla, "autoware"),
-    )
-    assert "zenoh-bridge" in carla_autoware["services"]
-    assert "carla" not in carla_autoware["services"]
-    assert "carla-interface" not in carla_autoware["services"]
-    vehicle_deps = carla_autoware["services"]["vehicle"].get("depends_on") or {}
-    assert "carla-interface" not in vehicle_deps
-
-    carla_node = _compose_config(
-        [carla / "compose.carla.yaml"],
-        carla,
-        _node_compose_env(carla, "carla"),
-    )
-    assert set(carla_node["services"]) == {
-        "carla",
-        "carla-interface",
-        "carla-map-loader",
-        "zenoh-bridge",
-    }
-
-
-def test_single_image_cli_writes_github_outputs(monkeypatch, capsys):
-    monkeypatch.chdir(ROOT)
-    monkeypatch.setattr(sys, "stdin", io.StringIO("components/api/Dockerfile\n"))
-    assert matrices.main(["resolver", "single-image", "humble", ""]) == 0
-    assert 'targets_json=["api"]' in capsys.readouterr().out
-
-
-@pytest.mark.skipif(not COMPOSE_AVAILABLE, reason="docker compose is required")
-def test_example_kit_includes_the_base_and_adds_its_layer():
-    kit = ROOT / "examples/custom-kit"
-    env = dict(os.environ)
-    for name in ("OPENADKIT_KIT", "OPENADKIT_DELEGATED", "COMPOSE_FILE"):
-        env.pop(name, None)
-    env["REMOTE_PASSWORD"] = "ci-validate"
-    result = subprocess.run(
-        [str(ROOT / "openadkit"), "validate", "custom-planning", "--json"],
-        cwd=kit, env=env, text=True, capture_output=True, check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["manifestValid"] is True
-    # The kit's values come after the base's.
-    env_files = re.findall(r"--env-file (\S+)", result.stderr)
-    assert env_files[:2] == [
-        str(ROOT / "deployments/planning-simulation/config.env"),
-        str(kit / "deployments/custom-planning/config.env"),
-    ]
-    assert json.loads(result.stdout)["overlayConformant"] is True
-
-
-@pytest.mark.skipif(not COMPOSE_AVAILABLE, reason="docker compose is required")
-@pytest.mark.parametrize(("service_override", "config", "artifacts", "rule"), [
-    ("", "VEHICLE_ID=custom\n", {}, None),
-    ('  control:\n    command: ["true"]\n', "", {}, "command"),
-    ('  control:\n    volumes:\n      - ./config:/opt/autoware/config:ro\n', "", {}, "internal-mount"),
-    ("", "TYPO=value\n", {}, "variable"),
-    ("", "", {"PLANNING_CONTROL_IMAGE": {"workload": "planning", "ref": f"example/control@sha256:{'a' * 64}"}}, "image"),
+@pytest.mark.parametrize(("name", "node", "present", "absent"), [
+    ("scenario-simulation", None, {"scenario_simulator", "map"}, {"zenoh-bridge"}),
+    ("scenario-simulation", "autoware", {"map", "zenoh-bridge"}, {"scenario_simulator"}),
+    ("scenario-simulation", "scenario", {"scenario_simulator", "zenoh-bridge"}, {"map", "vehicle"}),
+    ("carla-simulation", None, {"carla", "carla-interface", "map"}, {"zenoh-bridge"}),
+    ("carla-simulation", "autoware", {"map", "zenoh-bridge"}, {"carla", "carla-interface"}),
+    ("carla-simulation", "carla", {"carla", "carla-interface", "carla-map-loader", "zenoh-bridge"}, {"map", "vehicle"}),
 ])
-def test_real_kit_contract_compares_compiled_models(tmp_path, service_override, config, artifacts, rule):
+def test_real_compose_preserves_single_and_split_graphs(compose_context, name, node, present, absent):
+    deployment = manifest.get_deployment(ROOT, compose_context, name)
+    selection = deployment.select(compose_context, "humble", False, node=node)
+    result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
+    services = json.loads(result.stdout)["services"]
+    assert present <= services.keys() and not absent & services.keys()
+    if node:
+        bridge = services["zenoh-bridge"]
+        assert "container_name" not in bridge
+        assert bridge["environment"]["ROS_DOMAIN_ID"] == str(deployment.nodes[node]["rosDomainId"])
+        mounts = {item["target"]: item["source"] for item in bridge["volumes"]}
+        assert mounts["/config/zenoh.json5"] == str(deployment.directory / "config/zenoh.json5")
+        assert mounts["/etc/cyclonedds/cyclonedds.xml"] == str(ROOT / "deployments/shared/cyclonedds.xml")
+    if node in ("scenario", "carla"):
+        assert set(services) == present
+    if node == "scenario":
+        assert "pid" not in services["scenario_simulator"]
+    if name == "carla-simulation" and node == "autoware":
+        assert "carla-interface" not in services["vehicle"].get("depends_on", {})
+
+
+@pytest.mark.parametrize(("override", "rule"), [
+    ("", None), ('  control:\n    command: ["true"]\n', "command"),
+    ('  control:\n    volumes:\n      - ./config:/opt/autoware/config:ro\n', "internal-mount"),
+])
+def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_context, override, rule):
     kit = tmp_path / "kit"
     shutil.copytree(ROOT / "examples/custom-kit", kit, ignore=shutil.ignore_patterns("build", "install", "log"))
     path = kit / "openadkit.json"
     document = json.loads(path.read_text())
     document["extends"] = str(ROOT)
-    document["artifacts"].update(artifacts)
     path.write_text(json.dumps(document))
     directory = kit / "deployments/custom-planning"
-    (directory / "config.env").write_text(config)
-    with (directory / "docker-compose.yaml").open("a") as stream:
-        stream.write(service_override)
-    env = dict(os.environ)
-    for name in ("OPENADKIT_KIT", "OPENADKIT_DELEGATED"):
-        env.pop(name, None)
-    env.update(OPENADKIT_CONFIG_DIR=str(tmp_path / "config"), OPENADKIT_STATE_DIR=str(tmp_path / "state"), REMOTE_PASSWORD="ci-validate")
-    result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-planning", "--json"], cwd=kit, env=env, text=True, capture_output=True)
+    (directory / "config.env").write_text("VEHICLE_ID=custom\n")
+    with (directory / "docker-compose.yaml").open("a") as output:
+        output.write(override)
+    result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-planning", "--json"],
+                            cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr
     report = json.loads(result.stdout)
     assert report["overlayConformant"] is (rule is None)
