@@ -88,6 +88,7 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
         "components/runtime-cleanup.sh",
         "components/link-lock/*",
         "components/overlay/*",
+        "components/security-refresh.sh",
         ".github/image-inventory.json",
         ".github/scripts/export_autoware_lock.py",
         ".github/scripts/resolve_image_matrices.py",

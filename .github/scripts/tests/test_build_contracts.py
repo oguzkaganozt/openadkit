@@ -125,6 +125,7 @@ def test_component_changes_select_required_targets(changed, expected, flags):
 def test_shared_build_inputs_select_all_targets():
     expected = {image["target"] for image in INVENTORY["images"]}
     for changed in (
+        "components/security-refresh.sh",
         ".github/scripts/registry_lookup.sh",
         ".github/scripts/resolve_registry_contexts.sh",
         ".github/scripts/resolve_upstream_images.sh",
@@ -136,6 +137,28 @@ def test_shared_build_inputs_select_all_targets():
     ):
         plan = matrices.build_single_image_plan(INVENTORY, [changed])
         assert set(plan["targets_json"]) == expected
+
+
+@pytest.mark.parametrize("path", [
+    "components/universe-common/Dockerfile",
+    "components/sensing-perception/Dockerfile.cuda",
+])
+def test_security_refresh_keeps_runtime_ros_lock_and_overlay(path):
+    text = (ROOT / path).read_text()
+    runtime = text.rsplit("\nFROM ", 1)[1]
+    assert "security_packages=" not in text
+    assert "bash /tmp/link-lock/align.sh" in text
+    lock = runtime.index("bash /tmp/link-lock/lock.sh verify")
+    refresh = runtime.index("bash /tmp/security-refresh.sh")
+    hook = runtime.index("COPY components/overlay/")
+    assert lock < refresh < hook
+    assert 'ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]' in runtime
+
+
+def test_universe_devel_security_refresh_is_after_ros_alignment():
+    text = (ROOT / "components/universe-common/Dockerfile").read_text()
+    devel = text.split("\nFROM ", 2)[1]
+    assert devel.index("bash /tmp/link-lock/align.sh") < devel.index("bash /tmp/security-refresh.sh")
 
 
 def test_docker_bake_change_uses_all_local_images():
