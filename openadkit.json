@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "kind": "repository",
   "defaultRosDistro": "humble",
-  "imagePrefixComponent": "ghcr.io/autowarefoundation/openadkit",
+  "imagePrefixComponent": "ghcr.io/oguzkaganozt/openadkit",
   "componentImages": {
     "LOCALIZATION_MAPPING_IMAGE": "localization-mapping",
     "PLANNING_CONTROL_IMAGE": "planning-control",

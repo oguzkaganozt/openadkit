@@ -31,7 +31,7 @@ variable "UPSTREAM_REPO" {
 // (`${COMPONENT_IMAGE:-ghcr.io/.../openadkit:<target>}`), the published
 // :<target>-<ros_distro> alias, and the CLI repository-mode lookup tag.
 variable "LOCAL_IMAGE" {
-  default = "ghcr.io/autowarefoundation/openadkit"
+  default = "ghcr.io/oguzkaganozt/openadkit"
 }
 
 // Local builds resolve cross-stage refs within one graph. CI overrides each
