@@ -32,15 +32,19 @@ export OPENADKIT_STATE_DIR="${out}/state"
 scenario_output="${OPENADKIT_STATE_DIR}/${deployment}/output"
 
 split=false
-node_args=()
-projects=("openadkit-${deployment}")
+nodes=("${node}")
 if [ "${node}" = "split" ]; then
     split=true
-    projects=("openadkit-${deployment}-autoware" "openadkit-${deployment}-scenario")
-elif [ -n "${node}" ]; then
-    projects=("openadkit-${deployment}-${node}")
-    node_args=(--node "${node}")
+    nodes=(autoware scenario)
 fi
+projects=()
+validation_files=()
+for target_node in "${nodes[@]}"; do
+    projects+=("openadkit-${deployment}${target_node:+-${target_node}}")
+    suffix=""
+    [ "${split}" = true ] && suffix="-${target_node}"
+    validation_files+=("${out}/validate${suffix}.json")
+done
 cell_name="${deployment}-${distro}${node:+-${node}}-${platform//\//-}"
 
 api_container=autoware-api
@@ -53,6 +57,21 @@ api_topics=${API_TOPICS:-/api/routing/state /api/localization/initialization_sta
 zenoh_autoware=${SPLIT_ZENOH_AUTOWARE:-tcp/127.0.0.1:7447}
 zenoh_scenario=${SPLIT_ZENOH_SCENARIO:-tcp/127.0.0.1:7448}
 zenoh_peer=${SPLIT_ZENOH_PEER:-tcp/127.0.0.1:7447}
+
+node_cli() {
+    local operation=$1 target_node=$2
+    shift 2
+    local args=() environment=()
+    [ -n "${target_node}" ] && args=(--node "${target_node}")
+    if [ "${split}" = true ] && [ "${operation}" = run ]; then
+        if [ "${target_node}" = autoware ]; then
+            environment=("ZENOH_LISTEN=${zenoh_autoware}")
+        else
+            environment=("ZENOH_LISTEN=${zenoh_scenario}" "ZENOH_PEER=${zenoh_peer}")
+        fi
+    fi
+    env "${environment[@]}" "${cli}" "${operation}" "${deployment}" "${args[@]}" "$@"
+}
 
 result="PASSED"
 l0_ok=false
@@ -91,12 +110,9 @@ sample_memory() {
 cleanup() {
     kill "${sampler_pid:-}" 2>/dev/null
     wait "${sampler_pid:-}" 2>/dev/null
-    if [ "${split}" = true ]; then
-        "${cli}" stop "${deployment}" --node scenario >/dev/null 2>&1 || true
-        "${cli}" stop "${deployment}" --node autoware >/dev/null 2>&1 || true
-    else
-        "${cli}" stop "${deployment}" "${node_args[@]}" >/dev/null 2>&1 || true
-    fi
+    for ((i=${#nodes[@]}-1; i>=0; i--)); do
+        node_cli stop "${nodes[i]}" >/dev/null 2>&1 || true
+    done
 }
 trap cleanup EXIT
 
@@ -104,25 +120,14 @@ sample_memory &
 sampler_pid=$!
 
 # --- L0: manifest and compose validation -------------------------------------
-validate_node_args=()
-[ -n "${node}" ] && [ "${node}" != "split" ] && validate_node_args=(--node "${node}")
-if [ "${split}" = true ]; then
-    # Both node views must validate.
-    "${cli}" validate "${deployment}" --node autoware --ros-distro "${distro}" --json >"${out}/validate-autoware.json" 2>"${out}/validate-autoware.log"
-    rc_a=$?
-    "${cli}" validate "${deployment}" --node scenario --ros-distro "${distro}" --json >"${out}/validate-scenario.json" 2>"${out}/validate-scenario.log"
-    rc_b=$?
-    l0_rc=$(( rc_a != 0 || rc_b != 0 ))
-else
-    "${cli}" validate "${deployment}" --ros-distro "${distro}" "${validate_node_args[@]}" --json >"${out}/validate.json" 2>"${out}/validate.log"
-    l0_rc=$?
-fi
+l0_rc=0
+for i in "${!nodes[@]}"; do
+    node_cli validate "${nodes[i]}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
+done
 if [ "${l0_rc}" -eq 0 ]; then
     l0_ok=true
-    if [ "${split}" = true ]; then
-        overlay_conformant=$(jq -s 'all(.[]; .overlayConformant == true)' "${out}/validate-autoware.json" "${out}/validate-scenario.json")
-    else
-        overlay_conformant=$(jq -r '.overlayConformant == true' "${out}/validate.json")
+    overlay_conformant=$(jq -s 'all(.[]; .overlayConformant == true)' "${validation_files[@]}")
+    if [ "${split}" != true ]; then
         behaviour=$(jq -r '.base // .deployment' "${out}/validate.json")
     fi
 else
@@ -137,18 +142,12 @@ if [ "${l0_rc}" -eq 0 ]; then
     # Fresh publication proves the C++ overlay node survived its ABI boundary.
     if [ "${deployment}" = custom-planning ]; then fresh_topics+=" /acme/probe"; fi
     run_start=$(date +%s)
-    if [ "${split}" = true ]; then
-        ZENOH_LISTEN="${zenoh_autoware}" \
-            "${cli}" run "${deployment}" --node autoware --ros-distro "${distro}" >"${out}/run-autoware.log" 2>&1
-        rc_a=$?
-        ZENOH_LISTEN="${zenoh_scenario}" ZENOH_PEER="${zenoh_peer}" \
-            "${cli}" run "${deployment}" --node scenario --ros-distro "${distro}" >"${out}/run-scenario.log" 2>&1
-        rc_b=$?
-        run_rc=$(( rc_a != 0 || rc_b != 0 ))
-    else
-        "${cli}" run "${deployment}" --ros-distro "${distro}" "${node_args[@]}" >"${out}/run.log" 2>&1
-        run_rc=$?
-    fi
+    run_rc=0
+    for target_node in "${nodes[@]}"; do
+        suffix=""
+        [ "${split}" = true ] && suffix="-${target_node}"
+        node_cli run "${target_node}" --ros-distro "${distro}" >"${out}/run${suffix}.log" 2>&1 || run_rc=1
+    done
 
     if [ "${run_rc}" -eq 0 ] && docker inspect "${api_container}" >/dev/null 2>&1; then
         docker cp "${script_dir}/readiness.py" "${api_container}:/tmp/openadkit-readiness.py" >/dev/null 2>&1 || true

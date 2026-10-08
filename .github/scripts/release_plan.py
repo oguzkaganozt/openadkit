@@ -12,6 +12,7 @@ from typing import Any, NoReturn
 
 import validation_matrix
 from evidence.release_gate import validate_report
+from images import build_images, image_ref
 
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
@@ -20,7 +21,6 @@ SEMVER_RE = re.compile(
     rf"(?:-{_IDENTIFIER}(?:\.{_IDENTIFIER})*)?$"
 )
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 def fail(message: str) -> NoReturn:
@@ -161,36 +161,12 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         fail("build metadata Open AD Kit SHA does not match the release SHA")
 
     build_tag = require_string(metadata.get("build_tag"), "build_tag")
-    raw_images = metadata.get("images")
-    if not isinstance(raw_images, list) or not raw_images:
-        fail("build metadata images must be a nonempty array")
-
     image_rows: list[dict[str, Any]] = []
     indexed: dict[tuple[str, str], dict[str, Any]] = {}
-    seen: set[tuple[str, str, str]] = set()
-    for index, raw in enumerate(raw_images):
-        if not isinstance(raw, dict):
-            fail(f"images[{index}] must be an object")
-        repo = require_string(raw.get("repo"), f"images[{index}].repo")
-        target = require_string(raw.get("target"), f"images[{index}].target")
-        distro = require_string(raw.get("ros_distro"), f"images[{index}].ros_distro")
-        source_ref = require_string(raw.get("ref"), f"images[{index}].ref")
-        digest = require_string(raw.get("digest"), f"images[{index}].digest")
-        platforms = raw.get("platforms")
-        key = (repo, target, distro)
-        if key in seen:
-            fail(f"duplicate build image: {repo}:{target}-{distro}")
-        seen.add(key)
-        if not DIGEST_RE.fullmatch(digest):
-            fail(f"invalid image digest for {target}-{distro}")
-        if source_ref != f"{repo}:{target}-{distro}-{build_tag}":
-            fail(f"invalid source image reference for {target}-{distro}")
-        if not isinstance(platforms, list) or not platforms or any(
-            platform not in ("linux/amd64", "linux/arm64") for platform in platforms
-        ):
-            fail(f"invalid platforms for {target}-{distro}")
-
-        release_ref = f"{repo}:{target}-{distro}-{args.version}"
+    for raw in build_images(metadata):
+        repo, target, distro = raw["repo"], raw["target"], raw["ros_distro"]
+        digest = raw["digest"]
+        release_ref = image_ref(raw, args.version)
         aliases: list[str] = []
         if args.stable_release and args.publish_latest_aliases:
             aliases.extend((f"{repo}:{target}-{distro}", f"{repo}:{target}-{distro}-latest"))
@@ -199,12 +175,12 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         row: dict[str, Any] = {
             "aliases": aliases,
             "digest": digest,
-            "platforms": sorted(platforms),
+            "platforms": sorted(raw["platforms"]),
             "releaseExactRef": f"{release_ref}@{digest}",
             "releaseRef": release_ref,
             "repo": repo,
             "rosDistro": distro,
-            "sourceRef": source_ref,
+            "sourceRef": raw["ref"],
             "target": target,
         }
         image_rows.append(row)

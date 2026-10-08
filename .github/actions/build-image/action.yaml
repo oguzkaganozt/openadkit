@@ -1,0 +1,140 @@
+name: build-image
+description: Shared CI image recipe, tags and bounded ccache lifecycle (permissions stay with the caller)
+
+inputs:
+  target:
+    description: Bake target (universe-common publishes both common stages)
+    required: true
+  ros-distro:
+    description: ROS distribution
+    required: true
+  platform:
+    description: Build platform
+    required: true
+  prepared:
+    description: JSON outputs of the workflow prepare job
+    required: true
+  tag-suffix:
+    description: Build tag for publishing, or pr<number> for local checks
+    required: true
+  publish:
+    description: Push images (false for PR and local validation)
+    default: "false"
+  stable-tags:
+    description: Also publish unversioned tags (main pushes only)
+    default: "false"
+  ccache:
+    description: Restore and inject ccache mounts
+    default: "true"
+  save-ccache:
+    description: Save and prune ccache mounts (main pushes and schedules only)
+    default: "false"
+  shared-common:
+    description: Export temporary common caches for same-repository PR consumers
+    default: "false"
+  common-cached:
+    description: Consume temporary common caches from the shared PR build
+    default: "false"
+
+outputs:
+  tags:
+    description: Image tags for the caller's local scan
+    value: ${{ steps.meta.outputs.tags }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve shared Bake recipe
+      id: recipe
+      env:
+        BUILD_TARGET: ${{ inputs.target }}
+        ROS_DISTRO: ${{ inputs.ros-distro }}
+        BUILD_PLATFORM: ${{ inputs.platform }}
+        BUILD_INPUTS: ${{ inputs.prepared }}
+        PUBLISH: ${{ inputs.publish }}
+        SHARED_COMMON: ${{ inputs.shared-common }}
+        COMMON_CACHED: ${{ inputs.common-cached }}
+      run: python3 .github/scripts/build.py recipe
+      shell: bash
+
+    - name: Image metadata
+      if: inputs.shared-common != 'true'
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ${{ startsWith(inputs.target, 'universe-common') && env.IMAGE_PREFIX_COMMON || env.IMAGE_PREFIX_COMPONENT }}
+        bake-target: docker-metadata-action-${{ inputs.target }}
+        tags: |
+          type=raw,value=${{ inputs.target }}-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }},enable=${{ inputs.stable-tags }}
+          type=raw,value=${{ inputs.target }}-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }}-${{ inputs.tag-suffix }}
+        flavor: latest=false
+
+    - name: Common development image metadata
+      if: inputs.publish == 'true' && inputs.target == 'universe-common'
+      id: meta-devel
+      uses: docker/metadata-action@v6
+      with:
+        images: ${{ env.IMAGE_PREFIX_COMMON }}
+        bake-target: docker-metadata-action-universe-common-devel
+        tags: |
+          type=raw,value=universe-common-devel-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }},enable=${{ inputs.stable-tags }}
+          type=raw,value=universe-common-devel-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }}-${{ inputs.tag-suffix }}
+        flavor: latest=false
+
+    - name: Restore BuildKit cache mounts
+      if: inputs.ccache == 'true'
+      id: cache
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: cache-mounts
+        key: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
+        restore-keys: ${{ steps.recipe.outputs.cache_prefix }}
+
+    - name: Arm post-step cache save
+      if: inputs.save-ccache == 'true'
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: cache-mounts
+        key: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
+        lookup-only: true
+
+    - name: Inject ccache mounts
+      if: inputs.ccache == 'true'
+      uses: reproducible-containers/buildkit-cache-dance@7a38cfab60c63ee1022b7c1a14a031c82f4114c7 # v3
+      with:
+        cache-map: |
+          {"cache-mounts/ccache": {"id": "ccache-${{ inputs.ros-distro }}", "target": "/home/aw/.ccache", "uid": "1000", "gid": "1000"}}
+        skip-extraction: ${{ inputs.publish != 'true' || steps.cache.outputs.cache-hit == 'true' }}
+
+    - name: Build image
+      uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
+      env:
+        ROS_DISTRO: ${{ inputs.ros-distro }}
+        UPSTREAM_TAG: ${{ fromJSON(inputs.prepared).autoware_base_version }}
+        LOCAL_IMAGE: ""
+      with:
+        files: |
+          components/docker-bake.hcl
+          .build-recipe.json
+          ${{ steps.meta.outputs.bake-file }}
+          ${{ steps.meta-devel.outputs.bake-file }}
+        targets: ${{ steps.recipe.outputs.targets }}
+        push: ${{ inputs.publish == 'true' }}
+        load: ${{ inputs.publish != 'true' && inputs.shared-common != 'true' }}
+
+    - name: Prune prior ccache lineage
+      if: inputs.save-ccache == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CACHE_KEY_PREFIX: ${{ steps.recipe.outputs.cache_prefix }}
+        KEEP_KEY: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
+      run: |
+        # The cache action's POST saves the new entry after this step.
+        set -euo pipefail
+        gh cache list --repo "$GITHUB_REPOSITORY" --key "$CACHE_KEY_PREFIX" --limit 200 --json key,sizeInBytes \
+          | jq -r --arg keep "$KEEP_KEY" '.[] | select(.key != $keep or .sizeInBytes > 6000000000) | .key' \
+          | while read -r key; do
+              echo "delete: $key"
+              gh cache delete "$key" --repo "$GITHUB_REPOSITORY" || true
+            done
+      shell: bash

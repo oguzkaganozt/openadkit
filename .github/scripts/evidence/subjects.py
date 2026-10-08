@@ -10,6 +10,9 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from images import image_ref  # noqa: E402
+
 
 def load_manifest_module(source_root: Path):
     path = source_root / "cli" / "manifest.py"
@@ -31,7 +34,7 @@ def build_subjects(metadata: dict, source_root: Path):
             subjects.append(
                 (
                     digest.removeprefix("sha256:"),
-                    f'{image["repo"]}:{image["target"]}-{image["ros_distro"]}-{build_tag}',
+                    image_ref(image, build_tag),
                 )
             )
 

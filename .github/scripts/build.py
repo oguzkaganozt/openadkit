@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve GitHub Actions build matrices from the image inventory.
+"""Plan CI builds: inventory matrices, changed targets and the shared Bake recipe.
 
 Prints `KEY=<compact-json>` lines for each matrix to stdout. The `prepare`
 job redirects this into `$GITHUB_OUTPUT`. Uses only the standard library so
@@ -7,6 +7,7 @@ it runs before any pip/apt install step.
 """
 import fnmatch
 import json
+import os
 import pathlib
 import sys
 
@@ -91,13 +92,13 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
         "components/security-refresh.sh",
         ".github/image-inventory.json",
         ".github/scripts/export_autoware_lock.py",
-        ".github/scripts/resolve_image_matrices.py",
+        ".github/scripts/build.py",
         ".github/scripts/resolve_build_inputs.sh",
         ".github/scripts/resolve_registry_contexts.sh",
         ".github/scripts/resolve_upstream_images.sh",
         ".github/scripts/registry_lookup.sh",
         ".github/actions/free-disk-space/*",
-        ".github/actions/inject-ccache/*",
+        ".github/actions/build-image/*",
         ".github/actions/setup-build-env/*",
         ".github/workflows/build-single-image.yaml",
         ".trivyignore",
@@ -190,10 +191,102 @@ def format_outputs(matrices):
     return "\n".join(lines) + "\n"
 
 
+def bake_recipe(inventory, prepared, target, distro, platform, *, publish, shared_common, common_cached, owner, source_sha, run_id):
+    """Overlay the local HCL graph, preserving local dependency builds in PRs."""
+    images = {image["target"]: image for image in inventory["images"]}
+    if target not in images or distro not in image_distros(images[target], inventory["ros_distros"]) or platform not in images[target]["platforms"]:
+        raise ValueError(f"Unsupported build cell: {target}/{distro}/{platform}")
+    arch = platform_label(platform)
+    build_tag = prepared["build_tag"]
+    cache = f"ghcr.io/{owner}/openadkit-buildcache:{target}-{arch}-{distro}-main"
+    contexts = {}
+    args = {"ROS_DISTRO": distro}
+    labels = {}
+    cache_from = [f"type=registry,ref={cache}"]
+    cuda_contexts = {}
+    if publish:
+        if target == "universe-common":
+            upstream = json.loads(prepared["upstream_images"])[distro]
+            contexts.update({f"autoware-{name}": upstream[name]["uri"] for name in ("core-devel", "base")})
+            args["SECURITY_REFRESH"] = build_tag
+        else:
+            common = f"ghcr.io/{owner}/openadkit-common"
+            contexts.update({name: f"docker-image://{common}:{name}-{arch}-{distro}-{build_tag}" for name in ("universe-common-devel", "universe-common")})
+            if target != "carla-interface":
+                upstream = json.loads(prepared["upstream_images"])[distro]
+                cuda_contexts = {f"autoware-{name}": upstream[name]["uri"] for name in ("base-cuda-runtime", "base-cuda-devel")}
+        if target == "carla-interface":
+            contexts["simulator"] = f"docker-image://ghcr.io/{owner}/openadkit:simulator-amd64-{distro}-{build_tag}"
+        else:
+            args["ROS_ALIGN_STAMP"] = build_tag
+        labels = {f"org.opencontainers.image.{key.replace('_', '-')}": prepared[key] for key in (
+            "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_base_version", "autoware_lock_sha256",
+        )}
+        labels.update({"org.opencontainers.image.build-tag": build_tag, "org.opencontainers.image.run-id": run_id,
+                       "org.opencontainers.image.openadkit-sha": source_sha})
+        # Match the existing Bake --set label spelling; context readers accept
+        # these legacy quoted keys as well as canonical OCI keys.
+        labels = {f'"{key}"': value for key, value in labels.items()}
+    else:
+        for key, name in (("upstream_core_devel", "autoware-core-devel"), ("upstream_base", "autoware-base"),
+                          ("devel_context", "universe-common-devel"), ("runtime_context", "universe-common")):
+            if prepared.get(key) and not (shared_common and name.startswith("universe-common")):
+                contexts[name] = prepared[key]
+        for key, name in (("upstream_cuda_runtime", "autoware-base-cuda-runtime"), ("upstream_cuda_devel", "autoware-base-cuda-devel")):
+            if prepared.get(key) and not shared_common:
+                cuda_contexts[name] = prepared[key]
+        if target == "carla-interface" and prepared.get("use_local_simulator") != "true":
+            contexts["simulator"] = prepared["simulator_context"]
+        if not shared_common:
+            if prepared.get("use_local_common") == "true":
+                cache_from.append(f"type=registry,ref=ghcr.io/{owner}/openadkit-buildcache:universe-common-{arch}-{distro}-main")
+            if common_cached:
+                cache_from.extend(f"type=gha,scope=pr-common-{stage}-{run_id}" for stage in ("devel", "runtime"))
+            if prepared.get("use_local_simulator") == "true":
+                cache_from.append(f"type=registry,ref=ghcr.io/{owner}/openadkit-buildcache:simulator-{arch}-{distro}-main")
+
+    # Apply the same settings to dependency targets too, as the previous *.set
+    # overrides did. HCL remains the owner of Dockerfiles and local graph edges.
+    overrides = {}
+    for name in images:
+        overrides[name] = {"platforms": [platform], "args": args.copy(), "labels": labels.copy(),
+                           "contexts": contexts.copy(), "cache-from": cache_from.copy()}
+        if publish:
+            overrides[name]["cache-to"] = [f"type=registry,ref={cache},mode=max"]
+    overrides["sensing-perception-cuda"]["contexts"].update(cuda_contexts)
+    if publish and target not in ("universe-common", "carla-interface"):
+        overrides["sensing-perception-cuda"]["args"]["SECURITY_REFRESH"] = build_tag
+    if shared_common:
+        for name, stage in (("universe-common-devel", "devel"), ("universe-common", "runtime")):
+            overrides[name]["cache-to"] = [f"type=gha,scope=pr-common-{stage}-{run_id},mode=min"]
+    targets = ["universe-common-devel", "universe-common"] if publish and target == "universe-common" else [target]
+    return {"target": overrides}, targets
+
+
+def write_recipe():
+    inventory = json.loads(pathlib.Path(DEFAULT_INVENTORY).read_text())
+    target = os.environ["BUILD_TARGET"]
+    distro = os.environ["ROS_DISTRO"]
+    platform = os.environ["BUILD_PLATFORM"]
+    recipe, targets = bake_recipe(
+        inventory, json.loads(os.environ["BUILD_INPUTS"]), target, distro, platform,
+        publish=os.environ["PUBLISH"] == "true", shared_common=os.environ["SHARED_COMMON"] == "true",
+        common_cached=os.environ["COMMON_CACHED"] == "true", owner=os.environ["GITHUB_REPOSITORY"].split("/")[0],
+        source_sha=os.environ["GITHUB_SHA"], run_id=os.environ["GITHUB_RUN_ID"],
+    )
+    pathlib.Path(".build-recipe.json").write_text(json.dumps(recipe))
+    with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+        output.write(f"cache_prefix=buildkit-mounts-{target}-{distro}-{platform_label(platform)}-\n")
+        output.write("targets<<BUILD_TARGETS\n" + "\n".join(targets) + "\nBUILD_TARGETS\n")
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "recipe":
+        write_recipe()
+        return 0
     if len(argv) > 1 and argv[1] == "single-image":
         if len(argv) != 4:
-            print("usage: resolve_image_matrices.py single-image ROS_DISTRO TARGETS", file=sys.stderr)
+            print("usage: build.py single-image ROS_DISTRO TARGETS", file=sys.stderr)
             return 2
         inventory = json.loads(pathlib.Path(DEFAULT_INVENTORY).read_text())
         try:

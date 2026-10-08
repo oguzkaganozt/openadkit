@@ -222,9 +222,12 @@ def test_release_source_is_archived_from_promoted_sha_without_changing_dispatch_
     assert json.loads((checkout / "release-source/openadkit.json").read_text())["revision"] == "promoted"
 
 
-@pytest.mark.parametrize(("job", "script"), [("validate", "evidence/release_gate.py"), ("package-bundles", "release_plan.py")])
-def test_actual_workflow_sparse_paths_include_python_dependencies(tmp_path, job, script):
-    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yaml").read_text())
+@pytest.mark.parametrize(("workflow", "job", "script"), [
+    ("release", "validate", "evidence/release_gate.py"), ("release", "package-bundles", "release_plan.py"),
+    ("scan", "prepare", "images.py"), ("scan", "publish-metadata", "images.py"),
+])
+def test_actual_workflow_sparse_paths_include_python_dependencies(tmp_path, workflow, job, script):
+    workflow = yaml.safe_load((ROOT / f".github/workflows/{workflow}.yaml").read_text())
     patterns = workflow["jobs"][job]["steps"][0]["with"]["sparse-checkout"].splitlines()
     for pattern in patterns:
         path = pattern.strip("/")

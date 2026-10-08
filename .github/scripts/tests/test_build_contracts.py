@@ -13,9 +13,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / "cli"), str(ROOT / ".github/scripts")]
 
+import build as matrices  # noqa: E402
 import compose  # noqa: E402
 import manifest  # noqa: E402
-import resolve_image_matrices as matrices  # noqa: E402
 
 INVENTORY = json.loads((ROOT / ".github/image-inventory.json").read_text())
 
@@ -56,6 +56,33 @@ def test_invalid_build_inputs_fail_closed():
     ]:
         with pytest.raises(ValueError, match=message):
             matrices.build_single_image_plan(INVENTORY, **options)
+
+
+@pytest.mark.parametrize(("target", "publish", "local"), [
+    ("universe-common", True, False), ("sensing-perception-cuda", True, False),
+    ("carla-interface", True, False), ("api", False, False), ("carla-interface", False, True),
+])
+def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publish, local):
+    uri = "docker-image://example/base@sha256:" + "c" * 64
+    prepared = {"build_tag": "123-1", "autoware_input_ref": "1.8.0", "autoware_ref_type": "tag",
+                "autoware_ref": "a" * 40, "autoware_base_version": "1.8.0", "autoware_lock_sha256": "e" * 64,
+                "upstream_images": json.dumps({"humble": {name: {"uri": uri} for name in ("core-devel", "base", "base-cuda-runtime", "base-cuda-devel")}}),
+                "use_local_common": str(local).lower(), "use_local_simulator": str(local).lower(), "simulator_context": uri}
+    if not local:
+        prepared.update(devel_context=uri, runtime_context=uri)
+    recipe, targets = matrices.bake_recipe(INVENTORY, prepared, target, "humble", "linux/amd64", publish=publish,
+                                           shared_common=False, common_cached=local, owner="example", source_sha="b" * 40, run_id="123")
+    row = recipe["target"][target]
+    assert targets == (["universe-common-devel", "universe-common"] if publish and target == "universe-common" else [target])
+    if publish:
+        assert row["labels"]['"org.opencontainers.image.autoware-lock-sha256"'] == "e" * 64
+        assert row["labels"]['"org.opencontainers.image.openadkit-sha"'] == "b" * 40
+        assert row["cache-to"][0].endswith(",mode=max")
+        assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is (target == "sensing-perception-cuda")
+    else:
+        assert not row["labels"] and "cache-to" not in row
+        assert ("universe-common" in row["contexts"]) is (not local)
+        assert ("simulator" in row["contexts"]) is (target == "carla-interface" and not local)
 
 
 @pytest.mark.parametrize("path", ["components/universe-common/Dockerfile", "components/sensing-perception/Dockerfile.cuda"])

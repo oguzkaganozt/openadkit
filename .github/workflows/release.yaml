@@ -54,6 +54,7 @@ jobs:
             .github/scripts/registry_lookup.sh
             .github/scripts/stable_alias_policy.sh
             .github/scripts/validate_release.sh
+            .github/scripts/images.py
             .github/scripts/evidence/
             .github/scripts/validation_matrix.py
             openadkit.json
@@ -106,6 +107,7 @@ jobs:
             .github/scripts/install-compose.sh
             .github/scripts/package_release_bundles.sh
             .github/scripts/release_plan.py
+            .github/scripts/images.py
             .github/scripts/validation_matrix.py
             .github/scripts/evidence/
 
