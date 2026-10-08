@@ -2,7 +2,7 @@
 
 An integrator kit owns its differences, while Open AD Kit owns the base CLI,
 images and deployments. Start with [Custom Deployment](custom-deployment.md)
-and the [custom-kit example](https://github.com/autowarefoundation/openadkit/tree/main/examples/custom-kit).
+and the [custom-kit example](https://github.com/autowarefoundation/openadkit/tree/main/deployments/custom-kit).
 This interface requires manifest schema version 2; older manifests are rejected.
 
 ## Pin the Base
@@ -21,6 +21,11 @@ or widening. Base downloads and one-shot reset services are inherited; a kit
 can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.
+
+The example has just one deployment, also named `custom-kit`. Its
+`openadkit.json`, `deployment.json`, Compose and differences live in one
+directory; `deployments.custom-kit.path` is `"."`. No nested `deployments/`
+directory is needed. Run commands from that directory, not the base repository.
 
 The loader resolves the inherited image/artifact set and ordered env, GPU and
 config layers once. Runtime selection consumes that resolved model. The base
@@ -79,8 +84,9 @@ Put ROS packages in `overlay_ws/src` and build them in the
 The example's build script accepts a digest-pinned `DEVEL_IMAGE`:
 
 ```bash
+cd deployments/custom-kit
 DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit-common@sha256:<digest> \
-  bash deployments/custom-planning/overlay_ws/build.sh humble
+  bash overlay_ws/build.sh humble
 ```
 
 Obtain the matching digest from the build metadata or release BOM. Without an
@@ -96,7 +102,7 @@ devel/runtime ABI boundary, then publishes `/acme/probe`.
 
 ### 4. Extra Services
 
-Include the base's Compose file using `KIT_openadkit`, then define your services
+Include the base's Compose file using `OPENADKIT_BASE_DEPLOYMENT`, then define your services
 under `services:`. Keep communicating ROS services on the base ROS domain and
 middleware. An extra Open AD Kit runtime service can load the workspace by
 mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; the example's

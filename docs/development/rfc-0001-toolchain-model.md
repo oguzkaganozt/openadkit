@@ -20,7 +20,7 @@ The design serves three audiences:
 - Automotive/SDV integrators consuming pinned artifacts and bounded evidence
   through their existing platform and fleet-delivery systems
 
-v2.0 deliberately prioritizes the first audience. `examples/custom-kit` is the
+v2.0 deliberately prioritizes the first audience. `deployments/custom-kit` is the
 concrete integration acceptance fixture, not a promise to support every possible
 external kit, hardware platform or scenario.
 

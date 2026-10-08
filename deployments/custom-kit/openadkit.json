@@ -3,8 +3,8 @@
   "kind": "kit",
   "extends": "../..",
   "deployments": {
-    "custom-planning": {
-      "path": "deployments/custom-planning"
+    "custom-kit": {
+      "path": "."
     }
   },
   "artifacts": {

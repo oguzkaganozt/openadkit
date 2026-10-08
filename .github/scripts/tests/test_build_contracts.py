@@ -143,17 +143,17 @@ def test_real_compose_preserves_single_and_split_graphs(compose_context, name, n
     ('  control:\n    volumes:\n      - ./config:/opt/autoware/config:ro\n', "internal-mount"),
 ])
 def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_context, override, rule):
-    kit = tmp_path / "kit"
-    shutil.copytree(ROOT / "examples/custom-kit", kit, ignore=shutil.ignore_patterns("build", "install", "log"))
+    kit = tmp_path / "custom-kit"
+    shutil.copytree(ROOT / "deployments/custom-kit", kit, ignore=shutil.ignore_patterns("build", "install", "log"))
     path = kit / "openadkit.json"
     document = json.loads(path.read_text())
     document["extends"] = str(ROOT)
     path.write_text(json.dumps(document))
-    directory = kit / "deployments/custom-planning"
+    directory = kit
     (directory / "config.env").write_text("VEHICLE_ID=custom\n")
     with (directory / "docker-compose.yaml").open("a") as output:
         output.write(override)
-    result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-planning", "--json"],
+    result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-kit", "--json"],
                             cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr
     report = json.loads(result.stdout)

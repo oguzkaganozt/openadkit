@@ -140,7 +140,7 @@ if [ "${l0_rc}" -eq 0 ]; then
     if [ "${behaviour}" = scenario-simulation ]; then default_fresh+=" /clock"; fi
     fresh_topics=${FRESH_TOPICS:-${default_fresh}}
     # Fresh publication proves the C++ overlay node survived its ABI boundary.
-    if [ "${deployment}" = custom-planning ]; then fresh_topics+=" /acme/probe"; fi
+    if [ "${deployment}" = custom-kit ]; then fresh_topics+=" /acme/probe"; fi
     run_start=$(date +%s)
     run_rc=0
     for target_node in "${nodes[@]}"; do
@@ -184,7 +184,7 @@ if [ "${l0_ok}" = true ]; then
     fi
 fi
 
-if [ "${l1_ok}" = true ] && [ "${deployment}" = custom-planning ]; then
+if [ "${l1_ok}" = true ] && [ "${deployment}" = custom-kit ]; then
     docker cp "${script_dir}/custom_kit.py" "${api_container}:/tmp/openadkit-custom-kit.py" >/dev/null 2>&1
     if ! docker exec "${api_container}" bash -lc \
         "source /opt/ros/${distro}/setup.bash; source /opt/autoware/setup.sh; python3 /tmp/openadkit-custom-kit.py" >"${out}/custom-kit.log" 2>&1 \

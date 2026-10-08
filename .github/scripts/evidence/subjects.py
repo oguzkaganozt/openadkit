@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from images import image_ref  # noqa: E402
+from validation_matrix import example_kit_roots  # noqa: E402
 
 
 def load_manifest_module(source_root: Path):
@@ -52,10 +53,9 @@ def build_subjects(metadata: dict, source_root: Path):
 
     # Pin the integrator's source/config, not host-specific colcon products.
     # Recomputed by the release gate from the same source checkout.
-    for path in sorted((source_root / "examples").glob("*/openadkit.json")):
-        if manifest.load_json(path).get("kind") == "kit":
-            checksum = manifest.deployment_checksum(path.parent, exclude_dirs=("build", "install", "log"))
-            subjects.append((checksum, f"overlay:{path.parent.relative_to(source_root).as_posix()}"))
+    for root in example_kit_roots(manifest, source_root):
+        checksum = manifest.deployment_checksum(root, exclude_dirs=("build", "install", "log"))
+        subjects.append((checksum, f"overlay:{root.relative_to(source_root).as_posix()}"))
 
     subjects.sort(key=lambda item: item[1])
     return subjects

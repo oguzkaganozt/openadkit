@@ -154,7 +154,6 @@ jobs:
         if: ${{ matrix.kit != '' }}
         env:
           KIT_PATH: ${{ matrix.kit }}
-          DEPLOYMENT: ${{ matrix.deployment }}
           DISTRO: ${{ matrix.distro }}
         run: |
           set -euo pipefail
@@ -163,7 +162,7 @@ jobs:
             | .repo + "@" + .digest
           ' build-metadata/build-metadata.json)
           export DEVEL_IMAGE
-          bash "evidence-kit/$KIT_PATH/deployments/$DEPLOYMENT/overlay_ws/build.sh" "$DISTRO"
+          bash "evidence-kit/$KIT_PATH/overlay_ws/build.sh" "$DISTRO"
 
       - name: Run evidence cell
         id: cell

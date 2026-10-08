@@ -39,6 +39,11 @@ validate/start/cleanup lifecycle. Scenario isolation and golden-path checks stay
 distinct. Hosted split evidence is two nodes on one runner, not proof of two
 physical hosts.
 
+The one integrator example lives at `deployments/custom-kit/`, with its kit
+manifest and deployment files side by side. CI stages it without host-built
+workspace products and verifies its source checksum. Older source revisions
+retain their original example path when release evidence is rechecked.
+
 After changing a shared build owner, update both workflow path triggers and the
 changed-input patterns in `build.py`. Python helpers needed by release and scan
 must also be included in their trusted policy sparse checkouts.

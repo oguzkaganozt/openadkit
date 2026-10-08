@@ -1,4 +1,4 @@
-"""Runtime acceptance checks for examples/custom-kit (inside the API image)."""
+"""Runtime acceptance checks for deployments/custom-kit (inside the API image)."""
 import subprocess
 
 

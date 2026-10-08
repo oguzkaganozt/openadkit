@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "name": "custom-planning",
+  "name": "custom-kit",
   "description": "Planning Simulation with an integrator layer on top",
   "base": "planning-simulation",
   "compose": {

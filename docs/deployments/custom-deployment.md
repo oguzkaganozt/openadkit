@@ -1,90 +1,71 @@
 # Custom Deployment
 
-Build your own stack in an integrator repository. Include a pinned Open AD Kit
-deployment and keep only your differences; do not copy its Compose files or
-modify an installed release.
+Start with the single
+[custom-kit example](https://github.com/autowarefoundation/openadkit/tree/main/deployments/custom-kit).
+Copy that directory into your own repository and keep only your differences.
+It extends Planning Simulation without copying its Compose files or modifying
+an installed release.
 
-## How Deployments Are Built
+## One Directory, One Deployment
 
-Each service is defined once in
-[`deployments/shared/services/`](https://github.com/autowarefoundation/openadkit/tree/main/deployments/shared/services),
-one file per service. A deployment directory contains:
-
-| File | Purpose |
-|------|---------|
-| `docker-compose.yaml` | Selects services with `include`, sets `depends_on`, and adds deployment-specific settings or services. It is the source of truth for the service set. |
-| `config.env` | Values the selected services need, such as map paths and simulator settings. |
-| `config.gpu.env` | GPU settings loaded with `--gpu`. Required when `deployment.json` lists `gpuFiles`. |
-| `deployment.json` | Supported architectures, ROS distros, GPU requirement, data downloads, and one-shot services to reset on each run. |
-
-Container ROS and DDS settings shared by all deployments live in
-`deployments/shared/runtime.env`.
-
-## Include Planning Simulation
-
-Create an `openadkit.json` at the root of your repository:
-
-```json
-{
-  "schemaVersion": 2,
-  "kind": "kit",
-  "extends": "v2.0.0",
-  "deployments": {
-    "my-simulation": {"path": "deployments/my-simulation"}
-  }
-}
+```text
+custom-kit/
+├── openadkit.json
+├── deployment.json
+├── docker-compose.yaml
+├── config.env
+├── config/
+└── overlay_ws/
 ```
 
-Use a published schema-v2 release tag for `extends`; the version above is an
-example, not a claim that it has been released. During development, `extends`
-can instead point to a source checkout. The CLI uses the pinned base's own CLI
-and asks you to install it when it is missing.
+- `openadkit.json` selects the base (`extends`), pins the extra heartbeat image,
+  and points the `custom-kit` deployment at `"."` — this same directory.
+- `deployment.json` selects `planning-simulation` as `base` and names the
+  Compose entrypoint. Architecture, ROS distro, GPU and downloads are inherited.
+- `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`
+  and adds the heartbeat and overlay node. The CLI resolves that base directory;
+`KIT_openadkit` names the base root for shared assets.
+- `config.env` contains only changed values, such as `VEHICLE_ID=acme-01`.
+- `config/autoware/` changes one parameter, `nominal.vel_lim=8.0`.
+- `overlay_ws/` builds a small C++ node publishing `/acme/probe`.
 
-Create `deployments/my-simulation/deployment.json`:
+Keep the directory named `custom-kit`. To use another name, rename the directory,
+the deployment key in `openadkit.json` and `name` in `deployment.json` together.
+The CLI checks that they agree.
 
-```json
-{
-  "schemaVersion": 2,
-  "name": "my-simulation",
-  "description": "My Planning Simulation stack",
-  "base": "planning-simulation",
-  "compose": {"files": ["docker-compose.yaml"]}
-}
-```
+## Pin Your Base
 
-The base's architecture, ROS distro and GPU requirements are inherited exactly;
-do not redeclare them. Its data downloads are inherited too.
+In this checkout the example uses `"extends": "../.."`. After copying it
+elsewhere, change that value to your base checkout or a published schema-v2
+release tag, such as `"v2.0.0"`. That version is illustrative, not a claim that
+it is released. Install the selected release with
+`openadkit install --version <tag>`; the CLI then uses that base's own launcher.
+Keep the example's other fields, including its pinned artifact, when changing
+`extends`.
 
-## Customize the Stack
+## Validate, Run, Stop
 
-Create `deployments/my-simulation/docker-compose.yaml`:
-
-```yaml
-include:
-  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
-```
-
-The resolver sets `OPENADKIT_BASE_DEPLOYMENT` from `deployment.json`'s `base`,
-so the deployment name is not repeated in Compose. `KIT_openadkit` still names
-the base root for shared assets. Add only settings that differ
-in `config.env`, for example `VEHICLE_ID=my-vehicle`. Add your own services under
-`services:` in the same Compose file. A block for an included service overrides
-that service rather than creating another container.
-
-Use parameter-level config differences and an overlay workspace instead of
-mounting files over `/opt/autoware` or replacing a base command. See the
-[Integrator Guide](integrator-guide.md) for all extension points, image
-replacement, configuration order and contract warnings.
-
-## Validate and Run
+For the source-checkout example, first build matching base runtime/devel images
+with the overlay hook. Build the example workspace in the devel image from that
+same build; set `DEVEL_IMAGE` to its digest from the build metadata/BOM. The
+script's moving default tag is for source development, not a production pin.
 
 ```bash
-openadkit validate my-simulation
-openadkit run my-simulation
-openadkit stop my-simulation
+cd deployments/custom-kit
+bash overlay_ws/build.sh humble
+../../openadkit validate custom-kit
+../../openadkit run custom-kit
+../../openadkit stop custom-kit
 ```
 
-Run these commands from your kit repository (or set `OPENADKIT_KIT` to its
-root). Validate every distro and GPU mode supported by the base. The
-[custom-kit example](https://github.com/autowarefoundation/openadkit/tree/main/examples/custom-kit)
-is a complete, minimal Planning Simulation integration exercised by CI.
+For your copied kit, run `openadkit validate/run/stop custom-kit` from its root,
+or set `OPENADKIT_KIT` to that directory. Add `--ros-distro jazzy` to `validate`
+and `run` after building a fresh Jazzy workspace. Static validation renders the
+Compose model; it is not runtime or ABI evidence. CI exercises the example on
+both Humble and Jazzy, including the parameters, fresh C++ publication and the
+Planning Simulation golden path.
+
+Keep parameter and package changes in `config/` and `overlay_ws/` rather than
+mounting over `/opt/autoware` or replacing base service commands. See the
+[Integrator Guide](integrator-guide.md) for configuration order, pinned image
+replacement and contract warnings.

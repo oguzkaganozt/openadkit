@@ -52,7 +52,7 @@ capture/
 deployments/*/config.local.env
 deployments/*/output/
 
-# Overlay workspace build output (examples/custom-kit/.../overlay_ws/build.sh)
+# Overlay workspace build output (deployments/custom-kit/overlay_ws/build.sh)
 overlay_ws/build/
 overlay_ws/install/
 overlay_ws/log/

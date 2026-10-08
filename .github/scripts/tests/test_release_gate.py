@@ -134,10 +134,10 @@ def test_changed_release_source_cannot_reuse_old_evidence(tmp_path, metadata):
     source = tmp_path / "source"
     source.mkdir()
     shutil.copy2(ROOT / "openadkit.json", source / "openadkit.json")
-    for directory in ("cli", "deployments", "examples"):
+    for directory in ("cli", "deployments"):
         shutil.copytree(ROOT / directory, source / directory)
     statement = passing_statement(metadata)
-    path = source / "examples/custom-kit/README.md"
+    path = source / "deployments/custom-kit/README.md"
     path.write_text(path.read_text() + "\nchanged kit\n")
     with pytest.raises(ValueError, match="subjects differ"):
         release_gate.verified_report(

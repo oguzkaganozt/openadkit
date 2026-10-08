@@ -43,7 +43,7 @@ evidence workflow. Do not replace the signer check with merely an owner check.
 
 The current reusable interface takes **only `build_tag`**. Metadata and source
 come from the caller's build-owning repository. It stages that exact source's
-reference deployments and `examples/*` kits, including `examples/custom-kit`.
+reference deployments and the single flat example at `deployments/custom-kit`.
 It does **not** take an arbitrary external kit repository, revision or scenario
 as input. Do not copy this example into an unrelated integrator repository and
 claim it verifies that kit; external kit intake needs a dedicated, pinned,
@@ -56,7 +56,7 @@ trusted-builder implementation before such a claim is valid.
 The workflow checks out its `openadkit_sha` and stages runtime image digests
 from the same metadata, never moving image aliases.
 
-Each example workspace builds against that build's matching distro-specific
+The example workspace builds against that build's matching distro-specific
 `universe-common-devel` digest. Source/config checksums omit `build`, `install`
 and `log` products. Hosted runners execute L0-L2 cells, retry a failed cell once,
 and aggregate all expected cells, including missing-cell failures.
