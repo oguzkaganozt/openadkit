@@ -513,6 +513,13 @@ def main() -> int:
             require_gpu=args.command != "fetch",
         )
         if args.command == "fetch":
+            if args.force:
+                # Replacing data a live container mounts deletes it under that container.
+                compose.require_stopped(deployment.name)
+                compose.require_data_unused(
+                    item["destination"]
+                    for item in data.check_installed_data(deployment, selection, include_gpu=True)
+                )
             data.install_data(deployment, selection, args.force, include_gpu=True)
             return 0
 

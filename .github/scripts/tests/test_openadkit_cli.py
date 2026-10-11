@@ -469,6 +469,25 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
 
 
+@pytest.mark.parametrize("live", ["project", "container"])
+def test_forced_fetch_refuses_data_in_use(tmp_path, live):
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    target = tmp_path / "home/data/map"
+    target.mkdir(parents=True)
+    (target / cli_data.MARKER).write_text("{}")
+    (target / "required.txt").write_text("keep")
+    if live == "project":
+        fake_docker(tmp_path, projects=["openadkit-example"])
+    else:
+        container = {"Id": "abc", "Name": "/other", "State": {"Status": "running"},
+                     "Mounts": [{"Type": "bind", "Source": str(target)}]}
+        fake_docker(tmp_path, projects=["openadkit-other"], containers=[container])
+    result = run_cli(root, "fetch", "example", "--force")
+    assert result.returncode != 0
+    assert ("example is running" if live == "project" else "is in use") in result.stderr
+    assert (target / "required.txt").read_text() == "keep"
+
+
 def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, monkeypatch):
     # Exercise download validation, not the earlier unmanaged-target refusal.
     resource = files_resource(tmp_path)

@@ -100,9 +100,9 @@ openadkit clean planning-simulation            # report only
 openadkit clean planning-simulation --data     # delete
 ```
 
-`clean --data` refuses while that deployment is running, or when any live
-container mounts the data (including another kit or deployment). If data usage
-cannot be checked, deletion is refused. If Scenario
+`clean --data` and `fetch --force` refuse while that deployment is running, or
+when any live container mounts the data (including another kit or deployment).
+If data usage cannot be checked, deletion or replacement is refused. If Scenario
 Simulation's Kashiwanoha map is removed, restore it with
 `openadkit fetch scenario-simulation --force`.
 
