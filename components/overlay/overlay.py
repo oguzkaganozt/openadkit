@@ -115,9 +115,13 @@ def main() -> int:
     model = os.environ.get("VEHICLE_MODEL")
     if model:
         description = f"{model}_description"
-        prefix = find_prefix(description)
-        if prefix is not None:
-            (ROOT / "vehicle_description").symlink_to(prefix / "share" / description)
+        share = ROOT / description / "share" / description
+        if not share.is_dir():
+            prefix = find_prefix(description)
+            if prefix is not None:
+                share = prefix / "share" / description
+        if share.is_dir():
+            (ROOT / "vehicle_description").symlink_to(share)
 
     (ROOT / "overlay-report.json").write_text(json.dumps(report, indent=2) + "\n")
     for kind, items in report.items():

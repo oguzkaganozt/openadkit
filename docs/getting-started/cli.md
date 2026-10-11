@@ -14,7 +14,9 @@ openadkit stop planning-simulation
 ```
 
 Pass the deployment name. Without it, these commands only list what is running.
-One deployment runs at a time; `run` asks you to stop the current one first.
+One deployment runs at a time, including deployments from other kits. `run`
+refuses conflicting projects; stop them from their owning kit first. Declared
+split nodes of the same deployment can still run together.
 After starting, `run` watches the services for 10 seconds and fails if one
 crashes.
 `openadkit run <deployment> --pull always` refreshes images before starting,
@@ -98,7 +100,9 @@ openadkit clean planning-simulation            # report only
 openadkit clean planning-simulation --data     # delete
 ```
 
-`clean --data` refuses while that deployment is running. If Scenario
+`clean --data` refuses while that deployment is running, or when any live
+container mounts the data (including another kit or deployment). If data usage
+cannot be checked, deletion is refused. If Scenario
 Simulation's Kashiwanoha map is removed, restore it with
 `openadkit fetch scenario-simulation --force`.
 
@@ -110,6 +114,9 @@ The CLI marks the data it installs with a `.openadkit-resource.json` file.
 `clean --data` and `--force` only delete or replace marked data. Data that was
 already there, such as a map you copied yourself, is still used when it is
 complete, but the CLI never deletes or replaces it; move or remove it yourself.
+If a target changes during `fetch --force`, publication fails instead of deleting
+the changed directory. A conflict during the atomic swap preserves staging;
+the error names its path for inspection rather than automatically removing it.
 
 ## Split-host nodes
 

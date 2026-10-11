@@ -47,3 +47,9 @@ retain their original example path when release evidence is rechecked.
 After changing a shared build owner, update both workflow path triggers and the
 changed-input patterns in `build.py`. Python helpers needed by release and scan
 must also be included in their trusted policy sparse checkouts.
+
+Production docs builds record their checkout SHA in `openadkit-docs-source.txt`.
+Inside the shared `gh-pages` publishing lane, `deploy-docs.yaml` rejects sources
+older than, or divergent from, that published revision. Rebuilding the same SHA
+is allowed. Before the first marked publication, the current default-branch head
+is the baseline. PR previews do not replace the production marker.

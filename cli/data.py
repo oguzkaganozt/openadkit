@@ -12,6 +12,8 @@ import time
 import urllib.error
 import urllib.request
 import zipfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -27,6 +29,24 @@ from manifest import (
 # Marks a directory the CLI installed. Only marked data is replaced or deleted,
 # so a data variable pointing at, say, $HOME can never lose user files.
 MARKER = ".openadkit-resource.json"
+
+
+class PublicationConflict(OpenADKitError):
+    """The exchanged directory must not be removed by staging cleanup."""
+
+
+@contextmanager
+def resource_stage(parent: Path, name: str) -> Iterator[Path]:
+    stage = Path(tempfile.mkdtemp(prefix=f".{name}.stage.", dir=parent))
+    cleanup = True
+    try:
+        yield stage
+    except PublicationConflict as error:
+        cleanup = False
+        raise OpenADKitError(f"{error}; staging preserved at {stage}") from error
+    finally:
+        if cleanup:
+            shutil.rmtree(stage)
 
 
 def is_managed(target: Path) -> bool:
@@ -91,7 +111,7 @@ def validate_dataset(path: Path, required: list[str]) -> bool:
     return True
 
 
-def atomic_publish(candidate: Path, target: Path, force: bool) -> None:
+def rename_atomic(candidate: Path, target: Path, flags: int) -> None:
     libc = ctypes.CDLL(None, use_errno=True)
     try:
         renameat2 = libc.renameat2
@@ -105,14 +125,41 @@ def atomic_publish(candidate: Path, target: Path, force: bool) -> None:
         ctypes.c_uint,
     ]
     renameat2.restype = ctypes.c_int
-    flags = 2 if target.exists() else 1
-    if target.exists() and not force:
-        raise OpenADKitError(f"data target already exists: {target}")
     if renameat2(-100, os.fsencode(candidate), -100, os.fsencode(target), flags) != 0:
         errno = ctypes.get_errno()
         raise OpenADKitError(
             f"atomic data publication failed for {target}: {os.strerror(errno)}"
         )
+
+
+def target_identity(path: Path) -> tuple[int, int, int] | None:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return None
+    return info.st_dev, info.st_ino, info.st_ctime_ns
+
+
+def atomic_publish(candidate: Path, target: Path, expected: tuple[int, int, int] | None) -> None:
+    # Absence at download start always means NOREPLACE, even for fetch --force.
+    if expected is None:
+        rename_atomic(candidate, target, 1)
+        return
+    if target_identity(target) != expected or not is_managed(target):
+        raise OpenADKitError(f"data target changed during download: {target}")
+    published = candidate.stat()
+    rename_atomic(candidate, target, 2)
+    try:
+        displaced = candidate.lstat()
+        # rename changes ctime itself: compare device/inode after the exchange.
+        if (displaced.st_dev, displaced.st_ino) == expected[:2] and is_managed(candidate):
+            return
+        current = target.lstat()
+        if (current.st_dev, current.st_ino) == (published.st_dev, published.st_ino):
+            rename_atomic(candidate, target, 2)
+    except (OSError, OpenADKitError) as error:
+        raise PublicationConflict(f"could not verify/restore data publication: {target}") from error
+    raise PublicationConflict(f"data target changed during publication: {target}")
 
 
 def validate_zip(archive: Path, expected_root: str) -> list[zipfile.ZipInfo]:
@@ -323,6 +370,7 @@ def install_resource(
     force: bool,
 ) -> None:
     target = resource_destination(resource, selection)
+    expected = target_identity(target)
     required = resource["requiredFiles"]
     if target.exists() or target.is_symlink():
         if not force:
@@ -336,10 +384,7 @@ def install_resource(
             raise OpenADKitError(f"unsafe data target: {target}")
         refuse_unmanaged(target, "replace")
 
-    with tempfile.TemporaryDirectory(
-        prefix=f".{resource['name']}.stage.", dir=target.parent
-    ) as temporary:
-        stage = Path(temporary)
+    with resource_stage(target.parent, resource["name"]) as stage:
         if resource["kind"] == "zip":
             archive = stage / "download.zip"
             download(resource["url"], archive, resource["sha256"])
@@ -367,7 +412,7 @@ def install_resource(
         (candidate / MARKER).write_text(
             json.dumps({"resource": resource["name"]}) + "\n", encoding="utf-8"
         )
-        atomic_publish(candidate, target, force)
+        atomic_publish(candidate, target, expected)
         print(f"installed data: {target}")
 
 

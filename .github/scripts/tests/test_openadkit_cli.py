@@ -112,7 +112,7 @@ def edit_kit(root, change):
     path.write_text(json.dumps(document))
 
 
-def fake_docker(tmp_path, *, projects=(), daemon=0, config=0, runtimes='{"nvidia": {}}'):
+def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}'):
     """One stateful stub shared by runtime and integrator subprocess tests."""
     calls = tmp_path / "docker-calls"
     live = tmp_path / "projects.json"
@@ -133,6 +133,10 @@ if text == "info --format {{{{json .Runtimes}}}}":
     print({runtimes!r})
 elif text == "compose ls --format json":
     print(live.read_text())
+elif text == "ps -aq":
+    print("\\n".join(row['Id'] for row in {list(containers)!r}))
+elif args[0] == "inspect":
+    print(json.dumps({list(containers)!r}))
 elif "config --format json" in text:
     print('{{"services": {{}}}}')
 elif "config --services" in text:
@@ -388,6 +392,29 @@ def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, a
     assert not any("up" in row["args"] for row in recorded(calls))
 
 
+@pytest.mark.parametrize("target", ["base", "kit"])
+def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    kit = integrator_kit(tmp_path, root)
+    name, other = ("example", "custom") if target == "base" else ("custom", "example")
+    calls = fake_docker(tmp_path, projects=[f"openadkit-{other}"])
+    result = run_cli(root, "run", name, "--pull", "never", directory=root if target == "base" else kit)
+    assert result.returncode != 0 and f"openadkit-{other} is already running" in result.stderr
+    assert not (tmp_path / "home/data").exists()
+    assert not any("up" in row["args"] or "pull" in row["args"] for row in recorded(calls))
+
+
+@pytest.mark.parametrize(("project", "allowed"), [("openadkit-example-primary", True),
+                                                ("openadkit-example-secondary", True),
+                                                ("openadkit-example-foreign", False)])
+def test_exclusivity_only_allows_declared_nodes_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
+    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+    kit = cli_manifest.load_kit(root)
+    deployment = cli_manifest.get_deployment(root, kit, "example")
+    monkeypatch.setattr(cli_compose, "live_projects", lambda: {project})
+    assert cli_compose.other_projects(deployment) == ([] if allowed else [project])
+
+
 def test_several_live_nodes_require_an_explicit_stop_target(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
     calls = fake_docker(tmp_path, projects=["openadkit-example-primary", "openadkit-example-secondary"])
@@ -459,6 +486,61 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
     assert not list(tmp_path.glob(".dataset.stage.*"))
 
 
+@pytest.mark.parametrize("race", ["appeared", "replaced", "unmarked", "exchange"])
+def test_forced_fetch_preserves_targets_changed_during_publication(tmp_path, monkeypatch, race):
+    resource = files_resource(tmp_path)
+    resource["generatedFiles"] = {}
+    target = tmp_path / "installed"
+    if race != "appeared":
+        target.mkdir()
+        (target / cli_data.MARKER).write_text("{}")
+        (target / "user-file").write_text("original")
+    def change_target():
+        if race == "unmarked":
+            (target / cli_data.MARKER).unlink()
+        else:
+            if target.exists():
+                target.rename(tmp_path / "original")
+            target.mkdir()
+            (target / "user-file").write_text("new user data")
+    download, rename = cli_data.download, cli_data.rename_atomic
+    def download_with_race(*args):
+        download(*args)
+        if race != "exchange":
+            change_target()
+    def rename_with_race(candidate, destination, flags):
+        if race == "exchange" and flags == 2 and destination == target and not (tmp_path / "original").exists():
+            change_target()
+        rename(candidate, destination, flags)
+    monkeypatch.setattr(cli_data, "download", download_with_race)
+    monkeypatch.setattr(cli_data, "rename_atomic", rename_with_race)
+    selection = cli_manifest.Selection("humble", False, None, {}, {"MAP_PATH": str(target)})
+    with pytest.raises(cli_manifest.OpenADKitError, match="changed|publication failed"):
+        cli_data.install_resource(resource, selection, True)
+    assert (target / "user-file").read_text() == ("original" if race == "unmarked" else "new user data")
+    assert bool(list(tmp_path.glob(".dataset.stage.*"))) is (race == "exchange")
+
+
+def test_failed_post_exchange_verification_never_cleans_displaced_data(tmp_path, monkeypatch):
+    resource = files_resource(tmp_path)
+    resource["generatedFiles"] = {}
+    target = tmp_path / "installed"
+    target.mkdir()
+    (target / cli_data.MARKER).write_text("{}")
+    (target / "user-file").write_text("keep")
+    managed = cli_data.is_managed
+    def unreadable_displaced(path):
+        if path.name == "dataset":
+            raise OSError("inspection failed")
+        return managed(path)
+    monkeypatch.setattr(cli_data, "is_managed", unreadable_displaced)
+    selection = cli_manifest.Selection("humble", False, None, {}, {"MAP_PATH": str(target)})
+    with pytest.raises(cli_manifest.OpenADKitError, match="staging preserved"):
+        cli_data.install_resource(resource, selection, True)
+    staged = next(tmp_path.glob(".dataset.stage.*"))
+    assert (staged / "dataset/user-file").read_text() == "keep"
+
+
 @pytest.mark.parametrize("unsafe", ["traversal", "absolute", "symlink", "duplicate"])
 def test_zip_validation_rejects_unsafe_members(tmp_path, unsafe):
     archive = tmp_path / "unsafe.zip"
@@ -523,6 +605,39 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     assert message in result.stderr
     assert (first / "required.txt").read_text() == "keep"
     assert second.exists()
+
+
+@pytest.mark.parametrize(("name", "status", "shared"), [("custom", "running", True), ("example", "paused", True),
+                                                        ("custom", "restarting", True), ("custom", "running", False),
+                                                        ("custom", "exited", True)])
+def test_clean_protects_shared_data_across_kit_catalogs(tmp_path, name, status, shared):
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    kit = integrator_kit(tmp_path, root)
+    target = tmp_path / "home/data/map"
+    target.mkdir(parents=True)
+    (target / cli_data.MARKER).write_text("{}")
+    (target / "required.txt").write_text("keep")
+    other = "example" if name == "custom" else "custom"
+    container = {"Id": "abc", "Name": f"/{other}", "State": {"Status": status},
+                 "Mounts": [{"Type": "bind", "Source": str(target if shared else tmp_path / "unrelated")}]}
+    fake_docker(tmp_path, projects=[f"openadkit-{other}"], containers=[container])
+    result = run_cli(root, "clean", name, "--data", directory=kit if name == "custom" else root)
+    blocked = shared and status != "exited"
+    assert (result.returncode != 0) is blocked, result.stderr
+    if blocked:
+        assert "is in use" in result.stderr and (target / "required.txt").read_text() == "keep"
+    else:
+        assert not target.exists()
+
+
+@pytest.mark.parametrize("output", ["not json", "[]"])
+def test_cleanup_refuses_incomplete_container_inspection(tmp_path, monkeypatch, output):
+    def capture(args, **kwargs):
+        return subprocess.CompletedProcess(args, 0, "abc\n" if args[1] == "ps" else output, "")
+    monkeypatch.setattr(cli_compose, "capture_process", capture)
+    monkeypatch.setattr(cli_compose.shutil, "which", lambda _: "/bin/docker")
+    with pytest.raises(cli_manifest.OpenADKitError, match="refusing cleanup"):
+        cli_compose.require_data_unused([tmp_path / "data"])
 
 
 def test_fetch_checks_every_destination_before_download(tmp_path):

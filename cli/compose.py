@@ -238,6 +238,12 @@ def running_names(deployment_names: Iterable[str]) -> list[str]:
     return [name for name in wanted if name in found]
 
 
+def other_projects(deployment: Deployment) -> list[str]:
+    """Include foreign kits; only this deployment's exact views may coexist."""
+    own = {deployment.project_name(), *(deployment.project_name(node) for node in deployment.nodes)}
+    return sorted(live_projects() - own)
+
+
 def live_nodes(deployment: Deployment) -> list[str | None]:
     """Live views of one deployment: None is the single-host project."""
     live = live_projects()
@@ -281,6 +287,36 @@ def require_stopped(name: str) -> None:
             f"{name} is running; stop it before deleting data: "
             f"openadkit stop {name}"
         )
+
+
+def require_data_unused(paths: Iterable[Path]) -> None:
+    """Protect data shared with any live container, including another kit."""
+    targets = [path.resolve() for path in paths]
+    if not targets or not shutil.which("docker"):
+        return
+    ids = capture_process(["docker", "ps", "-aq"], trace=False).stdout.split()
+    if not ids:
+        return
+    result = capture_process(["docker", "inspect", *ids], trace=False)
+    try:
+        containers = json.loads(result.stdout)
+        if not isinstance(containers, list) or len(containers) != len(ids):
+            raise ValueError("incomplete container inspection")
+        for container in containers:
+            if container["State"]["Status"] not in LIVE_PROJECT_STATES:
+                continue
+            for mount in container["Mounts"]:
+                if mount["Type"] not in ("bind", "volume"):
+                    continue
+                source = Path(mount["Source"]).resolve()
+                for target in targets:
+                    if source == target or source in target.parents or target in source.parents:
+                        raise OpenADKitError(
+                            f"data at {target} is in use by {container['Name']}; "
+                            "stop that container before deleting data"
+                        )
+    except (ValueError, KeyError, TypeError) as error:
+        raise OpenADKitError("could not inspect data usage; refusing cleanup") from error
 
 
 def render(deployment: Deployment, selection: Selection) -> set[str]:

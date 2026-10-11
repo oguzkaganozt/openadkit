@@ -63,7 +63,7 @@ node_cli() {
     shift 2
     local args=() environment=()
     [ -n "${target_node}" ] && args=(--node "${target_node}")
-    if [ "${split}" = true ] && [ "${operation}" = run ]; then
+    if [ "${split}" = true ] && { [ "${operation}" = run ] || [ "${operation}" = validate ]; }; then
         if [ "${target_node}" = autoware ]; then
             environment=("ZENOH_LISTEN=${zenoh_autoware}")
         else
@@ -243,12 +243,14 @@ if [ "${l1_ok}" = true ]; then
                             -e "ROS_DISTRO=${distro}" \
                             -v "${PWD}/deployments/shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro" \
                             --entrypoint bash "${image}" -c \
-                            "source /opt/ros/${distro}/setup.bash; timeout 20 ros2 topic list 2>/dev/null | grep -c '^/api/'" 2>/dev/null || echo failed
+                            'set -eo pipefail; source "/opt/ros/${ROS_DISTRO}/setup.bash";
+                             topics=$(timeout 20 ros2 topic list);
+                             printf "%s\n" "$topics" | awk '\''/^\/api\// { n++ } END { print n+0 }'\''' 2>/dev/null || echo failed
                     )
                 else
                     isolation=failed
                 fi
-                [ -f "${out}/scenario.json" ] &&
+                [[ "${isolation}" =~ ^[0-9]+$ ]] && [ -f "${out}/scenario.json" ] &&
                     jq -c --argjson iso "${isolation}" '. + {isolation_api_topics: $iso}' "${out}/scenario.json" >"${out}/scenario.json.tmp" &&
                     mv "${out}/scenario.json.tmp" "${out}/scenario.json"
             fi

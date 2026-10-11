@@ -64,13 +64,14 @@ jobs:
             run_id="${build_tag%%-*}"
           fi
 
-          mkdir -p build-metadata
+          metadata_dir="${RUNNER_TEMP}/openadkit-build-metadata"
+          mkdir -p "${metadata_dir}"
           gh run download "${run_id}" \
             --repo "${GITHUB_REPOSITORY}" \
             --name "build-metadata-${build_tag}" \
-            --dir build-metadata
+            --dir "${metadata_dir}"
 
-          source_sha=$(jq -r '.openadkit_sha' build-metadata/build-metadata.json)
+          source_sha=$(jq -r '.openadkit_sha' "${metadata_dir}/build-metadata.json")
           if ! printf '%s\n' "${source_sha}" | grep -Eq '^[0-9a-f]{40}$'; then
             echo "Invalid OpenADKit SHA in build metadata: ${source_sha}" >&2
             exit 1
@@ -100,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           bash .github/scripts/evidence/stage_kit.sh \
-            "$PWD" build-metadata/build-metadata.json "$PWD/evidence-kit" \
+            "$PWD" "$RUNNER_TEMP/openadkit-build-metadata/build-metadata.json" "$PWD/evidence-kit" \
             "${{ steps.prepare.outputs.source_sha }}"
 
       - name: Upload evidence kit
@@ -114,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: evidence-build-metadata-${{ steps.prepare.outputs.build_tag }}
-          path: build-metadata/build-metadata.json
+          path: ${{ runner.temp }}/openadkit-build-metadata/build-metadata.json
           retention-days: 7
 
   cell:
@@ -142,6 +143,11 @@ jobs:
       - name: Restore launcher permissions
         # Artifact downloads do not preserve executable bits.
         run: chmod +x evidence-kit/openadkit
+
+      - name: Install Docker Compose v5.2+
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/install-compose.sh
 
       - name: Download build metadata for the overlay build
         if: ${{ matrix.kit != '' }}

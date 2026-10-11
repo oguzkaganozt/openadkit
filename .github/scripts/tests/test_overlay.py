@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -106,12 +107,16 @@ def test_overrides_without_a_base_are_reported(overlay, tmp_path, monkeypatch, c
     assert "use_emergncy_handling" in err
 
 
+@pytest.mark.parametrize("override", [False, True])
 def test_non_yaml_files_replace_and_the_vehicle_description_is_linked(
-    overlay, tmp_path, monkeypatch, capsys
+    overlay, tmp_path, monkeypatch, capsys, override
 ):
     layer(tmp_path, "base", "autoware_launch", "rviz/a.rviz", "custom rviz")
     description = tmp_path / "ws/install/acme_description"
     install(description, "acme_description", {"config/vehicle_info.param.yaml": "wheel: 1\n"})
+    if override:
+        layer(tmp_path, "base", "acme_description", "config/vehicle_info.param.yaml", "wheel: 2\n")
+        layer(tmp_path, "deployment", "acme_description", "config/vehicle_info.param.yaml", "wheel: 3\n")
     monkeypatch.setenv("VEHICLE_MODEL", "acme")
     prefix = tmp_path / "opt/autoware_launch"
     install(prefix, "autoware_launch", {GATE: BASE_GATE, "rviz/a.rviz": "rviz"})
@@ -119,4 +124,11 @@ def test_non_yaml_files_replace_and_the_vehicle_description_is_linked(
     assert overlay.main() == 0
     root = overlay.ROOT
     assert (root / "autoware_launch/share/autoware_launch/rviz/a.rviz").read_text() == "custom rviz"
-    assert (root / "vehicle_description/config/vehicle_info.param.yaml").read_text() == "wheel: 1\n"
+    info = root / "vehicle_description/config/vehicle_info.param.yaml"
+    assert yaml.safe_load(info.read_text()) == {"wheel": 3 if override else 1}
+    assert (description / "share/acme_description/config/vehicle_info.param.yaml").read_text() == "wheel: 1\n"
+    # A fresh start removes the override and returns to the base description.
+    for folder in overlay.LAYERS:
+        shutil.rmtree(folder, ignore_errors=True)
+    assert overlay.main() == 0
+    assert yaml.safe_load(info.read_text()) == {"wheel": 1}

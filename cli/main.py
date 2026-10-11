@@ -491,6 +491,7 @@ def main() -> int:
                 )
             return 0
         compose.require_stopped(deployment.name)
+        compose.require_data_unused(item["destination"] for item in installed)
         data.remove_installed_data(deployment, selection, include_gpu=True)
         return 0
 
@@ -568,15 +569,11 @@ def main() -> int:
         # Deployments share host networking, fixed container names and the
         # default DDS domain, so only one runs at a time. Rerunning the same
         # view updates it in place; other nodes of it may share this host.
-        others = [
-            name
-            for name in compose.running_names(kit.deployments)
-            if name != deployment.name
-        ]
+        others = compose.other_projects(deployment)
         if others:
             raise OpenADKitError(
-                f"{', '.join(others)} is already running; stop it first: "
-                f"openadkit stop {others[0]}"
+                f"{', '.join(others)} is already running; "
+                "stop it from its owning kit before starting this deployment"
             )
         conflict = compose.live_state_conflict(deployment, selection)
         if conflict:
