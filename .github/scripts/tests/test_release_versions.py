@@ -1,8 +1,9 @@
 """The four release-version checks must accept exactly the same tags.
 
 The bash bootstrap cannot import Python, so the pattern exists in four places:
-the launcher's regex, the launcher's version comparison, release_plan.py and
-validate_release.sh. Each is run against the same vectors here.
+the launcher's regex, the upgrade comparison in cli/installation.py,
+release_plan.py and validate_release.sh. Each is run against the same vectors
+here.
 """
 
 import re
@@ -14,7 +15,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / ".github/scripts"))
+sys.path.insert(0, str(ROOT / "cli"))
 
+import installation  # noqa: E402
 import release_plan  # noqa: E402
 
 VALID = [
@@ -56,26 +59,18 @@ def bash_accepts(pattern: str, version: str) -> bool:
     return subprocess.run(["bash", "-c", script, "_", pattern, version]).returncode == 0
 
 
-def launcher_compare_accepts(version: str) -> bool:
-    function = subprocess.run(
-        ["sed", "-n", "/^compare_release_versions()/,/^}/p", str(ROOT / "openadkit")],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    result = subprocess.run(
-        ["bash", "-c", function + '\ncompare_release_versions "$1" "$1"', "_", version],
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0 and result.stdout.strip() == "same"
+def upgrade_compare_accepts(version: str) -> bool:
+    try:
+        return installation.compare_versions(version, version) == "same"
+    except ValueError:
+        return False
 
 
 CHECKS = {
     "launcher": lambda v: bash_accepts(
         bash_pattern(ROOT / "openadkit", "OPENADKIT_VERSION_RE"), v
     ),
-    "launcher-compare": launcher_compare_accepts,
+    "upgrade-compare": upgrade_compare_accepts,
     "release_plan": lambda v: release_plan.SEMVER_RE.fullmatch(v) is not None,
     "validate_release": lambda v: bash_accepts(
         bash_pattern(ROOT / ".github/scripts/validate_release.sh", "openadkit_semver_re"), v

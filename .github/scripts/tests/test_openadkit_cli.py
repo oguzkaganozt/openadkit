@@ -191,7 +191,7 @@ def release_bin(tmp_path, version="v1.2.3", *, bad_checksum=False, member=None):
     bundle = release / f"{root_name}.tar.gz"
     files = {"openadkit": ENTRYPOINT.read_bytes(), "cli/main.py": b'print("ok")\n',
              "openadkit.json": json.dumps({"schemaVersion": 2, "kind": "release", "version": version}).encode()}
-    files.update({f"cli/{name}.py": (ROOT / f"cli/{name}.py").read_bytes() for name in ("compose", "manifest")})
+    files.update({f"cli/{name}.py": (ROOT / f"cli/{name}.py").read_bytes() for name in ("compose", "manifest", "installation")})
     if member:
         files[member] = "/etc/passwd" if member == "link" else b"escape"
     with tarfile.open(bundle, "w:gz", format=tarfile.USTAR_FORMAT) as archive:
