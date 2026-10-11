@@ -150,14 +150,14 @@ def evidence_cells(
 
 
 def example_kit_roots(runtime: ModuleType, source_root: Path) -> list[Path]:
-    """One flat example; retain the old location when verifying older sources."""
-    for relative in ("deployments/custom-kit", "examples/custom-kit"):
-        root = source_root / relative
-        if (root / "openadkit.json").is_file():
-            if runtime.load_json(root / "openadkit.json").get("kind") != "kit":
-                fail(f"custom-kit example must declare kind: kit ({relative})")
-            return [root]
-    return []
+    """The one integrator example, deployments/custom-kit."""
+    relative = "deployments/custom-kit"
+    root = source_root / relative
+    if not (root / "openadkit.json").is_file():
+        return []
+    if runtime.load_json(root / "openadkit.json").get("kind") != "kit":
+        fail(f"custom-kit example must declare kind: kit ({relative})")
+    return [root]
 
 
 def example_kit_cells(runtime: ModuleType, source_root: Path) -> list[dict[str, str]]:

@@ -49,8 +49,7 @@ hosts.
 
 The one integrator example lives at `deployments/custom-kit/`, with its kit
 manifest and deployment files side by side. CI stages it without host-built
-workspace products and verifies its source checksum. Older source revisions
-retain their original example path when release evidence is rechecked.
+workspace products and verifies its source checksum.
 
 After changing a shared build owner, update both workflow path triggers and the
 changed-input patterns in `build.py`. Python helpers needed by release and scan

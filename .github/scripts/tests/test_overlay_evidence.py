@@ -39,27 +39,6 @@ def test_example_evidence_cells_follow_the_base_distros():
     ]
 
 
-def test_old_source_layout_keeps_its_original_cells_and_overlay_subject(tmp_path):
-    for directory in ("cli", "deployments"):
-        shutil.copytree(ROOT / directory, tmp_path / directory, ignore=shutil.ignore_patterns("__pycache__", "custom-kit"))
-    shutil.copy2(ROOT / "openadkit.json", tmp_path / "openadkit.json")
-    legacy = tmp_path / "examples/custom-kit"
-    deployment = legacy / "deployments/custom-planning"
-    shutil.copytree(ROOT / "deployments/custom-kit", deployment)
-    document = json.loads((deployment / "openadkit.json").read_text())
-    document["deployments"] = {"custom-planning": {"path": "deployments/custom-planning"}}
-    (legacy / "openadkit.json").write_text(json.dumps(document))
-    (deployment / "openadkit.json").unlink()
-    manifest = json.loads((deployment / "deployment.json").read_text())
-    manifest["name"] = "custom-planning"
-    (deployment / "deployment.json").write_text(json.dumps(manifest))
-    runtime = validation_matrix.load_runtime(tmp_path)
-    assert identities(validation_matrix.example_kit_cells(runtime, tmp_path)) == [
-        {"deployment": "custom-planning", "distro": distro, "kit": "examples/custom-kit"} for distro in ("humble", "jazzy")]
-    expected = runtime.deployment_checksum(legacy, exclude_dirs=("build", "install", "log"))
-    assert (expected, "overlay:examples/custom-kit") in subjects.build_subjects({}, tmp_path)
-
-
 def test_staged_flat_example_inherits_pins_without_host_build_products(tmp_path):
     source = tmp_path / "source"
     for directory in ("cli", "deployments", ".github/scripts"):
@@ -83,7 +62,6 @@ def test_staged_flat_example_inherits_pins_without_host_build_products(tmp_path)
     assert all("@sha256:" in ref for refs in kit.images.values() for ref in refs.values())
     assert (example / "overlay_ws/src/acme_probe/src/probe.cpp").is_file()
     assert not any((example / "overlay_ws" / product).exists() for product in ("build", "install", "log"))
-    assert not (staged / "examples").exists()
 
 
 def test_overlay_subject_ignores_build_products_but_binds_sources(tmp_path):
