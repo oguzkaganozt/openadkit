@@ -41,10 +41,20 @@ Put overrides in `~/.config/openadkit/scenario-simulation.env`:
 
 Relative paths resolve from `deployments/scenario-simulation/`.
 
-To run your own scenario, put its YAML in the scenarios directory and set, for
-example, `SCENARIO=/scenarios/my-scenario.yaml`. Scenarios must match the map: a
-custom map needs matching `MAP_PATH`, `LANELET2_MAP_FILE`, and
-`POINTCLOUD_MAP_FILE` values, and the planning sample map does not work here.
+To run your own scenario, keep it outside the release. Create a directory, put
+the YAML there, and point the deployment at it in the host settings file:
+
+```bash
+SCENARIO_HOST_DIR=$HOME/openadkit-scenarios
+SCENARIO=/scenarios/my-scenario.yaml
+```
+
+The default `./scenarios` lies inside the installed release: files placed there
+mark the deployment as modified and are lost on `upgrade` or `uninstall`.
+
+Scenarios must match the map: a custom map needs matching `MAP_PATH`,
+`LANELET2_MAP_FILE`, and `POINTCLOUD_MAP_FILE` values, and the planning sample
+map does not work here.
 
 This deployment changes two Autoware parameters, each in a file that holds only
 the changed value. On every start, the images merge these files into the
