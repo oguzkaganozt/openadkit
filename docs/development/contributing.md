@@ -19,4 +19,4 @@ discussed on [Discord](https://discord.gg/Q94UsPvReQ) before implementation.
 - [GitHub Issues](https://github.com/autowarefoundation/openadkit/issues) — bugs and tasks
 - [Autoware Foundation Discord](https://discord.gg/Q94UsPvReQ) — questions, ideas, and design
 - [Autoware contribution guide](https://autowarefoundation.github.io/autoware-documentation/main/contributing/)
-- [Code of Conduct](https://github.com/autowarefoundation/openadkit/blob/main/CODE_OF_CONDUCT.md)
+- [Code of Conduct](https://github.com/autowarefoundation/openadkit/blob/main/.github/CODE_OF_CONDUCT.md)

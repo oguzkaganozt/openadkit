@@ -6,9 +6,9 @@ Thank you for your interest in contributing to Open AD Kit. This project is part
 
 - [Issues](https://github.com/autowarefoundation/openadkit/issues) — report bugs and plan tasks
 - [Discord](https://discord.gg/Q94UsPvReQ) — questions, ideas, and design discussion
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Support](SUPPORT.md) — community help and version coverage
-- [Security policy](SECURITY.md) — private vulnerability reporting
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+- [Support](.github/SUPPORT.md) — community help and version coverage
+- [Security policy](.github/SECURITY.md) — private vulnerability reporting
 
 ## License
 

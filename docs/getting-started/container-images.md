@@ -75,8 +75,8 @@ on every architecture.
    functional-safety, or production-readiness claims.
 
 Community help and version coverage are described in
-[SUPPORT.md](https://github.com/autowarefoundation/openadkit/blob/main/SUPPORT.md);
+[SUPPORT.md](https://github.com/autowarefoundation/openadkit/blob/main/.github/SUPPORT.md);
 report security vulnerabilities through the
-[private reporting policy](https://github.com/autowarefoundation/openadkit/blob/main/SECURITY.md).
+[private reporting policy](https://github.com/autowarefoundation/openadkit/blob/main/.github/SECURITY.md).
 
 Maintainers: see the [Release Process](../development/build-from-source.md#release-process).

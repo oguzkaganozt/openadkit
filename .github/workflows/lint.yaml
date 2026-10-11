@@ -105,7 +105,7 @@ jobs:
         run: mypy
 
       - name: Run markdownlint
-        run: npx --yes markdownlint-cli --config .markdownlint.yaml '**/*.md' '!site/**' '!.git/**' '!platforms/autosd/x5h/**'
+        run: npx --yes markdownlint-cli --config .markdownlint.yaml '**/*.md'
 
       - name: Install Docker Compose v5.2+
         # The ubuntu-latest runner ships an older compose plugin that rejects
