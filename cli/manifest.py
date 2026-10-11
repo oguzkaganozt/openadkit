@@ -717,14 +717,14 @@ def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
     return data
 
 
-def validate_manifest(root: Path, directory: Path) -> Deployment:
+def _load_deployment_manifest(directory: Path, allowed_keys: set[str]) -> dict[str, Any]:
+    """The part every deployment manifest shares: location, schema and identity."""
     if directory.is_symlink() or not directory.is_dir():
         raise OpenADKitError(f"unsafe deployment directory: {directory}")
-    manifest_path = ensure_safe_existing(
-        directory, "deployment.json", "deployment manifest"
+    manifest = load_json(
+        ensure_safe_existing(directory, "deployment.json", "deployment manifest")
     )
-    manifest = load_json(manifest_path)
-    reject_unknown(manifest, ALLOWED_DEPLOYMENT_KEYS, "manifest")
+    reject_unknown(manifest, allowed_keys, "manifest")
     if manifest.get("schemaVersion") != SCHEMA_VERSION:
         raise OpenADKitError(
             f"unsupported deployment schemaVersion {manifest.get('schemaVersion')!r} "
@@ -736,6 +736,17 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
             f"manifest name must match deployment directory: {directory.name}"
         )
     require_string(manifest.get("description"), "description")
+    return manifest
+
+
+def _wait_timeout(value: Any) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise OpenADKitError("compose.waitTimeout must be a positive integer")
+    return value
+
+
+def validate_manifest(root: Path, directory: Path) -> Deployment:
+    manifest = _load_deployment_manifest(directory, ALLOWED_DEPLOYMENT_KEYS)
 
     shared = require_string_list(manifest.get("shared", []), "shared")
     for shared_name in shared:
@@ -782,7 +793,6 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
             )
     manifest["requirements"] = requirements
 
-
     compose = manifest.get("compose")
     if not isinstance(compose, dict):
         raise OpenADKitError("compose must be an object")
@@ -791,10 +801,7 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
         compose[field] = require_string_list(compose.get(field, []), f"compose.{field}")
     if not compose["files"]:
         raise OpenADKitError("compose.files must not be empty")
-    wait_timeout = compose.get("waitTimeout", 300)
-    if not isinstance(wait_timeout, int) or isinstance(wait_timeout, bool) or wait_timeout <= 0:
-        raise OpenADKitError("compose.waitTimeout must be a positive integer")
-    compose["waitTimeout"] = wait_timeout
+    compose["waitTimeout"] = _wait_timeout(compose.get("waitTimeout", 300))
 
     manifest["compose"] = compose
 
@@ -883,23 +890,7 @@ def validate_kit_deployment(
 ) -> Deployment:
     """An integrator deployment: its own Compose file and values on top of a
     base deployment from the pinned kit, whose requirements it keeps as is."""
-    if directory.is_symlink() or not directory.is_dir():
-        raise OpenADKitError(f"unsafe deployment directory: {directory}")
-    manifest = load_json(
-        ensure_safe_existing(directory, "deployment.json", "deployment manifest")
-    )
-    reject_unknown(manifest, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS, "manifest")
-    if manifest.get("schemaVersion") != SCHEMA_VERSION:
-        raise OpenADKitError(
-            f"unsupported deployment schemaVersion {manifest.get('schemaVersion')!r} "
-            f"(expected {SCHEMA_VERSION})"
-        )
-    name = require_string(manifest.get("name"), "name")
-    if not NAME_RE.fullmatch(name) or name != directory.name:
-        raise OpenADKitError(
-            f"manifest name must match deployment directory: {directory.name}"
-        )
-    require_string(manifest.get("description"), "description")
+    manifest = _load_deployment_manifest(directory, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS)
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in base_kit.deployments:
         raise OpenADKitError(
@@ -914,9 +905,7 @@ def validate_kit_deployment(
     reject_unknown(compose, ALLOWED_INTEGRATOR_COMPOSE_KEYS, "compose")
     files = require_string_list(compose.get("files"), "compose.files", nonempty=True)
     extra_resets = require_string_list(compose.get("resetServices", []), "compose.resetServices")
-    wait_timeout = compose.get("waitTimeout", base.compose["waitTimeout"])
-    if not isinstance(wait_timeout, int) or isinstance(wait_timeout, bool) or wait_timeout <= 0:
-        raise OpenADKitError("compose.waitTimeout must be a positive integer")
+    wait_timeout = _wait_timeout(compose.get("waitTimeout", base.compose["waitTimeout"]))
 
     own_data = _validate_data(manifest.get("data", []), {})
     destinations = {item["destinationEnv"] for item in base.data}
@@ -927,7 +916,7 @@ def validate_kit_deployment(
         )
 
     merged = {
-        "name": name,
+        "name": manifest["name"],
         "description": manifest["description"],
         "compose": {
             "files": files,
