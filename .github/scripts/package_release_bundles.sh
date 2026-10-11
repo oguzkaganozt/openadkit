@@ -21,12 +21,12 @@ asset="dist/${root_name}.tar.gz"
 plan_file=release-plan.json
 
 rm -rf dist staging
-mkdir -p dist "${bundle_root}/deployments"
+mkdir -p dist
 
 python3 "${planner}" \
   --source-root "${source_dir}" \
-    --build-metadata "${build_metadata}" \
-    --evidence-report "${evidence_report}" \
+  --build-metadata "${build_metadata}" \
+  --evidence-report "${evidence_report}" \
   --version "${VERSION}" \
   --release-sha "${RELEASE_SHA}" \
   --packager-sha "${PACKAGER_SHA}" \
@@ -35,25 +35,12 @@ python3 "${planner}" \
   --publish-latest-aliases "${PUBLISH_LATEST_ALIASES}" \
   --output "${plan_file}"
 
-while IFS= read -r item; do
-  cp -a "${source_dir}/${item}" "${bundle_root}/${item}"
-done < <(jq -r '.bundle.runtime[]' "${plan_file}")
-
-while IFS= read -r path; do
-  mkdir -p "${bundle_root}/$(dirname "${path}")"
-  cp -a "${source_dir}/${path}" "${bundle_root}/${path}"
-done < <(jq -r '.releaseContext.deployments[].path' "${plan_file}")
-
-while IFS= read -r item; do
-  cp -a "${source_dir}/deployments/${item}" "${bundle_root}/deployments/${item}"
-done < <(jq -r '.bundle.shared[]' "${plan_file}")
-
-find "${bundle_root}" -type f \( -name config.local.env -o -name '*.pyc' \) -delete
-find "${bundle_root}" -type d -name __pycache__ -prune -exec rm -rf {} +
-if symlink=$(find "${bundle_root}" -type l -print -quit) && [ -n "${symlink}" ]; then
-  echo "Release bundle must not contain symlinks: ${symlink}" >&2
-  exit 1
-fi
+# Copies, scrubs and verifies the planned kit and pins its release context;
+# evidence stages its kit through the same step.
+python3 "${planner}" \
+  --source-root "${source_dir}" \
+  --output "${plan_file}" \
+  --stage "${bundle_root}"
 
 # The installer asset and the bundle entrypoint come from the packager
 # revision, not from the promoted build being released. A promoted build can
@@ -70,12 +57,6 @@ installer="${installer_dir}/openadkit"
   exit 1
 }
 cp -a "$installer" "${bundle_root}/openadkit"
-
-python3 "${planner}" \
-  --verify \
-  --source-root "${bundle_root}" \
-  --output "${plan_file}" \
-  --context-output "${bundle_root}/openadkit.json"
 
 (cd "${bundle_root}" && ./openadkit list)
 cp -a "$installer" dist/openadkit

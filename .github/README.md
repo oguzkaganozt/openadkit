@@ -10,10 +10,11 @@ data and behavior contracts; local actions own repeated execution recipes.
 | CI image tags, Bake execution and ccache restore/save/prune | `actions/build-image/` |
 | Source lock import, Buildx and registry login | `actions/setup-build-env/` |
 | Image metadata capture, inventory coverage, scan rows and artifact validation | `scripts/images.py` |
-| Runtime validation/start/cleanup and L0–L2 behavior checks | `scripts/evidence/run_cell.sh` |
+| Validation and evidence cell plans (nodes, checks) and the kit inventory | `scripts/validation_matrix.py` |
+| Executing one evidence cell: validate/start/cleanup and the L0–L2 checks it names | `scripts/evidence/run_cell.sh` |
 | Signed cell payloads and evidence authorization | `scripts/evidence/` |
 | External release checks and sequencing | `scripts/validate_release.sh` |
-| Immutable release plan, runtime pins and bundle integrity | `scripts/release_plan.py` |
+| Immutable release plan, runtime pins, and bundle staging and integrity | `scripts/release_plan.py` |
 | Packaging, image promotion and GitHub publication | `scripts/*release*.sh` |
 
 The shared build action never grants permissions. PR builds remain local
@@ -34,10 +35,17 @@ signature and one complete `PASSED` statement. Packaging reparses image records
 and rechecks evidence against the promoted source. Registry preflight remains at
 both validation and promotion, and sealed-plan hashes remain at publishing.
 
-Single and split evidence cells resolve their node list once and use a common
-validate/start/cleanup lifecycle. Scenario isolation and golden-path checks stay
-distinct. Hosted split evidence is two nodes on one runner, not proof of two
-physical hosts.
+Release packaging and evidence staging assemble the kit through one
+`release_plan.py --stage` step, so evidence runs the tree the release ships;
+evidence adds only the example kits. The bundle, the release plan and the
+evidence subjects all read one kit inventory.
+
+Each evidence matrix row is the complete cell plan: identity, the node list in
+manifest order and the L1/L2 checks. `run_cell.sh` executes the row with a
+common validate/start/cleanup lifecycle; it does not derive policy from
+deployment names. Scenario isolation and golden-path checks stay distinct.
+Hosted split evidence is two nodes on one runner, not proof of two physical
+hosts.
 
 The one integrator example lives at `deployments/custom-kit/`, with its kit
 manifest and deployment files side by side. CI stages it without host-built

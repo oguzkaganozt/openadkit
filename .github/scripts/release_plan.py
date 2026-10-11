@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import shutil
 from pathlib import Path
 from types import ModuleType
 from typing import Any, NoReturn
@@ -49,48 +51,62 @@ def require_string(value: Any, name: str) -> str:
 
 def load_product(runtime: ModuleType, source_root: Path) -> dict[str, Any]:
     kit = runtime.load_kit(source_root)
-    if not kit.deployments:
-        fail("release source has no deployments")
-
-    deployments: dict[str, dict[str, str]] = {}
-    shared_names: set[str] = set()
-    distros: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
-        deployments[name] = {
-            "path": kit.deployments[name].path,
-            "checksum": runtime.deployment_checksum(deployment.directory),
-        }
-        shared_names.update(deployment.shared)
-        distros.update(deployment.requirements["rosDistros"])
     validation = validation_matrix.validation_cells(runtime, source_root, kit)
-
-    if not distros:
-        fail("release deployments do not declare any ROS distros")
-    if not validation:
-        fail("release deployments do not produce any validation cases")
-    if not shared_names:
+    inventory = validation_matrix.kit_inventory(runtime, source_root, kit)
+    if not inventory["shared"]:
         fail("release deployments do not declare shared assets")
-    for name in sorted(shared_names):
-        shared_dir = source_root / "deployments" / name
-        if not shared_dir.is_dir():
-            fail(f"missing shared deployment assets: {name}")
-
     return {
         "kit": kit,
-        "deployments": deployments,
-        "distros": sorted(distros),
-        "shared": {
-            name: runtime.deployment_checksum(source_root / "deployments" / name)
-            for name in sorted(shared_names)
-        },
+        **inventory,
+        "distros": sorted({row["rosDistro"] for row in validation}),
         "validation": validation,
         "evidenceExempt": validation_matrix.evidence_exemptions(runtime, source_root, kit),
     }
 
 
-def verify_staged_bundle(source_root: Path, plan: dict[str, Any]) -> None:
-    runtime = load_runtime(source_root)
+def stage_bundle(
+    source_root: Path, plan: dict[str, Any], bundle_root: Path, *, include_example_kits: bool
+) -> None:
+    """Copy the planned kit into bundle_root, verify it and pin its release context.
+
+    Release packaging and evidence staging both stage through here, so the
+    evidence cells run the tree the release ships; evidence adds only the
+    example kits, without their host colcon products.
+    """
+    if bundle_root.exists():
+        fail(f"bundle root already exists: {bundle_root}")
+    items = [
+        *plan["bundle"]["runtime"],
+        *(meta["path"] for meta in plan["releaseContext"]["deployments"].values()),
+        *(f"deployments/{name}" for name in plan["bundle"]["shared"]),
+    ]
+    scrubbed = ["config.local.env", "__pycache__", "*.pyc"]
+    examples: list[str] = []
+    if include_example_kits:
+        runtime = load_runtime(source_root)
+        examples = [
+            root.relative_to(source_root).as_posix()
+            for root in validation_matrix.example_kit_roots(runtime, source_root)
+        ]
+    for item in [*items, *examples]:
+        source, target = source_root / item, bundle_root / item
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir() and not source.is_symlink():
+            patterns = scrubbed + (list(validation_matrix.COLCON_PRODUCTS) if item in examples else [])
+            shutil.copytree(source, target, symlinks=True, ignore=shutil.ignore_patterns(*patterns))
+        else:
+            shutil.copy2(source, target, follow_symlinks=False)
+    for directory, names, files in os.walk(bundle_root):
+        for name in [*names, *files]:
+            if os.path.islink(os.path.join(directory, name)):
+                fail(f"Release bundle must not contain symlinks: {os.path.join(directory, name)}")
+
+    verify_staged_bundle(bundle_root, plan)
+    write_json(bundle_root / "openadkit.json", plan["releaseContext"])
+    verify_release_integrity(bundle_root, plan)
+
+
+def verify_staged_bundle(bundle_root: Path, plan: dict[str, Any]) -> None:
     context = plan.get("releaseContext")
     bundle = plan.get("bundle")
     if not isinstance(context, dict) or not isinstance(bundle, dict):
@@ -107,36 +123,30 @@ def verify_staged_bundle(source_root: Path, plan: dict[str, Any]) -> None:
     if sorted(expected_shared) != sorted(context.get("shared", {})):
         fail("release plan shared assets do not match releaseContext")
 
+    staged = validation_matrix.kit_inventory(load_runtime(bundle_root), bundle_root)
     for name in expected_deployments:
         meta = context["deployments"].get(name)
         if not isinstance(meta, dict):
             fail(f"release plan is missing deployment context: {name}")
-        path = require_string(meta.get("path"), f"releaseContext.deployments.{name}.path")
-        expected = require_string(
-            meta.get("checksum"), f"releaseContext.deployments.{name}.checksum"
-        )
-        actual = runtime.deployment_checksum(source_root / path)
-        if actual != expected:
+        require_string(meta.get("path"), f"releaseContext.deployments.{name}.path")
+        require_string(meta.get("checksum"), f"releaseContext.deployments.{name}.checksum")
+        if staged["deployments"].get(name) != meta:
             fail(f"deployment checksum mismatch: {name}")
-
     for name in expected_shared:
-        expected = require_string(
-            context["shared"].get(name), f"releaseContext.shared.{name}"
-        )
-        actual = runtime.deployment_checksum(source_root / "deployments" / name)
-        if actual != expected:
+        expected = require_string(context["shared"].get(name), f"releaseContext.shared.{name}")
+        if staged["shared"].get(name) != expected:
             fail(f"shared checksum mismatch: {name}")
 
 
-def verify_release_integrity(source_root: Path, plan: dict[str, Any]) -> None:
-    runtime = load_runtime(source_root)
-    kit = runtime.load_kit(source_root)
+def verify_release_integrity(bundle_root: Path, plan: dict[str, Any]) -> None:
+    runtime = load_runtime(bundle_root)
+    kit = runtime.load_kit(bundle_root)
     expected = plan["bundle"]["deployments"]
     if sorted(kit.deployments) != sorted(expected):
         fail("staged bundle deployments do not match the release plan")
     for name in expected:
-        deployment = runtime.get_deployment(source_root, kit, name)
-        state = runtime.deployment_integrity(source_root, deployment, kit)
+        deployment = runtime.get_deployment(bundle_root, kit, name)
+        state = runtime.deployment_integrity(bundle_root, deployment, kit)
         if state != "intact":
             fail(f"packaged deployment is not intact: {name} ({state})")
 
@@ -286,7 +296,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--verify", action="store_true")
+    parser.add_argument(
+        "--stage",
+        type=Path,
+        metavar="BUNDLE_ROOT",
+        help="stage and verify the kit of the existing plan at --output",
+    )
+    parser.add_argument("--include-example-kits", action="store_true")
     parser.add_argument("--build-metadata", type=Path)
     parser.add_argument("--evidence-report", type=Path)
     parser.add_argument("--version")
@@ -295,16 +311,16 @@ def main() -> int:
     parser.add_argument("--default-ros-distro")
     parser.add_argument("--stable-release", type=parse_bool)
     parser.add_argument("--publish-latest-aliases", type=parse_bool)
-    parser.add_argument("--context-output", type=Path)
     args = parser.parse_args()
     try:
         source_root = args.source_root.resolve()
-        if args.verify:
-            plan = load_json(args.output)
-            verify_staged_bundle(source_root, plan)
-            context_path = args.context_output or (source_root / "openadkit.json")
-            write_json(context_path, plan["releaseContext"])
-            verify_release_integrity(source_root, plan)
+        if args.stage:
+            stage_bundle(
+                source_root,
+                load_json(args.output),
+                args.stage.resolve(),
+                include_example_kits=args.include_example_kits,
+            )
             return 0
 
         required = {
@@ -320,10 +336,7 @@ def main() -> int:
         if missing:
             parser.error("the following arguments are required: " + ", ".join(missing))
 
-        plan = build_plan(args)
-        write_json(args.output, plan)
-        if args.context_output:
-            write_json(args.context_output, plan["releaseContext"])
+        write_json(args.output, build_plan(args))
     except ValueError as error:
         parser.error(str(error))
     return 0

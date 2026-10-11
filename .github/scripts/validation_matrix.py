@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Enumerate package validation cells shared by lint and release planning.
+"""Manifest-derived views of a kit shared by lint, release planning and evidence.
 
-One cell is one `./openadkit validate` invocation: a deployment, ROS distro,
-GPU mode, and optional split-host node. Both the lint workflow (via this
-script) and `.github/scripts/release_plan.py` (which imports
-`validation_cells`) read the same enumeration, so a new deployment or node is
-walked everywhere without editing a hardcoded list.
+A validation cell is one `./openadkit validate` invocation: a deployment, ROS
+distro, GPU mode, and optional split-host node. An evidence cell is the complete
+plan of one runtime evidence run, which run_cell.sh executes as given. The kit
+inventory is what a release bundle ships and evidence attests. Lint, the
+release planner, the evidence workflow and the release gate all read these
+views, so a new deployment or node is walked everywhere without editing a
+hardcoded list.
 """
 
 from __future__ import annotations
@@ -17,6 +19,23 @@ import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any, NoReturn
+
+EVIDENCE_PLATFORM = "linux/amd64"
+# Topics that flow without a route or an initial pose, in every deployment.
+FRESH_TOPICS = ("/system/operation_mode/availability",)
+# What each curated behaviour proves beyond readiness: extra fresh topics (L1)
+# and the end-to-end check run_cell.sh runs (L2). The release gate requires L2,
+# so every deployment that is not exempt needs an entry. Scenario simulation
+# runs on sim time; planning simulation runs on wall time and has no /clock.
+BEHAVIOUR_CHECKS: dict[str, dict[str, Any]] = {
+    "planning-simulation": {"fresh": (), "l2": "golden"},
+    "scenario-simulation": {"fresh": ("/clock",), "l2": "scenario"},
+}
+# The example kit's acceptance: fresh publication proves its C++ overlay node
+# survived the ABI boundary, and custom_kit.py checks its parameter overrides.
+EXAMPLE_KIT_CHECKS: dict[str, Any] = {"fresh": ("/acme/probe",), "l1": "custom-kit"}
+# Host build products of an overlay workspace; never kit content.
+COLCON_PRODUCTS = ("build", "install", "log")
 
 
 def fail(message: str) -> NoReturn:
@@ -97,17 +116,36 @@ def evidence_cells(
     kit: Any | None = None,
 ) -> list[dict[str, str]]:
     """Cells the evidence workflow runs: every distro of every deployment that
-    is not exempt, plus one two-node cell where a deployment declares nodes."""
+    is not exempt, plus one cell running all nodes where a deployment declares
+    nodes. Each cell carries its identity and everything run_cell.sh checks."""
     kit = kit if kit is not None else runtime.load_kit(source_root)
     cells: list[dict[str, str]] = []
     for name in sorted(kit.deployments):
         deployment = runtime.get_deployment(source_root, kit, name)
         if deployment.evidence_exemption:
             continue
+        # A kit runs its base deployment's behaviour on top of its own layer.
+        behaviour = deployment.base.name if deployment.base else name
+        checks = BEHAVIOUR_CHECKS.get(behaviour)
+        if checks is None:
+            fail(
+                f"{name} has no L2 evidence check for {behaviour}; "
+                "add one to BEHAVIOUR_CHECKS or declare evidence.exempt"
+            )
         for distro in deployment.requirements["rosDistros"]:
-            cells.append({"deployment": name, "distro": distro})
+            identities = [{"deployment": name, "distro": distro}]
             if deployment.nodes:
-                cells.append({"deployment": name, "distro": distro, "node": "split"})
+                identities.append({"deployment": name, "distro": distro, "node": "split"})
+            for identity in identities:
+                cells.append(identity | {
+                    "name": evidence_cell_name(identity),
+                    "platform": EVIDENCE_PLATFORM,
+                    # Started in manifest order and stopped in reverse.
+                    "nodes": " ".join(deployment.nodes) if "node" in identity else "",
+                    "fresh": " ".join((*FRESH_TOPICS, *checks["fresh"])),
+                    "l1": "",
+                    "l2": checks["l2"],
+                })
     return cells
 
 
@@ -124,15 +162,59 @@ def example_kit_roots(runtime: ModuleType, source_root: Path) -> list[Path]:
 
 def example_kit_cells(runtime: ModuleType, source_root: Path) -> list[dict[str, str]]:
     """Exercise the custom-kit example against the same build as the base."""
-    return [cell | {"kit": root.relative_to(source_root).as_posix()}
-            for root in example_kit_roots(runtime, source_root) for cell in evidence_cells(runtime, root)]
+    return [cell | {
+        "kit": root.relative_to(source_root).as_posix(),
+        "fresh": " ".join((cell["fresh"], *EXAMPLE_KIT_CHECKS["fresh"])),
+        "l1": EXAMPLE_KIT_CHECKS["l1"],
+    } for root in example_kit_roots(runtime, source_root) for cell in evidence_cells(runtime, root)]
 
 
 def evidence_cell_name(cell: dict[str, Any]) -> str:
     """The hosted runtime cell identity, shared by aggregation and release policy."""
     node = cell.get("node") or ""
     suffix = f"-{node}" if node else ""
-    return f"{cell['deployment']}-{cell['distro']}{suffix}-linux-amd64"
+    platform = EVIDENCE_PLATFORM.replace("/", "-")
+    return f"{cell['deployment']}-{cell['distro']}{suffix}-{platform}"
+
+
+def kit_inventory(
+    runtime: ModuleType,
+    source_root: Path,
+    kit: Any | None = None,
+) -> dict[str, dict[str, Any]]:
+    """What a kit ships: deployment paths and checksums, and shared asset checksums.
+
+    The release plan, bundle staging and verification, and the evidence
+    subjects all read this one view, so packaging and evidence cannot disagree
+    about a kit's contents.
+    """
+    kit = kit if kit is not None else runtime.load_kit(source_root)
+    deployments: dict[str, dict[str, str]] = {}
+    shared: set[str] = set()
+    for name in sorted(kit.deployments):
+        deployment = runtime.get_deployment(source_root, kit, name)
+        deployments[name] = {
+            "path": kit.deployments[name].path,
+            "checksum": runtime.deployment_checksum(deployment.directory),
+        }
+        shared.update(deployment.shared)
+    return {
+        "deployments": deployments,
+        "shared": {
+            name: runtime.deployment_checksum(source_root / "deployments" / name)
+            for name in sorted(shared)
+        },
+    }
+
+
+def example_kit_checksums(runtime: ModuleType, source_root: Path) -> dict[str, str]:
+    """Example-kit source and config checksums, without host colcon products."""
+    return {
+        root.relative_to(source_root).as_posix(): runtime.deployment_checksum(
+            root, exclude_dirs=COLCON_PRODUCTS
+        )
+        for root in example_kit_roots(runtime, source_root)
+    }
 
 
 def evidence_exemptions(

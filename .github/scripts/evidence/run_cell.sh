@@ -4,39 +4,47 @@ set -uo pipefail
 
 # Run one evidence cell against a staged kit (run from the kit root):
 #   L0: ./openadkit validate
-#   L1: ./openadkit run + readiness (services, topics, freshness)
-#   L2: planning-simulation golden path, scenario-simulation samples, or the
-#       split-node variant (autoware + scenario nodes on one host) with a
-#       domain-isolation check.
+#   L1: ./openadkit run + readiness (services, topics, freshness) and the
+#       cell's extra L1 check
+#   L2: the cell's end-to-end check: the planning-simulation golden path, or
+#       the scenario-simulation samples, plus a domain-isolation check when
+#       the cell runs several nodes on one host.
 #
-# Writes cell.json, per-step logs and metrics under the output directory, and
-# collects container logs plus the scenario output when the cell fails.
+# The cell is one row of the evidence matrix (validation_matrix.py), which
+# derives what to run and check from the manifests; this runner only executes
+# it. Writes cell.json, per-step logs and metrics under the output directory,
+# and collects container logs plus the scenario output when the cell fails.
 #
-# Usage: run_cell.sh <deployment> <distro> <output-dir> [node]
-#   node: "" (single host), a node name, or "split"
-# Env:   PLATFORM, BUILD_TAG, SOURCE_SHA, API_SERVICES, API_TOPICS, FRESH_TOPICS,
-#        SPLIT_ZENOH_AUTOWARE, SPLIT_ZENOH_SCENARIO, SPLIT_ZENOH_PEER,
+# Usage: run_cell.sh <cell-json> <output-dir>
+# Env:   BUILD_TAG, SOURCE_SHA, API_SERVICES, API_TOPICS,
 #        OPENADKIT_CLI (absolute launcher when running inside an integrator kit)
 
-deployment=${1:?usage: run_cell.sh <deployment> <distro> <output-dir> [node]}
-distro=${2:?}
-out=${3:?}
-node=${4:-}
+cell=${1:?usage: run_cell.sh <cell-json> <output-dir>}
+out=${2:?usage: run_cell.sh <cell-json> <output-dir>}
 cli=${OPENADKIT_CLI:-./openadkit}
 
-platform=${PLATFORM:-linux/amd64}
+field() { jq -r --arg key "$1" '.[$key] // ""' <<<"${cell}"; }
+cell_name=$(field name)
+deployment=$(field deployment)
+distro=$(field distro)
+node=$(field node)
+kit=$(field kit)
+platform=$(field platform)
+fresh_topics=$(field fresh)
+l1_check=$(field l1)
+l2_check=$(field l2)
+read -ra nodes <<<"$(field nodes)"
+[ "${#nodes[@]}" -gt 0 ] || nodes=("${node}")
+
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 mkdir -p "${out}"
 # Keep run results with this cell's evidence instead of the runner's home.
 export OPENADKIT_STATE_DIR="${out}/state"
 scenario_output="${OPENADKIT_STATE_DIR}/${deployment}/output"
 
+# Several nodes on one host: each gets its own project, logs and Zenoh endpoint.
 split=false
-nodes=("${node}")
-if [ "${node}" = "split" ]; then
-    split=true
-    nodes=(autoware scenario)
-fi
+[ "${#nodes[@]}" -gt 1 ] && split=true
 projects=()
 validation_files=()
 for target_node in "${nodes[@]}"; do
@@ -45,30 +53,22 @@ for target_node in "${nodes[@]}"; do
     [ "${split}" = true ] && suffix="-${target_node}"
     validation_files+=("${out}/validate${suffix}.json")
 done
-cell_name="${deployment}-${distro}${node:+-${node}}-${platform//\//-}"
 
 api_container=autoware-api
 api_services=${API_SERVICES:-/api/localization/initialize /api/routing/set_route_points /api/operation_mode/change_to_autonomous}
 api_topics=${API_TOPICS:-/api/routing/state /api/localization/initialization_state /api/operation_mode/state}
-# Topics that flow without a route or an initial pose: the system's operation
-# mode availability in every deployment, plus the simulation clock where the
-# deployment runs on sim time. Planning Simulation runs on wall time and has
-# no /clock.
-zenoh_autoware=${SPLIT_ZENOH_AUTOWARE:-tcp/127.0.0.1:7447}
-zenoh_scenario=${SPLIT_ZENOH_SCENARIO:-tcp/127.0.0.1:7448}
-zenoh_peer=${SPLIT_ZENOH_PEER:-tcp/127.0.0.1:7447}
+# The first node listens on the base port; each later node listens on its own
+# port and peers with the first.
+zenoh_port=7447
 
 node_cli() {
-    local operation=$1 target_node=$2
+    local operation=$1 index=$2
     shift 2
-    local args=() environment=()
+    local target_node=${nodes[index]} args=() environment=()
     [ -n "${target_node}" ] && args=(--node "${target_node}")
     if [ "${split}" = true ] && { [ "${operation}" = run ] || [ "${operation}" = validate ]; }; then
-        if [ "${target_node}" = autoware ]; then
-            environment=("ZENOH_LISTEN=${zenoh_autoware}")
-        else
-            environment=("ZENOH_LISTEN=${zenoh_scenario}" "ZENOH_PEER=${zenoh_peer}")
-        fi
+        environment=("ZENOH_LISTEN=tcp/127.0.0.1:$((zenoh_port + index))")
+        [ "${index}" -gt 0 ] && environment+=("ZENOH_PEER=tcp/127.0.0.1:${zenoh_port}")
     fi
     env "${environment[@]}" "${cli}" "${operation}" "${deployment}" "${args[@]}" "$@"
 }
@@ -82,7 +82,6 @@ arrival_s="null"
 isolation="null"
 scenario_json="null"
 overlay_conformant=false
-behaviour="${deployment}"
 
 sample_memory() {
     local peak=0 ids sum
@@ -111,7 +110,7 @@ cleanup() {
     kill "${sampler_pid:-}" 2>/dev/null
     wait "${sampler_pid:-}" 2>/dev/null
     for ((i=${#nodes[@]}-1; i>=0; i--)); do
-        node_cli stop "${nodes[i]}" >/dev/null 2>&1 || true
+        node_cli stop "${i}" >/dev/null 2>&1 || true
     done
 }
 trap cleanup EXIT
@@ -122,31 +121,23 @@ sampler_pid=$!
 # --- L0: manifest and compose validation -------------------------------------
 l0_rc=0
 for i in "${!nodes[@]}"; do
-    node_cli validate "${nodes[i]}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
+    node_cli validate "${i}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
 done
 if [ "${l0_rc}" -eq 0 ]; then
     l0_ok=true
     overlay_conformant=$(jq -s 'all(.[]; .overlayConformant == true)' "${validation_files[@]}")
-    if [ "${split}" != true ]; then
-        behaviour=$(jq -r '.base // .deployment' "${out}/validate.json")
-    fi
 else
     result="FAILED"
 fi
 
 # --- L1: start the stack and check readiness ---------------------------------
 if [ "${l0_rc}" -eq 0 ]; then
-    default_fresh=/system/operation_mode/availability
-    if [ "${behaviour}" = scenario-simulation ]; then default_fresh+=" /clock"; fi
-    fresh_topics=${FRESH_TOPICS:-${default_fresh}}
-    # Fresh publication proves the C++ overlay node survived its ABI boundary.
-    if [ "${deployment}" = custom-kit ]; then fresh_topics+=" /acme/probe"; fi
     run_start=$(date +%s)
     run_rc=0
-    for target_node in "${nodes[@]}"; do
+    for i in "${!nodes[@]}"; do
         suffix=""
-        [ "${split}" = true ] && suffix="-${target_node}"
-        node_cli run "${target_node}" --ros-distro "${distro}" >"${out}/run${suffix}.log" 2>&1 || run_rc=1
+        [ "${split}" = true ] && suffix="-${nodes[i]}"
+        node_cli run "${i}" --ros-distro "${distro}" >"${out}/run${suffix}.log" 2>&1 || run_rc=1
     done
 
     if [ "${run_rc}" -eq 0 ] && docker inspect "${api_container}" >/dev/null 2>&1; then
@@ -184,7 +175,7 @@ if [ "${l0_ok}" = true ]; then
     fi
 fi
 
-if [ "${l1_ok}" = true ] && [ "${deployment}" = custom-kit ]; then
+if [ "${l1_ok}" = true ] && [ "${l1_check}" = custom-kit ]; then
     docker cp "${script_dir}/custom_kit.py" "${api_container}:/tmp/openadkit-custom-kit.py" >/dev/null 2>&1
     if ! docker exec "${api_container}" bash -lc \
         "source /opt/ros/${distro}/setup.bash; source /opt/autoware/setup.sh; python3 /tmp/openadkit-custom-kit.py" >"${out}/custom-kit.log" 2>&1 \
@@ -196,8 +187,8 @@ fi
 
 # --- L2: end-to-end behaviour -------------------------------------------------
 if [ "${l1_ok}" = true ]; then
-    case "${behaviour}" in
-        planning-simulation)
+    case "${l2_check}" in
+        golden)
             docker cp "${script_dir}/golden.py" "${api_container}:/tmp/openadkit-golden.py" >/dev/null 2>&1 || true
             golden_start=$(date +%s)
             docker exec "${api_container}" bash -lc \
@@ -212,7 +203,7 @@ if [ "${l1_ok}" = true ]; then
                 result="FAILED"
             fi
             ;;
-        scenario-simulation)
+        scenario)
             ss_rc=$(timeout 1200 docker wait autoware-scenario-simulator 2>/dev/null || echo timeout)
             docker logs autoware-scenario-simulator >"${out}/scenario.log" 2>&1 || true
             python3 "${script_dir}/scenario_metrics.py" \
@@ -293,7 +284,7 @@ jq -n \
     --arg result "${result}" \
     --arg build_tag "${BUILD_TAG:-unknown}" \
     --arg source_sha "${SOURCE_SHA:-unknown}" \
-    --arg kit "${KIT_PATH:-}" \
+    --arg kit "${kit}" \
     --argjson l0 "${l0_ok}" \
     --argjson l1 "${l1_ok}" \
     --argjson l2 "${l2_ok}" \

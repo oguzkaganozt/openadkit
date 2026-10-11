@@ -5,25 +5,17 @@ checksums. The evidence workflow attests to this set and the release gate
 recomputes it independently from the release tree.
 """
 import argparse
-import importlib.util
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from images import image_ref  # noqa: E402
-from validation_matrix import example_kit_roots  # noqa: E402
-
-
-def load_manifest_module(source_root: Path):
-    path = source_root / "cli" / "manifest.py"
-    spec = importlib.util.spec_from_file_location("openadkit_subjects_manifest", path)
-    if spec is None or spec.loader is None:
-        raise SystemExit(f"could not load {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+from validation_matrix import (  # noqa: E402
+    example_kit_checksums,
+    kit_inventory,
+    load_runtime,
+)
 
 
 def build_subjects(metadata: dict, source_root: Path):
@@ -39,23 +31,17 @@ def build_subjects(metadata: dict, source_root: Path):
                 )
             )
 
-    manifest = load_manifest_module(source_root)
-    kit = manifest.load_kit(source_root)
-    shared: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = manifest.get_deployment(source_root, kit, name)
-        checksum = manifest.deployment_checksum(deployment.directory)
-        subjects.append((checksum, f"deployment:{name}"))
-        shared.update(deployment.shared)
-    for name in sorted(shared):
-        checksum = manifest.deployment_checksum(source_root / "deployments" / name)
+    # The same inventory the release bundle is planned, staged and verified by.
+    runtime = load_runtime(source_root)
+    inventory = kit_inventory(runtime, source_root)
+    for name, meta in inventory["deployments"].items():
+        subjects.append((meta["checksum"], f"deployment:{name}"))
+    for name, checksum in inventory["shared"].items():
         subjects.append((checksum, f"shared:{name}"))
-
     # Pin the integrator's source/config, not host-specific colcon products.
     # Recomputed by the release gate from the same source checkout.
-    for root in example_kit_roots(manifest, source_root):
-        checksum = manifest.deployment_checksum(root, exclude_dirs=("build", "install", "log"))
-        subjects.append((checksum, f"overlay:{root.relative_to(source_root).as_posix()}"))
+    for path, checksum in example_kit_checksums(runtime, source_root).items():
+        subjects.append((checksum, f"overlay:{path}"))
 
     subjects.sort(key=lambda item: item[1])
     return subjects

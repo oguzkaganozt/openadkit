@@ -16,6 +16,10 @@ sys.path.insert(0, str(SCRIPTS))
 import validation_matrix  # noqa: E402
 
 
+def identities(cells):
+    return [{key: cell[key] for key in ("deployment", "distro", "node", "kit") if key in cell} for cell in cells]
+
+
 def load(name):
     spec = importlib.util.spec_from_file_location(name, SCRIPTS / "evidence" / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
@@ -29,7 +33,7 @@ subjects = load("subjects")
 
 def test_example_evidence_cells_follow_the_base_distros():
     runtime = validation_matrix.load_runtime(ROOT)
-    assert validation_matrix.example_kit_cells(runtime, ROOT) == [
+    assert identities(validation_matrix.example_kit_cells(runtime, ROOT)) == [
         {"deployment": "custom-kit", "distro": distro, "kit": "deployments/custom-kit"}
         for distro in ("humble", "jazzy")
     ]
@@ -50,7 +54,7 @@ def test_old_source_layout_keeps_its_original_cells_and_overlay_subject(tmp_path
     manifest["name"] = "custom-planning"
     (deployment / "deployment.json").write_text(json.dumps(manifest))
     runtime = validation_matrix.load_runtime(tmp_path)
-    assert validation_matrix.example_kit_cells(runtime, tmp_path) == [
+    assert identities(validation_matrix.example_kit_cells(runtime, tmp_path)) == [
         {"deployment": "custom-planning", "distro": distro, "kit": "examples/custom-kit"} for distro in ("humble", "jazzy")]
     expected = runtime.deployment_checksum(legacy, exclude_dirs=("build", "install", "log"))
     assert (expected, "overlay:examples/custom-kit") in subjects.build_subjects({}, tmp_path)

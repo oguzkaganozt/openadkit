@@ -91,7 +91,7 @@ def statement_report(
         row = expected[cell["name"]]
         identity = {
             "deployment": row["deployment"], "distro": row["distro"],
-            "node": row.get("node") or None, "platform": "linux/amd64",
+            "node": row.get("node") or None, "platform": row["platform"],
             "kit": row.get("kit") or None,
             "build_tag": metadata["build_tag"], "source_sha": metadata["openadkit_sha"],
         }

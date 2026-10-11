@@ -54,7 +54,9 @@ trusted-builder implementation before such a claim is valid.
 `build_tag` has the form `<run_id>-<run_attempt>`. The matching
 `build-metadata-<build_tag>` artifact must be available in the repository.
 The workflow checks out its `openadkit_sha` and stages runtime image digests
-from the same metadata, never moving image aliases.
+from the same metadata, never moving image aliases. It stages and verifies the
+kit with the same step that assembles release bundles, so the cells run the
+tree a release of that build ships, plus the example kit.
 
 The example workspace builds against that build's matching distro-specific
 `universe-common-devel` digest. Source/config checksums omit `build`, `install`

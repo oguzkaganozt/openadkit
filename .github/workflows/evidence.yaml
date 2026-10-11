@@ -90,7 +90,8 @@ jobs:
 
       - name: List evidence cells
         # Every deployment and distro the manifests declare, minus the
-        # deployments with an evidence exemption.
+        # deployments with an evidence exemption. Each row is a complete cell
+        # plan: identity, nodes and the checks run_cell.sh executes.
         id: cells
         run: |
           set -euo pipefail
@@ -176,25 +177,22 @@ jobs:
         env:
           BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
           SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
-          PLATFORM: linux/amd64
+          CELL: ${{ toJson(matrix) }}
           KIT_PATH: ${{ matrix.kit }}
           OPENADKIT_CLI: ${{ github.workspace }}/evidence-kit/openadkit
         run: |
           set -uo pipefail
           if [ -n "$KIT_PATH" ]; then cd "$KIT_PATH"; fi
           runner="$GITHUB_WORKSPACE/.github/scripts/evidence/run_cell.sh"
-          deployment="${{ matrix.deployment }}"
-          distro="${{ matrix.distro }}"
-          node="${{ matrix.node }}"
           output="$GITHUB_WORKSPACE/cell-output"
-          cell_name="${deployment}-${distro}${node:+-${node}}-linux-amd64"
+          cell_name=$(jq -r '.name' <<<"$CELL")
 
           mkdir -p "$output"
           status=0
-          if ! bash "$runner" "$deployment" "$distro" "$output/attempt-1" "$node"; then
+          if ! bash "$runner" "$CELL" "$output/attempt-1"; then
             echo "::warning title=evidence retry::${cell_name} failed on the first attempt; retrying once"
             rm -rf "$output/attempt-2"
-            if ! bash "$runner" "$deployment" "$distro" "$output/attempt-2" "$node"; then
+            if ! bash "$runner" "$CELL" "$output/attempt-2"; then
               echo "cell ${cell_name} failed after the retry" >&2
               status=1
             fi
@@ -213,7 +211,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: evidence-cell-${{ matrix.deployment }}-${{ matrix.distro }}${{ matrix.node && format('-{0}', matrix.node) || '' }}
+          name: evidence-cell-${{ matrix.name }}
           path: |
             cells
             cell-output

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 
 # Stage a release-like kit from a build, so evidence runs use the exact image
-# digests that build published instead of the moving prefix aliases. The layout
-# mirrors a release bundle: openadkit.json (kind: release), cli/, openadkit,
-# deployments/.
+# digests that build published instead of the moving prefix aliases. The kit is
+# staged and verified by the same release_plan.py step that assembles release
+# bundles, plus the example kits without their host colcon products.
 #
 # Usage: stage_kit.sh <source-root> <build-metadata.json> <kit-dir> <source-sha>
 
@@ -22,13 +23,13 @@ if [ -z "${build_tag}" ] || [ "${build_tag}" = "null" ]; then
     exit 1
 fi
 
+planner="${source_root}/.github/scripts/release_plan.py"
+plan="${kit}.release-plan.json"
 rm -rf "${kit}"
-mkdir -p "${kit}"
 
-python3 "${source_root}/.github/scripts/release_plan.py" \
+python3 "${planner}" \
     --source-root "${source_root}" \
-    --output "${kit}.release-plan.json" \
-    --context-output "${kit}/openadkit.json" \
+    --output "${plan}" \
     --build-metadata "${metadata}" \
     --version "v0.0.0-evidence.${build_tag}" \
     --release-sha "${sha}" \
@@ -37,14 +38,10 @@ python3 "${source_root}/.github/scripts/release_plan.py" \
     --stable-release false \
     --publish-latest-aliases false
 
-cp "${source_root}/openadkit" "${kit}/openadkit"
-cp -r "${source_root}/cli" "${kit}/cli"
-# The flat example lives with the deployments, preserving its relative extends.
-# Never carry host-built overlay products into the pinned evidence workspace.
-mkdir -p "${kit}/deployments"
-tar -C "${source_root}/deployments" \
-    --exclude=custom-kit/overlay_ws/build --exclude=custom-kit/overlay_ws/install \
-    --exclude=custom-kit/overlay_ws/log --exclude=__pycache__ -cf - . \
-    | tar -C "${kit}/deployments" -xf -
+python3 "${planner}" \
+    --source-root "${source_root}" \
+    --output "${plan}" \
+    --stage "${kit}" \
+    --include-example-kits
 
 echo "staged evidence kit at ${kit} (build_tag ${build_tag})"

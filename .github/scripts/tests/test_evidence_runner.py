@@ -8,6 +8,35 @@ import pytest
 import yaml
 from release_fixtures import ROOT, executable
 
+import validation_matrix
+
+RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
+
+
+def matrix_cell(deployment, node=""):
+    """The real evidence-matrix row the workflow hands to the runner."""
+    runtime = validation_matrix.load_runtime(ROOT)
+    cells = validation_matrix.evidence_cells(runtime, ROOT) + validation_matrix.example_kit_cells(runtime, ROOT)
+    return next(cell for cell in cells if cell["deployment"] == deployment and cell["distro"] == "humble"
+                and cell.get("node", "") == node)
+
+
+def test_evidence_cells_carry_the_manifest_plan():
+    split = matrix_cell("scenario-simulation", "split")
+    nodes = json.loads((ROOT / "deployments/scenario-simulation/deployment.json").read_text())["nodes"]
+    assert split["nodes"].split() == list(nodes) and split["l2"] == "scenario" and "/clock" in split["fresh"].split()
+    kit = matrix_cell("custom-kit")
+    assert kit["l2"] == "golden" and kit["l1"] == "custom-kit" and "/acme/probe" in kit["fresh"].split()
+    assert matrix_cell("planning-simulation")["nodes"] == ""
+    for cell in (split, kit):
+        assert cell["name"] == validation_matrix.evidence_cell_name(cell)
+
+
+def test_unexempt_deployment_without_an_l2_check_fails_enumeration(monkeypatch):
+    monkeypatch.delitem(validation_matrix.BEHAVIOUR_CHECKS, "scenario-simulation")
+    with pytest.raises(ValueError, match="scenario-simulation has no L2 evidence check"):
+        validation_matrix.evidence_cells(validation_matrix.load_runtime(ROOT), ROOT)
+
 
 @pytest.mark.parametrize(("node", "failure"), [("", ""), ("autoware", "validate"), ("split", "validate"), ("split", "run")])
 def test_cell_lifecycle_keeps_node_order_failures_and_cleanup(tmp_path, node, failure):
@@ -26,12 +55,14 @@ sys.exit(1 if args[0] == os.environ['FAILURE'] else 0)
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli),
                         "CALLS": str(calls), "FAILURE": failure, "BUILD_TAG": "123-1", "SOURCE_SHA": "b" * 40}
-    result = subprocess.run(["bash", str(ROOT / ".github/scripts/evidence/run_cell.sh"), "planning-simulation", "humble", str(out), node],
+    nodes = "autoware scenario" if node == "split" else ""
+    cell = matrix_cell("planning-simulation") | {"node": node, "nodes": nodes}
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
                             cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
     assert (result.returncode == 0) is (not failure), result.stderr
     report = json.loads((out / "cell.json").read_text())
     assert report["result"] == ("FAILED" if failure else "PASSED")
-    assert report["build_tag"] == "123-1" and report["node"] == node
+    assert report["build_tag"] == "123-1" and report["node"] == node and report["name"] == cell["name"]
     recorded = [json.loads(line) for line in calls.read_text().splitlines()]
     def target(args):
         return args[args.index("--node") + 1] if "--node" in args else ""
@@ -65,7 +96,7 @@ sys.exit(1 if args[0] == 'run' else 0)
     env = {k: v for k, v in os.environ.items() if k not in ("ZENOH_LISTEN", "ZENOH_PEER", "OPENADKIT_KIT")}
     env.update(PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}", OPENADKIT_CLI=str(cli),
                HOME=str(tmp_path), OPENADKIT_CONFIG_DIR=str(tmp_path / 'config'))
-    subprocess.run(["bash", str(ROOT / ".github/scripts/evidence/run_cell.sh"), "scenario-simulation", "humble", str(tmp_path / "out"), "split"],
+    subprocess.run(["bash", str(RUNNER), json.dumps(matrix_cell("scenario-simulation", "split")), str(tmp_path / "out")],
                    env=env, cwd=ROOT, capture_output=True, text=True, timeout=20)
     assert json.loads((tmp_path / "out/cell.json").read_text())["levels"]["L0"]["ok"] is True
 
@@ -81,7 +112,7 @@ command = command.replace('source "/opt/ros/${ROS_DISTRO}/setup.bash"', 'true')
 sys.exit(subprocess.run(['bash', '-c', command]).returncode)
 ''')
     executable(tmp_path / "bin/ros2", f"#!/usr/bin/env bash\nprintf '%s\\n' {topics!r}\nexit {rc}\n")
-    text = (ROOT / ".github/scripts/evidence/run_cell.sh").read_text()
+    text = RUNNER.read_text()
     probe = text[text.index('isolation=$(\n'):text.index('\n                else', text.index('isolation=$(\n'))]
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "ROS_DISTRO": "humble"}
     result = subprocess.run(["bash", "-c", 'distro=humble; image=test; ' + probe + '\nprintf "%s" "$isolation"'],
