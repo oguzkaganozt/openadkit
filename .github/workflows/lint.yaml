@@ -32,6 +32,7 @@ on:
       - 'platforms/**/*.yaml'
       - 'platforms/**/*.yml'
       - 'components/**/*.hcl'
+      - 'components/shared/**'
       - '.hadolint.yaml'
       - '.markdownlint.yaml'
       - '.markdownlintignore'
@@ -98,7 +99,7 @@ jobs:
             docs/
 
       - name: Run ruff
-        run: ruff check --output-format github cli .github/scripts
+        run: ruff check --output-format github cli .github/scripts components/shared/entrypoint
 
       - name: Run mypy
         # Settings and the checked paths live in pyproject.toml.

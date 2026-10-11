@@ -97,8 +97,8 @@ def main() -> int:
     for layer in LAYERS:
         workload = layer / "autoware"
         if workload.is_dir():
-            for package in sorted(path for path in workload.iterdir() if path.is_dir()):
-                overridden.setdefault(package.name, []).append(package)
+            for package_dir in sorted(path for path in workload.iterdir() if path.is_dir()):
+                overridden.setdefault(package_dir.name, []).append(package_dir)
 
     prefixes = []
     for package in [ALWAYS, *sorted(set(overridden) - {ALWAYS})]:

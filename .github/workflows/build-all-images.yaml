@@ -11,8 +11,11 @@ on:
       - '.github/actions/setup-build-env/**'
       - '.github/image-inventory.json'
       - '.github/scripts/**'
+      # Test-only and README-only pushes change no image or evidence input.
+      - '!.github/scripts/tests/**'
       - '.github/workflows/build-all-images.yaml'
       - 'components/**'
+      - '!components/**/README.md'
 
   schedule:
     - cron: '0 0 * * 0'
