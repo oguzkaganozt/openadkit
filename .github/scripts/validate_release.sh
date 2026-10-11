@@ -259,37 +259,10 @@ validate_git_tag() {
 }
 
 validate_registry_conflicts() {
-  local conflicts repo target distro ref digest source_digest release_ref existing_digest lookup_status
-
-  conflicts=0
-  while IFS=$'\t' read -r repo target distro ref digest; do
-    lookup_status=0
-    source_digest=$(registry_manifest_digest "${ref}") || lookup_status=$?
-    if [ "${lookup_status}" -eq 1 ]; then
-      echo "Source image not found: ${ref}" >&2
-      return 1
-    elif [ "${lookup_status}" -ne 0 ]; then
-      return "${lookup_status}"
-    fi
-    if [ "${source_digest}" != "${digest}" ]; then
-      echo "Source digest mismatch for ${ref}: ${source_digest} != ${digest}" >&2
-      conflicts=1
-    fi
-
-    release_ref="${repo}:${target}-${distro}-${VERSION}"
-    lookup_status=0
-    existing_digest=$(registry_manifest_digest "${release_ref}") || lookup_status=$?
-    if [ "${lookup_status}" -eq 0 ]; then
-      if [ "${existing_digest}" != "${digest}" ]; then
-        echo "Release tag conflict: ${release_ref} points to ${existing_digest}, expected ${digest}" >&2
-        conflicts=1
-      fi
-    elif [ "${lookup_status}" -ne 1 ]; then
-      return "${lookup_status}"
-    fi
-  done < <(jq -r '.images[] | [.repo, .target, .ros_distro, .ref, .digest] | @tsv' release-input/build/build-metadata.json)
-
-  [ "${conflicts}" -eq 0 ] || exit 1
+  jq -r --arg version "${VERSION}" \
+    '.images[] | [.ref, "\(.repo):\(.target)-\(.ros_distro)-\($version)", .digest] | @tsv' \
+    release-input/build/build-metadata.json \
+    | registry_preflight_release_images
 }
 
 verify_evidence() (

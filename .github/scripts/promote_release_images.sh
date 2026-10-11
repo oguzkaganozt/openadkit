@@ -92,33 +92,6 @@ promote_tag() {
   return 1
 }
 
-preflight_images() {
-  local conflicts=0 source_ref release_ref digest source_digest existing_digest lookup_status
-  while IFS=$'\t' read -r source_ref release_ref digest; do
-    lookup_status=0
-    source_digest=$(registry_manifest_digest "${source_ref}") || lookup_status=$?
-    if [ "${lookup_status}" -eq 1 ]; then
-      echo "Source image not found: ${source_ref}" >&2
-      conflicts=1
-    elif [ "${lookup_status}" -ne 0 ]; then
-      return "${lookup_status}"
-    elif [ "${source_digest}" != "${digest}" ]; then
-      echo "Source digest mismatch for ${source_ref}: ${source_digest} != ${digest}" >&2
-      conflicts=1
-    fi
-
-    lookup_status=0
-    existing_digest=$(registry_manifest_digest "${release_ref}") || lookup_status=$?
-    if [ "${lookup_status}" -eq 0 ] && [ "${existing_digest}" != "${digest}" ]; then
-      echo "Release tag conflict: ${release_ref} points to ${existing_digest}, expected ${digest}" >&2
-      conflicts=1
-    elif [ "${lookup_status}" -ne 0 ] && [ "${lookup_status}" -ne 1 ]; then
-      return "${lookup_status}"
-    fi
-  done < <(jq -r '.images[] | [.sourceRef, .releaseRef, .digest] | @tsv' "${plan_file}")
-  [ "${conflicts}" -eq 0 ]
-}
-
 check_alias_policy() {
   local current_policy
   [ "${stable_release}" = true ] || return 0
@@ -142,7 +115,8 @@ preflight_aliases() {
 }
 
 check_alias_policy
-preflight_images
+jq -r '.images[] | [.sourceRef, .releaseRef, .digest] | @tsv' "${plan_file}" \
+  | registry_preflight_release_images
 preflight_aliases
 
 while IFS=$'\t' read -r release_ref repo digest; do

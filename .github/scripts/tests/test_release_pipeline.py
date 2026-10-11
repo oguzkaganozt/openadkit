@@ -66,6 +66,37 @@ def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     assert any(row["node"] for row in plan["bundle"]["validation"])
 
 
+@pytest.mark.parametrize(("problem", "messages"), [
+    (None, []),
+    ("source", ["Source digest mismatch"]),
+    ("conflict", ["Release tag conflict"]),
+    # Every conflict is reported before failing, not only the first one.
+    ("missing-and-conflict", ["Source image not found", "Release tag conflict"]),
+])
+def test_release_validation_preflights_registry_state(tmp_path, problem, messages):
+    repo = "ghcr.io/example/openadkit"
+    images = [{"repo": repo, "target": target, "ros_distro": "humble", "digest": DIGEST,
+               "ref": f"{repo}:{target}-humble-{BUILD_TAG}"} for target in ("api", "simulator")]
+    build = tmp_path / "release-input/build"
+    build.mkdir(parents=True)
+    (build / "build-metadata.json").write_text(json.dumps({"images": images}))
+    missing = images[0]["ref"] if problem == "missing-and-conflict" else None
+    conflict = f"{repo}:simulator-humble-{VERSION}" if problem in ("conflict", "missing-and-conflict") else None
+    executable(tmp_path / "bin/docker", f'''#!/usr/bin/env python3
+import json, sys
+ref = sys.argv[4]
+if ref == {missing!r} or (ref.endswith({VERSION!r}) and ref != {conflict!r}):
+    sys.exit("ERROR: " + ref + ": not found")
+mismatch = {problem!r} == "source" and ref.endswith({BUILD_TAG!r})
+digest = "sha256:" + "f" * 64 if mismatch or ref == {conflict!r} else {DIGEST!r}
+print(json.dumps({{"manifest": {{"digest": digest}}}}))
+''')
+    result = run_validator(tmp_path, "validate_registry_conflicts",
+                           PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}", REGISTRY_LOOKUP_MAX_ATTEMPTS="1")
+    assert (result.returncode == 0) is (problem is None), result.stderr
+    assert all(message in result.stderr for message in messages), result.stderr
+
+
 def manager_env(tmp_path, problem):
     """One asset is sufficient to exercise ownership, race and content guards."""
     asset = tmp_path / "bundle.tar.gz"
