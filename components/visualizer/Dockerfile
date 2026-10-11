@@ -54,10 +54,10 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 
 # Align the packages the compiled tree links against with the current apt feed
 # and rebuild when any of them moved; the first compile above stays cached when
-# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/link-lock).
+# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/shared/link-lock).
 ARG ROS_ALIGN_STAMP=0
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
@@ -73,13 +73,13 @@ ARG ROS_DISTRO
 
 USER root
 RUN --mount=from=visualizer-devel,source=/opt/autoware,target=/mnt/autoware \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     cp -a /mnt/autoware/. /opt/autoware/ && \
     find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
     bash /tmp/runtime-cleanup.sh opt
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     apt-get update && \
@@ -137,9 +137,9 @@ COPY components/visualizer/etc/visualizer_entrypoint.sh /usr/local/bin/visualize
 RUN chmod +x /usr/local/bin/visualizer_entrypoint.sh /home/aw/.vnc/xstartup
 
 # Install the exact package versions the matching devel stage compiled
-# against and verify them (components/link-lock).
+# against and verify them (components/shared/link-lock).
 RUN --mount=from=visualizer-devel,source=/opt/openadkit/link-lock.txt,target=/tmp/link-lock.txt \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     bash /tmp/link-lock/lock.sh install --lock /tmp/link-lock.txt && \
@@ -151,5 +151,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD bash -c 'if [ "${REMOTE_DISPLAY:-true}" = false ]; then exit 0; fi; exec 3<>/dev/tcp/127.0.0.1/6080 && exec 4<>/dev/tcp/127.0.0.1/5999'
 
 USER aw
-# The integrator-layer hook from universe-common runs first (components/overlay).
+# The integrator-layer hook from universe-common runs first (components/shared/entrypoint).
 ENTRYPOINT ["/opt/openadkit/openadkit-hook.sh", "/usr/local/bin/visualizer_entrypoint.sh"]

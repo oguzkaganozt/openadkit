@@ -55,10 +55,10 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 
 # Align the packages the compiled tree links against with the current apt feed
 # and rebuild when any of them moved; the first compile above stays cached when
-# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/link-lock).
+# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/shared/link-lock).
 ARG ROS_ALIGN_STAMP=0
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
@@ -79,13 +79,13 @@ ENV AUTOWARE_RUNTIME=1
 
 USER root
 RUN --mount=from=sensing-perception-cuda-devel,source=/opt/autoware,target=/mnt/autoware \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     cp -a /mnt/autoware/. /opt/autoware/ && \
     find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
     bash /tmp/runtime-cleanup.sh opt
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     apt-get update && \
@@ -97,9 +97,9 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     bash /tmp/runtime-cleanup.sh
 
 # Install the exact package versions the matching devel stage compiled
-# against and verify them (components/link-lock).
+# against and verify them (components/shared/link-lock).
 RUN --mount=from=sensing-perception-cuda-devel,source=/opt/openadkit/link-lock.txt,target=/tmp/link-lock.txt \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     bash /tmp/link-lock/lock.sh install --lock /tmp/link-lock.txt && \
@@ -109,15 +109,15 @@ RUN --mount=from=sensing-perception-cuda-devel,source=/opt/openadkit/link-lock.t
 # on. Kept as the last step of the stage so a per-build SECURITY_REFRESH
 # change only re-runs this layer, not the rosdep layer above.
 ARG SECURITY_REFRESH=0
-RUN --mount=type=bind,source=components/security-refresh.sh,target=/tmp/security-refresh.sh \
+RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/security-refresh.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     echo "openadkit security refresh ${SECURITY_REFRESH}" && \
     bash /tmp/security-refresh.sh
 
-# Integrator layer (components/overlay): on every start, layer config overrides
+# Integrator layer (components/shared/entrypoint): on every start, layer config overrides
 # and the overlay workspace on top of Autoware, after the upstream entrypoint
 # has sourced ROS and switched to the aw user.
-COPY components/overlay/openadkit-hook.sh components/overlay/overlay.py /opt/openadkit/
+COPY components/shared/entrypoint/openadkit-hook.sh components/shared/entrypoint/overlay.py /opt/openadkit/
 ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]
 CMD ["/bin/bash"]

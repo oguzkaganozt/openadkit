@@ -76,7 +76,7 @@ def source_repository(tmp_path, changed_source=None):
     git(repo, "init", "--quiet")
     for source_path in (
         "components/docker-bake.hcl",
-        "components/runtime-cleanup.sh",
+        "components/shared/runtime-cleanup.sh",
         "components/universe-common/input",
         "components/simulator/input",
     ):
@@ -172,7 +172,7 @@ def test_empty_target_plan_does_not_inspect_registry(tmp_path):
 
 SHARED_SOURCES = (
     "components/docker-bake.hcl",
-    "components/runtime-cleanup.sh",
+    "components/shared/runtime-cleanup.sh",
     "components/universe-common/input",
 )
 

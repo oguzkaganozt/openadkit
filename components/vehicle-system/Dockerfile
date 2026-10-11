@@ -63,10 +63,10 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 
 # Align the packages the compiled tree links against with the current apt feed
 # and rebuild when any of them moved; the first compile above stays cached when
-# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/link-lock).
+# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/shared/link-lock).
 ARG ROS_ALIGN_STAMP=0
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
@@ -82,13 +82,13 @@ ARG ROS_DISTRO
 
 USER root
 RUN --mount=from=vehicle-system-devel,source=/opt/autoware,target=/mnt/autoware \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     cp -a /mnt/autoware/. /opt/autoware/ && \
     find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
     bash /tmp/runtime-cleanup.sh opt
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
+    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     apt-get update && \
@@ -100,9 +100,9 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     bash /tmp/runtime-cleanup.sh
 
 # Install the exact package versions the matching devel stage compiled
-# against and verify them (components/link-lock).
+# against and verify them (components/shared/link-lock).
 RUN --mount=from=vehicle-system-devel,source=/opt/openadkit/link-lock.txt,target=/tmp/link-lock.txt \
-    --mount=type=bind,source=components/link-lock,target=/tmp/link-lock \
+    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     bash /tmp/link-lock/lock.sh install --lock /tmp/link-lock.txt && \

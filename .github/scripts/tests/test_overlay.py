@@ -1,4 +1,4 @@
-"""The image entrypoint hook's overlay builder (components/overlay/overlay.py)."""
+"""The image entrypoint hook's overlay builder (components/shared/entrypoint/overlay.py)."""
 
 import importlib.util
 import json
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 @pytest.fixture
 def overlay(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location(
-        "openadkit_overlay", ROOT / "components/overlay/overlay.py"
+        "openadkit_overlay", ROOT / "components/shared/entrypoint/overlay.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

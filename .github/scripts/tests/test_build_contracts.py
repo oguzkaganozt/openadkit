@@ -90,7 +90,7 @@ def test_runtime_keeps_lock_security_refresh_and_overlay_hook(path):
     text = (ROOT / path).read_text()
     runtime = text.rsplit("\nFROM ", 1)[1]
     assert "bash /tmp/link-lock/align.sh" in text
-    assert runtime.index("bash /tmp/link-lock/lock.sh verify") < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("COPY components/overlay/")
+    assert runtime.index("bash /tmp/link-lock/lock.sh verify") < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("COPY components/shared/entrypoint/")
     assert 'ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]' in runtime
 
 
