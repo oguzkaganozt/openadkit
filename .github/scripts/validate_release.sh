@@ -27,7 +27,6 @@ publish_latest_aliases=false
 is_stable_release=false
 release_sha=""
 run_id=""
-run_attempt=""
 readonly BUILD_AGE_MAX_DAYS=90
 
 fail() {
@@ -84,12 +83,17 @@ resolve_latest_alias_policy() {
 }
 
 validate_build_run() {
-  local run_json workflow_name workflow_path head_branch status conclusion created_at
+  local run_json latest_tag workflow_name workflow_path head_branch status conclusion created_at
   local created_epoch now_epoch max_age_seconds
 
   run_id="${BUILD_TAG%%-*}"
-  run_attempt="${BUILD_TAG##*-}"
-  run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/attempts/${run_attempt}")
+  # The run's latest attempt decides: "Re-run failed jobs" finishes a build
+  # under its first tag, while "Re-run all jobs" supersedes that tag.
+  run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+  latest_tag=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+    --jq '.artifacts[] | select(.expired | not) | .name | select(startswith("build-metadata-")) | ltrimstr("build-metadata-")' \
+    | sort -V | tail -n 1)
+  [ "${latest_tag}" = "${BUILD_TAG}" ] || fail "Build ${BUILD_TAG} is not the latest build of run ${run_id} (latest: '${latest_tag}')"
 
   workflow_name=$(printf '%s' "${run_json}" | jq -r '.name')
   workflow_path=$(printf '%s' "${run_json}" | jq -r '.path')

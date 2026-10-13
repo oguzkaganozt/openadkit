@@ -155,7 +155,9 @@ def capture(directory: Path, env: dict[str, str]) -> dict[str, Any]:
         row.update(ref=ref, digest=manifest["digest"], platforms=sorted({f'{item["platform"]["os"]}/{item["platform"]["architecture"]}'
                    for item in manifest["manifests"] if item["platform"]["os"] != "unknown"}))
     metadata: dict[str, Any] = {key.lower(): env[key] for key in ("BUILD_TAG", "OPENADKIT_SHA", "AUTOWARE_INPUT_REF", "AUTOWARE_REF_TYPE", "AUTOWARE_REF", "AUTOWARE_BASE_VERSION")}
-    metadata.update(hashes, run_id=env["GITHUB_RUN_ID"], run_attempt=env["GITHUB_RUN_ATTEMPT"],
+    # A partial rerun keeps prepare's build tag; the tag, not this attempt, names the images.
+    run_id, run_attempt = env["BUILD_TAG"].split("-")
+    metadata.update(hashes, run_id=run_id, run_attempt=run_attempt,
                     scan_requested=json.loads(env["SCAN_REQUESTED"]), images=rows, upstream_images=load_json(directory / "upstream-images.json"))
     build_images(metadata)
     return metadata

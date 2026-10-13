@@ -55,8 +55,12 @@ jobs:
 
           if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
             run_id="${{ github.event.workflow_run.id }}"
-            run_attempt="${{ github.event.workflow_run.run_attempt }}"
-            build_tag="${run_id}-${run_attempt}"
+            # "Re-run failed jobs" keeps the first attempt's tag; read it from
+            # the newest metadata artifact instead of this attempt's number.
+            build_tag=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+              --jq '.artifacts[] | select(.expired | not) | .name | select(startswith("build-metadata-")) | ltrimstr("build-metadata-")' \
+              | sort -V | tail -n 1)
+            [ -n "${build_tag}" ] || { echo "Build run ${run_id} has no build metadata artifact" >&2; exit 1; }
           else
             build_tag="${DISPATCH_BUILD_TAG}"
             if ! printf '%s\n' "${build_tag}" | grep -Eq '^[0-9]+-[0-9]+$'; then

@@ -85,6 +85,8 @@ def test_capture_uses_registry_platforms_and_legacy_scan_rows(artifacts, monkeyp
     captured = images.capture(directory, env)
     assert captured == metadata
     assert [{key: value for key, value in row.items() if key != "platform_label"} for row in images.scan_rows(captured)] == scan["scanned_images"]
+    # "Re-run failed jobs" captures in a later attempt under the original tag.
+    assert images.capture(directory, {**env, "GITHUB_RUN_ATTEMPT": "2"}) == metadata
     by_ref[metadata["images"][0]["ref"]]["platforms"] = ["linux/arm64"]
     assert images.capture(directory, env)["images"][0]["platforms"] == ["linux/arm64"]
 
