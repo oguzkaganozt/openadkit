@@ -113,6 +113,16 @@ validate_build_run() {
   fi
 }
 
+warn_unreleased_kit_changes() {
+  # The bundle ships cli/ and deployments/ from the build SHA, and pushes that
+  # only touch them start no build. Name what main would add; do not fail.
+  local changed
+  changed=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${release_sha}...main" --jq '.files[].filename' 2>/dev/null \
+    | grep -E '^(cli/|deployments/|openadkit$|openadkit\.json$)') || return 0
+  echo "::warning title=Unreleased kit changes::main changes the CLI or deployments after ${release_sha}; dispatch build-all-images on main to release them"
+  printf '%s\n' "${changed}" | sed 's/^/  /' >&2
+}
+
 download_build_metadata() {
   mkdir -p release-input/build release-input/scan
   gh run download "${run_id}" \
@@ -306,6 +316,7 @@ main() {
   validate_inputs
   resolve_latest_alias_policy
   validate_build_run
+  warn_unreleased_kit_changes
   checkout_release_source
   validate_manifest_consistency
   download_build_metadata

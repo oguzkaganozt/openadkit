@@ -127,7 +127,10 @@ Releases promote an existing CI build; nothing is rebuilt.
   used.
 - **A successful build** of `build-all-images` exists on `main` from an exact
   Autoware release tag. Builds from a full SHA can only become pre-releases. The
-  build summary shows its `build_tag`.
+  build summary shows its `build_tag`. The release ships the CLI and deployments
+  from that build's commit, and pushes that change only those start no build:
+  dispatch `build-all-images` on `main` to release them. The release run warns
+  when `main` has such changes.
 - **A passing scan** of `scan-images` exists for that `build_tag`.
 - **Complete signed `PASSED` evidence** exists for that same build. Required
   cells, source checksums and image digests must match; quarantine does not waive
