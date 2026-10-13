@@ -481,16 +481,35 @@ def check_daemon(selection: Selection) -> None:
         )
 
 
+def restart_counts(deployment: Deployment, selection: Selection) -> dict[str, int]:
+    """Restarts each container of the project has had so far, by container id."""
+    ids = compose_capture(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
+    if not ids:
+        return {}
+    result = capture_process(
+        ["docker", "inspect", "--format", "{{.Id}} {{.RestartCount}}", *ids],
+        env=process_environment(selection),
+        trace=False,
+    )
+    return {
+        container: int(restarts)
+        for container, restarts in (line.split() for line in result.stdout.splitlines())
+    }
+
+
 def failed_services(
-    deployment: Deployment, selection: Selection, ids: list[str]
+    deployment: Deployment,
+    selection: Selection,
+    ids: list[str],
+    baseline: dict[str, int],
 ) -> list[str]:
-    """Long-running services that restarted or exited with an error."""
+    """Long-running services that restarted since `up` or exited with an error."""
     result = capture_process(
         [
             "docker",
             "inspect",
             "--format",
-            '{{index .Config.Labels "com.docker.compose.service"}} '
+            '{{.Id}} {{index .Config.Labels "com.docker.compose.service"}} '
             "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}}",
             *ids,
         ],
@@ -499,15 +518,19 @@ def failed_services(
     )
     failed = set()
     for line in result.stdout.splitlines():
-        service, restarts, state, exit_code = line.split()
+        container, service, restarts, state, exit_code = line.split()
         if service in deployment.reset_services(selection.node):
             continue
-        if restarts != "0" or state == "restarting" or exit_code != "0":
+        # `up` keeps unchanged containers, and with them earlier restarts.
+        restarted = int(restarts) > baseline.get(container, 0)
+        if restarted or state == "restarting" or exit_code != "0":
             failed.add(service)
     return sorted(failed)
 
 
-def check_services_stay_up(deployment: Deployment, selection: Selection) -> None:
+def check_services_stay_up(
+    deployment: Deployment, selection: Selection, baseline: dict[str, int]
+) -> None:
     """Fail when a service crashes shortly after `up`.
 
     Without healthchecks `up --wait` only waits for the containers to start, so
@@ -522,7 +545,7 @@ def check_services_stay_up(deployment: Deployment, selection: Selection) -> None
         flush=True,
     )
     for _ in range(SETTLE_SECONDS):
-        failed = failed_services(deployment, selection, ids)
+        failed = failed_services(deployment, selection, ids, baseline)
         if failed:
             raise OpenADKitError(
                 f"{', '.join(failed)} failed after start; "
@@ -542,6 +565,7 @@ def start(deployment: Deployment, selection: Selection, pull_policy: str) -> Non
             ["rm", "--stop", "--force", service],
         )
 
+    baseline = restart_counts(deployment, selection)
     compose_run(
         deployment,
         selection,
@@ -556,7 +580,7 @@ def start(deployment: Deployment, selection: Selection, pull_policy: str) -> Non
             "--remove-orphans",
         ],
     )
-    check_services_stay_up(deployment, selection)
+    check_services_stay_up(deployment, selection, baseline)
 
 
 def status(deployment: Deployment, selection: Selection) -> None:

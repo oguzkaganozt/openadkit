@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import http.client
 import json
 import os
 import shutil
@@ -71,19 +72,27 @@ def download(url: str, destination: Path, checksum: str) -> None:
                 request, timeout=60
             ) as response, destination.open("wb") as output:
                 size = response.headers.get("Content-Length")
-                if size and size.isdigit():
-                    print(f"downloading {url} ({int(size)} bytes)", flush=True)
+                expected = int(size) if size and size.isdigit() else None
+                if expected is not None:
+                    print(f"downloading {url} ({expected} bytes)", flush=True)
                 else:
                     print(f"downloading {url}", flush=True)
                 shutil.copyfileobj(response, output)
-            if sha256_file(destination) != checksum:
-                raise OpenADKitError(f"checksum mismatch for {url}")
-            return
-        except (OSError, urllib.error.URLError, OpenADKitError) as error:
+            # urllib ends a cut-off body without an error; retry a short file.
+            received = destination.stat().st_size
+            if expected is not None and received != expected:
+                raise OSError(f"received {received} of {expected} bytes")
+        except (OSError, urllib.error.URLError, http.client.HTTPException) as error:
             last_error = error
             destination.unlink(missing_ok=True)
             if attempt < 2:
                 time.sleep(1 + attempt)
+            continue
+        # A complete file with the wrong content does not improve on retry.
+        if sha256_file(destination) != checksum:
+            destination.unlink(missing_ok=True)
+            raise OpenADKitError(f"checksum mismatch for {url}")
+        return
     raise OpenADKitError(f"failed to download {url}: {last_error}")
 
 
@@ -91,7 +100,9 @@ def ensure_no_symlink_components(path: Path) -> None:
     current = Path(path.anchor)
     for part in path.parts[1:]:
         current = current / part
-        if current.is_symlink():
+        # Root-owned links are host layout (a relocated /home); a link anyone
+        # else made could redirect data writes and removals.
+        if current.is_symlink() and current.lstat().st_uid != 0:
             raise OpenADKitError(f"symlinked data path is not allowed: {current}")
         if current.exists() and not current.is_dir():
             raise OpenADKitError(f"data path component is not a directory: {current}")
@@ -352,6 +363,12 @@ def validate_install_targets(
                 raise OpenADKitError(f"unsafe data target: {target}")
             refuse_unmanaged(target, "replace")
         elif not validate_dataset(target, resource["requiredFiles"]):
+            if target.is_symlink() or not is_managed(target):
+                # fetch --force refuses these; the operator has to remove them first.
+                raise OpenADKitError(
+                    f"incomplete data at {target} cannot be replaced in place; "
+                    f"remove it and run: openadkit fetch {deployment.name}"
+                )
             raise OpenADKitError(
                 f"incomplete data at {target}; run: openadkit fetch {deployment.name} --force"
             )

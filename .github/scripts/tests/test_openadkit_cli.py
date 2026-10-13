@@ -453,12 +453,17 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     target = tmp_path / "home/data/map"
     target.mkdir(parents=True)
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "run", "example", "--pull", "never")
-    assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
+    # Data the CLI did not install: --force would refuse it, so do not advise it.
+    for command in (("run", "example", "--pull", "never"), ("fetch", "example")):
+        result = run_cli(root, *command)
+        assert result.returncode != 0 and "remove it and run: openadkit fetch example\n" in result.stderr
+        assert "--force" not in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
     assert run_cli(root, "run", "example", "--force").returncode == 2
     assert "refusing to replace" in run_cli(root, "fetch", "example", "--force").stderr
     (target / cli_data.MARKER).write_text("{}")
+    result = run_cli(root, "run", "example", "--pull", "never")
+    assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
     result = run_cli(root, "fetch", "example", "--force")
     assert result.returncode == 0, result.stderr
     assert (target / "required.txt").read_text() == "replacement"
@@ -503,6 +508,44 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
         cli_data.install_resource(resource, selection, True)
     assert (target / "required.txt").read_text() == "original"
     assert not list(tmp_path.glob(".dataset.stage.*"))
+
+
+def test_rerun_counts_only_restarts_since_up(monkeypatch):
+    # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
+    inspect = "kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
+    monkeypatch.setattr(cli_compose, "capture_process",
+                        lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
+    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init"})})()
+    selection = cli_manifest.Selection("humble", False, None, {}, {})
+    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning"]
+
+
+def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
+    payload = b"dataset"
+    bodies = []
+
+    class Response(io.BytesIO):
+        headers = {"Content-Length": str(len(payload))}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return None
+
+    def urlopen(request, timeout):
+        return Response(bodies.pop(0))
+
+    monkeypatch.setattr(cli_data.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(cli_data.time, "sleep", lambda _: None)
+    destination = tmp_path / "download"
+    bodies[:] = [payload[:3], payload]
+    cli_data.download("https://example/data", destination, hashlib.sha256(payload).hexdigest())
+    assert destination.read_bytes() == payload and not bodies
+    bodies[:] = [payload, payload]
+    with pytest.raises(cli_manifest.OpenADKitError, match="checksum mismatch"):
+        cli_data.download("https://example/data", destination, "0" * 64)
+    assert len(bodies) == 1 and not destination.exists()
 
 
 @pytest.mark.parametrize("race", ["appeared", "replaced", "unmarked", "exchange"])
@@ -558,6 +601,19 @@ def test_failed_post_exchange_verification_never_cleans_displaced_data(tmp_path,
         cli_data.install_resource(resource, selection, True)
     staged = next(tmp_path.glob(".dataset.stage.*"))
     assert (staged / "dataset/user-file").read_text() == "keep"
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="every link a root test creates is root-owned")
+def test_data_paths_reject_user_symlinks_but_trust_host_layout(tmp_path):
+    (tmp_path / "real").mkdir()
+    (tmp_path / "link").symlink_to(tmp_path / "real")
+    with pytest.raises(cli_manifest.OpenADKitError, match="symlinked data path"):
+        cli_data.ensure_no_symlink_components(tmp_path / "link/map")
+    # A merged-/usr host's /bin -> usr/bin stands in for a relocated /home.
+    system = Path("/bin")
+    if not system.is_symlink() or system.lstat().st_uid != 0:
+        pytest.skip("host has no root-owned top-level symlink")
+    cli_data.ensure_no_symlink_components(system / "openadkit-map")
 
 
 @pytest.mark.parametrize("unsafe", ["traversal", "absolute", "symlink", "duplicate"])
