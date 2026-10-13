@@ -104,7 +104,8 @@ runs:
       with:
         cache-map: |
           {"cache-mounts/ccache": {"id": "ccache-${{ inputs.ros-distro }}", "target": "/home/aw/.ccache", "uid": "1000", "gid": "1000"}}
-        skip-extraction: ${{ inputs.publish != 'true' || steps.cache.outputs.cache-hit == 'true' }}
+        # Extract only what the post step saves; an exact hit is already stored.
+        skip-extraction: ${{ inputs.save-ccache != 'true' || steps.cache.outputs.cache-hit == 'true' }}
 
     - name: Build image
       uses: docker/bake-action@4a9a8d494466d37134e2bfca2d3a8de8fb2681ad # v5
