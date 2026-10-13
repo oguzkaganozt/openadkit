@@ -84,7 +84,6 @@ user_in_docker_group() {
 docker_stack_ready() {
   [[ $FORCE_DOCKER_INSTALL != true ]] \
     && command -v docker >/dev/null 2>&1 \
-    && docker buildx version >/dev/null 2>&1 \
     && compose_capable
 }
 
@@ -117,7 +116,7 @@ docker_run() {
 
 install_docker() {
   if docker_stack_ready; then
-    log "Docker, Buildx, and Compose are already available"
+    log "Docker and Compose are already available"
   else
     log "installing Docker from the official Ubuntu repository"
     sudo apt-get update
@@ -263,6 +262,11 @@ EOF
 }
 
 collect_missing_packages
+# Docker CE conflicts with the distribution's docker.io and containerd; never
+# replace an engine the host already runs.
+if [[ $FORCE_DOCKER_INSTALL != true ]] && command -v docker >/dev/null 2>&1 && ! compose_capable; then
+  fail "Docker is installed but Docker Compose 2.20 or newer is missing; install it (Ubuntu: docker-compose-v2) and rerun setup"
+fi
 need_sudo=false
 if ((${#MISSING_PACKAGES[@]} > 0)) || ! docker_stack_ready || ! user_in_docker_group; then
   need_sudo=true
