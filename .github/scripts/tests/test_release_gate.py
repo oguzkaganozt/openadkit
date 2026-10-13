@@ -243,6 +243,26 @@ def test_actual_workflow_sparse_paths_include_python_dependencies(tmp_path, work
     assert result.returncode == 0, result.stderr
 
 
+def test_workflow_sparse_checkouts_are_accepted_by_git(tmp_path):
+    # actions/checkout defaults to cone mode, where git rejects patterns such as
+    # a leading slash; a rejected list fails the job before any release step.
+    subprocess.run(["git", "init", "--quiet", str(tmp_path)], check=True)
+    checked = 0
+    for path in sorted((ROOT / ".github/workflows").glob("*.yaml")):
+        for name, job in yaml.safe_load(path.read_text())["jobs"].items():
+            for step in job.get("steps", []):
+                options = step.get("with") or {}
+                if "sparse-checkout" not in options:
+                    continue
+                cone = str(options.get("sparse-checkout-cone-mode", True)).lower() != "false"
+                result = subprocess.run(
+                    ["git", "-C", str(tmp_path), "sparse-checkout", "set", "--cone" if cone else "--no-cone",
+                     *options["sparse-checkout"].split()], text=True, capture_output=True)
+                assert result.returncode == 0, f"{path.name} {name}: {result.stderr}"
+                checked += 1
+    assert checked
+
+
 def test_real_aggregator_output_passes_the_gate_with_workflow_matrix(tmp_path, metadata):
     cells = release_gate.expected_cells(ROOT)
     for name, row in cells.items():

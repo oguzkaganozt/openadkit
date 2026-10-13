@@ -102,8 +102,9 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.workflow_sha }}
+          # Cone mode always includes root files (the openadkit launcher) and
+          # rejects leading-slash entries.
           sparse-checkout: |
-            /openadkit
             .github/scripts/install-compose.sh
             .github/scripts/package_release_bundles.sh
             .github/scripts/release_plan.py
