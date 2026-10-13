@@ -22,15 +22,22 @@ command -v jq >/dev/null 2>&1 || {
   exit 1
 }
 
+# shellcheck source=SCRIPTDIR/../../scripts/registry_lookup.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/registry_lookup.sh"
+
 target_ref="${IMAGE}:${TARGET}-${ROS_DISTRO}-${BUILD_TAG}"
 
-# Prints the linux/<arch> image digest for ref.
-# Exit 0 on success, 2 if the tag is absent, 1 if present but has no linux image.
+# Prints the linux/<arch> image digest for ref. Exit 0 on success, 2 if the
+# tag is absent, 3 if the lookup failed (auth, or transient after retries),
+# 1 if present but has no linux image.
 linux_image_digest() {
-  local ref="$1" arch="$2" json digest
-  if ! json=$(docker buildx imagetools inspect "${ref}" --format '{{json .}}'); then
-    return 2
-  fi
+  local ref="$1" arch="$2" json digest status=0
+  json=$(registry_inspect_json "${ref}") || status=$?
+  case "${status}" in
+    0) ;;
+    1) return 2 ;;
+    *) return 3 ;;
+  esac
   digest=$(
     jq -er --arg arch "${arch}" '
       [
@@ -79,6 +86,10 @@ for arch in "${arch_list[@]}"; do
   if [ "${status}" -eq 2 ]; then
     missing+=("${arch}")
     continue
+  fi
+  if [ "${status}" -eq 3 ]; then
+    echo "::error::Cannot create ${target_ref}: registry lookup of ${ref} failed" >&2
+    exit 1
   fi
   if [ "${status}" -ne 0 ]; then
     echo "::error::Cannot create ${target_ref}: ${ref} has no linux/${arch} image manifest" >&2

@@ -11,7 +11,7 @@ ATTESTATION='sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 RAW_IMAGE='sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 
 # Stub `docker` on PATH: `inspect --format json` succeeds iff the ref is listed
-# in $PRESENT_REFS. By default it emits an OCI index with linux/<arch> plus an
+# in $PRESENT_REFS, and fails authorization for refs in $AUTH_FAILURE. By default it emits an OCI index with linux/<arch> plus an
 # attestation. $SINGLE_MANIFEST emits a raw image whose config platform matches
 # the tag arch; $WRONG_PLATFORM emits a raw image of the other arch.
 # `create` records its args to $CREATE_LOG.
@@ -26,7 +26,11 @@ if [ "\${1:-} \${2:-} \${3:-}" = "buildx imagetools inspect" ]; then
       *) ref=\$1; shift ;;
     esac
   done
-  grep -qxF "\$ref" "\${PRESENT_REFS}" || exit 1
+  if grep -qxF "\$ref" "\${AUTH_FAILURE:-/dev/null}" 2>/dev/null; then
+    echo "ERROR: failed to authorize: 401 Unauthorized" >&2
+    exit 1
+  fi
+  grep -qxF "\$ref" "\${PRESENT_REFS}" || { echo "ERROR: \$ref: not found" >&2; exit 1; }
   if [[ "\$ref" == *-amd64-* ]]; then
     arch=amd64
     image_digest=${AMD64_IMAGE}
@@ -74,9 +78,12 @@ export PRESENT_REFS="${work}/present.txt"
 export ATTESTATION_ONLY="${work}/attestation-only.txt"
 export SINGLE_MANIFEST="${work}/single-manifest.txt"
 export WRONG_PLATFORM="${work}/wrong-platform.txt"
+export AUTH_FAILURE="${work}/auth-failure.txt"
+export REGISTRY_LOOKUP_RETRY_DELAY_SECONDS=0
 : > "${ATTESTATION_ONLY}"
 : > "${SINGLE_MANIFEST}"
 : > "${WRONG_PLATFORM}"
+: > "${AUTH_FAILURE}"
 
 fail=0
 check() { if ! eval "$1"; then echo "FAIL: $1"; fail=1; fi; }
@@ -140,5 +147,16 @@ check "[ ${rc} -eq 1 ]"
 check "[ ! -s '${CREATE_LOG}' ]"
 check "grep -q 'no linux/amd64 image manifest' '${work}/out.txt'"
 : > "${WRONG_PLATFORM}"
+
+# Case 7: a failed lookup is not a missing architecture -> fail, no create
+printf '%s\n' "ghcr.io/x/openadkit:planning-control-amd64-humble-T" > "${PRESENT_REFS}"
+printf '%s\n' "ghcr.io/x/openadkit:planning-control-amd64-humble-T" > "${AUTH_FAILURE}"
+: > "${CREATE_LOG}"
+run_sut IMAGE=ghcr.io/x/openadkit TARGET=planning-control ROS_DISTRO=humble ARCHES="amd64" BUILD_TAG=T
+check "[ ${rc} -eq 1 ]"
+check "[ ! -s '${CREATE_LOG}' ]"
+check "grep -q 'registry lookup of' '${work}/out.txt'"
+check "! grep -q 'missing architecture' '${work}/out.txt'"
+: > "${AUTH_FAILURE}"
 
 if [ "${fail}" -eq 0 ]; then echo "create-manifest: ALL PASS"; else echo "create-manifest: TESTS FAILED"; cat "${work}/out.txt"; exit 1; fi
