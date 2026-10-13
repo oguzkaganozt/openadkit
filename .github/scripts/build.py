@@ -214,8 +214,6 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
                 cuda_contexts = {f"autoware-{name}": upstream[name]["uri"] for name in ("base-cuda-runtime", "base-cuda-devel")}
         if target == "carla-interface":
             contexts["simulator"] = f"docker-image://ghcr.io/{owner}/openadkit:simulator-amd64-{distro}-{build_tag}"
-        else:
-            args["ROS_ALIGN_STAMP"] = build_tag
         labels = {f"org.opencontainers.image.{key.replace('_', '-')}": prepared[key] for key in (
             "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_base_version", "autoware_lock_sha256",
         )}

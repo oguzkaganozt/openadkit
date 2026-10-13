@@ -56,18 +56,6 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
       --dependency-types=exec && \
     rm -rf /tmp/autoware
 
-# Align the packages the compiled tree links against with the current apt feed
-# and rebuild when any of them moved; the first compile above stays cached when
-# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/shared/link-lock).
-ARG ROS_ALIGN_STAMP=0
-RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
-    --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
-    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    echo "ros align ${ROS_ALIGN_STAMP}" && \
-    bash /tmp/link-lock/align.sh
-
 # =============================================================================
 # Runtime stage: localization-mapping
 # =============================================================================
@@ -94,11 +82,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --skip-keys "${internal_packages}" && \
     bash /tmp/runtime-cleanup.sh
 
-# Install the exact package versions the matching devel stage compiled
-# against and verify them (components/shared/link-lock).
-RUN --mount=from=localization-mapping-devel,source=/opt/openadkit/link-lock.txt,target=/tmp/link-lock.txt \
-    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
-    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    bash /tmp/link-lock/lock.sh install --lock /tmp/link-lock.txt && \
-    bash /tmp/link-lock/lock.sh verify --lock /tmp/link-lock.txt
+# Fail when a compiled binary cannot load its libraries in this image
+# (components/shared/check-linked-libs.sh).
+RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
+    bash /tmp/check-linked-libs.sh

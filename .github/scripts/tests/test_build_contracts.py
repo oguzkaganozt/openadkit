@@ -86,11 +86,12 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
 
 
 @pytest.mark.parametrize("path", ["components/universe-common/Dockerfile", "components/sensing-perception/Dockerfile.cuda"])
-def test_runtime_keeps_lock_security_refresh_and_overlay_hook(path):
+def test_stages_pin_ros_snapshot_and_runtime_checks_linked_libraries(path):
     text = (ROOT / path).read_text()
-    runtime = text.rsplit("\nFROM ", 1)[1]
-    assert "bash /tmp/link-lock/align.sh" in text
-    assert runtime.index("bash /tmp/link-lock/lock.sh verify") < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("COPY components/shared/entrypoint/")
+    devel, runtime = text.rsplit("\nFROM ", 1)
+    pin = 'bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check'
+    assert devel.index(pin) < devel.index("colcon build")
+    assert runtime.index(pin) < runtime.index("bash /tmp/check-linked-libs.sh") < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("COPY components/shared/entrypoint/")
     assert 'ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]' in runtime
 
 

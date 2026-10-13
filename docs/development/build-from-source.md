@@ -96,6 +96,7 @@ docker buildx bake -f components/docker-bake.hcl --load sensing-perception      
 | `ROS_DISTRO` | `humble` or `jazzy` | `humble` |
 | `UPSTREAM_TAG` | Upstream Autoware release to build on (e.g. `1.8.0`). Empty uses the moving `<name>-<distro>` tag, which is not reproducible. | `""` |
 | `UPSTREAM_REPO` | Upstream Autoware image repository | `ghcr.io/autowarefoundation/autoware` |
+| `ROS_SNAPSHOT_HUMBLE`, `ROS_SNAPSHOT_JAZZY` | ROS apt snapshot the `UPSTREAM_TAG` images were built from. The build fails when they do not match; see [ROS snapshot](https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md). | Snapshots for `1.8.0` |
 
 ## Continuous Integration
 
@@ -119,7 +120,8 @@ Releases promote an existing CI build; nothing is rebuilt.
 
 - **`vars.UPSTREAM_TAG`** is set in the repository or organization variables. It
   selects the Autoware release to build; the workflow's `autoware_ref` input
-  overrides it.
+  overrides it. The ROS snapshots in `components/docker-bake.hcl` must belong
+  to the same release.
 - **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-common`, and
   `openadkit-buildcache` under `ghcr.io/autowarefoundation/`.
 - **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting

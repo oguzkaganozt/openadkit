@@ -136,6 +136,7 @@ jobs:
             /openadkit
             /openadkit.json
             /cli/
+            /components/docker-bake.hcl
             /deployments/
 
       - name: Download validated release metadata

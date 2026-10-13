@@ -177,6 +177,7 @@ def test_release_notes_cannot_replace_verified_current_metrics_with_unsigned_sum
     assert "Evidence result: **PASSED**" in notes
     assert "Passing cells: **8/8**" in notes
     assert "Evidence result: **FAILED**" not in notes
+    assert "| ROS snapshots | humble `" in notes
     # A historical input cannot change notes from the same sealed plan, even
     # when old caller environments still set this removed integration variable.
     result = subprocess.run(["bash", str(pipeline.WRITE_NOTES)], cwd=tmp_path,

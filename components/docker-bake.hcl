@@ -22,6 +22,19 @@ variable "ROS_DISTRO" {
 variable "UPSTREAM_TAG" {
   default = ""
 }
+// ROS snapshot (snapshots.ros.org) each distro's upstream images were built
+// from, for UPSTREAM_TAG 1.8.0. Change both together: the universe-common
+// devel build fails when the snapshot does not match the upstream images.
+variable "ROS_SNAPSHOT_HUMBLE" {
+  default = "2026-03-29"
+}
+variable "ROS_SNAPSHOT_JAZZY" {
+  default = "2026-04-13"
+}
+function "ros_snapshot" {
+  params = []
+  result = ROS_DISTRO == "jazzy" ? ROS_SNAPSHOT_JAZZY : ROS_SNAPSHOT_HUMBLE
+}
 variable "UPSTREAM_REPO" {
   default = "ghcr.io/autowarefoundation/autoware"
 }
@@ -146,6 +159,7 @@ target "_universe-common-base" {
     CORE_DEVEL_IMAGE = "autoware-core-devel"
     BASE_IMAGE       = "autoware-base"
     ROS_DISTRO       = ROS_DISTRO
+    ROS_SNAPSHOT     = ros_snapshot()
   }
 }
 
@@ -231,6 +245,7 @@ target "sensing-perception-cuda" {
     BASE_CUDA_RUNTIME_IMAGE = "autoware-base-cuda-runtime"
     BASE_CUDA_DEVEL_IMAGE   = "autoware-base-cuda-devel"
     COLCON_BASE_PATHS       = sensing_base_paths()
+    ROS_SNAPSHOT            = ros_snapshot()
   }
 }
 

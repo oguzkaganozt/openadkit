@@ -43,7 +43,8 @@ def test_staged_flat_example_inherits_pins_without_host_build_products(tmp_path)
     source = tmp_path / "source"
     for directory in ("cli", "deployments", ".github/scripts"):
         shutil.copytree(ROOT / directory, source / directory, ignore=shutil.ignore_patterns("__pycache__", "build", "install", "log"))
-    for file in ("openadkit", "openadkit.json"):
+    for file in ("openadkit", "openadkit.json", "components/docker-bake.hcl"):
+        (source / file).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / file, source / file)
     workspace = source / "deployments/custom-kit/overlay_ws"
     for product in ("build", "install", "log"):

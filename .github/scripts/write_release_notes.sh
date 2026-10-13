@@ -74,7 +74,7 @@ jq \
   --slurpfile scan release-input/scan/scan-metadata.json \
   --argjson evidence_exempt "$(jq -c '.evidence.exempt' "${plan_file}")" \
   --argjson evidence "$(jq -c '.evidence' "${plan_file}")" \
-  --argjson bom "$(jq -c '.releaseContext | {autoware, images, artifacts}' "${plan_file}")" \
+  --argjson bom "$(jq -c '(.releaseContext | {autoware, images, artifacts}) + {rosSnapshots}' "${plan_file}")" \
   '. + {
     openadkit_version: $version,
     release_sha: $release_sha,
@@ -110,6 +110,7 @@ autoware_ref=$(jq -r '.autoware_ref' release-metadata.json)
 autoware_base_version=$(jq -r '.autoware_base_version' release-metadata.json)
 autoware_lock_sha256=$(jq -r '.autoware_lock_sha256' release-metadata.json)
 upstream_images_sha256=$(jq -r '.upstream_images_sha256' release-metadata.json)
+ros_snapshots=$(jq -r '.bom.rosSnapshots | to_entries | map("\(.key) `\(.value)`") | join(", ")' release-metadata.json)
 openadkit_sha=$(jq -r '.openadkit_sha' release-metadata.json)
 build_tag=$(jq -r '.build_tag' release-metadata.json)
 
@@ -130,6 +131,7 @@ build_tag=$(jq -r '.build_tag' release-metadata.json)
   echo "| Autoware base version | \`${autoware_base_version}\` |"
   echo "| Autoware lock SHA256 | \`${autoware_lock_sha256}\` |"
   echo "| Upstream images SHA256 | \`${upstream_images_sha256}\` |"
+  echo "| ROS snapshots | ${ros_snapshots} |"
   echo ""
   echo "## Open AD Kit Bundle"
   echo "| Asset | SHA256 |"

@@ -65,6 +65,22 @@ changing it requires a reviewed manifest change and passing evidence, not an
 automatic release-time fallback. Image builds alone do not prove runtime behavior
 on every architecture.
 
+### ROS Package Snapshot
+
+Every image installs its ROS packages from one dated
+[ROS snapshot](http://snapshots.ros.org/): the one the upstream Autoware images
+of that release were built from. Compiled code and runtime therefore use the
+same ROS versions, and the build fails if they would differ. Release notes and
+the release BOM name the snapshot per distro; an image carries it as a label:
+
+```bash
+docker inspect --format '{{ "{{" }} index .Config.Labels "org.opencontainers.image.ros-snapshot" {{ "}}" }}' \
+  {{ registry }}:planning-control-humble
+```
+
+The snapshot changes only with the upstream Autoware release. Ubuntu packages
+are not pinned, so security updates keep flowing into new builds.
+
 ## What "Supported" Means
 
 - **Releases**: the latest stable release is supported. Fixes, including CVE

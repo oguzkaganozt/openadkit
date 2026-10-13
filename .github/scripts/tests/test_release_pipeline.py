@@ -64,6 +64,9 @@ def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
         assert all(ref.endswith(f"@{DIGEST}") and f"-{distro}-{VERSION}@" in ref for ref in refs.values())
     assert {row["rosDistro"] for row in plan["bundle"]["validation"]} == {"humble", "jazzy"}
     assert any(row["node"] for row in plan["bundle"]["validation"])
+    # The BOM names the ROS apt snapshot every distro's images were built from.
+    assert set(plan["rosSnapshots"]) == {"humble", "jazzy"}
+    assert all(f'default = "{date}"' in (ROOT / "components/docker-bake.hcl").read_text() for date in plan["rosSnapshots"].values())
 
 
 @pytest.mark.parametrize(("problem", "messages"), [

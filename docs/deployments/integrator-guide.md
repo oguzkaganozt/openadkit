@@ -95,10 +95,13 @@ that default as a production pin. Keep separate workspace outputs for different
 ROS distros. The CLI mounts the workspace and the hook sources
 `overlay_ws/install/local_setup.bash` on top of Autoware.
 
-The ROS link lock covers packages linked by Open AD Kit's compiled tree; it
-does not guarantee ABI compatibility for every extra dependency you add. The
-example's C++ node links `diagnostic_updater` deliberately to test the known
-devel/runtime ABI boundary, then publishes `/acme/probe`.
+The devel and runtime images install ROS packages from the same
+[ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
+an overlay built in the devel image links the ROS versions the runtime image
+ships. A dependency you add must also exist in the runtime image; the overlay
+cannot install packages. The example's C++ node links `diagnostic_updater`
+deliberately to test the devel/runtime ABI boundary, then publishes
+`/acme/probe`.
 
 ### 4. Extra Services
 

@@ -23,6 +23,7 @@ SEMVER_RE = re.compile(
     rf"(?:-{_IDENTIFIER}(?:\.{_IDENTIFIER})*)?$"
 )
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+ROS_SNAPSHOT_RE = re.compile(r'variable "ROS_SNAPSHOT_([A-Z]+)" \{\s*default = "(\d{4}-\d{2}-\d{2})"\s*\}')
 
 
 def fail(message: str) -> NoReturn:
@@ -151,6 +152,16 @@ def verify_release_integrity(bundle_root: Path, plan: dict[str, Any]) -> None:
             fail(f"packaged deployment is not intact: {name} ({state})")
 
 
+def ros_snapshots(source_root: Path, distros: list[str]) -> dict[str, str]:
+    """The ROS apt snapshot each distro's images were built from."""
+    bake = (source_root / "components/docker-bake.hcl").read_text(encoding="utf-8")
+    snapshots = {name.lower(): date for name, date in ROS_SNAPSHOT_RE.findall(bake)}
+    missing = sorted(set(distros) - snapshots.keys())
+    if missing:
+        fail(f"components/docker-bake.hcl declares no ROS snapshot for: {', '.join(missing)}")
+    return {distro: snapshots[distro] for distro in sorted(distros)}
+
+
 def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     source_root = args.source_root.resolve()
     metadata = load_json(args.build_metadata)
@@ -272,6 +283,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             "version": args.version,
         },
         "releaseContext": release_context,
+        "rosSnapshots": ros_snapshots(source_root, product["distros"]),
         # Deployments that ship without CI evidence, with the reason.
         "evidence": evidence,
         "schemaVersion": 1,

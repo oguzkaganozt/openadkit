@@ -11,6 +11,15 @@ FROM ${CORE_DEVEL_IMAGE} AS universe-common-devel
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 
+# Install ROS packages from the snapshot the upstream images were built from;
+# fails when ROS_SNAPSHOT does not match them (components/shared/ros-snapshot).
+ARG ROS_SNAPSHOT
+LABEL org.opencontainers.image.ros-snapshot="${ROS_SNAPSHOT}"
+RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snapshot \
+    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
+    bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check
+
 # rosdep install for the universe-common slice (build/test deps).
 # Broad glob so rosdep sees all universe packages as local via --ignore-src,
 # preventing cross-component exec_depend failures (e.g. simulator referencing
@@ -88,18 +97,6 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
       --dependency-types=exec && \
     rm -rf /tmp/autoware
 
-# Align the packages the compiled tree links against with the current apt feed
-# and rebuild when any of them moved; the first compile above stays cached when
-# nothing did. Re-runs every build via ROS_ALIGN_STAMP (components/shared/link-lock).
-ARG ROS_ALIGN_STAMP=0
-RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
-    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
-    --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
-    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    echo "ros align ${ROS_ALIGN_STAMP}" && \
-    bash /tmp/link-lock/align.sh
-
 # Refresh the security packages that the pinned upstream base image may lag
 # on. Kept as the last step of the stage so a per-build SECURITY_REFRESH
 # change only re-runs this layer, not the acados and colcon layers above.
@@ -120,6 +117,16 @@ ARG ROS_DISTRO
 
 USER root
 ENV AUTOWARE_RUNTIME=1
+
+# Install ROS packages from the same snapshot as the devel stage; fails when
+# the base image's ROS packages differ from it.
+ARG ROS_SNAPSHOT
+LABEL org.opencontainers.image.ros-snapshot="${ROS_SNAPSHOT}"
+RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snapshot \
+    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
+    bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check
+
 # ${BASE_IMAGE} has no /opt/autoware. Copy the tree into place; cp -a src/. dest/
 # would require dest to exist, and if dest later appears this must not nest.
 RUN --mount=from=universe-common-devel,source=/opt/acados,target=/mnt/acados \
@@ -150,14 +157,10 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --skip-keys "${internal_packages}" && \
     bash /tmp/runtime-cleanup.sh
 
-# Install the exact package versions the matching devel stage compiled
-# against and verify them (components/shared/link-lock).
-RUN --mount=from=universe-common-devel,source=/opt/openadkit/link-lock.txt,target=/tmp/link-lock.txt \
-    --mount=type=bind,source=components/shared/link-lock,target=/tmp/link-lock \
-    --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    bash /tmp/link-lock/lock.sh install --lock /tmp/link-lock.txt && \
-    bash /tmp/link-lock/lock.sh verify --lock /tmp/link-lock.txt
+# Fail when a compiled binary cannot load its libraries in this image
+# (components/shared/check-linked-libs.sh).
+RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
+    bash /tmp/check-linked-libs.sh
 
 # Same refresh as the devel stage, as the final layer: a per-build
 # SECURITY_REFRESH change only re-runs this step.
