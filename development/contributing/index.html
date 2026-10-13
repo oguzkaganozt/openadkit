@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
       
       
       
@@ -16,14 +16,14 @@
         <link rel="prev" href="../build-from-source/">
       
       
-        <link rel="next" href="../../releases/">
+        <link rel="next" href="../evidence-workflow/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/autoware-foundation.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -54,8 +54,6 @@
     
     
       <link rel="stylesheet" href="../../assets/css/extra.css">
-    
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -99,7 +97,8 @@
             
             
   <a href="../../getting-started/">
-    <span aria-hidden="true">🚀</span> New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
+    <svg class="oak-banner-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+    New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
   </a>
 
           </div>
@@ -289,13 +288,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../deployment/" class="md-tabs__link">
+        <a href="../../deployments/" class="md-tabs__link">
           
   
   
     
   
-  Deployment
+  Deployments
 
         </a>
       </li>
@@ -385,30 +384,11 @@
   
     
   
-  Releases
+  Releases & Roadmap
 
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -585,6 +565,8 @@
       
         
       
+        
+      
     
     
     
@@ -648,6 +630,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../getting-started/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI & Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../getting-started/container-images/" class="md-nav__link">
         
   
@@ -655,7 +665,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -729,6 +739,8 @@
       
         
       
+        
+      
     
     
     
@@ -748,14 +760,14 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/" class="md-nav__link ">
+            <a href="../../deployments/" class="md-nav__link ">
               
   
   
   <span class="md-ellipsis">
     
   
-    Deployment
+    Deployments
   
 
     
@@ -777,7 +789,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deployment
+    Deployments
   
 
           </label>
@@ -817,7 +829,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/planning-simulation/" class="md-nav__link ">
+            <a href="../../deployments/planning-simulation/" class="md-nav__link ">
               
   
   
@@ -889,7 +901,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/scenario-simulation/" class="md-nav__link ">
+            <a href="../../deployments/scenario-simulation/" class="md-nav__link ">
               
   
   
@@ -961,7 +973,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/logging-simulation/" class="md-nav__link ">
+            <a href="../../deployments/logging-simulation/" class="md-nav__link ">
               
   
   
@@ -1033,7 +1045,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/carla-simulation/" class="md-nav__link ">
+            <a href="../../deployments/carla-simulation/" class="md-nav__link ">
               
   
   
@@ -1079,40 +1091,15 @@
   
   
   
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../../deployments/split-host/" class="md-nav__link">
         
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/zenoh-bridge/" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    Zenoh Bridge
+    Split-host simulation
   
 
     
@@ -1120,26 +1107,7 @@
   
   
 
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Zenoh Bridge
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
+      </a>
     </li>
   
 
@@ -1152,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment/custom-deployment/" class="md-nav__link">
+      <a href="../../deployments/custom-deployment/" class="md-nav__link">
         
   
   
@@ -1160,6 +1128,34 @@
     
   
     Custom Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployments/integrator-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrator Guide
   
 
     
@@ -1191,22 +1187,6 @@
       
         
           
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
         
       
     
@@ -1245,11 +1225,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
@@ -1263,230 +1238,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/sensing-perception/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sensing & Perception
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/localization-mapping/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Localization & Mapping
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/planning-control/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning & Control
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/vehicle-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Vehicle and System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/simulator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simulator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/visualizer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visualizer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/carla-interface/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CARLA Interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
           </ul>
@@ -1892,6 +1643,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2046,133 +1801,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        License
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#developer-certificate-of-origin-dco" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Developer Certificate of Origin (DCO)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to Contribute
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How to Contribute">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-fork-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Fork the Repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-set-up-your-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Set Up Your Environment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-create-a-branch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Create a Branch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-make-your-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Make Your Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-commit-with-conventional-commits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Commit with Conventional Commits
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-push-and-open-a-pull-request" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Push and Open a Pull Request
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contribution-workflow-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contribution Workflow Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validate-before-pushing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validate Before Pushing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#community" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2183,21 +1811,66 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#code-of-conduct" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code of Conduct
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evidence-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rfc-0001-toolchain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RFC 0001: Toolchain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2221,6 +1894,10 @@
       
         
           
+        
+      
+        
+      
         
       
     
@@ -2249,7 +1926,7 @@
   <span class="md-ellipsis">
     
   
-    Releases
+    Releases & Roadmap
   
 
     
@@ -2259,6 +1936,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
@@ -2266,7 +1948,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Releases
+    Releases & Roadmap
   
 
           </label>
@@ -2274,28 +1956,21 @@
             
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../../roadmap/" class="md-nav__link">
+      <a href="../../releases/evidence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Roadmap
+    Evidence Policy
   
 
     
@@ -2304,6 +1979,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify a Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2337,148 +2048,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        License
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#developer-certificate-of-origin-dco" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Developer Certificate of Origin (DCO)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to Contribute
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How to Contribute">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-fork-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Fork the Repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-set-up-your-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Set Up Your Environment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-create-a-branch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Create a Branch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-make-your-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Make Your Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-commit-with-conventional-commits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Commit with Conventional Commits
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-push-and-open-a-pull-request" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Push and Open a Pull Request
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contribution-workflow-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contribution Workflow Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validate-before-pushing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validate Before Pushing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#community" class="md-nav__link">
     <span class="md-ellipsis">
       
         Community
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-of-conduct" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code of Conduct
       
     </span>
   </a>
@@ -2511,160 +2084,26 @@
 
 
 <h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">#</a></h1>
-<p>Thank you for your interest in contributing to Open AD Kit. This project is part of the <a href="https://www.autoware.org/">Autoware Foundation</a> ecosystem, and we welcome contributions from individuals and organizations worldwide.</p>
-<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">#</a></h2>
-<p>Open AD Kit is licensed under the <strong>Apache License 2.0</strong>. By contributing, you agree that your contributions will be licensed under the same terms.</p>
-<div class="admonition note">
-<p class="admonition-title">No CLA Required</p>
-<p>The Autoware Foundation does <strong>not</strong> require a Contributor License Agreement (CLA). Contributions are accepted under the Apache 2.0 license terms.</p>
-</div>
-<h2 id="developer-certificate-of-origin-dco">Developer Certificate of Origin (DCO)<a class="headerlink" href="#developer-certificate-of-origin-dco" title="Permanent link">#</a></h2>
-<p>All commits must include a <strong>Signed-off-by</strong> line to certify that you have the right to submit the code under the Apache 2.0 license:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Sign off automatically when committing</span>
-git<span class="w"> </span>commit<span class="w"> </span>-s<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add new deployment&quot;</span>
-</code></pre></div>
-<p>The sign-off is a simple line at the end of the commit message:</p>
-<div class="highlight"><pre><span></span><code>Signed-off-by: Your Name &lt;your.email@example.com&gt;
-</code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">DCO Enforcement</p>
-<p>Pull requests without proper DCO sign-off will not be merged. The CI checks enforce this requirement automatically.</p>
-</div>
-<h2 id="how-to-contribute">How to Contribute<a class="headerlink" href="#how-to-contribute" title="Permanent link">#</a></h2>
-<h3 id="1-fork-the-repository">1. Fork the Repository<a class="headerlink" href="#1-fork-the-repository" title="Permanent link">#</a></h3>
-<p>Create your own fork of the <a href="https://github.com/autowarefoundation/openadkit">Open AD Kit repository</a> on GitHub.</p>
-<h3 id="2-set-up-your-environment">2. Set Up Your Environment<a class="headerlink" href="#2-set-up-your-environment" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Clone your fork</span>
-git<span class="w"> </span>clone<span class="w"> </span>https://github.com/YOUR_USERNAME/openadkit.git
-<span class="nb">cd</span><span class="w"> </span>openadkit
-
-<span class="c1"># Add the upstream remote</span>
-git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
-</code></pre></div>
-<h3 id="3-create-a-branch">3. Create a Branch<a class="headerlink" href="#3-create-a-branch" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Make sure you are on the latest main branch first</span>
-git<span class="w"> </span>checkout<span class="w"> </span>main
-git<span class="w"> </span>pull<span class="w"> </span>upstream<span class="w"> </span>main
-
-<span class="c1"># Create your feature branch</span>
-git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feat/your-feature-name
-</code></pre></div>
-<p>Use descriptive branch names that reflect the change:</p>
+<p>Open AD Kit welcomes contributions from individuals and organizations. The
+repository's <a href="https://github.com/autowarefoundation/openadkit/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>
+is the canonical guide for:</p>
 <ul>
-<li><code>feat/</code> — New features or enhancements</li>
-<li><code>fix/</code> — Bug fixes</li>
-<li><code>docs/</code> — Documentation improvements</li>
-<li><code>refactor/</code> — Code refactoring</li>
+<li>Developer Certificate of Origin (DCO) sign-off</li>
+<li>Branch and commit conventions</li>
+<li>Local lint and test commands</li>
+<li>Deployment validation</li>
+<li>Release workflow</li>
 </ul>
-<h3 id="4-make-your-changes">4. Make Your Changes<a class="headerlink" href="#4-make-your-changes" title="Permanent link">#</a></h3>
-<p>Follow the existing code style and documentation conventions. For documentation changes, preview them locally:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Build the MkDocs container image (run once)</span>
-make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </span>prepare
-
-<span class="c1"># Serve the docs site</span>
-make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </span>serve
-</code></pre></div>
-<h3 id="5-commit-with-conventional-commits">5. Commit with Conventional Commits<a class="headerlink" href="#5-commit-with-conventional-commits" title="Permanent link">#</a></h3>
-<p>Use <a href="https://www.conventionalcommits.org/">Conventional Commits</a> for all commit messages and PR titles:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feat</code></td>
-<td>New feature</td>
-<td><code>feat: add carla-interface container</code></td>
-</tr>
-<tr>
-<td><code>fix</code></td>
-<td>Bug fix</td>
-<td><code>fix: resolve zenoh bridge port conflict</code></td>
-</tr>
-<tr>
-<td><code>docs</code></td>
-<td>Documentation only</td>
-<td><code>docs: update hardware requirements</code></td>
-</tr>
-<tr>
-<td><code>style</code></td>
-<td>Formatting, no code change</td>
-<td><code>style: format docker-compose files</code></td>
-</tr>
-<tr>
-<td><code>refactor</code></td>
-<td>Code restructuring</td>
-<td><code>refactor: simplify build pipeline</code></td>
-</tr>
-<tr>
-<td><code>test</code></td>
-<td>Adding or updating tests</td>
-<td><code>test: add scenario simulation test</code></td>
-</tr>
-<tr>
-<td><code>chore</code></td>
-<td>Maintenance tasks</td>
-<td><code>chore: update CI workflow</code></td>
-</tr>
-</tbody>
-</table>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>commit<span class="w"> </span>-s<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add new deployment for logging simulation&quot;</span>
-</code></pre></div>
-<h3 id="6-push-and-open-a-pull-request">6. Push and Open a Pull Request<a class="headerlink" href="#6-push-and-open-a-pull-request" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feat/your-feature-name
-</code></pre></div>
-<p>Open a pull request against the <code>main</code> branch of the upstream repository. The PR description should include:</p>
-<ul>
-<li><strong>What</strong> changed and <strong>why</strong></li>
-<li><strong>How</strong> it was tested</li>
-<li>Any <strong>breaking changes</strong> or migration notes</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Large Changes</p>
-<p>For significant changes (new features, architectural modifications), please open a GitHub Discussion first to align with maintainers before submitting a PR.</p>
-</div>
-<h2 id="contribution-workflow-summary">Contribution Workflow Summary<a class="headerlink" href="#contribution-workflow-summary" title="Permanent link">#</a></h2>
-<div class="oak-steps">
-<ul>
-<li><strong>Fork</strong> the repository on GitHub</li>
-<li><strong>Clone</strong> your fork and set up the development environment</li>
-<li><strong>Branch</strong> from <code>main</code> with a descriptive name</li>
-<li><strong>Develop</strong> your changes following project conventions</li>
-<li><strong>Commit</strong> with DCO sign-off and Conventional Commit format</li>
-<li><strong>Push</strong> your branch to your fork</li>
-<li><strong>Validate</strong> before opening a PR (see below)</li>
-<li><strong>Open a Pull Request</strong> against <code>main</code> with a clear description</li>
-</ul>
-</div>
-<h2 id="validate-before-pushing">Validate Before Pushing<a class="headerlink" href="#validate-before-pushing" title="Permanent link">#</a></h2>
-<p>Run the same checks CI runs to catch issues early:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Documentation build</span>
-make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </span>build
-
-<span class="c1"># Docker Compose validation (per-deployment, with both env files — base first, last wins)</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">REMOTE_PASSWORD</span><span class="o">=</span><span class="s2">&quot;ci-validate&quot;</span>
-<span class="o">(</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>deployments/planning-simulation<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>config<span class="w"> </span>-q<span class="w"> </span><span class="o">)</span>
-
-<span class="c1"># Python tests</span>
-pytest<span class="w"> </span>.github/scripts/
-</code></pre></div>
-<p>For the complete lint suite (shellcheck, actionlint, hadolint, yamllint, markdownlint) and all deployment validations, see the top-level <a href="https://github.com/autowarefoundation/openadkit/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> file.</p>
-<pre class="mermaid"><code>flowchart LR
-    Fork --&gt; Clone --&gt; Branch --&gt; Develop --&gt; Commit --&gt; Push --&gt; PR</code></pre>
+<p>Before opening a pull request, run the checks relevant to your change and sign
+every commit with <code>git commit -s</code>. Significant architectural changes should be
+discussed on <a href="https://discord.gg/Q94UsPvReQ">Discord</a> before implementation.</p>
 <h2 id="community">Community<a class="headerlink" href="#community" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="https://discord.gg/Q94UsPvReQ">Autoware Foundation Discord</a> — Real-time discussion and support</li>
-<li><a href="https://autowarefoundation.github.io/autoware-documentation/main/contributing/">Autoware Documentation — Contributing</a> — Foundation-wide contribution guidelines</li>
-<li><a href="https://github.com/autowarefoundation/openadkit/issues">GitHub Issues</a> — Bug reports and feature requests</li>
-<li><a href="https://github.com/autowarefoundation/openadkit/discussions">GitHub Discussions</a> — Design proposals and community questions</li>
+<li><a href="https://github.com/autowarefoundation/openadkit/issues">GitHub Issues</a> — bugs and tasks</li>
+<li><a href="https://discord.gg/Q94UsPvReQ">Autoware Foundation Discord</a> — questions, ideas, and design</li>
+<li><a href="https://autowarefoundation.github.io/autoware-documentation/main/contributing/">Autoware contribution guide</a></li>
+<li><a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
 </ul>
-<h2 id="code-of-conduct">Code of Conduct<a class="headerlink" href="#code-of-conduct" title="Permanent link">#</a></h2>
-<p>All contributors are expected to adhere to the <a href="https://github.com/autowarefoundation/openadkit/blob/main/CODE_OF_CONDUCT.md">Autoware Foundation Code of Conduct</a>, which fosters an open, welcoming, and harassment-free environment.</p>
 
 
 
@@ -2719,13 +2158,13 @@ pytest<span class="w"> </span>.github/scripts/
         
         
           
-          <a href="../../releases/" class="md-footer__link md-footer__link--next" aria-label="Next: Releases">
+          <a href="../evidence-workflow/" class="md-footer__link md-footer__link--next" aria-label="Next: Evidence Workflow">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Releases
+                Evidence Workflow
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2769,7 +2208,7 @@ pytest<span class="w"> </span>.github/scripts/
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["announce.dismiss", "content.action.edit", "content.code.annotate", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

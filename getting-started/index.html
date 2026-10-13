@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
       
       
       
@@ -16,14 +16,14 @@
         <link rel="prev" href="../overview/">
       
       
-        <link rel="next" href="container-images/">
+        <link rel="next" href="cli/">
       
       
         
       
       
       <link rel="icon" href="../assets/images/autoware-foundation.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -54,8 +54,6 @@
     
     
       <link rel="stylesheet" href="../assets/css/extra.css">
-    
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -99,7 +97,8 @@
             
             
   <a href="./">
-    <span aria-hidden="true">🚀</span> New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
+    <svg class="oak-banner-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+    New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
   </a>
 
           </div>
@@ -291,13 +290,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../deployment/" class="md-tabs__link">
+        <a href="../deployments/" class="md-tabs__link">
           
   
   
     
   
-  Deployment
+  Deployments
 
         </a>
       </li>
@@ -385,30 +384,11 @@
   
     
   
-  Releases
+  Releases & Roadmap
 
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -587,6 +567,8 @@
       
         
       
+        
+      
     
     
     
@@ -651,6 +633,34 @@
   
   
     <li class="md-nav__item">
+      <a href="cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI & Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="container-images/" class="md-nav__link">
         
   
@@ -658,7 +668,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -732,6 +742,8 @@
       
         
       
+        
+      
     
     
     
@@ -751,14 +763,14 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/" class="md-nav__link ">
+            <a href="../deployments/" class="md-nav__link ">
               
   
   
   <span class="md-ellipsis">
     
   
-    Deployment
+    Deployments
   
 
     
@@ -780,7 +792,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deployment
+    Deployments
   
 
           </label>
@@ -820,7 +832,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/planning-simulation/" class="md-nav__link ">
+            <a href="../deployments/planning-simulation/" class="md-nav__link ">
               
   
   
@@ -892,7 +904,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/scenario-simulation/" class="md-nav__link ">
+            <a href="../deployments/scenario-simulation/" class="md-nav__link ">
               
   
   
@@ -964,7 +976,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/logging-simulation/" class="md-nav__link ">
+            <a href="../deployments/logging-simulation/" class="md-nav__link ">
               
   
   
@@ -1036,7 +1048,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/carla-simulation/" class="md-nav__link ">
+            <a href="../deployments/carla-simulation/" class="md-nav__link ">
               
   
   
@@ -1082,40 +1094,15 @@
   
   
   
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../deployments/split-host/" class="md-nav__link">
         
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../deployment/zenoh-bridge/" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    Zenoh Bridge
+    Split-host simulation
   
 
     
@@ -1123,26 +1110,7 @@
   
   
 
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Zenoh Bridge
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
+      </a>
     </li>
   
 
@@ -1155,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/custom-deployment/" class="md-nav__link">
+      <a href="../deployments/custom-deployment/" class="md-nav__link">
         
   
   
@@ -1163,6 +1131,34 @@
     
   
     Custom Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployments/integrator-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrator Guide
   
 
     
@@ -1194,22 +1190,6 @@
       
         
           
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
         
       
     
@@ -1248,11 +1228,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
@@ -1266,230 +1241,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/sensing-perception/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sensing & Perception
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/localization-mapping/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Localization & Mapping
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/planning-control/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning & Control
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/vehicle-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Vehicle and System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/simulator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simulator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/visualizer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visualizer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/carla-interface/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CARLA Interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
           </ul>
@@ -1893,6 +1644,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2005,6 +1760,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/evidence-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RFC 0001: Toolchain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2023,6 +1834,10 @@
       
         
           
+        
+      
+        
+      
         
       
     
@@ -2051,7 +1866,7 @@
   <span class="md-ellipsis">
     
   
-    Releases
+    Releases & Roadmap
   
 
     
@@ -2061,6 +1876,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
@@ -2068,7 +1888,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Releases
+    Releases & Roadmap
   
 
           </label>
@@ -2076,28 +1896,21 @@
             
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../roadmap/" class="md-nav__link">
+      <a href="../releases/evidence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Roadmap
+    Evidence Policy
   
 
     
@@ -2106,6 +1919,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify a Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2150,10 +1999,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-install-dependencies" class="md-nav__link">
+  <a href="#get-open-ad-kit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Install Dependencies
+        1. Get Open AD Kit
       
     </span>
   </a>
@@ -2161,88 +2010,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-get-the-deployment-files" class="md-nav__link">
+  <a href="#set-up-the-host" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Get the Deployment Files
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Get the Deployment Files">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#source-checkout-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source checkout files
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#release-bundle-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release bundle files
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-start-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Start It
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Start It">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#start-the-source-checkout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Start the source checkout
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#start-the-release-bundle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Start the release bundle
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#access-the-visualizer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Access the Visualizer
+        2. Set Up the Host
       
     </span>
   </a>
@@ -2250,10 +2021,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-drive" class="md-nav__link">
+  <a href="#run-planning-simulation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Drive
+        3. Run Planning Simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-the-visualizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Open the Visualizer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Drive
       
     </span>
   </a>
@@ -2297,85 +2090,131 @@
 
 
 <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">#</a></h1>
-<p>From zero to a running Autoware planning simulation in about 10 minutes. No GPU required.</p>
-<pre class="mermaid"><code>flowchart LR
-    A[Install] --&gt; B[Download] --&gt; C[Start] --&gt; D[Drive]</code></pre>
+<p>From zero to a running Autoware planning simulation in about 10 minutes. No GPU is required.</p>
+<nav class="oak-quickstart" aria-label="Quickstart steps">
+  <ol>
+    <li>
+      <a href="#get-open-ad-kit">
+        <span class="oak-quickstart__number">1</span>
+        <span><strong>Get the kit</strong><small>Download or clone</small></span>
+      </a>
+    </li>
+    <li>
+      <a href="#set-up-the-host">
+        <span class="oak-quickstart__number">2</span>
+        <span><strong>Set up the host</strong><small>Configure dependencies</small></span>
+      </a>
+    </li>
+    <li>
+      <a href="#run-planning-simulation">
+        <span class="oak-quickstart__number">3</span>
+        <span><strong>Run simulation</strong><small>Start planning</small></span>
+      </a>
+    </li>
+    <li>
+      <a href="#open-the-visualizer">
+        <span class="oak-quickstart__number">4</span>
+        <span><strong>Open visualizer</strong><small>Inspect the output</small></span>
+      </a>
+    </li>
+    <li>
+      <a href="#drive">
+        <span class="oak-quickstart__number">5</span>
+        <span><strong>Drive</strong><small>Set a route</small></span>
+      </a>
+    </li>
+  </ol>
+</nav>
+
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <ul>
 <li><strong>Ubuntu 22.04 (Jammy) or 24.04 (Noble)</strong> with <code>sudo</code> access</li>
-<li>A web browser — the visualizer runs in it, no display server needed</li>
+<li><code>curl</code> for the release installer; <code>python3</code> and <code>tar</code> are preinstalled on supported Ubuntu releases</li>
+<li>A web browser - the visualizer runs in it, no display server needed</li>
 </ul>
-<p>A GPU is <strong>not</strong> needed for this quickstart. For GPU-accelerated deployments and tested machines, see the full <a href="../platforms/hardware/">hardware requirements</a>.</p>
-<h2 id="1-install-dependencies">1. Install Dependencies<a class="headerlink" href="#1-install-dependencies" title="Permanent link">#</a></h2>
-<p>The included <code>install.sh</code> sets up Docker Engine and the NVIDIA Container Toolkit in one step:</p>
-<div class="highlight"><pre><span></span><code>install_openadkit<span class="o">()</span><span class="w"> </span><span class="o">(</span>
-<span class="w">  </span><span class="nb">set</span><span class="w"> </span>-eu
-<span class="w">  </span><span class="nv">install_tmp</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>mktemp<span class="k">)</span><span class="s2">&quot;</span>
-<span class="w">  </span><span class="nb">trap</span><span class="w"> </span><span class="s1">&#39;rm -f &quot;$install_tmp&quot;&#39;</span><span class="w"> </span>EXIT
-<span class="w">  </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span>https://raw.githubusercontent.com/autowarefoundation/openadkit/d8126e7b22f6beb151a3d48b5a42bebc9d5e2bbf/install.sh
-<span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s  %s\n&#39;</span><span class="w"> </span><span class="s1">&#39;acb8e685545638b277ef38a14ef7eac8106142d19454b1b42c16413b9b5345c1&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
-<span class="w">  </span>sudo<span class="w"> </span>bash<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$install_tmp</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
-<span class="o">)</span>
-install_openadkit
-</code></pre></div>
+<h2 id="get-open-ad-kit">1. Get Open AD Kit<a class="headerlink" href="#get-open-ad-kit" title="Permanent link">#</a></h2>
 <div class="admonition tip">
-<p class="admonition-title">Skip NVIDIA Toolkit</p>
-<p>Append <code>--no-nvidia</code> to the final command (<code>install_openadkit --no-nvidia</code>) if you do not have an NVIDIA GPU. The toolkit is only needed for GPU-accelerated deployments.</p>
+<p class="admonition-title">Release bundles</p>
+<p>Each stable GitHub Release will publish a versionless <code>openadkit</code> installer and
+one <code>openadkit-vX.Y.Z.tar.gz</code> containing the runtime entry point and the
+curated deployments (planning, logging, scenario, and CARLA). Split-host
+nodes ship as experimental. Images and sample data
+are pulled on demand. Until the first release exists, use a source checkout.</p>
 </div>
-<p>Activate the Docker group membership added by the installer before running
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Source checkout</label><label for="__tabbed_1_2">Release bundle</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
+<span class="nb">cd</span><span class="w"> </span>openadkit
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Download the latest release. The command verifies the release bundle before
+installing it to <code>~/.local/share/openadkit</code> and makes <code>openadkit</code> available
+from <code>~/.local/bin</code>.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>install
+</code></pre></div>
+<p>If <code>~/.local/bin</code> is not on your <code>PATH</code>, the installer prints the command to
+add it. For a reproducible install, replace <code>latest</code> with a release version
+and pass the same version to <code>install</code>:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/download/vX.Y.Z/openadkit<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>install<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
+</code></pre></div>
+<p>To verify the bundle yourself before running it, see
+<a href="cli/#verify-a-release-bundle-manually">Verify a Release Bundle Manually</a>.</p>
+</div>
+</div>
+</div>
+<p>The release bundle contains only the runtime and deployment assets. A source
+checkout also contains the image sources, CI, and development tools.</p>
+<h2 id="set-up-the-host">2. Set Up the Host<a class="headerlink" href="#set-up-the-host" title="Permanent link">#</a></h2>
+<p>After a release install, these commands work from any directory. For a source
+checkout, prefix them with <code>./</code> (for example <code>./openadkit</code>) and run them from
+the repository root.</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>setup<span class="w"> </span>--verify
+</code></pre></div>
+<p>Run setup as your normal user. It requests <code>sudo</code> only for host changes. CPU is
+the default; add <code>--gpu</code> for NVIDIA deployments. <code>--gpu</code> also installs NVIDIA
+OpenGL/Vulkan libraries needed for CARLA. Setup installs Docker only when the
+host has none; it never replaces an existing engine. If Docker is installed but
+Docker Compose 2.20 or newer is missing, install Compose (Ubuntu:
+<code>docker-compose-v2</code>) and rerun setup.</p>
+<p>Activate the Docker group membership added by <code>openadkit setup</code> before running
 Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
 </code></pre></div>
-<p>Confirm the environment is ready:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>version
+<h2 id="run-planning-simulation">3. Run Planning Simulation<a class="headerlink" href="#run-planning-simulation" title="Permanent link">#</a></h2>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
 </code></pre></div>
-<h2 id="2-get-the-deployment-files">2. Get the Deployment Files<a class="headerlink" href="#2-get-the-deployment-files" title="Permanent link">#</a></h2>
-<h3 id="source-checkout-files">Source checkout files<a class="headerlink" href="#source-checkout-files" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
-<span class="nb">cd</span><span class="w"> </span>openadkit/deployments/planning-simulation
-../../install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
-</code></pre></div>
-<h3 id="release-bundle-files">Release bundle files<a class="headerlink" href="#release-bundle-files" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/planning-simulation.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz
-<span class="nb">cd</span><span class="w"> </span>planning-simulation
-./install.sh<span class="w"> </span>sample-data<span class="w"> </span>planning-simulation
-</code></pre></div>
-<h2 id="3-start-it">3. Start It<a class="headerlink" href="#3-start-it" title="Permanent link">#</a></h2>
-<h3 id="start-the-source-checkout">Start the source checkout<a class="headerlink" href="#start-the-source-checkout" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>../base/base.env<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
-</code></pre></div>
-<h3 id="start-the-release-bundle">Start the release bundle<a class="headerlink" href="#start-the-release-bundle" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>planning-simulation.env<span class="w"> </span>up<span class="w"> </span>-d
-</code></pre></div>
-<p>Wait about 10 seconds for the containers to initialize.</p>
-<h2 id="access-the-visualizer">Access the Visualizer<a class="headerlink" href="#access-the-visualizer" title="Permanent link">#</a></h2>
-<p>Open your browser and navigate to:</p>
+<p>Add <code>--ros-distro jazzy</code> to select Jazzy. Humble is the default in both source
+checkouts and release bundles.</p>
+<p><code>run</code> downloads and verifies the sample map, pulls missing images, starts the
+services, and waits until they are ready.</p>
+<h2 id="open-the-visualizer">4. Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
+<p>Wait about 10 seconds for the containers to initialize, then open:</p>
 <div class="highlight"><pre><span></span><code>https://localhost:6080/vnc.html
 </code></pre></div>
-<p>Use the default password <strong><code>openadkit</code></strong>. The connection uses a self-signed certificate; dismiss the browser privacy warning to continue.</p>
-<div class="admonition tip">
-<p class="admonition-title">Remote Access</p>
-<p>The visualizer runs under <code>network_mode: host</code>, so <code>ports:</code> is ignored and the loopback bind (<code>127.0.0.1:6080</code>) lives in the visualizer entrypoint. To reach noVNC from another machine, either forward the port over SSH:</p>
+<p>Use the default password <strong><code>openadkit</code></strong> and accept the self-signed certificate.</p>
+<p>For a remote host, keep noVNC loopback-only and forward it over SSH:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
-<span class="c1"># then open https://localhost:8080/vnc.html</span>
 </code></pre></div>
-<p>or put a TLS-terminating reverse proxy in front of <code>127.0.0.1:6080</code> and set a strong <code>REMOTE_PASSWORD</code> in <code>base.env</code>. Editing <code>docker-compose.yaml</code> to add a <code>ports:</code> mapping has no effect under host networking.</p>
-</div>
-<h2 id="4-drive">4. Drive<a class="headerlink" href="#4-drive" title="Permanent link">#</a></h2>
+<p>Then open <code>https://localhost:8080/vnc.html</code> locally.</p>
+<h2 id="drive">5. Drive<a class="headerlink" href="#drive" title="Permanent link">#</a></h2>
 <p>In RViz2, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation instructions</a> to:</p>
 <ol>
 <li>Set an <strong>initial pose</strong> for the ego vehicle</li>
 <li>Set a <strong>goal pose</strong> on the map</li>
 <li>Watch the vehicle plan and drive the route</li>
 </ol>
-<p>That's it — you are running Autoware. The full guide with configuration, architecture, and cloned-repo usage is at <a href="../deployment/planning-simulation/">Planning Simulation</a>.</p>
-<p>If something goes wrong, see <a href="troubleshooting/">Troubleshooting</a>.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
-<p><strong><a href="../deployment/">Explore the other deployments</a></strong> — scenario testing, rosbag replay, closed-loop CARLA, and distributed cloud-edge operation with Zenoh.</p>
+<p><strong><a href="../deployments/">Explore the other deployments</a></strong> - scenario testing,
+rosbag replay, and CARLA. Split-host (<code>--node</code> over Zenoh) is experimental.</p>
 <ul>
-<li><a href="../components/">Components</a> — The architecture behind what you just ran</li>
-<li><a href="container-images/">Container Images &amp; Versioning</a> — Tag schema and pinning guidance</li>
-<li><a href="../deployment/custom-deployment/">Custom Deployment</a> — Compose your own stack</li>
+<li><a href="cli/">CLI &amp; Maintenance</a> - Runtime controls, validation, upgrades, and cleanup</li>
+<li><a href="../components/">Components</a> - The architecture behind what you just ran</li>
+<li><a href="container-images/">Container Images &amp; Versioning</a> - Tag schema and pinning guidance</li>
+<li><a href="../deployments/custom-deployment/">Custom Deployment</a> - Compose your own stack</li>
 </ul>
 
 
@@ -2431,13 +2270,13 @@ Docker without <code>sudo</code>. Either log out and back in, or run:</p>
         
         
           
-          <a href="container-images/" class="md-footer__link md-footer__link--next" aria-label="Next: Images &amp; Versioning">
+          <a href="cli/" class="md-footer__link md-footer__link--next" aria-label="Next: CLI &amp; Maintenance">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Images & Versioning
+                CLI & Maintenance
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2481,7 +2320,7 @@ Docker without <code>sudo</code>. Either log out and back in, or run:</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["announce.dismiss", "content.action.edit", "content.code.annotate", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -6,32 +6,32 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
       
       
       
         <link rel="canonical" href="https://autowarefoundation.github.io/openadkit/releases/">
       
       
-        <link rel="prev" href="../development/contributing/">
+        <link rel="prev" href="../development/rfc-0001-toolchain-model/">
       
       
-        <link rel="next" href="../roadmap/">
+        <link rel="next" href="evidence/">
       
       
         
       
       
       <link rel="icon" href="../assets/images/autoware-foundation.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Releases - Open AD Kit</title>
+        <title>Releases & Roadmap - Open AD Kit</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -54,8 +54,6 @@
     
     
       <link rel="stylesheet" href="../assets/css/extra.css">
-    
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -82,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#releases" class="md-skip">
+        <a href="#releases-roadmap" class="md-skip">
           Skip to content
         </a>
       
@@ -99,7 +97,8 @@
             
             
   <a href="../getting-started/">
-    <span aria-hidden="true">🚀</span> New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
+    <svg class="oak-banner-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+    New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
   </a>
 
           </div>
@@ -136,7 +135,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases
+              Releases &amp; Roadmap
             
           </span>
         </div>
@@ -289,13 +288,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../deployment/" class="md-tabs__link">
+        <a href="../deployments/" class="md-tabs__link">
           
   
   
     
   
-  Deployment
+  Deployments
 
         </a>
       </li>
@@ -385,30 +384,11 @@
   
     
   
-  Releases
+  Releases & Roadmap
 
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -585,6 +565,8 @@
       
         
       
+        
+      
     
     
     
@@ -648,6 +630,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../getting-started/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI & Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../getting-started/container-images/" class="md-nav__link">
         
   
@@ -655,7 +665,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -729,6 +739,8 @@
       
         
       
+        
+      
     
     
     
@@ -748,14 +760,14 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/" class="md-nav__link ">
+            <a href="../deployments/" class="md-nav__link ">
               
   
   
   <span class="md-ellipsis">
     
   
-    Deployment
+    Deployments
   
 
     
@@ -777,7 +789,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deployment
+    Deployments
   
 
           </label>
@@ -817,7 +829,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/planning-simulation/" class="md-nav__link ">
+            <a href="../deployments/planning-simulation/" class="md-nav__link ">
               
   
   
@@ -889,7 +901,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/scenario-simulation/" class="md-nav__link ">
+            <a href="../deployments/scenario-simulation/" class="md-nav__link ">
               
   
   
@@ -961,7 +973,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/logging-simulation/" class="md-nav__link ">
+            <a href="../deployments/logging-simulation/" class="md-nav__link ">
               
   
   
@@ -1033,7 +1045,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../deployment/carla-simulation/" class="md-nav__link ">
+            <a href="../deployments/carla-simulation/" class="md-nav__link ">
               
   
   
@@ -1079,40 +1091,15 @@
   
   
   
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../deployments/split-host/" class="md-nav__link">
         
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../deployment/zenoh-bridge/" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    Zenoh Bridge
+    Split-host simulation
   
 
     
@@ -1120,26 +1107,7 @@
   
   
 
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Zenoh Bridge
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
+      </a>
     </li>
   
 
@@ -1152,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/custom-deployment/" class="md-nav__link">
+      <a href="../deployments/custom-deployment/" class="md-nav__link">
         
   
   
@@ -1160,6 +1128,34 @@
     
   
     Custom Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployments/integrator-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrator Guide
   
 
     
@@ -1191,22 +1187,6 @@
       
         
           
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
         
       
     
@@ -1245,11 +1225,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
@@ -1263,230 +1238,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/sensing-perception/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sensing & Perception
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/localization-mapping/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Localization & Mapping
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/planning-control/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning & Control
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/vehicle-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Vehicle and System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/simulator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simulator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/visualizer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visualizer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../components/carla-interface/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CARLA Interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
           </ul>
@@ -1890,6 +1641,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2002,6 +1757,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/evidence-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RFC 0001: Toolchain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2022,6 +1833,10 @@
       
         
           
+        
+      
+        
+      
         
       
     
@@ -2051,7 +1866,7 @@
   <span class="md-ellipsis">
     
   
-    Releases
+    Releases & Roadmap
   
 
     
@@ -2061,6 +1876,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
@@ -2068,7 +1888,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Releases
+    Releases & Roadmap
   
 
           </label>
@@ -2076,28 +1896,21 @@
             
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../roadmap/" class="md-nav__link">
+      <a href="evidence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Roadmap
+    Evidence Policy
   
 
     
@@ -2106,6 +1919,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify a Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2139,10 +1988,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#v001" class="md-nav__link">
+  <a href="#releases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.0.1
+        Releases
       
     </span>
   </a>
@@ -2150,120 +1999,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#provenance" class="md-nav__link">
+  <a href="#roadmap" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provenance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment-bundles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment Bundles
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#images" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Images
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stable-aliases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stable Aliases
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v000" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.0.0
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provenance_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provenance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#images_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Images
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stable-aliases_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stable Aliases
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v000-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.0.0-test
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provenance_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provenance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#images_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Images
+        Roadmap
       
     </span>
   </a>
@@ -2295,396 +2034,65 @@
   
 
 
-<!-- AUTOGENERATED by generate_release_notes.py; DO NOT EDIT MANUALLY -->
-
-<h1 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h1>
-<p>Published Open AD Kit releases are listed here, synchronized from
-<a href="https://github.com/oguzkaganozt/openadkit/releases">GitHub Releases</a>.</p>
-<h2 id="v001">v0.0.1<a class="headerlink" href="#v001" title="Permanent link">#</a></h2>
-<p><strong>Published:</strong> 2026-07-18 · <strong>Type:</strong> Stable ·
-<a href="https://github.com/oguzkaganozt/openadkit/releases/tag/v0.0.1">View on GitHub</a></p>
-<!-- openadkit-release-workflow:v1 -->
-
-<h2 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">#</a></h2>
+<h1 id="releases-roadmap">Releases &amp; Roadmap<a class="headerlink" href="#releases-roadmap" title="Permanent link">#</a></h1>
+<p><strong>No stable release has been published yet.</strong> Until the first release, run Open
+AD Kit from a <a href="../getting-started/">source checkout</a>.</p>
+<h2 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h2>
+<p><a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Releases</a> is
+the canonical source for published versions, release notes, and provenance
+metadata. Each stable release publishes:</p>
+<ul>
+<li>a versionless <code>openadkit</code> installer</li>
+<li>the versioned <code>openadkit-vX.Y.Z.tar.gz</code> bundle</li>
+<li>the pinned Autoware meta-release, ROS 2 distro(s), and image tags and digests</li>
+<li>a BOM, signed runtime evidence summary, explicit CI exemptions and distro decision</li>
+<li>build provenance for the installer, bundle, plan and metadata</li>
+</ul>
+<p>Installed releases move to the latest stable version with <code>openadkit upgrade</code>.
+Tag naming is documented in
+<a href="../getting-started/container-images/">Container Images &amp; Versioning</a>.
+See <a href="evidence/">Evidence Policy</a> for the blocking gate and verification report, and
+<a href="verification/">Verify a Release</a> before executing downloaded artifacts.</p>
+<h2 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">#</a></h2>
+<p>The <a href="../development/rfc-0001-toolchain-model/">toolchain RFC</a> records the
+selected design and its delivery boundaries. Roadmap entries are not claims of
+published releases, external team approval or vehicle certification.</p>
 <table>
 <thead>
 <tr>
-<th>Key</th>
-<th>Value</th>
+<th>Phase or milestone</th>
+<th>Status</th>
+<th>Focus</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>OpenADKit version</td>
-<td><code>v0.0.1</code></td>
+<td><strong>v2.0 foundation</strong></td>
+<td><span class="oak-badge oak-badge--testing">Release validation pending</span></td>
+<td>Reference/integrator kits, pinned inputs, user-data boundaries, Compose nodes, L0-L2 evidence and blocking releases</td>
 </tr>
 <tr>
-<td>OpenADKit SHA</td>
-<td><code>a7e665ddb5390dea8839e60373191780d653e40e</code></td>
+<td><strong>v2.0.x confidence</strong></td>
+<td><span class="oak-badge oak-badge--neutral">Planned</span></td>
+<td>Evidence-backed upstream updates, richer upgrade/scenario metrics and image SBOMs</td>
 </tr>
 <tr>
-<td>Build tag</td>
-<td><code>29652882161-1</code></td>
+<td><strong>CES 2027 demo</strong></td>
+<td><span class="oak-badge oak-badge--neutral">Milestone</span></td>
+<td>Hardware integration and partner evidence; not a general vehicle-support claim</td>
 </tr>
 <tr>
-<td>Packager SHA</td>
-<td><code>a7e665ddb5390dea8839e60373191780d653e40e</code></td>
+<td><strong>v2.1 delivery</strong></td>
+<td><span class="oak-badge oak-badge--neutral">Planned</span></td>
+<td>OCI package, vehicle-path flattening, Quadlet/BlueChi backend and pinned upstream applications</td>
 </tr>
 <tr>
-<td>Autoware input ref</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware ref type</td>
-<td><code>tag</code></td>
-</tr>
-<tr>
-<td>Autoware resolved SHA</td>
-<td><code>5b27e88e84683deb4afaf0aa917f80082a608871</code></td>
-</tr>
-<tr>
-<td>Autoware base version</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware lock SHA256</td>
-<td><code>043d19f3647abeab0aa68cefdd4b38a1943e8fde4d1664c684ef4f415499d9a8</code></td>
-</tr>
-<tr>
-<td>Upstream images SHA256</td>
-<td><code>f5f35a5254c6ef08a5d2d320f676bd07346c2abd4ad4dd0b83f546cd9f6c5f91</code></td>
+<td><strong>Later evidence views</strong></td>
+<td><span class="oak-badge oak-badge--neutral">Planned</span></td>
+<td>Generated compatibility views and partner-backed HIL/field coverage; fleet orchestration remains external</td>
 </tr>
 </tbody>
 </table>
-<h2 id="deployment-bundles">Deployment Bundles<a class="headerlink" href="#deployment-bundles" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Asset</th>
-<th>SHA256</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>carla-simulation.tar.gz</code></td>
-<td><code>5bc3cd779f2a8fb9a9e88be3a6e12bb7b51fe45dfaa8d78007886e22012daf0d</code></td>
-</tr>
-<tr>
-<td><code>logging-simulation.tar.gz</code></td>
-<td><code>d2a333cabf07836d67cfe19a40363204a0eb969801902220c2ba924356dd1252</code></td>
-</tr>
-<tr>
-<td><code>planning-simulation.tar.gz</code></td>
-<td><code>25dd303730cfa06eb252b74e0c1b9ea5f7fdbe17539419402ca80d72d927f6b8</code></td>
-</tr>
-<tr>
-<td><code>scenario-simulation.tar.gz</code></td>
-<td><code>8d8c797e27c9c80ee4277826dd8e1d2e9e3934152081a986176ba0229a8d0f0b</code></td>
-</tr>
-<tr>
-<td><code>zenoh-bridge.tar.gz</code></td>
-<td><code>d501516f34c0e110686776421921310b9482c65a5e6e47955fd481048f7b620f</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="images">Images<a class="headerlink" href="#images" title="Permanent link">#</a></h2>
-<ul>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble-v0.0.1</code> -&gt; <code>sha256:969aef435e37f97fded7dc16675e2fb770144f0f8f8a9c615f0d45fe271892eb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy-v0.0.1</code> -&gt; <code>sha256:58a740c1a8e012cef759fcd06a7c93936df26473616cfc408ff4ad7a020c8cc6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble-v0.0.1</code> -&gt; <code>sha256:35d704efe0762300d95dd395807a6c224cceb45dfad289628333fac9ec5dc133</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy-v0.0.1</code> -&gt; <code>sha256:be0d469c11e3f72394794159f9d09bdd1ae3ae63e4ea7a1131dcf030265979ee</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-v0.0.1</code> -&gt; <code>sha256:8c0e3ea6da71d36f8d1f2063f34d3b8c7d8b38a9cdf9cafd0449cc05214bbc9b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy-v0.0.1</code> -&gt; <code>sha256:cbc9af687c5670a6b3d9546b960e544af29712e86c57dd5d13ad6c15e94a32ae</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-v0.0.1</code> -&gt; <code>sha256:4b5c1228dbc9eb440d26d6fc37c5b7407ec54c2ed3f23cab8b4a00ce55ec1df9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy-v0.0.1</code> -&gt; <code>sha256:ec433c8dbe69deb2effc464959dc9604d4c8b1541009c05e6511e7a71ffdabcf</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-v0.0.1</code> -&gt; <code>sha256:010284d12bf033baed73d66b70324211b7782c04334257579e2cf1d927032e3c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy-v0.0.1</code> -&gt; <code>sha256:436f5fc948c6933ed3524919ccc62394eb5828404b5317fe0ba982fe87976dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble-v0.0.1</code> -&gt; <code>sha256:5ea2d1a13f6e4a2c38579b286b98e77a17afd16fce954662e8fa1afd9198bca0</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy-v0.0.1</code> -&gt; <code>sha256:4d1ec925f7449bcb3310cc15f2a1bf843101f286d6415f648fc77b0cce039c86</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-v0.0.1</code> -&gt; <code>sha256:0bcef9569098eb62e975416b065f0ed12e8c9097421e7aa8adf5a7b50ecb0c59</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy-v0.0.1</code> -&gt; <code>sha256:50508e649adf574a87fe33d3ad489e1e6eb19d32083157193d5f69bc82aff76e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble-v0.0.1</code> -&gt; <code>sha256:8e584d35739cce08e75e0e1c72b4f77102bf7258a6e0cd2bb1998af3a6f3c3a3</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy-v0.0.1</code> -&gt; <code>sha256:2d5ea46127d2a350538e43d55452f5624be804fa6397355923849b32b9aef2e8</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble-v0.0.1</code> -&gt; <code>sha256:2c2fe97f8169e11ac724bfa5d2cb7eefa16127e7143e1974766fb7c4afa67d3e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy-v0.0.1</code> -&gt; <code>sha256:36ab9a0f6f8b59eb948eaa7ba6b36d2aa7d88d360cda5af200676efd4eaa5be4</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble-v0.0.1</code> -&gt; <code>sha256:36d5facb2146f17ebfc19302081a5331927c6a21ff57403f9c4283253435a4de</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy-v0.0.1</code> -&gt; <code>sha256:cf93ae1955cda78ba72bf985f5a4bbddea9dd7ab4961f8eb7b92bec732d9c28f</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble-v0.0.1</code> -&gt; <code>sha256:32170244e1dc3cc1974493870c258c500f54ddbd85e78d84b2b1157c06e3b9c6</code></li>
-</ul>
-<h2 id="stable-aliases">Stable Aliases<a class="headerlink" href="#stable-aliases" title="Permanent link">#</a></h2>
-<ul>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble</code> -&gt; <code>sha256:969aef435e37f97fded7dc16675e2fb770144f0f8f8a9c615f0d45fe271892eb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble-latest</code> -&gt; <code>sha256:969aef435e37f97fded7dc16675e2fb770144f0f8f8a9c615f0d45fe271892eb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel</code> -&gt; <code>sha256:969aef435e37f97fded7dc16675e2fb770144f0f8f8a9c615f0d45fe271892eb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-latest</code> -&gt; <code>sha256:969aef435e37f97fded7dc16675e2fb770144f0f8f8a9c615f0d45fe271892eb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy</code> -&gt; <code>sha256:58a740c1a8e012cef759fcd06a7c93936df26473616cfc408ff4ad7a020c8cc6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy-latest</code> -&gt; <code>sha256:58a740c1a8e012cef759fcd06a7c93936df26473616cfc408ff4ad7a020c8cc6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble</code> -&gt; <code>sha256:35d704efe0762300d95dd395807a6c224cceb45dfad289628333fac9ec5dc133</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble-latest</code> -&gt; <code>sha256:35d704efe0762300d95dd395807a6c224cceb45dfad289628333fac9ec5dc133</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common</code> -&gt; <code>sha256:35d704efe0762300d95dd395807a6c224cceb45dfad289628333fac9ec5dc133</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-latest</code> -&gt; <code>sha256:35d704efe0762300d95dd395807a6c224cceb45dfad289628333fac9ec5dc133</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy</code> -&gt; <code>sha256:be0d469c11e3f72394794159f9d09bdd1ae3ae63e4ea7a1131dcf030265979ee</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy-latest</code> -&gt; <code>sha256:be0d469c11e3f72394794159f9d09bdd1ae3ae63e4ea7a1131dcf030265979ee</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble</code> -&gt; <code>sha256:8c0e3ea6da71d36f8d1f2063f34d3b8c7d8b38a9cdf9cafd0449cc05214bbc9b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-latest</code> -&gt; <code>sha256:8c0e3ea6da71d36f8d1f2063f34d3b8c7d8b38a9cdf9cafd0449cc05214bbc9b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception</code> -&gt; <code>sha256:8c0e3ea6da71d36f8d1f2063f34d3b8c7d8b38a9cdf9cafd0449cc05214bbc9b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-latest</code> -&gt; <code>sha256:8c0e3ea6da71d36f8d1f2063f34d3b8c7d8b38a9cdf9cafd0449cc05214bbc9b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy</code> -&gt; <code>sha256:cbc9af687c5670a6b3d9546b960e544af29712e86c57dd5d13ad6c15e94a32ae</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy-latest</code> -&gt; <code>sha256:cbc9af687c5670a6b3d9546b960e544af29712e86c57dd5d13ad6c15e94a32ae</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble</code> -&gt; <code>sha256:4b5c1228dbc9eb440d26d6fc37c5b7407ec54c2ed3f23cab8b4a00ce55ec1df9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-latest</code> -&gt; <code>sha256:4b5c1228dbc9eb440d26d6fc37c5b7407ec54c2ed3f23cab8b4a00ce55ec1df9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda</code> -&gt; <code>sha256:4b5c1228dbc9eb440d26d6fc37c5b7407ec54c2ed3f23cab8b4a00ce55ec1df9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-latest</code> -&gt; <code>sha256:4b5c1228dbc9eb440d26d6fc37c5b7407ec54c2ed3f23cab8b4a00ce55ec1df9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy</code> -&gt; <code>sha256:ec433c8dbe69deb2effc464959dc9604d4c8b1541009c05e6511e7a71ffdabcf</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy-latest</code> -&gt; <code>sha256:ec433c8dbe69deb2effc464959dc9604d4c8b1541009c05e6511e7a71ffdabcf</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble</code> -&gt; <code>sha256:010284d12bf033baed73d66b70324211b7782c04334257579e2cf1d927032e3c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-latest</code> -&gt; <code>sha256:010284d12bf033baed73d66b70324211b7782c04334257579e2cf1d927032e3c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping</code> -&gt; <code>sha256:010284d12bf033baed73d66b70324211b7782c04334257579e2cf1d927032e3c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-latest</code> -&gt; <code>sha256:010284d12bf033baed73d66b70324211b7782c04334257579e2cf1d927032e3c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy</code> -&gt; <code>sha256:436f5fc948c6933ed3524919ccc62394eb5828404b5317fe0ba982fe87976dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy-latest</code> -&gt; <code>sha256:436f5fc948c6933ed3524919ccc62394eb5828404b5317fe0ba982fe87976dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble</code> -&gt; <code>sha256:5ea2d1a13f6e4a2c38579b286b98e77a17afd16fce954662e8fa1afd9198bca0</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble-latest</code> -&gt; <code>sha256:5ea2d1a13f6e4a2c38579b286b98e77a17afd16fce954662e8fa1afd9198bca0</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control</code> -&gt; <code>sha256:5ea2d1a13f6e4a2c38579b286b98e77a17afd16fce954662e8fa1afd9198bca0</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-latest</code> -&gt; <code>sha256:5ea2d1a13f6e4a2c38579b286b98e77a17afd16fce954662e8fa1afd9198bca0</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy</code> -&gt; <code>sha256:4d1ec925f7449bcb3310cc15f2a1bf843101f286d6415f648fc77b0cce039c86</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy-latest</code> -&gt; <code>sha256:4d1ec925f7449bcb3310cc15f2a1bf843101f286d6415f648fc77b0cce039c86</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble</code> -&gt; <code>sha256:0bcef9569098eb62e975416b065f0ed12e8c9097421e7aa8adf5a7b50ecb0c59</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-latest</code> -&gt; <code>sha256:0bcef9569098eb62e975416b065f0ed12e8c9097421e7aa8adf5a7b50ecb0c59</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system</code> -&gt; <code>sha256:0bcef9569098eb62e975416b065f0ed12e8c9097421e7aa8adf5a7b50ecb0c59</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-latest</code> -&gt; <code>sha256:0bcef9569098eb62e975416b065f0ed12e8c9097421e7aa8adf5a7b50ecb0c59</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy</code> -&gt; <code>sha256:50508e649adf574a87fe33d3ad489e1e6eb19d32083157193d5f69bc82aff76e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy-latest</code> -&gt; <code>sha256:50508e649adf574a87fe33d3ad489e1e6eb19d32083157193d5f69bc82aff76e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble</code> -&gt; <code>sha256:8e584d35739cce08e75e0e1c72b4f77102bf7258a6e0cd2bb1998af3a6f3c3a3</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble-latest</code> -&gt; <code>sha256:8e584d35739cce08e75e0e1c72b4f77102bf7258a6e0cd2bb1998af3a6f3c3a3</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api</code> -&gt; <code>sha256:8e584d35739cce08e75e0e1c72b4f77102bf7258a6e0cd2bb1998af3a6f3c3a3</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-latest</code> -&gt; <code>sha256:8e584d35739cce08e75e0e1c72b4f77102bf7258a6e0cd2bb1998af3a6f3c3a3</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy</code> -&gt; <code>sha256:2d5ea46127d2a350538e43d55452f5624be804fa6397355923849b32b9aef2e8</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy-latest</code> -&gt; <code>sha256:2d5ea46127d2a350538e43d55452f5624be804fa6397355923849b32b9aef2e8</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble</code> -&gt; <code>sha256:2c2fe97f8169e11ac724bfa5d2cb7eefa16127e7143e1974766fb7c4afa67d3e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble-latest</code> -&gt; <code>sha256:2c2fe97f8169e11ac724bfa5d2cb7eefa16127e7143e1974766fb7c4afa67d3e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer</code> -&gt; <code>sha256:2c2fe97f8169e11ac724bfa5d2cb7eefa16127e7143e1974766fb7c4afa67d3e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-latest</code> -&gt; <code>sha256:2c2fe97f8169e11ac724bfa5d2cb7eefa16127e7143e1974766fb7c4afa67d3e</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy</code> -&gt; <code>sha256:36ab9a0f6f8b59eb948eaa7ba6b36d2aa7d88d360cda5af200676efd4eaa5be4</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy-latest</code> -&gt; <code>sha256:36ab9a0f6f8b59eb948eaa7ba6b36d2aa7d88d360cda5af200676efd4eaa5be4</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble</code> -&gt; <code>sha256:36d5facb2146f17ebfc19302081a5331927c6a21ff57403f9c4283253435a4de</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble-latest</code> -&gt; <code>sha256:36d5facb2146f17ebfc19302081a5331927c6a21ff57403f9c4283253435a4de</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator</code> -&gt; <code>sha256:36d5facb2146f17ebfc19302081a5331927c6a21ff57403f9c4283253435a4de</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-latest</code> -&gt; <code>sha256:36d5facb2146f17ebfc19302081a5331927c6a21ff57403f9c4283253435a4de</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy</code> -&gt; <code>sha256:cf93ae1955cda78ba72bf985f5a4bbddea9dd7ab4961f8eb7b92bec732d9c28f</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy-latest</code> -&gt; <code>sha256:cf93ae1955cda78ba72bf985f5a4bbddea9dd7ab4961f8eb7b92bec732d9c28f</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble</code> -&gt; <code>sha256:32170244e1dc3cc1974493870c258c500f54ddbd85e78d84b2b1157c06e3b9c6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble-latest</code> -&gt; <code>sha256:32170244e1dc3cc1974493870c258c500f54ddbd85e78d84b2b1157c06e3b9c6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface</code> -&gt; <code>sha256:32170244e1dc3cc1974493870c258c500f54ddbd85e78d84b2b1157c06e3b9c6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-latest</code> -&gt; <code>sha256:32170244e1dc3cc1974493870c258c500f54ddbd85e78d84b2b1157c06e3b9c6</code></li>
-</ul>
-<h2 id="v000">v0.0.0<a class="headerlink" href="#v000" title="Permanent link">#</a></h2>
-<p><strong>Published:</strong> 2026-07-15 · <strong>Type:</strong> Stable ·
-<a href="https://github.com/oguzkaganozt/openadkit/releases/tag/v0.0.0">View on GitHub</a></p>
-<h2 id="provenance_1">Provenance<a class="headerlink" href="#provenance_1" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OpenADKit version</td>
-<td><code>v0.0.0</code></td>
-</tr>
-<tr>
-<td>OpenADKit SHA</td>
-<td><code>625fd44d0d10323efb586f39386f3ce366423d8c</code></td>
-</tr>
-<tr>
-<td>Build tag</td>
-<td><code>29413163540-1</code></td>
-</tr>
-<tr>
-<td>Autoware input ref</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware ref type</td>
-<td><code>tag</code></td>
-</tr>
-<tr>
-<td>Autoware resolved SHA</td>
-<td><code>5b27e88e84683deb4afaf0aa917f80082a608871</code></td>
-</tr>
-<tr>
-<td>Autoware base version</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware lock SHA256</td>
-<td><code>043d19f3647abeab0aa68cefdd4b38a1943e8fde4d1664c684ef4f415499d9a8</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="images_1">Images<a class="headerlink" href="#images_1" title="Permanent link">#</a></h2>
-<ul>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble-v0.0.0</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy-v0.0.0</code> -&gt; <code>sha256:6b17fee979caed18d4ce1e324c0c45314e316e865c945e683f83cebcdbeeeb5a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble-v0.0.0</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy-v0.0.0</code> -&gt; <code>sha256:e24e58cbfb18730e1de174452024f6eb133d20afc58d6dcf0141d9479036fb29</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-v0.0.0</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy-v0.0.0</code> -&gt; <code>sha256:94c90450fb0e70a6a28d61150d21a7a36f410cf1e783952e5fb0156d39304b7b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-v0.0.0</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy-v0.0.0</code> -&gt; <code>sha256:45f83c2b9bc4fa7f5dd8afb6546f787afbeee97a1c2260f3d69e36e21c1ecf4b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-v0.0.0</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy-v0.0.0</code> -&gt; <code>sha256:1f5b807de705f1c093c5d2e8235429ffc541823ce73fbadee7115d7a832a0366</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble-v0.0.0</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy-v0.0.0</code> -&gt; <code>sha256:b5fa2438c45b8c4ad34cab9de509560e83a29afa218adc12e4703a5c87e4ec1b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-v0.0.0</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy-v0.0.0</code> -&gt; <code>sha256:614fee9f0f72b06439e7ffde3762344069a9ef1491e5c59cf8e334552378ee37</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble-v0.0.0</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy-v0.0.0</code> -&gt; <code>sha256:41879a499c27cdb00c968b80490e909c0aa014e64a9eb57203333d9f84f86dbb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble-v0.0.0</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy-v0.0.0</code> -&gt; <code>sha256:b84831ef36f90736208168e9d37cb95d14f9b32e3bee312548bb8ee371e6d9b9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble-v0.0.0</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy-v0.0.0</code> -&gt; <code>sha256:787548910bdeff8c3d132c36784e56a8984e3d9c0a60dd24b60db667c9533be6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble-v0.0.0</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-</ul>
-<h2 id="stable-aliases_1">Stable Aliases<a class="headerlink" href="#stable-aliases_1" title="Permanent link">#</a></h2>
-<ul>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble-latest</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-latest</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy</code> -&gt; <code>sha256:6b17fee979caed18d4ce1e324c0c45314e316e865c945e683f83cebcdbeeeb5a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy-latest</code> -&gt; <code>sha256:6b17fee979caed18d4ce1e324c0c45314e316e865c945e683f83cebcdbeeeb5a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble-latest</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-latest</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy</code> -&gt; <code>sha256:e24e58cbfb18730e1de174452024f6eb133d20afc58d6dcf0141d9479036fb29</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy-latest</code> -&gt; <code>sha256:e24e58cbfb18730e1de174452024f6eb133d20afc58d6dcf0141d9479036fb29</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-latest</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-latest</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy</code> -&gt; <code>sha256:94c90450fb0e70a6a28d61150d21a7a36f410cf1e783952e5fb0156d39304b7b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy-latest</code> -&gt; <code>sha256:94c90450fb0e70a6a28d61150d21a7a36f410cf1e783952e5fb0156d39304b7b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-latest</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-latest</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy</code> -&gt; <code>sha256:45f83c2b9bc4fa7f5dd8afb6546f787afbeee97a1c2260f3d69e36e21c1ecf4b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy-latest</code> -&gt; <code>sha256:45f83c2b9bc4fa7f5dd8afb6546f787afbeee97a1c2260f3d69e36e21c1ecf4b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-latest</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-latest</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy</code> -&gt; <code>sha256:1f5b807de705f1c093c5d2e8235429ffc541823ce73fbadee7115d7a832a0366</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy-latest</code> -&gt; <code>sha256:1f5b807de705f1c093c5d2e8235429ffc541823ce73fbadee7115d7a832a0366</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble-latest</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-latest</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy</code> -&gt; <code>sha256:b5fa2438c45b8c4ad34cab9de509560e83a29afa218adc12e4703a5c87e4ec1b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy-latest</code> -&gt; <code>sha256:b5fa2438c45b8c4ad34cab9de509560e83a29afa218adc12e4703a5c87e4ec1b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-latest</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-latest</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy</code> -&gt; <code>sha256:614fee9f0f72b06439e7ffde3762344069a9ef1491e5c59cf8e334552378ee37</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy-latest</code> -&gt; <code>sha256:614fee9f0f72b06439e7ffde3762344069a9ef1491e5c59cf8e334552378ee37</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble-latest</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-latest</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy</code> -&gt; <code>sha256:41879a499c27cdb00c968b80490e909c0aa014e64a9eb57203333d9f84f86dbb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy-latest</code> -&gt; <code>sha256:41879a499c27cdb00c968b80490e909c0aa014e64a9eb57203333d9f84f86dbb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble-latest</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-latest</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy</code> -&gt; <code>sha256:b84831ef36f90736208168e9d37cb95d14f9b32e3bee312548bb8ee371e6d9b9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy-latest</code> -&gt; <code>sha256:b84831ef36f90736208168e9d37cb95d14f9b32e3bee312548bb8ee371e6d9b9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble-latest</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-latest</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy</code> -&gt; <code>sha256:787548910bdeff8c3d132c36784e56a8984e3d9c0a60dd24b60db667c9533be6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy-latest</code> -&gt; <code>sha256:787548910bdeff8c3d132c36784e56a8984e3d9c0a60dd24b60db667c9533be6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble-latest</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-latest</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-</ul>
-<h2 id="v000-test">v0.0.0-test<a class="headerlink" href="#v000-test" title="Permanent link">#</a></h2>
-<p><strong>Published:</strong> 2026-07-15 · <strong>Type:</strong> Pre-release ·
-<a href="https://github.com/oguzkaganozt/openadkit/releases/tag/v0.0.0-test">View on GitHub</a></p>
-<h2 id="provenance_2">Provenance<a class="headerlink" href="#provenance_2" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OpenADKit version</td>
-<td><code>v0.0.0-test</code></td>
-</tr>
-<tr>
-<td>OpenADKit SHA</td>
-<td><code>625fd44d0d10323efb586f39386f3ce366423d8c</code></td>
-</tr>
-<tr>
-<td>Build tag</td>
-<td><code>29413163540-1</code></td>
-</tr>
-<tr>
-<td>Autoware input ref</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware ref type</td>
-<td><code>tag</code></td>
-</tr>
-<tr>
-<td>Autoware resolved SHA</td>
-<td><code>5b27e88e84683deb4afaf0aa917f80082a608871</code></td>
-</tr>
-<tr>
-<td>Autoware base version</td>
-<td><code>1.8.0</code></td>
-</tr>
-<tr>
-<td>Autoware lock SHA256</td>
-<td><code>043d19f3647abeab0aa68cefdd4b38a1943e8fde4d1664c684ef4f415499d9a8</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="images_2">Images<a class="headerlink" href="#images_2" title="Permanent link">#</a></h2>
-<ul>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-humble-v0.0.0-test</code> -&gt; <code>sha256:1415a7c3570f5fbd72fa874cdffa3698636c21de5dd23ed29258d46594a10cbd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-devel-jazzy-v0.0.0-test</code> -&gt; <code>sha256:6b17fee979caed18d4ce1e324c0c45314e316e865c945e683f83cebcdbeeeb5a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-humble-v0.0.0-test</code> -&gt; <code>sha256:c416e46e3138df8759660ee0620546eec29f3341720e89fea34787c1cd482e75</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit-common:universe-common-jazzy-v0.0.0-test</code> -&gt; <code>sha256:e24e58cbfb18730e1de174452024f6eb133d20afc58d6dcf0141d9479036fb29</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-v0.0.0-test</code> -&gt; <code>sha256:d0e9cb1dcc86b1da6f3ff1520fe22967d99a9dbcbba8a6bde3e6f6367fe2064c</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-jazzy-v0.0.0-test</code> -&gt; <code>sha256:94c90450fb0e70a6a28d61150d21a7a36f410cf1e783952e5fb0156d39304b7b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-v0.0.0-test</code> -&gt; <code>sha256:4c97254379d38dc81f7528877e4ca6be0698904aed7d9f9ca5ba4f6939d12b8a</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-jazzy-v0.0.0-test</code> -&gt; <code>sha256:45f83c2b9bc4fa7f5dd8afb6546f787afbeee97a1c2260f3d69e36e21c1ecf4b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-v0.0.0-test</code> -&gt; <code>sha256:d6dabff867c1c21fa33d9e35b0b7f7c51a15374792ce89647b5b07a446629e88</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:localization-mapping-jazzy-v0.0.0-test</code> -&gt; <code>sha256:1f5b807de705f1c093c5d2e8235429ffc541823ce73fbadee7115d7a832a0366</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-humble-v0.0.0-test</code> -&gt; <code>sha256:cad36c8b382c6c61ed2a229769cbb58df2b859f28a33d88b78ab8c2617f991a5</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:planning-control-jazzy-v0.0.0-test</code> -&gt; <code>sha256:b5fa2438c45b8c4ad34cab9de509560e83a29afa218adc12e4703a5c87e4ec1b</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-v0.0.0-test</code> -&gt; <code>sha256:fc83ee53d8dc7d245b44b46d18821d6690b5e9eb8cf7e95cf98ac0bde0d6bd53</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:vehicle-system-jazzy-v0.0.0-test</code> -&gt; <code>sha256:614fee9f0f72b06439e7ffde3762344069a9ef1491e5c59cf8e334552378ee37</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-humble-v0.0.0-test</code> -&gt; <code>sha256:a44f6a36c65719ad0fef3c15121fb78f681163a3b13f410de98a6c0bad1470cd</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:api-jazzy-v0.0.0-test</code> -&gt; <code>sha256:41879a499c27cdb00c968b80490e909c0aa014e64a9eb57203333d9f84f86dbb</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-humble-v0.0.0-test</code> -&gt; <code>sha256:8faae8c7be0305fc0b3f88c201ec3f1ad3ae015e37e053151366af4b441cad87</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:visualizer-jazzy-v0.0.0-test</code> -&gt; <code>sha256:b84831ef36f90736208168e9d37cb95d14f9b32e3bee312548bb8ee371e6d9b9</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-humble-v0.0.0-test</code> -&gt; <code>sha256:b00614200bec424489ce6cd93fbb19709d0b718a28d56b27de4d58c172c76dde</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:simulator-jazzy-v0.0.0-test</code> -&gt; <code>sha256:787548910bdeff8c3d132c36784e56a8984e3d9c0a60dd24b60db667c9533be6</code></li>
-<li><code>ghcr.io/oguzkaganozt/openadkit:carla-interface-humble-v0.0.0-test</code> -&gt; <code>sha256:be36b0bbe436e0f0b57daa50a3c481a4fe311049ab0114e91448ad39001e2370</code></li>
-</ul>
 
 
 
@@ -2722,7 +2130,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../development/contributing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Contributing">
+          <a href="../development/rfc-0001-toolchain-model/" class="md-footer__link md-footer__link--prev" aria-label="Previous: RFC 0001: Toolchain Model">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2732,20 +2140,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Contributing
+                RFC 0001: Toolchain Model
               </div>
             </div>
           </a>
         
         
           
-          <a href="../roadmap/" class="md-footer__link md-footer__link--next" aria-label="Next: Roadmap">
+          <a href="evidence/" class="md-footer__link md-footer__link--next" aria-label="Next: Evidence Policy">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Roadmap
+                Evidence Policy
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2789,7 +2197,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["announce.dismiss", "content.action.edit", "content.code.annotate", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

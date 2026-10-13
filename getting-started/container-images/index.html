@@ -6,14 +6,14 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
       
       
       
         <link rel="canonical" href="https://autowarefoundation.github.io/openadkit/getting-started/container-images/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../cli/">
       
       
         <link rel="next" href="../troubleshooting/">
@@ -23,15 +23,15 @@
       
       
       <link rel="icon" href="../../assets/images/autoware-foundation.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Images & Versioning - Open AD Kit</title>
+        <title>Container Images & Versioning - Open AD Kit</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -54,8 +54,6 @@
     
     
       <link rel="stylesheet" href="../../assets/css/extra.css">
-    
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -99,7 +97,8 @@
             
             
   <a href="../">
-    <span aria-hidden="true">🚀</span> New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
+    <svg class="oak-banner-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+    New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
   </a>
 
           </div>
@@ -136,7 +135,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Images & Versioning
+              Container Images & Versioning
             
           </span>
         </div>
@@ -291,13 +290,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../deployment/" class="md-tabs__link">
+        <a href="../../deployments/" class="md-tabs__link">
           
   
   
     
   
-  Deployment
+  Deployments
 
         </a>
       </li>
@@ -385,30 +384,11 @@
   
     
   
-  Releases
+  Releases & Roadmap
 
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -587,6 +567,8 @@
       
         
       
+        
+      
     
     
     
@@ -648,6 +630,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI & Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -667,7 +677,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -685,7 +695,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -724,17 +734,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cuda-images" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CUDA Images
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#choosing-a-tag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -742,23 +741,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Choosing a Tag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#decision-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -774,17 +756,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-autoware" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Relationship to Autoware
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#ros-2-distro-support" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -793,6 +764,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ROS 2 Distro Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ros-package-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ROS Package Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -800,28 +788,6 @@
     <span class="md-ellipsis">
       
         What "Supported" Means
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-releases-are-tagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Releases Are Tagged
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
       
     </span>
   </a>
@@ -897,6 +863,8 @@
       
         
       
+        
+      
     
     
     
@@ -916,14 +884,14 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/" class="md-nav__link ">
+            <a href="../../deployments/" class="md-nav__link ">
               
   
   
   <span class="md-ellipsis">
     
   
-    Deployment
+    Deployments
   
 
     
@@ -945,7 +913,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deployment
+    Deployments
   
 
           </label>
@@ -985,7 +953,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/planning-simulation/" class="md-nav__link ">
+            <a href="../../deployments/planning-simulation/" class="md-nav__link ">
               
   
   
@@ -1057,7 +1025,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/scenario-simulation/" class="md-nav__link ">
+            <a href="../../deployments/scenario-simulation/" class="md-nav__link ">
               
   
   
@@ -1129,7 +1097,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/logging-simulation/" class="md-nav__link ">
+            <a href="../../deployments/logging-simulation/" class="md-nav__link ">
               
   
   
@@ -1201,7 +1169,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/carla-simulation/" class="md-nav__link ">
+            <a href="../../deployments/carla-simulation/" class="md-nav__link ">
               
   
   
@@ -1247,40 +1215,15 @@
   
   
   
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../../deployments/split-host/" class="md-nav__link">
         
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/zenoh-bridge/" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    Zenoh Bridge
+    Split-host simulation
   
 
     
@@ -1288,26 +1231,7 @@
   
   
 
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Zenoh Bridge
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
+      </a>
     </li>
   
 
@@ -1320,7 +1244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment/custom-deployment/" class="md-nav__link">
+      <a href="../../deployments/custom-deployment/" class="md-nav__link">
         
   
   
@@ -1328,6 +1252,34 @@
     
   
     Custom Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployments/integrator-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrator Guide
   
 
     
@@ -1359,22 +1311,6 @@
       
         
           
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
         
       
     
@@ -1413,11 +1349,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
@@ -1431,230 +1362,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/sensing-perception/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sensing & Perception
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/localization-mapping/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Localization & Mapping
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/planning-control/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning & Control
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/vehicle-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Vehicle and System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/simulator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simulator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/visualizer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visualizer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/carla-interface/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CARLA Interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
           </ul>
@@ -2058,6 +1765,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2170,6 +1881,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/evidence-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RFC 0001: Toolchain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2188,6 +1955,10 @@
       
         
           
+        
+      
+        
+      
         
       
     
@@ -2216,7 +1987,7 @@
   <span class="md-ellipsis">
     
   
-    Releases
+    Releases & Roadmap
   
 
     
@@ -2226,6 +1997,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
@@ -2233,7 +2009,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Releases
+    Releases & Roadmap
   
 
           </label>
@@ -2241,28 +2017,21 @@
             
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../../roadmap/" class="md-nav__link">
+      <a href="../../releases/evidence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Roadmap
+    Evidence Policy
   
 
     
@@ -2271,6 +2040,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify a Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2315,17 +2120,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cuda-images" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CUDA Images
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#choosing-a-tag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2333,23 +2127,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Choosing a Tag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#decision-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2365,17 +2142,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-autoware" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Relationship to Autoware
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#ros-2-distro-support" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2384,6 +2150,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ROS 2 Distro Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ros-package-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ROS Package Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2391,28 +2174,6 @@
     <span class="md-ellipsis">
       
         What "Supported" Means
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-releases-are-tagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Releases Are Tagged
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
       
     </span>
   </a>
@@ -2445,204 +2206,149 @@
 
 
 <h1 id="container-images-versioning">Container Images &amp; Versioning<a class="headerlink" href="#container-images-versioning" title="Permanent link">#</a></h1>
-<p>Open AD Kit publishes images to the GitHub Container Registry (<code>ghcr.io/autowarefoundation/openadkit</code>). This page is the canonical reference for the tag schema, the version scheme, and what "supported" means.</p>
+<p>Open AD Kit publishes images to the GitHub Container Registry (<code>ghcr.io/oguzkaganozt/openadkit</code>).
+This page is the reference for image tags, versions, and what "supported" means.</p>
 <h2 id="tag-reference">Tag Reference<a class="headerlink" href="#tag-reference" title="Permanent link">#</a></h2>
+<p>Releases are promoted from existing CI builds rather than rebuilt, so the images
+tested in CI are the images that ship. Every tag below points at a promoted
+image digest.</p>
 <table>
 <thead>
 <tr>
-<th>Tag Pattern</th>
+<th>Tag</th>
 <th>Example</th>
-<th>Description</th>
+<th>Created</th>
+<th>Moves?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Stable release</strong></td>
+<td><strong>Release</strong></td>
 <td><code>planning-control-humble-v2.0.0</code></td>
-<td>Immutable release tag. Use this when you need a fully reproducible deployment.</td>
+<td>Every release</td>
+<td>No</td>
 </tr>
 <tr>
-<td><strong>Latest stable alias</strong></td>
+<td><strong>Latest per distro</strong></td>
 <td><code>planning-control-humble</code></td>
-<td>Always resolves to the latest stable release for the specified ROS distro.</td>
+<td>Stable releases</td>
+<td>Yes</td>
 </tr>
 <tr>
-<td><strong>Latest stable + suffix</strong></td>
-<td><code>planning-control-humble-latest</code></td>
-<td>Same as above, explicit.</td>
-</tr>
-<tr>
-<td><strong>Default ROS distro alias</strong></td>
+<td><strong>Default distro</strong></td>
 <td><code>planning-control</code></td>
-<td>Convenience alias that resolves to the current default ROS distro (Humble).</td>
-</tr>
-<tr>
-<td><strong>Default + latest suffix</strong></td>
-<td><code>planning-control-latest</code></td>
-<td>Explicit default-distro latest alias.</td>
-</tr>
-<tr>
-<td><strong>Immutable build tag</strong></td>
-<td><code>planning-control-humble-123456789-1</code></td>
-<td>Pin to a specific CI build. Format: <code>&lt;target&gt;-&lt;ros_distro&gt;-&lt;run_id&gt;-&lt;run_attempt&gt;</code>. Per-platform variants include the platform label (e.g. <code>planning-control-amd64-humble-123456789-1</code>), but prefer the multi-arch tag for portability.</td>
-</tr>
-<tr>
-<td><strong>CI development alias</strong></td>
-<td><code>planning-control-amd64-humble</code></td>
-<td>Per-platform mutable tag used during CI. <strong>Do not use for pinned deployments.</strong></td>
+<td>Stable releases, default distro only</td>
+<td>Yes</td>
 </tr>
 <tr>
 <td><strong>Pre-release</strong></td>
 <td><code>planning-control-humble-v2.0.0-rc.1</code></td>
-<td>Pre-release tag for testing. Pre-releases do not update latest stable aliases.</td>
+<td>Pre-releases</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>CI build</strong></td>
+<td><code>planning-control-humble-123456789-1</code></td>
+<td>Every CI build (<code>&lt;run_id&gt;-&lt;run_attempt&gt;</code>)</td>
+<td>No</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition note">
-<p class="admonition-title">ROS 2 distributions</p>
-<p>Examples use <strong>Humble</strong> (the current default). <strong>Jazzy</strong> images are published in parallel for most components — substitute <code>-jazzy</code> for <code>-humble</code> in tags (e.g. <code>planning-control-jazzy</code>, <code>planning-control-jazzy-v2.0.0</code>). Some components (e.g. <code>carla-interface</code>) are Humble-only; their tags have no Jazzy equivalent.</p>
-</div>
-<h2 id="cuda-images">CUDA Images<a class="headerlink" href="#cuda-images" title="Permanent link">#</a></h2>
-<p>CUDA-enabled variants follow the same patterns but are <strong>amd64-only</strong>:</p>
-<table>
-<thead>
-<tr>
-<th>Tag Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Stable release</td>
-<td><code>sensing-perception-cuda-humble-v2.0.0</code></td>
-</tr>
-<tr>
-<td>Latest alias</td>
-<td><code>sensing-perception-cuda-humble</code></td>
-</tr>
-</tbody>
-</table>
+<p>The moving aliases also exist with a <code>-latest</code> suffix
+(<code>planning-control-humble-latest</code>, <code>planning-control-latest</code>). Pre-releases
+never update them.</p>
+<p>Examples use <strong>Humble</strong>, the default distro. Jazzy images use
+the same patterns with <code>-jazzy</code> (for example <code>planning-control-jazzy</code>).
+<code>sensing-perception-cuda</code> and <code>carla-interface</code> are amd64-only.</p>
 <h2 id="choosing-a-tag">Choosing a Tag<a class="headerlink" href="#choosing-a-tag" title="Permanent link">#</a></h2>
-<div class="oak-callout">
-<p><strong>Production / reproducible deployments</strong> — Use a stable release tag (<code>vX.Y.Z</code>).</p>
-<p><strong>Development / latest features</strong> — Use a latest stable alias (<code>&lt;target&gt;-&lt;ros_distro&gt;</code>).</p>
-<p><strong>Quick start / deployments</strong> — Use a default ROS distro alias (<code>&lt;target&gt;</code>).</p>
-<p><strong>Never pin to CI development aliases</strong> (<code>*-amd64-*</code>) — Do not use mutable per-platform tags in committed deployment files.</p>
-</div>
-<h3 id="decision-flow">Decision Flow<a class="headerlink" href="#decision-flow" title="Permanent link">#</a></h3>
-<pre class="mermaid"><code>flowchart TD
-    A{Need fully reproducible&lt;br/&gt;deployment?} --&gt;|Yes| B[Use stable release tag&lt;br/&gt;vX.Y.Z]
-    A --&gt;|No| C{Need specific&lt;br/&gt;ROS distro?}
-    C --&gt;|Yes| D[Use latest stable alias&lt;br/&gt;&amp;lt;target&amp;gt;-&amp;lt;ros_distro&amp;gt;]
-    C --&gt;|No| E[Use default alias&lt;br/&gt;&amp;lt;target&amp;gt;]</code></pre>
+<ul>
+<li><strong>Reproducible deployments</strong>: use a release tag (<code>vX.Y.Z</code>) or a digest.</li>
+<li><strong>Latest stable for a distro</strong>: use <code>&lt;target&gt;-&lt;ros_distro&gt;</code>.</li>
+<li><strong>Quick experiments</strong>: use the default alias <code>&lt;target&gt;</code>.</li>
+<li><strong>Never</strong> pin per-platform CI tags such as <code>planning-control-amd64-humble</code>;
+  they move with every build.</li>
+</ul>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">#</a></h2>
-<p>Open AD Kit releases use <a href="https://semver.org/">Semantic Versioning</a>: <code>vMAJOR.MINOR.PATCH</code> (for example, <code>v2.0.0</code>).</p>
+<p>Open AD Kit uses <a href="https://semver.org/">Semantic Versioning</a>
+(<code>vMAJOR.MINOR.PATCH</code>):</p>
 <table>
 <thead>
 <tr>
-<th>Component</th>
+<th>Part</th>
 <th>Increments when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>MAJOR</strong></td>
-<td>A backward-incompatible change to the public deployment surface — image taxonomy, documented compose/deployment layout, or removal of a supported platform/variant.</td>
+<td>A backward-incompatible change to the image set, the documented deployment layout, or a supported platform is removed.</td>
 </tr>
 <tr>
 <td><strong>MINOR</strong></td>
-<td>New backward-compatible capability — additional components, platforms, deployments, or CI/release machinery.</td>
+<td>New backward-compatible capability: components, platforms, deployments, or tooling.</td>
 </tr>
 <tr>
 <td><strong>PATCH</strong></td>
-<td>Backward-compatible fixes — bug fixes, security/CVE remediation, image refreshes, and documentation corrections within the same release surface.</td>
+<td>Backward-compatible fixes: bugs, CVE remediation, image refreshes, and documentation.</td>
 </tr>
 </tbody>
 </table>
-<p>The Open AD Kit version is <strong>independent of the Autoware version</strong> it packages: a single Open AD Kit release pins a specific upstream Autoware release (see below), and a new Autoware release does not automatically change the Open AD Kit version.</p>
-<h2 id="relationship-to-autoware">Relationship to Autoware<a class="headerlink" href="#relationship-to-autoware" title="Permanent link">#</a></h2>
-<p>Each Open AD Kit release pins a specific upstream <strong>Autoware semver meta-release</strong> and records it in the release:</p>
-<ul>
-<li>Stable Open AD Kit releases pin an Autoware <code>X.Y.Z</code> meta-release tag.
-Each release records its pinned Autoware version in the release notes.</li>
-</ul>
-<p>A release pins, at minimum: the Open AD Kit version, the Autoware meta-release, the ROS 2 distro(s), and the published image tags and digests. Published release details are listed on the <a href="../../releases/">Releases</a> page; how the tags are structured is in the <a href="#tag-reference">Tag Reference</a> above.</p>
+<p>The Open AD Kit version is <strong>independent of the Autoware version</strong>. Each release
+pins one upstream Autoware release, the ROS 2 distros, and every image digest,
+and lists them in its
+<a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Release</a>
+notes.</p>
 <h2 id="ros-2-distro-support">ROS 2 Distro Support<a class="headerlink" href="#ros-2-distro-support" title="Permanent link">#</a></h2>
 <table>
 <thead>
 <tr>
 <th>Distro</th>
-<th>Status at v2.0</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Humble</strong></td>
-<td>Default, documented path.</td>
+<td>Default</td>
 </tr>
 <tr>
 <td><strong>Jazzy</strong></td>
-<td>Built and published <strong>in parallel</strong> wherever the <code>amd64</code>+<code>arm64</code> matrix is green.</td>
+<td>Published where required builds, scans and runtime evidence pass</td>
 </tr>
 </tbody>
 </table>
-<p>Each release pins its ROS distro(s), and Humble and Jazzy are built while both matrices are green. Jazzy is promoted to the primary documented path at the first release with a sustained green Jazzy <code>amd64</code>+<code>arm64</code> matrix. Distro support tracks the upstream ROS 2 lifecycle — a distro is supported by Open AD Kit only while it is supported upstream.</p>
+<p>A release bundle carries pinned images for both distros; choose one with
+<code>--ros-distro</code>. A distro is supported only while it is supported upstream.
+Non-exempt runtime cells for each declared distro must also pass the
+<a href="../../releases/evidence/">release evidence gate</a>. The initial default is Humble;
+changing it requires a reviewed manifest change and passing evidence, not an
+automatic release-time fallback. Image builds alone do not prove runtime behavior
+on every architecture.</p>
+<h3 id="ros-package-snapshot">ROS Package Snapshot<a class="headerlink" href="#ros-package-snapshot" title="Permanent link">#</a></h3>
+<p>Every image installs its ROS packages from one dated
+<a href="http://snapshots.ros.org/">ROS snapshot</a>: the one the upstream Autoware images
+of that release were built from. Compiled code and runtime therefore use the
+same ROS versions, and the build fails if they would differ. Release notes and
+the release BOM name the snapshot per distro; an image carries it as a label:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>inspect<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{ index .Config.Labels "org.opencontainers.image.ros-snapshot" }}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>ghcr.io/oguzkaganozt/openadkit:planning-control-humble
+</code></pre></div>
+<p>The snapshot changes only with the upstream Autoware release. Ubuntu packages
+are not pinned, so security updates keep flowing into new builds.</p>
 <h2 id="what-supported-means">What "Supported" Means<a class="headerlink" href="#what-supported-means" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Releases</strong> — The latest stable release is supported. Fixes (including security/CVE remediation) land in a new patch or minor release rather than being backported to older tags. Stable release tags are immutable; see <a href="#choosing-a-tag">Choosing a Tag</a> for pinning guidance.</li>
-<li><strong>Platforms</strong> — Support is tiered (committed / experimental / best-effort / unsupported). A variant that does not pass its build/validation gate is dropped from the support matrix rather than shipped as if it worked. See <a href="../../platforms/">Supported Platforms</a> for the current, honest matrix.</li>
-<li><strong>No certification claims</strong> — "Supported" refers to build, deployment, and validation in a non-certified environment. Open AD Kit makes no safety-certification, functional-safety, or production-readiness claims.</li>
+<li><strong>Releases</strong>: the latest stable release is supported. Fixes, including CVE
+  remediation, ship in a new release; older releases are not patched.</li>
+<li><strong>Platforms</strong>: support is tiered (committed, experimental, best-effort,
+  unsupported). See <a href="../../platforms/">Supported Platforms</a>.</li>
+<li><strong>No certification claims</strong>: Open AD Kit makes no safety-certification,
+   functional-safety, or production-readiness claims.</li>
 </ul>
-<h2 id="how-releases-are-tagged">How Releases Are Tagged<a class="headerlink" href="#how-releases-are-tagged" title="Permanent link">#</a></h2>
-<p>Releases are promoted from existing CI builds rather than rebuilt at release time, so the exact images validated during CI are the images that ship. When a release workflow runs, each tag alias is created independently from the promoted image digest:</p>
-<table>
-<thead>
-<tr>
-<th>Alias</th>
-<th>Example</th>
-<th>Condition</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Stable release</td>
-<td><code>planning-control-humble-v2.0.0</code></td>
-<td>Always created</td>
-</tr>
-<tr>
-<td>Latest per-distro</td>
-<td><code>planning-control-humble</code></td>
-<td>Stable releases only</td>
-</tr>
-<tr>
-<td>Latest per-distro + suffix</td>
-<td><code>planning-control-humble-latest</code></td>
-<td>Stable releases only</td>
-</tr>
-<tr>
-<td>Default distro alias</td>
-<td><code>planning-control</code></td>
-<td>Stable releases, only for the default ROS distro</td>
-</tr>
-<tr>
-<td>Default distro + suffix</td>
-<td><code>planning-control-latest</code></td>
-<td>Stable releases, only for the default ROS distro</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition info">
-<p class="admonition-title">Pre-Releases</p>
-<p>Pre-release tags (e.g., <code>-rc.1</code>) are published but <strong>do not update</strong> latest stable aliases. This prevents prerelease images from being pulled by default aliases.</p>
-</div>
-<p>Maintainer workflow steps are documented in the <a href="../../development/build-from-source/#release-process">Release Process</a>.</p>
-<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
-<ul>
-<li><a href="../">Quickstart</a> — Environment setup and first deployment</li>
-<li><a href="../../releases/">Releases</a> — Published release details</li>
-<li><a href="../../development/build-from-source/">Build from Source</a> — Building images locally</li>
-<li><a href="../troubleshooting/">Troubleshooting</a> — Common issues</li>
-</ul>
+<p>Community help and version coverage are described in
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/SUPPORT.md">SUPPORT.md</a>;
+report security vulnerabilities through the
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/SECURITY.md">private reporting policy</a>.</p>
+<p>Maintainers: see the <a href="../../development/build-from-source/#release-process">Release Process</a>.</p>
 
 
 
@@ -2680,7 +2386,7 @@ Each release records its pinned Autoware version in the release notes.</li>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Quickstart">
+          <a href="../cli/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CLI &amp; Maintenance">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2690,7 +2396,7 @@ Each release records its pinned Autoware version in the release notes.</li>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Quickstart
+                CLI & Maintenance
               </div>
             </div>
           </a>
@@ -2747,7 +2453,7 @@ Each release records its pinned Autoware version in the release notes.</li>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["announce.dismiss", "content.action.edit", "content.code.annotate", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A modular, container-based distribution of Autoware for building autonomous driving systems — from development laptops to vehicle edge deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
       
       
       
@@ -23,15 +23,15 @@
       
       
       <link rel="icon" href="../../assets/images/autoware-foundation.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>AutoSD + Open AD Kit - Open AD Kit</title>
+        <title>AutoSD - Open AD Kit</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -54,8 +54,6 @@
     
     
       <link rel="stylesheet" href="../../assets/css/extra.css">
-    
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -82,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#autosd-open-ad-kit" class="md-skip">
+        <a href="#autosd" class="md-skip">
           Skip to content
         </a>
       
@@ -99,7 +97,8 @@
             
             
   <a href="../../getting-started/">
-    <span aria-hidden="true">🚀</span> New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
+    <svg class="oak-banner-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+    New here? Follow the <strong>Getting Started</strong> guide to run your first deployment
   </a>
 
           </div>
@@ -136,7 +135,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              AutoSD + Open AD Kit
+              AutoSD
             
           </span>
         </div>
@@ -289,13 +288,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../deployment/" class="md-tabs__link">
+        <a href="../../deployments/" class="md-tabs__link">
           
   
   
     
   
-  Deployment
+  Deployments
 
         </a>
       </li>
@@ -385,30 +384,11 @@
   
     
   
-  Releases
+  Releases & Roadmap
 
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -585,6 +565,8 @@
       
         
       
+        
+      
     
     
     
@@ -648,6 +630,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../getting-started/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI & Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../getting-started/container-images/" class="md-nav__link">
         
   
@@ -655,7 +665,7 @@
   <span class="md-ellipsis">
     
   
-    Images & Versioning
+    Container Images & Versioning
   
 
     
@@ -729,6 +739,8 @@
       
         
       
+        
+      
     
     
     
@@ -748,14 +760,14 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/" class="md-nav__link ">
+            <a href="../../deployments/" class="md-nav__link ">
               
   
   
   <span class="md-ellipsis">
     
   
-    Deployment
+    Deployments
   
 
     
@@ -777,7 +789,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deployment
+    Deployments
   
 
           </label>
@@ -817,7 +829,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/planning-simulation/" class="md-nav__link ">
+            <a href="../../deployments/planning-simulation/" class="md-nav__link ">
               
   
   
@@ -889,7 +901,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/scenario-simulation/" class="md-nav__link ">
+            <a href="../../deployments/scenario-simulation/" class="md-nav__link ">
               
   
   
@@ -961,7 +973,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/logging-simulation/" class="md-nav__link ">
+            <a href="../../deployments/logging-simulation/" class="md-nav__link ">
               
   
   
@@ -1033,7 +1045,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/carla-simulation/" class="md-nav__link ">
+            <a href="../../deployments/carla-simulation/" class="md-nav__link ">
               
   
   
@@ -1079,40 +1091,15 @@
   
   
   
-    
-    
-      
+    <li class="md-nav__item">
+      <a href="../../deployments/split-host/" class="md-nav__link">
         
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../deployment/zenoh-bridge/" class="md-nav__link ">
-              
   
   
   <span class="md-ellipsis">
     
   
-    Zenoh Bridge
+    Split-host simulation
   
 
     
@@ -1120,26 +1107,7 @@
   
   
 
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Zenoh Bridge
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
+      </a>
     </li>
   
 
@@ -1152,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment/custom-deployment/" class="md-nav__link">
+      <a href="../../deployments/custom-deployment/" class="md-nav__link">
         
   
   
@@ -1160,6 +1128,34 @@
     
   
     Custom Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployments/integrator-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrator Guide
   
 
     
@@ -1191,22 +1187,6 @@
       
         
           
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
         
       
     
@@ -1245,11 +1225,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
@@ -1263,230 +1238,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/sensing-perception/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sensing & Perception
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/localization-mapping/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Localization & Mapping
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/planning-control/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning & Control
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/vehicle-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Vehicle and System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/simulator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simulator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/visualizer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Visualizer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../components/carla-interface/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CARLA Interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
           </ul>
@@ -1902,6 +1653,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2014,6 +1769,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/evidence-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RFC 0001: Toolchain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2032,6 +1843,10 @@
       
         
           
+        
+      
+        
+      
         
       
     
@@ -2060,7 +1875,7 @@
   <span class="md-ellipsis">
     
   
-    Releases
+    Releases & Roadmap
   
 
     
@@ -2070,6 +1885,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
@@ -2077,7 +1897,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Releases
+    Releases & Roadmap
   
 
           </label>
@@ -2085,28 +1905,21 @@
             
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../../roadmap/" class="md-nav__link">
+      <a href="../../releases/evidence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Roadmap
+    Evidence Policy
   
 
     
@@ -2115,6 +1928,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify a Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2148,124 +1997,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-autosd" class="md-nav__link">
+  <a href="#in-this-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What is AutoSD?
+        In This Repository
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-features-for-autonomous-driving" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features for Autonomous Driving
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key Features for Autonomous Driving">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mixed-criticality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mixed Criticality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#atomic-updates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Atomic Updates
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#real-time-kernel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Real-Time Kernel
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#container-native" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Container-Native
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#folder-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Folder Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Requirements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-the-container-script-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using the Container Script (Recommended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#running-automotive-image-builder-on-the-host" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running Automotive Image Builder on the Host
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2273,7 +2011,7 @@
   <a href="#building-an-autosd-image" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Building an AutoSD Image
+        Build an Image
       
     </span>
   </a>
@@ -2281,32 +2019,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-image" class="md-nav__link">
+  <a href="#run-the-image" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running the Image
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture-on-autosd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture on AutoSD
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
+        Run the Image
       
     </span>
   </a>
@@ -2338,146 +2054,77 @@
   
 
 
-<h1 id="autosd-open-ad-kit">AutoSD + Open AD Kit<a class="headerlink" href="#autosd-open-ad-kit" title="Permanent link">#</a></h1>
-<div class="admonition abstract">
-<p>AutoSD is the upstream binary distribution serving as the public, in-development preview of the <strong>Red Hat In-Vehicle Operating System (RHIVOS)</strong>. It brings cloud-native, container-first principles to automotive edge computing with an emphasis on safety, security, and deterministic behavior.</p>
-</div>
-<h2 id="what-is-autosd">What is AutoSD?<a class="headerlink" href="#what-is-autosd" title="Permanent link">#</a></h2>
-<p>AutoSD is built on <strong>CentOS Stream</strong> with an automotive-specific kernel (<code>kernel-automotive</code>) and is the upstream, in-development preview of Red Hat's commercial <strong>In-Vehicle OS (RHIVOS)</strong>, which Red Hat positions for functional-safety use. It is the platform-specific deployment path for Open AD Kit in this repository.</p>
-<h2 id="key-features-for-autonomous-driving">Key Features for Autonomous Driving<a class="headerlink" href="#key-features-for-autonomous-driving" title="Permanent link">#</a></h2>
-<div class="oak-card-grid">
-<div class="oak-card">
-<p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m10 17-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9m-6-8L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/></svg></span></p>
-<h3 id="mixed-criticality">Mixed Criticality<a class="headerlink" href="#mixed-criticality" title="Permanent link">#</a></h3>
-<p>Separates safety-critical containers in the root partition from non-critical workloads in the QM partition using systemd, Eclipse BlueChi, and QM.</p>
-</div>
-<div class="oak-card">
-<p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.68 6h-1.36L7 16h2l.73-2h4.54l.73 2h2zm-2.38 6.5L12 8l1.7 4.5zm7.1 7.9L19 22h-5v-5l2 2c2.39-1.39 4-4.05 4-7 0-4.41-3.59-8-8-8s-8 3.59-8 8c0 2.95 1.61 5.53 4 6.92v2.24C4.47 19.61 2 16.1 2 12 2 6.5 6.5 2 12 2s10 4.5 10 10c0 3.53-1.83 6.62-4.6 8.4"/></svg></span></p>
-<h3 id="atomic-updates">Atomic Updates<a class="headerlink" href="#atomic-updates" title="Permanent link">#</a></h3>
-<p>Immutable system images with OSTree and composefs enable A/B updates, rollback, and tamper-proofing. Bootc brings container-native OS lifecycle management.</p>
-</div>
-<div class="oak-card">
-<p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 4a8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8 8 8 0 0 1 8-8m0 2a6 6 0 0 0-6 6 6 6 0 0 0 6 6 6 6 0 0 0 6-6 6 6 0 0 0-6-6m-1 2h1.5v3.78l2.33 2.33-1.06 1.06L14 12.4zM2 18a1 1 0 0 1-1-1 1 1 0 0 1 1-1h3.83c.31.71.71 1.38 1.17 2zm1-5a1 1 0 0 1-1-1 1 1 0 0 1 1-1h2.05L5 12l.05 1zm1-5a1 1 0 0 1-1-1 1 1 0 0 1 1-1h3c-.46.62-.86 1.29-1.17 2z"/></svg></span></p>
-<h3 id="real-time-kernel">Real-Time Kernel<a class="headerlink" href="#real-time-kernel" title="Permanent link">#</a></h3>
-<p>RT-optimized automotive kernel with deterministic scheduling for time-critical autonomous driving functions.</p>
-</div>
-<div class="oak-card">
-<p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.81 10.25c-.06-.04-.56-.43-1.64-.43-.28 0-.56.03-.84.08-.21-1.4-1.38-2.11-1.43-2.14l-.29-.17-.18.27c-.24.36-.43.77-.51 1.19-.2.8-.08 1.56.33 2.21-.49.28-1.29.35-1.46.35H2.62c-.34 0-.62.28-.62.63 0 1.15.18 2.3.58 3.38.45 1.19 1.13 2.07 2 2.61.98.6 2.59.94 4.42.94.79 0 1.61-.07 2.42-.22 1.12-.2 2.2-.59 3.19-1.16A8.3 8.3 0 0 0 16.78 16c1.05-1.17 1.67-2.5 2.12-3.65h.19c1.14 0 1.85-.46 2.24-.85.26-.24.45-.53.59-.87l.08-.24zm-17.96.99h1.76c.08 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16H3.85c-.09 0-.16.07-.16.16v1.58c.01.09.07.16.16.16m2.43 0h1.76c.08 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16H6.28c-.09 0-.16.07-.16.16v1.58c.01.09.07.16.16.16m2.47 0h1.75c.1 0 .17-.07.17-.16V9.5c0-.08-.06-.16-.17-.16H8.75c-.08 0-.15.07-.15.16v1.58c0 .09.06.16.15.16m2.44 0h1.77c.08 0 .15-.07.15-.16V9.5c0-.08-.06-.16-.15-.16h-1.77c-.08 0-.15.07-.15.16v1.58c0 .09.07.16.15.16M6.28 9h1.76c.08 0 .16-.09.16-.18V7.25c0-.09-.07-.16-.16-.16H6.28c-.09 0-.16.06-.16.16v1.57c.01.09.07.18.16.18m2.47 0h1.75c.1 0 .17-.09.17-.18V7.25c0-.09-.06-.16-.17-.16H8.75c-.08 0-.15.06-.15.16v1.57c0 .09.06.18.15.18m2.44 0h1.77c.08 0 .15-.09.15-.18V7.25c0-.09-.07-.16-.15-.16h-1.77c-.08 0-.15.06-.15.16v1.57c0 .09.07.18.15.18m0-2.28h1.77c.08 0 .15-.07.15-.16V5c0-.1-.07-.17-.15-.17h-1.77c-.08 0-.15.06-.15.17v1.56c0 .08.07.16.15.16m2.46 4.52h1.76c.09 0 .16-.07.16-.16V9.5c0-.08-.07-.16-.16-.16h-1.76c-.08 0-.15.07-.15.16v1.58c0 .09.07.16.15.16"/></svg></span></p>
-<h3 id="container-native">Container-Native<a class="headerlink" href="#container-native" title="Permanent link">#</a></h3>
-<p>Built around Podman, Quadlet (systemd container units), and BlueChi orchestration. No Docker daemon required.</p>
-</div>
-</div>
-<h2 id="folder-structure">Folder Structure<a class="headerlink" href="#folder-structure" title="Permanent link">#</a></h2>
-<p>This folder contains a per-use-case structure for deploying and running Open AD Kit on AutoSD. Each folder contains at least:</p>
+<h1 id="autosd">AutoSD<a class="headerlink" href="#autosd" title="Permanent link">#</a></h1>
+<p>AutoSD (Automotive Stream Distribution) is the public, in-development preview of
+<strong>Red Hat In-Vehicle OS</strong>. It is built on CentOS Stream with an automotive
+kernel and provides:</p>
 <ul>
-<li><strong>Quadlet files</strong> to define containerized services managed by Podman and systemd</li>
-<li><strong>Automotive Image Builder files</strong> to build an AutoSD image</li>
+<li><strong>Mixed criticality</strong>: safety-critical containers in the root partition,
+  non-critical ones in an isolated QM partition</li>
+<li><strong>Atomic updates</strong>: immutable OSTree images with A/B updates and rollback</li>
+<li><strong>Real-time kernel</strong> for deterministic scheduling</li>
+<li><strong>Container-native runtime</strong>: Podman, Quadlet (systemd container units), and
+  BlueChi orchestration, with no Docker daemon</li>
 </ul>
-<p>Build and running instructions on this page apply to any use-case subfolder.</p>
+<h2 id="in-this-repository">In This Repository<a class="headerlink" href="#in-this-repository" title="Permanent link">#</a></h2>
+<p>AutoSD assets live under
+<a href="https://github.com/autowarefoundation/openadkit/tree/main/platforms/autosd"><code>platforms/autosd/</code></a>.
+Each use case contains Quadlet files for its services and Automotive Image
+Builder files for its OS image.</p>
 <ul>
-<li><a href="planning-simulator/">Planning Simulator</a>: Run planning and simulator services in containers (pre-built)</li>
+<li><a href="planning-simulator/">Planning Simulator</a>: Autoware planning and
+  Scenario Simulator under Podman and Quadlet</li>
+<li><a href="https://github.com/autowarefoundation/openadkit/tree/main/platforms/autosd/x5h">R-Car X5H</a>:
+  AutoSD 10 image for the R-Car X5H board, tested in QEMU before board bring-up</li>
 </ul>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
-<h3 id="using-the-container-script-recommended">Using the Container Script (Recommended)<a class="headerlink" href="#using-the-container-script-recommended" title="Permanent link">#</a></h3>
-<ul>
-<li>Docker or Podman</li>
-<li>QEMU</li>
-</ul>
-<h3 id="running-automotive-image-builder-on-the-host">Running Automotive Image Builder on the Host<a class="headerlink" href="#running-automotive-image-builder-on-the-host" title="Permanent link">#</a></h3>
-<ul>
-<li>RPM-based Linux distribution (Fedora, CentOS, or RHEL)</li>
-<li>Automotive Image Builder</li>
-<li>OSBuild</li>
-<li>QEMU</li>
-</ul>
-<h2 id="building-an-autosd-image">Building an AutoSD Image<a class="headerlink" href="#building-an-autosd-image" title="Permanent link">#</a></h2>
-<p>This section guides you through running <code>automotive-image-builder</code> from a container. Commands assume you are inside one of the sub-directories of this folder.</p>
-<p>First, download the runner script:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-L<span class="w"> </span>-o<span class="w"> </span>auto-image-builder.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s2">&quot;https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/raw/main/auto-image-builder.sh?ref_type=heads&quot;</span>
+<div class="admonition note">
+<p class="admonition-title">Current scope</p>
+<p>These are platform demos. They run upstream Autoware images, not the modular
+Open AD Kit component images. Mapping the components onto AutoSD's
+root and QM partitions is on the <a href="../../releases/">roadmap</a>.</p>
+</div>
+<h2 id="building-an-autosd-image">Build an Image<a class="headerlink" href="#building-an-autosd-image" title="Permanent link">#</a></h2>
+<p>You need Docker or Podman and QEMU. Run these commands from a use-case directory
+such as <code>platforms/autosd/planning-simulator/</code>.</p>
+<p>Download the Automotive Image Builder runner and build its container:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>-o<span class="w"> </span>auto-image-builder.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/raw/main/auto-image-builder.sh?ref_type=heads"</span>
+chmod<span class="w"> </span>+x<span class="w"> </span>auto-image-builder.sh
+sudo<span class="w"> </span>bash<span class="w"> </span>./auto-image-builder.sh<span class="w"> </span>build-builder<span class="w"> </span>--distro<span class="w"> </span>autosd10-sig
 </code></pre></div>
-<p>Now build an image (requires sudo/root):</p>
+<p>Build the image. The arguments are the manifest, the container image name, and
+the disk image to write:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>bash<span class="w"> </span>./auto-image-builder.sh<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--distro<span class="w"> </span>autosd9<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--mode<span class="w"> </span>image<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--distro<span class="w"> </span>autosd10-sig<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--target<span class="w"> </span>qemu<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--export<span class="w"> </span>qcow2<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--define-file<span class="w"> </span>aib/vars.yml<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>aib/image.aib.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>localhost/awf-oak:latest<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>disk.qcow2
+sudo<span class="w"> </span>chown<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>logname<span class="k">)</span><span class="s2">"</span><span class="w"> </span>disk.qcow2
 </code></pre></div>
-<p>You may want to change the owner of <code>disk.qcow2</code>:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>chown<span class="w"> </span><span class="k">$(</span>logname<span class="k">)</span><span class="w"> </span>disk.qcow2
+<p>To run Automotive Image Builder directly instead, use an RPM-based host (Fedora,
+CentOS, or RHEL) with Automotive Image Builder, OSBuild, and QEMU installed.</p>
+<h2 id="run-the-image">Run the Image<a class="headerlink" href="#run-the-image" title="Permanent link">#</a></h2>
+<p>With <code>air</code> installed:</p>
+<div class="highlight"><pre><span></span><code>air<span class="w"> </span>disk.qcow2
 </code></pre></div>
-<p>You can now use QEMU to run the image from a mounted QEMU disk.</p>
-<h2 id="running-the-image">Running the Image<a class="headerlink" href="#running-the-image" title="Permanent link">#</a></h2>
-<p>If you have <code>automotive-image-runner</code> available:</p>
-<div class="highlight"><pre><span></span><code>automotive-image-runner<span class="w"> </span>--nographic<span class="w"> </span>disk.qcow2
-</code></pre></div>
-<p>Otherwise, use the following example QEMU command:</p>
+<p>Or with QEMU directly:</p>
 <div class="highlight"><pre><span></span><code>/usr/bin/qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span>/usr/share/OVMF/OVMF_CODE.fd,if<span class="o">=</span>pflash,format<span class="o">=</span>raw,unit<span class="o">=</span><span class="m">0</span>,readonly<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span>/usr/share/OVMF/OVMF_VARS.fd,if<span class="o">=</span>pflash,format<span class="o">=</span>raw,unit<span class="o">=</span><span class="m">1</span>,snapshot<span class="o">=</span>on,readonly<span class="o">=</span>off<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-smp<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-nographic<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-enable-kvm<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-m<span class="w"> </span>2G<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span><span class="m">16384</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-machine<span class="w"> </span>q35<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-cpu<span class="w"> </span>host<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-device<span class="w"> </span>virtio-net-pci,netdev<span class="o">=</span>n0,mac<span class="o">=</span>FE:00:e2:0d:ba:4d<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-netdev<span class="w"> </span>user,id<span class="o">=</span>n0,net<span class="o">=</span><span class="m">10</span>.0.2.0/24,hostfwd<span class="o">=</span>tcp::2222-:22<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span>disk.qcow2,index<span class="o">=</span><span class="m">0</span>,media<span class="o">=</span>disk,format<span class="o">=</span>qcow2,if<span class="o">=</span>virtio,id<span class="o">=</span>rootdisk,snapshot<span class="o">=</span>off
 </code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Memory sizing</p>
-<p>The <code>-m 2G</code> value above is only enough to boot and explore the AutoSD OS image. Running the full Open AD Kit stack requires considerably more — see the <a href="../hardware/">hardware requirements</a> (16 GB minimum, 32 GB recommended) and raise <code>-m</code> accordingly. A concrete starting point is <code>-m 16384</code> (16 GB); for heavier workloads use <code>-m 32768</code> (32 GB).</p>
-</div>
-<h2 id="architecture-on-autosd">Architecture on AutoSD<a class="headerlink" href="#architecture-on-autosd" title="Permanent link">#</a></h2>
-<p>AutoSD's mixed-criticality architecture maps naturally to Open AD Kit's component model:</p>
-<div class="oak-component-grid">
-
-<div class="oak-component-item">
-<strong>Root Partition</strong>
-<span>Open AD Kit components with higher criticality assumptions (planning, control, vehicle interface) map to the privileged root partition with RT scheduling.</span>
-</div>
-
-<div class="oak-component-item">
-<strong>QM Partition</strong>
-<span>Non-critical components (visualizer, simulator, development tools) are isolated in the QM partition for safety containment.</span>
-</div>
-
-<div class="oak-component-item">
-<strong>OSTree / Bootc</strong>
-<span>Atomic, rollback-capable updates. The entire OS is versioned and updated as a unit, matching Open AD Kit's container-native philosophy.</span>
-</div>
-
-<div class="oak-component-item">
-<strong>BlueChi + Quadlet</strong>
-<span>Container orchestration via systemd units. Each Open AD Kit component maps to a Quadlet service file managed by systemd (BlueChi is available for multi-host orchestration on production deployments).</span>
-</div>
-
-</div>
-
-<pre class="mermaid"><code>flowchart TB
-    subgraph Root["Root Partition (Safety-Critical)"]
-        R1[Planning]
-        R2[Control]
-        R3[Vehicle System]
-    end
-
-    subgraph QM["QM Partition (Non-Critical)"]
-        Q1[Visualizer]
-        Q2[Simulator]
-    end
-
-    OSTree[OSTree / Bootc&lt;br/&gt;Atomic Updates] --&gt; Root
-    OSTree --&gt; QM</code></pre>
-<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">#</a></h2>
-<ul>
-<li><a href="https://sigs.centos.org/automotive/latest/">CentOS Automotive SIG Documentation</a></li>
-<li><a href="https://sigs.centos.org/automotive/latest/features-and-concepts/">AutoSD Features and Concepts</a></li>
-<li><a href="../">Supported Platforms overview</a></li>
-</ul>
+<p><code>-m 16384</code> (16 GB) is the minimum for the Autoware stack; use <code>-m 32768</code> for
+heavier workloads. <code>-m 2G</code> is enough only to boot and explore the OS.</p>
 
 
 
@@ -2532,13 +2179,13 @@
         
         
           
-          <a href="planning-simulator/" class="md-footer__link md-footer__link--next" aria-label="Next: AutoSD + Planning + Simulator">
+          <a href="planning-simulator/" class="md-footer__link md-footer__link--next" aria-label="Next: AutoSD Planning Simulator">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                AutoSD + Planning + Simulator
+                AutoSD Planning Simulator
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2582,7 +2229,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["announce.dismiss", "content.action.edit", "content.code.annotate", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
