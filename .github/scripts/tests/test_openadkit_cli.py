@@ -603,6 +603,16 @@ def test_failed_post_exchange_verification_never_cleans_displaced_data(tmp_path,
     assert (staged / "dataset/user-file").read_text() == "keep"
 
 
+def test_data_destinations_follow_the_settings_they_build_on(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    resource = {"name": "models", "destinationEnv": "MODEL_PATH"}
+    environment = {"DATA_PATH": "$HOME/data", "MODEL_PATH": "${DATA_PATH}/models"}
+    selection = cli_manifest.Selection("humble", False, None, {}, environment)
+    assert cli_data.resolve_destination(resource, selection) == tmp_path / "data/models"
+    moved = cli_manifest.Selection("humble", False, None, {}, {**environment, "DATA_PATH": "/srv/data"})
+    assert cli_data.resolve_destination(resource, moved) == Path("/srv/data/models")
+
+
 @pytest.mark.skipif(os.geteuid() == 0, reason="every link a root test creates is root-owned")
 def test_data_paths_reject_user_symlinks_but_trust_host_layout(tmp_path):
     (tmp_path / "real").mkdir()
