@@ -61,9 +61,14 @@ networking, so adding a `ports:` mapping to `docker-compose.yaml` has no effect.
 ### ROS 2 nodes on another machine cannot see the stack
 
 DDS stays on loopback by default. To reach other hosts, set
-`CYCLONEDDS_NETWORK_INTERFACE` in `deployments/shared/runtime.env` to the exact
-LAN or VPN interface name. `ROS_DOMAIN_ID` separates traffic but provides no
-authentication or encryption.
+`CYCLONEDDS_NETWORK_INTERFACE` to the exact LAN or VPN interface name in your
+[host settings file](cli.md) (`~/.config/openadkit/<deployment>.env`):
+
+```bash
+CYCLONEDDS_NETWORK_INTERFACE=eth0
+```
+
+`ROS_DOMAIN_ID` separates traffic but provides no authentication or encryption.
 
 ## Getting Help
 
