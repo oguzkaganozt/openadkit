@@ -107,7 +107,7 @@ and each container creates its own self-signed certificate at startup.
 
 | Variable | Default | Values | Description |
 |----------|---------|--------|-------------|
-| `RVIZ_CONFIG` | <code>/opt/<wbr>autoware/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz2 configuration inside the container |
+| `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz2 configuration inside the container; the default is the copy with config overrides applied |
 | `REMOTE_DISPLAY` | `true` | `true`, `false` | Use browser-based RViz2; `false` launches a local display |
 | `REMOTE_PASSWORD` | — | String | Required when `REMOTE_DISPLAY=true` |
 | `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address; bridge networking uses `0.0.0.0` with a host loopback port mapping |
