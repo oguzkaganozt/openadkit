@@ -16,9 +16,12 @@ esac
 image=${DEVEL_IMAGE:-ghcr.io/autowarefoundation/openadkit-common:universe-common-devel-${arch}-${distro}}
 workspace=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
+# The image compiles through ccache with CCACHE_DIR in the aw home, which only
+# uid 1000 can write; keep the cache in the container's own /tmp instead.
 docker run --rm \
     --user "$(id -u):$(id -g)" \
     --env HOME=/tmp \
+    --env CCACHE_DIR=/tmp/ccache \
     --volume "${workspace}:/overlay_ws" \
     --workdir /overlay_ws \
     --entrypoint bash \
