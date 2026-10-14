@@ -36,6 +36,9 @@ def main():
 
     log_path = Path(args.log)
     log = log_path.read_text(errors="replace") if log_path.exists() else ""
+    # The interpreter colors its verdict ("\x1b[32mPassed\x1b[0m"), which hides
+    # the word boundary from \b; count the plain text.
+    log = re.sub(r"\x1b\[[0-9;]*m", "", log)
     runs = len(re.findall(r"Run sample", log))
     log_passed = len(re.findall(r"\bPassed\b", log))
     timeouts = len(re.findall(r"Timeout: The simulation", log))

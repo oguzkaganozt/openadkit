@@ -143,3 +143,17 @@ destination = Path(sys.argv[sys.argv.index('--dir') + 1])
     cell_steps = jobs["cell"]["steps"]
     install = next(i for i, s in enumerate(cell_steps) if s.get("run") == "bash .github/scripts/install-compose.sh")
     assert install < next(i for i, s in enumerate(cell_steps) if s["name"] == "Run evidence cell")
+
+
+def test_scenario_metrics_count_colored_verdicts(tmp_path):
+    # The interpreter colors "Passed"; a colored verdict must still count.
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out/result.junit.xml").write_text('<testsuites><testsuite><testcase name="sample"/></testsuite></testsuites>')
+    (tmp_path / "scenario.log").write_text(
+        "[scenario_test_runner.py-1] Run sample.xosc (1 of 1)\n"
+        "[openscenario_interpreter_node-3] [INFO] [simulation.openscenario_interpreter]: \x1b[32mPassed\x1b[0m\n")
+    result = subprocess.run([sys.executable, str(ROOT / ".github/scripts/evidence/scenario_metrics.py"),
+                             "--output-dir", str(tmp_path / "out"), "--log", str(tmp_path / "scenario.log"),
+                             "--json", str(tmp_path / "metrics.json")], capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout
+    assert json.loads((tmp_path / "metrics.json").read_text())["log_passed"] == 1
