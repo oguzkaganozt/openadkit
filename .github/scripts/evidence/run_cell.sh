@@ -231,6 +231,7 @@ if [ "${l1_ok}" = true ]; then
                             -e ROS_DOMAIN_ID=2 \
                             -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
                             -e CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml \
+                            -e CYCLONEDDS_NETWORK_INTERFACE=lo \
                             -e "ROS_DISTRO=${distro}" \
                             -v "${PWD}/deployments/shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro" \
                             --entrypoint bash "${image}" -c \
