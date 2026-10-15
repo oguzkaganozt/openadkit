@@ -97,9 +97,9 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
       --dependency-types=exec && \
     rm -rf /tmp/autoware
 
-# Refresh the security packages that the pinned upstream base image may lag
-# on. Kept as the last step of the stage so a per-build SECURITY_REFRESH
-# change only re-runs this layer, not the acados and colcon layers above.
+# Apply Ubuntu's updates the pinned upstream base image lags on
+# (components/shared/security-refresh.sh). Kept as the last step of the stage
+# so a per-build SECURITY_REFRESH change only re-runs this layer.
 ARG SECURITY_REFRESH=0
 RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/security-refresh.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
@@ -157,19 +157,19 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --skip-keys "${internal_packages}" && \
     bash /tmp/runtime-cleanup.sh
 
-# Fail when a compiled binary cannot load its libraries in this image
-# (components/shared/check-linked-libs.sh).
-RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
-    bash /tmp/check-linked-libs.sh
-
-# Same refresh as the devel stage, as the final layer: a per-build
-# SECURITY_REFRESH change only re-runs this step.
+# Same refresh as the devel stage: a per-build SECURITY_REFRESH change only
+# re-runs this step and the check after it.
 ARG SECURITY_REFRESH=0
 RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/security-refresh.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     echo "openadkit security refresh ${SECURITY_REFRESH}" && \
     bash /tmp/security-refresh.sh
+
+# Fail when a compiled binary cannot load its libraries in this image, after
+# the refresh (components/shared/check-linked-libs.sh).
+RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
+    bash /tmp/check-linked-libs.sh
 
 # Integrator layer (components/shared/entrypoint): on every start, layer config overrides
 # and the overlay workspace on top of Autoware, after the upstream entrypoint
