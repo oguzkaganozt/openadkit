@@ -41,8 +41,10 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 # Install acados (BLASFEO + HPIPM + acados) via the upstream ansible playbook.
 # Must run as ${USERNAME} because the playbook uses pipx in the aw user directory.
 # The acados venv only generates solver code during colcon builds; nothing
-# installs into it afterwards, so it keeps no pip. pipx then drops ansible and
-# the developer tools inherited from core-devel (pre-commit, clang-format).
+# installs into it afterwards, so it keeps no pip. pipx then drops ansible, the
+# developer tools inherited from core-devel (pre-commit, clang-format) and its
+# shared pip, which uninstall-all keeps (~/.local/pipx on Humble,
+# ~/.local/share/pipx on Jazzy).
 USER ${USERNAME}
 RUN --mount=type=bind,source=autoware/ansible-galaxy-requirements.yaml,target=/tmp/ansible/ansible-galaxy-requirements.yaml \
     --mount=type=bind,source=autoware/ansible,target=/tmp/ansible/ansible \
@@ -56,7 +58,8 @@ RUN --mount=type=bind,source=autoware/ansible-galaxy-requirements.yaml,target=/t
       -e "rosdistro=${ROS_DISTRO}" && \
     sudo rm -rf /opt/acados/.git /opt/acados/examples /opt/acados/docs /opt/acados/test && \
     sudo /opt/acados/.venv/bin/python -m pip uninstall -y pip && \
-    pipx uninstall-all
+    pipx uninstall-all && \
+    rm -rf /home/aw/.local/pipx /home/aw/.local/share/pipx
 USER root
 
 ENV CMAKE_PREFIX_PATH="/opt/acados${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
