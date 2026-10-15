@@ -2427,6 +2427,10 @@ issue.</p>
   selects the Autoware release to build; the workflow's <code>autoware_ref</code> input
   overrides it. The ROS snapshots in <code>components/docker-bake.hcl</code> must belong
   to the same release.</li>
+<li><strong><code>vars.RUNNER_AMD64</code></strong> and <strong><code>vars.RUNNER_ARM64</code></strong> optionally move the build,
+  scan and evidence jobs to larger runners (for example
+  <code>ubicloud-standard-8-ubuntu-2204</code> and <code>ubicloud-standard-8-arm-ubuntu-2204</code>).
+  Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.</li>
 <li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-common</code>, and
   <code>openadkit-buildcache</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
 <li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
