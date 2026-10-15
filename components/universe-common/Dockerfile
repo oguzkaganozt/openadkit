@@ -40,6 +40,9 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 
 # Install acados (BLASFEO + HPIPM + acados) via the upstream ansible playbook.
 # Must run as ${USERNAME} because the playbook uses pipx in the aw user directory.
+# The acados venv only generates solver code during colcon builds; nothing
+# installs into it afterwards, so it keeps no pip. pipx then drops ansible and
+# the developer tools inherited from core-devel (pre-commit, clang-format).
 USER ${USERNAME}
 RUN --mount=type=bind,source=autoware/ansible-galaxy-requirements.yaml,target=/tmp/ansible/ansible-galaxy-requirements.yaml \
     --mount=type=bind,source=autoware/ansible,target=/tmp/ansible/ansible \
@@ -52,7 +55,8 @@ RUN --mount=type=bind,source=autoware/ansible-galaxy-requirements.yaml,target=/t
       --tags acados \
       -e "rosdistro=${ROS_DISTRO}" && \
     sudo rm -rf /opt/acados/.git /opt/acados/examples /opt/acados/docs /opt/acados/test && \
-    pipx uninstall ansible
+    sudo /opt/acados/.venv/bin/python -m pip uninstall -y pip && \
+    pipx uninstall-all
 USER root
 
 ENV CMAKE_PREFIX_PATH="/opt/acados${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
@@ -129,16 +133,17 @@ RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snap
 
 # ${BASE_IMAGE} has no /opt/autoware. Copy the tree into place; cp -a src/. dest/
 # would require dest to exist, and if dest later appears this must not nest.
-RUN --mount=from=universe-common-devel,source=/opt/acados,target=/mnt/acados \
+# Of acados, the compiled tree only links its shared libraries; its sources,
+# build tree and code-generation venv stay in the devel image.
+RUN --mount=from=universe-common-devel,source=/opt/acados/lib,target=/mnt/acados-lib \
     --mount=from=universe-common-devel,source=/opt/autoware,target=/mnt/autoware \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
-    cp -a /mnt/acados /opt/acados && \
+    mkdir /opt/acados && \
+    cp -a /mnt/acados-lib /opt/acados/lib && \
     cp -a /mnt/autoware /opt/autoware && \
     find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
     bash /tmp/runtime-cleanup.sh opt
 
-ENV CMAKE_PREFIX_PATH="/opt/acados${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-ENV ACADOS_SOURCE_DIR="/opt/acados"
 ENV LD_LIBRARY_PATH="/opt/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \

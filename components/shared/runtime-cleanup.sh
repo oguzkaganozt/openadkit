@@ -9,6 +9,5 @@ find /opt/autoware /opt/acados \
 rm -rf \
     /opt/autoware/include \
     /opt/autoware/*/include \
-    /opt/acados/include \
     /root/.cache \
     /home/aw/.cache
