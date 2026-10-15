@@ -121,6 +121,10 @@ def manager_env(tmp_path, problem):
     elif problem == "body":
         refreshed["body"] += "changed\n"
     (tmp_path / "listed.json").write_text(json.dumps([[state]]))
+    if problem == "lagging":
+        # No release yet; the list shows the new draft only on its second read.
+        (tmp_path / "listed.json").write_text(json.dumps([[]]))
+        (tmp_path / "created.json").write_text(json.dumps([[state]]))
     (tmp_path / "refreshed.json").write_text(json.dumps(refreshed))
     downloaded = tmp_path / "downloaded"
     downloaded.write_bytes(b"tampered" if problem == "asset" else asset.read_bytes())
@@ -138,6 +142,12 @@ elif "--method PATCH" in args or "--method DELETE" in args:
     pass
 elif "/releases/assets/" in args:
     sys.stdout.buffer.write((root / "downloaded").read_bytes())
+elif args.startswith("release create"):
+    (root / "list-reads").write_text("0")
+elif "--paginate --slurp" in args and (root / "list-reads").exists():
+    reads = int((root / "list-reads").read_text()) + 1
+    (root / "list-reads").write_text(str(reads))
+    print((root / ("created.json" if reads > 1 else "listed.json")).read_text())
 elif "--paginate --slurp" in args:
     print((root / "listed.json").read_text())
 elif "/releases/42" in args:
@@ -248,3 +258,12 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     assert metadata["bundles"] == [{"name": asset.name, "sha256": first_asset}]
     assert metadata["release_plan_sha256"] == hashlib.sha256(first_plan).hexdigest()
     assert metadata["evidence"]["result"] == "PASSED"
+
+
+def test_release_manager_waits_for_a_created_draft_to_be_listed(tmp_path):
+    env, log = manager_env(tmp_path, "lagging")
+    result = subprocess.run(["bash", str(ROOT / ".github/scripts/manage_github_release.sh"), "prepare"],
+                            cwd=tmp_path, env=env, text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert "created=true" in (tmp_path / "output").read_text()
+    assert "release_id=42" in (tmp_path / "output").read_text()

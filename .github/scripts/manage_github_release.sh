@@ -210,12 +210,17 @@ create_draft() {
     --notes-file release-notes.md \
     --draft \
     "${assets[@]}" >/dev/null
-  state=$(fetch_release_by_tag) || return
-  if [ -z "${state}" ] || ! verify_owned_draft "${state}"; then
-    echo "Created draft release ${VERSION} could not be verified" >&2
-    return 1
-  fi
-  jq -er '.id' <<<"${state}"
+  # The release list can show a new draft a few seconds after its creation.
+  for attempt in 1 2 3 4 5; do
+    state=$(fetch_release_by_tag) || return
+    if [ -n "${state}" ] && verify_owned_draft "${state}"; then
+      jq -er '.id' <<<"${state}"
+      return
+    fi
+    sleep "${attempt}"
+  done
+  echo "Created draft release ${VERSION} could not be verified" >&2
+  return 1
 }
 
 prepare_release() {
