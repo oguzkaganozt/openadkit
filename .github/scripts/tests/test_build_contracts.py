@@ -23,7 +23,8 @@ INVENTORY = json.loads((ROOT / ".github/image-inventory.json").read_text())
 def test_inventory_bake_and_runtime_catalog_agree():
     bake = (ROOT / "components/docker-bake.hcl").read_text()
     targets = {image["target"] for image in INVENTORY["images"]}
-    assert set(re.findall(r'^target\s+"(?!_|docker-metadata-action-)([\w-]+)"', bake, re.M)) == targets
+    # universe-common-build is CI's unpublished compile base for components.
+    assert set(re.findall(r'^target\s+"(?!_|docker-metadata-action-)([\w-]+)"', bake, re.M)) == targets | {"universe-common-build"}
     assert set(re.findall(r'target\s+"docker-metadata-action-([\w-]+)"', bake)) == targets
     kit = json.loads((ROOT / "openadkit.json").read_text())
     assert set(kit["componentImages"].values()) == {image["target"] for image in INVENTORY["images"] if image["stage"] == "component"}
@@ -73,12 +74,22 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
     recipe, targets = matrices.bake_recipe(INVENTORY, prepared, target, "humble", "linux/amd64", publish=publish,
                                            shared_common=False, common_cached=local, owner="example", source_sha="b" * 40, run_id="123")
     row = recipe["target"][target]
-    assert targets == (["universe-common-devel", "universe-common"] if publish and target == "universe-common" else [target])
+    assert targets == (["universe-common-build", "universe-common-devel", "universe-common"]
+                       if publish and target == "universe-common" else [target])
+    common_build = "ghcr.io/example/openadkit-buildcache:universe-common-build-amd64-humble-123-1"
     if publish:
         assert row["labels"]['"org.opencontainers.image.autoware-lock-sha256"'] == "e" * 64
         assert row["labels"]['"org.opencontainers.image.openadkit-sha"'] == "b" * 40
         assert row["cache-to"][0].endswith(",mode=max")
         assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is (target == "sensing-perception-cuda")
+        if target == "universe-common":
+            # Per-build labels or provenance would change the compile base's
+            # digest on every build and invalidate every component compile.
+            build = recipe["target"]["universe-common-build"]
+            assert build["tags"] == [common_build] and not build["labels"]
+            assert build["attest"] == ["type=provenance,disabled=true"]
+        else:
+            assert row["contexts"]["universe-common-devel"] == "docker-image://" + common_build
     else:
         assert not row["labels"] and "cache-to" not in row
         assert ("universe-common" in row["contexts"]) is (not local)

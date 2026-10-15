@@ -28,6 +28,12 @@ build tools never reach the runtime layers. Every component builds from it.
 `sensing-perception-cuda` builds on the upstream CUDA images and adds the
 `universe-common` install tree.
 
+The published images end with a per-build Ubuntu security refresh. Components
+compile on `universe-common-build`, the devel image without that refresh, which
+CI pushes only to its build cache. Its digest changes only with its inputs, so a
+build that changes no Autoware source or component Dockerfile reuses the cached
+compiles and only refreshes and reassembles the runtime images.
+
 | Group | Targets | Published to |
 |-------|---------|--------------|
 | `universe-common` | `universe-common-devel`, `universe-common` | `ghcr.io/autowarefoundation/openadkit-common` |

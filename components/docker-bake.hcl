@@ -143,12 +143,13 @@ target "docker-metadata-action-visualizer" { tags = local_tags("visualizer") }
 target "docker-metadata-action-simulator" { tags = local_tags("simulator") }
 target "docker-metadata-action-carla-interface" { tags = local_tags("carla-interface") }
 
-// Common base for both universe-common stages. The Dockerfile has FROM lines
-// for both ${CORE_DEVEL_IMAGE} (devel stage) and ${BASE_IMAGE} (runtime
+// Common base for the universe-common stages. The Dockerfile has FROM lines
+// for both ${CORE_DEVEL_IMAGE} (build stage) and ${BASE_IMAGE} (runtime
 // stage), so BuildKit needs both ARGs and both contexts resolved at parse
 // time regardless of which target stage is being built. The runtime starts
-// from the lean base and copies the compiled core/common tree from devel;
-// inheriting upstream core would retain its development files in final layers.
+// from the lean base and copies the compiled core/common tree from the build
+// stage; inheriting upstream core would retain its development files in final
+// layers.
 target "_universe-common-base" {
   dockerfile = "components/universe-common/Dockerfile"
   contexts = {
@@ -163,22 +164,34 @@ target "_universe-common-base" {
   }
 }
 
+// The devel image without its per-build security refresh. It is not
+// published; components compile on it so their builds stay cached.
+target "universe-common-build" {
+  inherits = ["_universe-common-base"]
+  target   = "universe-common-build"
+}
+
 target "universe-common-devel" {
   inherits = ["_universe-common-base", "docker-metadata-action-universe-common-devel"]
   target   = "universe-common-devel"
+  contexts = {
+    universe-common-build = ctx("universe-common-build")
+  }
 }
 
 target "universe-common" {
   inherits = ["_universe-common-base", "docker-metadata-action-universe-common"]
   target   = "universe-common"
   contexts = {
-    universe-common-devel = ctx("universe-common-devel")
+    universe-common-build = ctx("universe-common-build")
   }
 }
 
+// Components compile in the universe-common-devel context: the build stage
+// locally, the published devel image or CI's internal build image in CI.
 target "_component-base" {
   contexts = {
-    universe-common-devel = ctx("universe-common-devel")
+    universe-common-devel = ctx("universe-common-build")
     universe-common       = ctx("universe-common")
   }
   args = {

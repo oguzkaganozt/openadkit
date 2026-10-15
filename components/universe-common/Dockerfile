@@ -4,10 +4,13 @@ ARG CORE_DEVEL_IMAGE
 ARG BASE_IMAGE
 
 # =============================================================================
-# Stage: universe-common-devel
+# Stage: universe-common-build
 # Compiles the universe-common slice into /opt/autoware on top of core-devel.
+# Components compile on this stage. It has no per-build step, so CI can push it
+# with the same digest while its inputs are unchanged and the component builds
+# stay cached (.github/scripts/build.py).
 # =============================================================================
-FROM ${CORE_DEVEL_IMAGE} AS universe-common-devel
+FROM ${CORE_DEVEL_IMAGE} AS universe-common-build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 
@@ -104,9 +107,13 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
       --dependency-types=exec && \
     rm -rf /tmp/autoware
 
-# Apply Ubuntu's updates the pinned upstream base image lags on
-# (components/shared/security-refresh.sh). Kept as the last step of the stage
-# so a per-build SECURITY_REFRESH change only re-runs this layer.
+# =============================================================================
+# Stage: universe-common-devel
+# The published development image: the build stage plus Ubuntu's updates the
+# pinned upstream base image lags on (components/shared/security-refresh.sh).
+# =============================================================================
+FROM universe-common-build AS universe-common-devel
+ARG ROS_DISTRO
 ARG SECURITY_REFRESH=0
 RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/security-refresh.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
@@ -138,8 +145,8 @@ RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snap
 # would require dest to exist, and if dest later appears this must not nest.
 # Of acados, the compiled tree only links its shared libraries; its sources,
 # build tree and code-generation venv stay in the devel image.
-RUN --mount=from=universe-common-devel,source=/opt/acados/lib,target=/mnt/acados-lib \
-    --mount=from=universe-common-devel,source=/opt/autoware,target=/mnt/autoware \
+RUN --mount=from=universe-common-build,source=/opt/acados/lib,target=/mnt/acados-lib \
+    --mount=from=universe-common-build,source=/opt/autoware,target=/mnt/autoware \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     mkdir /opt/acados && \
     cp -a /mnt/acados-lib /opt/acados/lib && \
@@ -165,7 +172,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --skip-keys "${internal_packages}" && \
     bash /tmp/runtime-cleanup.sh
 
-# Same refresh as the devel stage: a per-build SECURITY_REFRESH change only
+# Same refresh as the devel image: a per-build SECURITY_REFRESH change only
 # re-runs this step and the check after it.
 ARG SECURITY_REFRESH=0
 RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/security-refresh.sh \

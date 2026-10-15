@@ -196,6 +196,10 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
     arch = platform_label(platform)
     build_tag = prepared["build_tag"]
     cache = f"ghcr.io/{owner}/openadkit-buildcache:{target}-{arch}-{distro}-main"
+    # Internal compile base for components (the devel image without its
+    # per-build refresh). Without per-build labels or provenance its digest
+    # only changes with its inputs, which keeps component compiles cached.
+    common_build = f"ghcr.io/{owner}/openadkit-buildcache:universe-common-build-{arch}-{distro}-{build_tag}"
     contexts = {}
     args = {"ROS_DISTRO": distro}
     labels = {}
@@ -207,8 +211,8 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             contexts.update({f"autoware-{name}": upstream[name]["uri"] for name in ("core-devel", "base")})
             args["SECURITY_REFRESH"] = build_tag
         else:
-            common = f"ghcr.io/{owner}/openadkit-common"
-            contexts.update({name: f"docker-image://{common}:{name}-{arch}-{distro}-{build_tag}" for name in ("universe-common-devel", "universe-common")})
+            contexts["universe-common-devel"] = f"docker-image://{common_build}"
+            contexts["universe-common"] = f"docker-image://ghcr.io/{owner}/openadkit-common:universe-common-{arch}-{distro}-{build_tag}"
             if target != "carla-interface":
                 upstream = json.loads(prepared["upstream_images"])[distro]
                 cuda_contexts = {f"autoware-{name}": upstream[name]["uri"] for name in ("base-cuda-runtime", "base-cuda-devel")}
@@ -243,18 +247,22 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
     # Apply the same settings to dependency targets too, as the previous *.set
     # overrides did. HCL remains the owner of Dockerfiles and local graph edges.
     overrides = {}
-    for name in images:
+    for name in [*images, "universe-common-build"]:
         overrides[name] = {"platforms": [platform], "args": args.copy(), "labels": labels.copy(),
                            "contexts": contexts.copy(), "cache-from": cache_from.copy()}
         if publish:
             overrides[name]["cache-to"] = [f"type=registry,ref={cache},mode=max"]
+    if publish and target == "universe-common":
+        overrides["universe-common-build"].update(
+            tags=[common_build], labels={}, attest=["type=provenance,disabled=true"])
     overrides["sensing-perception-cuda"]["contexts"].update(cuda_contexts)
     if publish and target not in ("universe-common", "carla-interface"):
         overrides["sensing-perception-cuda"]["args"]["SECURITY_REFRESH"] = build_tag
     if shared_common:
-        for name, stage in (("universe-common-devel", "devel"), ("universe-common", "runtime")):
+        for name, stage in (("universe-common-build", "devel"), ("universe-common", "runtime")):
             overrides[name]["cache-to"] = [f"type=gha,scope=pr-common-{stage}-{run_id},mode=min"]
-    targets = ["universe-common-devel", "universe-common"] if publish and target == "universe-common" else [target]
+    targets = (["universe-common-build", "universe-common-devel", "universe-common"]
+               if publish and target == "universe-common" else [target])
     return {"target": overrides}, targets
 
 
