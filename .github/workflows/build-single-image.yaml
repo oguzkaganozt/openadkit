@@ -212,7 +212,7 @@ jobs:
       needs.prepare.outputs.use_local_common == 'true' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-22.04
+    runs-on: ${{ vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
     timeout-minutes: 120
     permissions:
       actions: write
@@ -262,7 +262,7 @@ jobs:
       needs.prepare.outputs.targets_json != '[]' &&
       (needs.build-local-common.result == 'success' ||
       needs.build-local-common.result == 'skipped')
-    runs-on: ubuntu-22.04
+    runs-on: ${{ vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
     # planning-control can take nearly two hours before the bounded Trivy scan.
     timeout-minutes: 180
     permissions:

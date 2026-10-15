@@ -138,7 +138,7 @@ jobs:
   # =============================================================================
   build-common:
     needs: prepare
-    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && (vars.RUNNER_AMD64 || 'ubuntu-22.04') || (vars.RUNNER_ARM64 || 'ubuntu-22.04-arm') }}
     timeout-minutes: 120
     permissions:
       actions: write
@@ -180,7 +180,7 @@ jobs:
   # Stage 2: Build component images (parallel)
   # =============================================================================
   build-components:
-    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && (vars.RUNNER_AMD64 || 'ubuntu-22.04') || (vars.RUNNER_ARM64 || 'ubuntu-22.04-arm') }}
     timeout-minutes: 120
     needs: [prepare, build-common]
     # A single common matrix failure must not skip cells whose common image
@@ -223,7 +223,7 @@ jobs:
           save-ccache: ${{ env.SAVE_CCACHE }}
 
   build-carla-interface:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
     timeout-minutes: 60
     needs: [prepare, build-common, build-components]
     # build-components remains an ordering dependency, but unrelated matrix

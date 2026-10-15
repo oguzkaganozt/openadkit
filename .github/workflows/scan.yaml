@@ -100,7 +100,7 @@ jobs:
   scan:
     needs: prepare
     if: needs.prepare.outputs.should_scan == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: ${{ vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
     timeout-minutes: 60
     permissions:
       contents: read
