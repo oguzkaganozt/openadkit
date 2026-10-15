@@ -46,7 +46,7 @@ jobs:
       is_stable_release: ${{ steps.validate.outputs.is_stable_release }}
     steps:
       - name: Check out release scripts
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           sparse-checkout: |
@@ -60,10 +60,10 @@ jobs:
             openadkit.json
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -80,7 +80,7 @@ jobs:
         shell: bash
 
       - name: Upload validated release metadata
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v7
         with:
           name: validated-release-${{ inputs.build_tag }}
           path: release-input
@@ -99,7 +99,7 @@ jobs:
       release_plan_sha256: ${{ steps.package.outputs.release_plan_sha256 }}
     steps:
       - name: Check out release scripts
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           # Cone mode always includes root files (the openadkit launcher) and
@@ -127,7 +127,7 @@ jobs:
         shell: bash
 
       - name: Check out repository at release SHA
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.validate.outputs.release_sha }}
           path: src
@@ -140,7 +140,7 @@ jobs:
             /deployments/
 
       - name: Download validated release metadata
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: validated-release-${{ inputs.build_tag }}
           path: release-input
@@ -151,7 +151,7 @@ jobs:
         run: bash .github/scripts/install-compose.sh
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Package and validate deployment bundles
         id: package
@@ -170,7 +170,7 @@ jobs:
         shell: bash
 
       - name: Upload deployment bundles
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-bundles-${{ inputs.build_tag }}
           path: |
@@ -190,13 +190,13 @@ jobs:
       contents: write
     steps:
       - name: Check out release tag helper
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           sparse-checkout: .github/scripts/release_tag.sh
 
       - name: Download immutable release plan
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: release-bundles-${{ inputs.build_tag }}
           path: release-output
@@ -226,7 +226,7 @@ jobs:
       packages: write
     steps:
       - name: Check out release scripts
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           sparse-checkout: |
@@ -235,7 +235,7 @@ jobs:
             .github/scripts/stable_alias_policy.sh
 
       - name: Download immutable release plan
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: release-bundles-${{ inputs.build_tag }}
           path: release-output
@@ -248,10 +248,10 @@ jobs:
             = "${EXPECTED_PLAN_SHA256}"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -280,7 +280,7 @@ jobs:
       release_id: ${{ steps.prepare-release.outputs.release_id }}
     steps:
       - name: Check out release scripts
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           sparse-checkout: |
@@ -291,13 +291,13 @@ jobs:
             .github/scripts/evidence/cells.py
 
       - name: Download validated release metadata
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: validated-release-${{ inputs.build_tag }}
           path: release-input
 
       - name: Download deployment bundles
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: release-bundles-${{ inputs.build_tag }}
           path: .
@@ -316,7 +316,7 @@ jobs:
         shell: bash
 
       - name: Attest release artifacts
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             dist/openadkit
@@ -333,7 +333,7 @@ jobs:
         shell: bash
 
       - name: Upload expected release asset manifest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-asset-manifest-${{ inputs.build_tag }}
           path: release-assets.sha256
@@ -351,7 +351,7 @@ jobs:
       contents: write
     steps:
       - name: Check out release manager
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.workflow_sha }}
           sparse-checkout: |
@@ -359,13 +359,13 @@ jobs:
             .github/scripts/release_tag.sh
 
       - name: Download expected release asset manifest
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: release-asset-manifest-${{ inputs.build_tag }}
           path: release-asset-manifest
 
       - name: Download immutable release plan
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v8
         with:
           name: release-bundles-${{ inputs.build_tag }}
           path: release-output

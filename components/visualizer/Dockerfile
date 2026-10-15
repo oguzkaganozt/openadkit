@@ -132,7 +132,7 @@ RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/
 # In remote mode, report unhealthy if noVNC (6080) or VNC (5999) stops accepting
 # connections. Local mode has no endpoints; PID 1 exits if its command fails.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD bash -c 'if [ "${REMOTE_DISPLAY:-true}" = false ]; then exit 0; fi; exec 3<>/dev/tcp/127.0.0.1/6080 && exec 4<>/dev/tcp/127.0.0.1/5999'
+    CMD ["bash", "-c", "if [ \"${REMOTE_DISPLAY:-true}\" = false ]; then exit 0; fi; exec 3<>/dev/tcp/127.0.0.1/6080 && exec 4<>/dev/tcp/127.0.0.1/5999"]
 
 USER aw
 # The integrator-layer hook from universe-common runs first (components/shared/entrypoint).
