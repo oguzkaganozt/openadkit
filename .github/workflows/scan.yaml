@@ -139,7 +139,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          scanners: vuln
+          scanners: vuln,secret
           timeout: 15m
           trivyignores: .trivyignore
           limit-severities-for-sarif: true
@@ -157,7 +157,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          scanners: vuln
+          scanners: vuln,secret
           timeout: 15m
           trivyignores: .trivyignore
           limit-severities-for-sarif: true

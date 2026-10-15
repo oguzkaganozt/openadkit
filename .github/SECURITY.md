@@ -36,8 +36,9 @@ AD Kit image digest here when our packaging or configuration is involved.
 
 ## Security boundaries
 
-Digest pins, vulnerability scans and signed provenance improve traceability;
-they do not prove that software is vulnerability-free or safe for a vehicle.
+Digest pins, vulnerability and secret scans and signed provenance improve
+traceability; they do not prove that software is vulnerability-free or safe
+for a vehicle.
 Test Result attestations are runtime test claims, not security certification.
 
 Run only trusted kits and images: a kit can launch additional containers and

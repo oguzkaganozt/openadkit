@@ -312,7 +312,7 @@ jobs:
           exit-code: '0'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          scanners: vuln
+          scanners: vuln,secret
           timeout: 15m
           trivyignores: .trivyignore
 
