@@ -52,8 +52,10 @@ inputs:
 runs:
   using: composite
   steps:
+    # The ARM runner image already has ample space and lacks most of the
+    # packages this removes, so its apt-get remove fails with a warning.
     - name: Free Disk Space (Ubuntu)
-      if: inputs.free-disk == 'true'
+      if: inputs.free-disk == 'true' && runner.arch == 'X64'
       uses: ./.github/actions/free-disk-space
 
     - name: Install jq and vcs2l
