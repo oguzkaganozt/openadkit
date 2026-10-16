@@ -32,7 +32,8 @@ install_usage() {
 Usage: openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]
 
 Downloads and verifies an Open AD Kit release bundle. The default destination is
-~/.local/share/openadkit. A launcher is installed at ~/.local/bin/openadkit.
+$OPENADKIT_INSTALL_DIR, else ~/.local/share/openadkit. A launcher is installed at
+~/.local/bin/openadkit.
 Reinstalling over an existing version requires --force.
 
 To move an installed release to the latest stable version, run: openadkit upgrade
@@ -203,7 +204,8 @@ EOF
 }
 
 install_openadkit() {
-  local version=latest destination="${HOME}/.local/share/openadkit" force=false
+  # Kits find the release they extend under the same root (cli/manifest.py).
+  local version=latest destination="${OPENADKIT_INSTALL_DIR:-${HOME}/.local/share/openadkit}" force=false
   local resolve_only=false announce_next=true
 
   while (($#)); do
@@ -232,7 +234,7 @@ install_openadkit() {
 
   [[ $version == latest || $version =~ $OPENADKIT_VERSION_RE ]] \
     || usage_fail "invalid release version: ${version}"
-  [[ $destination = /* ]] || usage_fail '--destination must be an absolute path'
+  [[ $destination = /* ]] || usage_fail 'the install destination must be an absolute path'
   require_command curl
   require_command python3
 

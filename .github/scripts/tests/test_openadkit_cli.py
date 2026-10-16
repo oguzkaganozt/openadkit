@@ -29,7 +29,7 @@ OTHER_PIN = f"registry.example/custom@sha256:{'b' * 64}"
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 ISOLATED_ENV = (
     "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_CONFIG_DIR", "OPENADKIT_STATE_DIR",
-    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "COMPOSE_FILE",
+    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "OPENADKIT_INSTALL_DIR", "COMPOSE_FILE",
 )
 
 
@@ -242,6 +242,14 @@ def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
     assert result.returncode == 0, result.stderr
     assert not launcher.exists() and not installed(tmp_path, "v1.3.0").exists()
     assert installed(tmp_path).is_file()
+
+
+def test_install_defaults_to_the_root_kits_resolve_extends_from(tmp_path):
+    root = tmp_path / "releases"
+    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path),
+                     OPENADKIT_INSTALL_DIR=str(root))
+    assert result.returncode == 0, result.stderr
+    assert (root / "openadkit-v1.2.3/openadkit").is_file()
 
 
 @pytest.mark.parametrize(("options", "message"), [
