@@ -145,15 +145,25 @@ destination = Path(sys.argv[sys.argv.index('--dir') + 1])
     assert install < next(i for i, s in enumerate(cell_steps) if s["name"] == "Run evidence cell")
 
 
-def test_scenario_metrics_count_colored_verdicts(tmp_path):
-    # The interpreter colors "Passed"; a colored verdict must still count.
+RUN = "[scenario_test_runner.py-1] Run sample_{i}.xosc (1 of 1)\n"
+# The interpreter colors "Passed"; a colored verdict must still count.
+PASSED = "[openscenario_interpreter_node-3] [INFO] [simulation.openscenario_interpreter]: \x1b[32mPassed\x1b[0m\n"
+
+
+@pytest.mark.parametrize(("cases", "log", "ok"), [
+    (['<testcase name="sample_0"/>', '<testcase name="sample_1"/>'], RUN.format(i=0) + PASSED + RUN.format(i=1) + PASSED, True),
+    # One of two scenarios ran and passed: incomplete, not a pass.
+    (['<testcase name="sample_0"/>', '<testcase name="sample_1"/>'], RUN.format(i=0) + PASSED, False),
+    # A skipped case did not run.
+    (['<testcase name="sample_0"><skipped/></testcase>'], RUN.format(i=0) + PASSED, False),
+    (['<testcase name="sample_0"><failure/></testcase>'], RUN.format(i=0), False),
+])
+def test_scenario_metrics_pass_only_complete_runs(tmp_path, cases, log, ok):
     (tmp_path / "out").mkdir()
-    (tmp_path / "out/result.junit.xml").write_text('<testsuites><testsuite><testcase name="sample"/></testsuite></testsuites>')
-    (tmp_path / "scenario.log").write_text(
-        "[scenario_test_runner.py-1] Run sample.xosc (1 of 1)\n"
-        "[openscenario_interpreter_node-3] [INFO] [simulation.openscenario_interpreter]: \x1b[32mPassed\x1b[0m\n")
+    (tmp_path / "out/result.junit.xml").write_text(f"<testsuites><testsuite>{''.join(cases)}</testsuite></testsuites>")
+    (tmp_path / "scenario.log").write_text(log)
     result = subprocess.run([sys.executable, str(ROOT / ".github/scripts/evidence/scenario_metrics.py"),
                              "--output-dir", str(tmp_path / "out"), "--log", str(tmp_path / "scenario.log"),
                              "--json", str(tmp_path / "metrics.json")], capture_output=True, text=True)
-    assert result.returncode == 0, result.stdout
-    assert json.loads((tmp_path / "metrics.json").read_text())["log_passed"] == 1
+    assert (result.returncode == 0) is ok, result.stdout
+    assert json.loads((tmp_path / "metrics.json").read_text())["ok"] is ok

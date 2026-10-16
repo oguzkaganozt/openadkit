@@ -262,7 +262,8 @@ if [ "${l1_ok}" = true ]; then
 fi
 
 # --- artifacts ---------------------------------------------------------------
-peak_mib=$(cat "${out}/.peak_mib" 2>/dev/null || echo 0)
+# null, like ready_s and arrival_s, when no container was ever sampled.
+peak_mib=$(cat "${out}/.peak_mib" 2>/dev/null || echo null)
 rm -f "${out}/.peak_mib"
 
 if [ "${result}" != "PASSED" ]; then

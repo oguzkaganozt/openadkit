@@ -1,8 +1,9 @@
 """Summarize a scenario-simulation run from its JUnit XML and simulator log.
 
 The simulator writes JUnit XML under the deployment output directory and logs
-one "Run sample" line per run. A run counts as passed when every sample ran,
-none failed or timed out, and the JUnit suite has no failures or errors.
+one "Run sample" line per run. A run counts as passed only when every JUnit
+case passed (none failed, errored or was skipped), the log shows one run and
+one passing verdict per case, and no run timed out.
 """
 import argparse
 import json
@@ -46,11 +47,10 @@ def main():
     ok = (
         junit_files > 0
         and cases > 0
-        and failed == 0
-        and errors == 0
+        and passed == cases
+        and runs == cases
+        and log_passed == cases
         and timeouts == 0
-        and runs > 0
-        and runs == log_passed
     )
     metrics = {
         "junit_files": junit_files,
