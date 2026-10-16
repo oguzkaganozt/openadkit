@@ -8,7 +8,7 @@ instead (see [Container Images & Versioning](../getting-started/container-images
 
 - Ubuntu 22.04 or 24.04 (`openadkit setup` supports Ubuntu only; elsewhere,
   install Docker with Buildx and Compose yourself)
-- Git, `pipx`, and `vcs2l` to import the Autoware sources
+- Git, `pipx`, `vcs2l`, and `python3-yaml` to import the Autoware sources
 - Disk space for several multi-gigabyte images
 
 The component Dockerfiles build on upstream Autoware images from GHCR and
@@ -58,17 +58,26 @@ cd openadkit
 # 3. Make the pipx-installed vcs command available in this shell
 export PATH="$HOME/.local/bin:$PATH"
 
-# 4. Import Autoware sources at the release used by the upstream base images
-AUTOWARE_REF=1.8.0
-export UPSTREAM_TAG="$AUTOWARE_REF"
+# 4. Import the Autoware sources this branch pins
+AUTOWARE_REF=$(cat .github/autoware.ref)
 git clone --branch "$AUTOWARE_REF" --depth 1 \
   https://github.com/autowarefoundation/autoware.git
+overlay=()
+if [ "$AUTOWARE_REF" = main ]; then
+  # Upstream development: its development manifest, and core built locally
+  overlay=(autoware/repositories/autoware-nightly.repos)
+  export UPSTREAM_TAG=""
+else
+  export UPSTREAM_TAG="$AUTOWARE_REF"
+fi
+python3 .github/scripts/export_autoware_lock.py \
+  autoware/repositories/autoware.repos autoware.lock "${overlay[@]}"
 mkdir -p autoware/src
-vcs import --shallow autoware/src < autoware/repositories/autoware.repos
+vcs import --shallow autoware/src < autoware.lock
 mkdir -p autoware/src/middleware/external
 touch autoware/src/middleware/external/.keep
 
-# 5. Build the shared universe-common layer (~2 hours)
+# 5. Build the shared universe-common layer (~2 hours, more with core)
 docker buildx bake -f components/docker-bake.hcl universe-common
 
 # 6. Build the Planning Simulation images (~2 hours)
@@ -86,6 +95,8 @@ docker buildx bake -f components/docker-bake.hcl --load planning
   with `--set <target>.tags=...`. To use other images, set the `*_IMAGE`
   variables in `~/.config/openadkit/<deployment>.env`.
 - For Jazzy, build with `ROS_DISTRO=jazzy` and run with `--ros-distro jazzy`.
+- `main` builds for upstream development; check out a `release/X.Y` branch to
+  build a release's sources.
 
 Other useful targets:
 
@@ -100,9 +111,9 @@ docker buildx bake -f components/docker-bake.hcl --load sensing-perception      
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ROS_DISTRO` | `humble` or `jazzy` | `humble` |
-| `UPSTREAM_TAG` | Upstream Autoware release to build on (e.g. `1.8.0`). Empty uses the moving `<name>-<distro>` tag, which is not reproducible. | `""` |
+| `UPSTREAM_TAG` | Upstream Autoware release to build on (e.g. `1.9.0`). Empty builds for upstream development: core compiles from `autoware/src` on the moving `base-<distro>` image, and ROS installs from the live repository. | `""` |
 | `UPSTREAM_REPO` | Upstream Autoware image repository | `ghcr.io/autowarefoundation/autoware` |
-| `ROS_SNAPSHOT_HUMBLE`, `ROS_SNAPSHOT_JAZZY` | ROS apt snapshot the `UPSTREAM_TAG` images were built from. The build fails when they do not match; see [ROS snapshot](https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md). | Snapshots for `1.8.0` |
+| `ROS_SNAPSHOT_HUMBLE`, `ROS_SNAPSHOT_JAZZY` | ROS apt snapshot the `UPSTREAM_TAG` images were built from. The build fails when they do not match; see [ROS snapshot](https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md). | Snapshots for `1.9.0` |
 
 ## Continuous Integration
 
@@ -118,16 +129,24 @@ into multi-arch tags. CI disables the local tags (`LOCAL_IMAGE=""`) and tags
 images through `docker/metadata-action`. A failed scheduled build opens a GitHub
 issue.
 
+Each branch's [`.github/autoware.ref`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref)
+selects its Autoware sources, resolved into an exact dependency lock per build.
+`main` pins `main`: it overlays upstream's development manifest and compiles
+core in the same Bake graph, so integration changes are tested as upstream lands
+them. A `release/X.Y` branch pins an Autoware release and builds on its official
+images. CI builds `main` and `release/*` pushes; registry caches are kept per
+branch. Pull request checks of `main` build on the Autoware revision of `main`'s
+latest published images, so unchanged images are reused.
+
 ## Release Process
 
 Releases promote an existing CI build; nothing is rebuilt.
 
 ### Before You Release
 
-- **`vars.UPSTREAM_TAG`** is set in the repository or organization variables. It
-  selects the Autoware release to build; the workflow's `autoware_ref` input
-  overrides it. The ROS snapshots in `components/docker-bake.hcl` must belong
-  to the same release.
+- **A `release/X.Y` branch** exists for the version, created from `main`. Its
+  `.github/autoware.ref` names the Autoware release (for example `1.9.0`), and
+  the ROS snapshots in `components/docker-bake.hcl` belong to that release.
 - **`vars.RUNNER_AMD64`** and **`vars.RUNNER_ARM64`** optionally move the build,
   scan and evidence jobs to larger runners (for example
   `ubicloud-standard-8-ubuntu-2204` and `ubicloud-standard-8-arm-ubuntu-2204`).
@@ -137,12 +156,12 @@ Releases promote an existing CI build; nothing is rebuilt.
 - **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
   used.
-- **A successful build** of `build-all-images` exists on `main` from an exact
-  Autoware release tag. Builds from a full SHA can only become pre-releases. The
-  build summary shows its `build_tag`. The release ships the CLI and deployments
-  from that build's commit, and pushes that change only those start no build:
-  dispatch `build-all-images` on `main` to release them. The release run warns
-  when `main` has such changes.
+- **A successful build** of `build-all-images` exists on `release/X.Y`; stable
+  and pre-releases `vX.Y.Z` both come from it, and `main` builds are never
+  released. The build summary shows its `build_tag`. The release ships the CLI
+  and deployments from that build's commit, and pushes that change only those
+  start no build: dispatch `build-all-images` on the branch to release them. The
+  release run warns when the branch has such changes.
 - **A passing scan** of `scan-images` exists for that `build_tag`.
 - **Complete signed `PASSED` evidence** exists for that same build. Required
   cells, source checksums and image digests must match; quarantine does not waive
@@ -151,7 +170,7 @@ Releases promote an existing CI build; nothing is rebuilt.
 ### Workflow
 
 Run [`release.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml)
-with the version and `build_tag`. Its jobs run in order:
+on `main` with the version and `build_tag`. Its jobs run in order:
 
 ```mermaid
 flowchart LR

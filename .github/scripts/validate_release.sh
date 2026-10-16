@@ -26,6 +26,7 @@ autoware_stable_re='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 publish_latest_aliases=false
 is_stable_release=false
 release_sha=""
+source_branch=""
 run_id=""
 readonly BUILD_AGE_MAX_DAYS=90
 
@@ -83,7 +84,7 @@ resolve_latest_alias_policy() {
 }
 
 validate_build_run() {
-  local run_json latest_tag workflow_name workflow_path head_branch status conclusion created_at
+  local run_json latest_tag workflow_name workflow_path status conclusion created_at
   local created_epoch now_epoch max_age_seconds
 
   run_id="${BUILD_TAG%%-*}"
@@ -97,7 +98,7 @@ validate_build_run() {
 
   workflow_name=$(printf '%s' "${run_json}" | jq -r '.name')
   workflow_path=$(printf '%s' "${run_json}" | jq -r '.path')
-  head_branch=$(printf '%s' "${run_json}" | jq -r '.head_branch')
+  source_branch=$(printf '%s' "${run_json}" | jq -r '.head_branch')
   status=$(printf '%s' "${run_json}" | jq -r '.status')
   conclusion=$(printf '%s' "${run_json}" | jq -r '.conclusion')
   release_sha=$(printf '%s' "${run_json}" | jq -r '.head_sha')
@@ -105,7 +106,6 @@ validate_build_run() {
 
   [ "${workflow_name}" = "build-all-images" ] || fail "Expected build-all-images run, got '${workflow_name}'"
   [ "${workflow_path}" = ".github/workflows/build-all-images.yaml" ] || fail "Unexpected workflow path '${workflow_path}'"
-  [ "${head_branch}" = "main" ] || fail "Source build must come from main branch (got '${head_branch}')"
   [ "${status}" = "completed" ] || fail "Source build must be completed (got '${status}')"
   [ "${conclusion}" = "success" ] || fail "Source build must succeed (got '${conclusion}')"
 
@@ -119,11 +119,11 @@ validate_build_run() {
 
 warn_unreleased_kit_changes() {
   # The bundle ships cli/ and deployments/ from the build SHA, and pushes that
-  # only touch them start no build. Name what main would add; do not fail.
+  # only touch them start no build. Name what the branch would add; do not fail.
   local changed
-  changed=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${release_sha}...main" --jq '.files[].filename' 2>/dev/null \
+  changed=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${release_sha}...${source_branch}" --jq '.files[].filename' 2>/dev/null \
     | grep -E '^(cli/|deployments/|openadkit$|openadkit\.json$)') || return 0
-  echo "::warning title=Unreleased kit changes::main changes the CLI or deployments after ${release_sha}; dispatch build-all-images on main to release them"
+  echo "::warning title=Unreleased kit changes::${source_branch} changes the CLI or deployments after ${release_sha}; dispatch build-all-images on ${source_branch} to release them"
   printf '%s\n' "${changed}" | sed 's/^/  /' >&2
 }
 
@@ -208,9 +208,9 @@ select_scan_metadata() {
 
     if [ "${scan_workflow_name}" != "scan-images" ] || \
       [ "${scan_workflow_path}" != ".github/workflows/scan.yaml" ] || \
-      [ "${scan_head_branch}" != "main" ] || \
+      { [ "${scan_head_branch}" != "main" ] && [ "${scan_head_branch}" != "${source_branch}" ]; } || \
       [ "${scan_status}" != "completed" ]; then
-      echo "Ignoring scan artifact ${scan_artifact_id}: scan run ${scan_run_id}-${scan_run_attempt} is not a completed scan-images run on main" >&2
+      echo "Ignoring scan artifact ${scan_artifact_id}: scan run ${scan_run_id}-${scan_run_attempt} is not a completed scan-images run on main or ${source_branch}" >&2
       continue
     fi
 
@@ -233,30 +233,27 @@ validate_metadata() {
   python3 "${script_dir}/images.py" validate release-input/build release-input/scan/scan-metadata.json
 }
 
+# Releases come from release/X.Y branches, whose .github/autoware.ref pins the
+# Autoware release their builds use; main builds for upstream development.
 validate_release_rules() {
-  local metadata_sha autoware_input_ref autoware_ref_type autoware_base_version
+  local metadata_sha autoware_input_ref autoware_ref_type autoware_base_version line
 
   metadata_sha=$(jq -r '.openadkit_sha' release-input/build/build-metadata.json)
   [ "${metadata_sha}" = "${release_sha}" ] \
     || fail "Build metadata SHA ${metadata_sha} does not match workflow SHA ${release_sha}"
 
+  line=$(printf '%s\n' "${VERSION#v}" | cut -d. -f1-2)
+  [ "${source_branch}" = "release/${line}" ] \
+    || fail "${VERSION} must be built from release/${line} (got '${source_branch}')"
+
   autoware_input_ref=$(jq -r '.autoware_input_ref' release-input/build/build-metadata.json)
   autoware_ref_type=$(jq -r '.autoware_ref_type' release-input/build/build-metadata.json)
   autoware_base_version=$(jq -r '.autoware_base_version' release-input/build/build-metadata.json)
-  if [ "${autoware_ref_type}" = "tag" ]; then
-    printf '%s\n' "${autoware_input_ref}" | grep -Eq "${autoware_stable_re}" \
-      || fail "Autoware release tags must use X.Y.Z format (got ${autoware_input_ref})"
-    [ "${autoware_base_version}" = "${autoware_input_ref}" ] \
-      || fail "Autoware base version ${autoware_base_version} does not match release tag ${autoware_input_ref}"
-  elif ! printf '%s\n' "${VERSION}" | grep -Eq "${openadkit_stable_re}" \
-    && [ "${autoware_ref_type}" = "sha" ] \
-    && printf '%s\n' "${autoware_input_ref}" | grep -Eq '^[0-9a-fA-F]{40}$'; then
-    :
-  elif printf '%s\n' "${VERSION}" | grep -Eq "${openadkit_stable_re}"; then
-    fail "Stable releases must be built from an Autoware release tag (got ${autoware_ref_type}:${autoware_input_ref})"
-  else
-    fail "Pre-releases must be built from an Autoware release tag or full SHA (got ${autoware_ref_type}:${autoware_input_ref})"
+  if [ "${autoware_ref_type}" != "tag" ] || ! printf '%s\n' "${autoware_input_ref}" | grep -Eq "${autoware_stable_re}"; then
+    fail "Releases must be built from an Autoware X.Y.Z release tag (got ${autoware_ref_type}:${autoware_input_ref})"
   fi
+  [ "${autoware_base_version}" = "${autoware_input_ref}" ] \
+    || fail "Autoware base version ${autoware_base_version} does not match release tag ${autoware_input_ref}"
 }
 
 validate_git_tag() {

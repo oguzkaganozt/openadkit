@@ -10,7 +10,7 @@ SCRIPT = ROOT / ".github/scripts/resolve_upstream_images.sh"
 DIGEST = f"sha256:{'a' * 64}"
 
 
-def resolver_env(tmp_path, distro=None, image_names=None):
+def resolver_env(tmp_path, distro=None, image_names=None, upstream_tag="1.8.0"):
     inventory = tmp_path / "inventory.json"
     inventory.write_text(json.dumps({"ros_distros": ["humble", "jazzy"]}))
     output = tmp_path / "upstream-images.json"
@@ -26,7 +26,7 @@ printf '{"manifest":{"digest":"%s"}}\n' "${DIGEST}"
     fake_docker.chmod(0o755)
     env = os.environ | {
         "PATH": f"{tmp_path}:{os.environ['PATH']}",
-        "AUTOWARE_BASE_VERSION": "1.8.0",
+        "UPSTREAM_TAG": upstream_tag,
         "IMAGE_INVENTORY": str(inventory),
         "UPSTREAM_IMAGES_OUTPUT": str(output),
         "DOCKER_LOG": str(docker_log),
@@ -39,8 +39,8 @@ printf '{"manifest":{"digest":"%s"}}\n' "${DIGEST}"
     return env, output, docker_log
 
 
-def run_resolver(tmp_path, distro=None, image_names=None):
-    env, output, docker_log = resolver_env(tmp_path, distro, image_names)
+def run_resolver(tmp_path, distro=None, image_names=None, upstream_tag="1.8.0"):
+    env, output, docker_log = resolver_env(tmp_path, distro, image_names, upstream_tag)
     result = subprocess.run(
         ["bash", str(SCRIPT)], env=env, text=True, capture_output=True
     )
@@ -68,6 +68,13 @@ def test_resolves_requested_distros_and_images(tmp_path, distro, names, distros,
     if distro:
         assert all(f"-{distro}-1.8.0" in ref for ref in inspected)
     assert all(item["uri"] == f"docker-image://{item['ref']}@{DIGEST}" for item in data)
+
+
+def test_development_uses_plain_tags_and_compiles_core(tmp_path):
+    result, data, inspected = run_resolver(tmp_path, "humble", upstream_tag="")
+    assert result.returncode == 0, result.stderr
+    assert {item["name"] for item in data} == {"base", "base-cuda-runtime", "base-cuda-devel"}
+    assert all(ref.endswith("-humble") for ref in inspected)
 
 
 @pytest.mark.parametrize(

@@ -27,8 +27,15 @@ If you are a member of the Autoware Foundation contributing to active developmen
 
 ### Branch Strategy
 
-- `main` — stable, production-ready code
+- `main` — integration with upstream Autoware development
+- `release/X.Y` — an Open AD Kit release line, pinned to one Autoware release
 - `feat/...`, `fix/...`, `refactor/...` — active development branches merged into `main` via PR
+
+`.github/autoware.ref` selects the Autoware sources a branch builds: `main` on
+`main`, an exact release such as `1.9.0` on `release/X.Y`. A change that only
+upstream development needs, such as a moved package, lands on `main` without
+breaking the release line. Create `release/X.Y` from `main` when stabilizing a
+release, set its pin, and cherry-pick fixes into it.
 
 ### Local CI Commands
 
@@ -108,7 +115,7 @@ For split-host (`--node`) topology testing, follow the [documentation](https://a
 
 ### Releasing
 
-Use the `release.yaml` workflow (GitHub Actions) to promote a build to a release. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
+Use the `release.yaml` workflow (GitHub Actions), run on `main`, to promote a `release/X.Y` build to a `vX.Y.Z` release or pre-release. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
 
 Both release candidates and stable releases require complete signed `PASSED`
 runtime evidence for the promoted build. CI quarantine does not bypass the gate;

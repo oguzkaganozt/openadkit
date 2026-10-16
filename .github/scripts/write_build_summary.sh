@@ -23,21 +23,16 @@ echo ""
 echo "## Release Eligibility"
 
 autoware_stable_re='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
-if [ "${SOURCE_REF}" != "refs/heads/main" ]; then
-  echo "This build is not release-eligible. Releases must promote builds from the main branch."
-elif [ "${AUTOWARE_REF_TYPE}" = "tag" ] && printf '%s\n' "${AUTOWARE_INPUT_REF}" | grep -Eq "${autoware_stable_re}"; then
-  echo "This build can be promoted to a stable or pre-release OpenADKit version after a passed full scan."
+release_line=$(printf '%s\n' "${SOURCE_REF}" | sed -nE 's#^refs/heads/release/((0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$#\1#p')
+if [ -n "${release_line}" ] && [ "${AUTOWARE_REF_TYPE}" = "tag" ] \
+  && printf '%s\n' "${AUTOWARE_INPUT_REF}" | grep -Eq "${autoware_stable_re}"; then
+  echo "This build can be released as an OpenADKit v${release_line}.Z version after a passed full scan."
   echo ""
-  echo "To release this build, run **Actions -> release -> Run workflow** and set \`build_tag\` to \`${BUILD_TAG}\`."
-elif [ "${AUTOWARE_REF_TYPE}" = "sha" ] && printf '%s\n' "${AUTOWARE_INPUT_REF}" | grep -Eq '^[0-9a-fA-F]{40}$'; then
-  echo "This build can only be promoted to a pre-release OpenADKit version after a passed full scan."
-  echo ""
-  echo "To pre-release this build, run **Actions -> release -> Run workflow** and set \`build_tag\` to \`${BUILD_TAG}\`."
+  echo "To release this build, run **Actions -> release -> Run workflow** on main and set \`build_tag\` to \`${BUILD_TAG}\`."
+  if [ "${SCAN_REQUESTED}" != "true" ]; then
+    echo ""
+    echo "Run **Actions -> scan-images -> Run workflow** with \`build_tag\` set to \`${BUILD_TAG}\` before releasing."
+  fi
 else
-  echo "This build is not release-eligible. Stable releases require an Autoware SemVer tag, and pre-releases require a SemVer tag or full SHA."
-fi
-
-if [ "${SCAN_REQUESTED}" != "true" ]; then
-  echo ""
-  echo "If this build is otherwise release-eligible, run **Actions -> scan-images -> Run workflow** with \`build_tag\` set to \`${BUILD_TAG}\` before releasing."
+  echo "This is a development build. Releases come from release/X.Y branches, whose \`.github/autoware.ref\` pins an Autoware X.Y.Z release."
 fi

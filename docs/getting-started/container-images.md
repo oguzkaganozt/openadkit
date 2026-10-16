@@ -17,6 +17,10 @@ image digest.
 | **Pre-release** | `planning-control-humble-v2.0.0-rc.1` | Pre-releases | No |
 | **CI build** | `planning-control-humble-123456789-1` | Every CI build (`<run_id>-<run_attempt>`) | No |
 
+CI builds of `main` follow upstream Autoware development and are never
+released; releases come from `release/X.Y` branches (see
+[Versioning](#versioning)).
+
 The moving aliases also exist with a `-latest` suffix
 (`planning-control-humble-latest`, `planning-control-latest`). Pre-releases
 never update them.
@@ -48,7 +52,8 @@ The Open AD Kit version is **independent of the Autoware version**. Each release
 pins one upstream Autoware release, the ROS 2 distros, and every image digest,
 and lists them in its
 [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
-notes.
+notes. A `release/X.Y` branch produces the `vX.Y.Z` releases and pins their
+Autoware release in `.github/autoware.ref`; `main` tracks upstream development.
 
 ## ROS 2 Distro Support
 

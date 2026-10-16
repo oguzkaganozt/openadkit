@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Resolve shared build inputs for build-all-images.
+# Resolve shared build inputs for build-all-images and build-single-image.
 # Writes GitHub Actions outputs directly to GITHUB_OUTPUT.
+#
+# .github/autoware.ref selects the Autoware sources: an exact release tag
+# builds on that release's upstream images, anything else (main) builds for
+# upstream development.
 set -euo pipefail
 
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
@@ -8,8 +12,17 @@ set -euo pipefail
 : "${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
 : "${GITHUB_EVENT_NAME:?GITHUB_EVENT_NAME is required}"
 
-autoware_input_ref="${AUTOWARE_REF_INPUT:-main}"
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=.github/scripts/registry_lookup.sh
+# shellcheck disable=SC1091
+source "${script_dir}/registry_lookup.sh"
+
+autoware_input_ref=$(cat .github/autoware.ref)
+[ -n "${autoware_input_ref}" ] || { echo "The Autoware pin is empty" >&2; exit 1; }
 build_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+# Registry caches per branch, so development and release builds do not evict
+# each other; pull requests read their base branch's.
+cache_scope=$(printf '%s' "${GITHUB_BASE_REF:-${GITHUB_REF_NAME:?GITHUB_REF_NAME is required}}" | tr -c 'A-Za-z0-9_.-' '-')
 
 scan_requested=false
 if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
@@ -53,6 +66,23 @@ if [ "${autoware_ref_type}" = "ref" ]; then
   exit 1
 fi
 
+# Upstream development moves daily. A check of one change builds on the
+# Autoware revision and dependency lock of REUSE_IMAGE, the base branch's
+# published compile base, so its unchanged images stay reusable.
+lock_build_tag=""
+if [ "${autoware_ref_type}" != tag ] && [ -n "${REUSE_IMAGE:-}" ] \
+  && labels=$(registry_inspect_json "${REUSE_IMAGE}" | jq -c '.image.config.Labels // {}'); then
+  label() {
+    jq -r --arg key "org.opencontainers.image.$1" '.[$key] // .["\"" + $key + "\""] // empty' <<<"${labels}"
+  }
+  if [ "$(label autoware-input-ref)" = "${autoware_input_ref}" ] \
+    && [[ "$(label autoware-ref)" =~ ^[0-9a-f]{40}$ ]] && [[ "$(label build-tag)" =~ ^[0-9]+-[0-9]+$ ]]; then
+    fetch_ref=$(label autoware-ref)
+    lock_build_tag=$(label build-tag)
+    echo "Building on the Autoware revision of ${REUSE_IMAGE} (build ${lock_build_tag})" >&2
+  fi
+fi
+
 # Fetch the requested ref plus all tags so git describe can find the nearest semver tag.
 # A single fetch keeps FETCH_HEAD pointed at the requested ref; a bare "git fetch --tags"
 # would clobber FETCH_HEAD with the remote default branch and silently build from main.
@@ -73,11 +103,27 @@ fi
   exit 1
 }
 
+# Release builds use that release's upstream images. Development builds
+# overlay upstream's development manifest and compile core themselves.
+upstream_tag=""
+autoware_overlay=autoware-metadata/repositories/autoware-nightly.repos
+if [ "${autoware_ref_type}" = tag ]; then
+  upstream_tag="${autoware_base_version}"
+  autoware_overlay=""
+elif [ ! -f "${autoware_overlay}" ]; then
+  echo "Development manifest not found: ${autoware_overlay}" >&2
+  exit 1
+fi
+
 {
   echo "autoware_input_ref=${autoware_input_ref}"
   echo "autoware_ref_type=${autoware_ref_type}"
   echo "autoware_ref=${autoware_ref}"
   echo "autoware_base_version=${autoware_base_version}"
+  echo "upstream_tag=${upstream_tag}"
+  echo "autoware_overlay=${autoware_overlay}"
+  echo "lock_build_tag=${lock_build_tag}"
+  echo "cache_scope=${cache_scope}"
   echo "build_tag=${build_tag}"
   echo "scan_requested=${scan_requested}"
 } >> "${GITHUB_OUTPUT}"

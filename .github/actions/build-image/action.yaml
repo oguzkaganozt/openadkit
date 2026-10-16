@@ -27,7 +27,7 @@ inputs:
     description: Restore and inject ccache mounts
     default: "true"
   save-ccache:
-    description: Save and prune ccache mounts (main pushes and schedules only)
+    description: Save and prune ccache mounts (main and release branch pushes and schedules only)
     default: "false"
   shared-common:
     description: Export temporary common caches for same-repository PR consumers
@@ -111,7 +111,7 @@ runs:
       uses: docker/bake-action@v7
       env:
         ROS_DISTRO: ${{ inputs.ros-distro }}
-        UPSTREAM_TAG: ${{ fromJSON(inputs.prepared).autoware_base_version }}
+        UPSTREAM_TAG: ${{ fromJSON(inputs.prepared).upstream_tag }}
         LOCAL_IMAGE: ""
       with:
         # Build from the checkout: the recipe and metadata bake files are
@@ -133,9 +133,10 @@ runs:
         CACHE_KEY_PREFIX: ${{ steps.recipe.outputs.cache_prefix }}
         KEEP_KEY: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
       run: |
-        # The cache action's POST saves the new entry after this step.
+        # The cache action's POST saves the new entry after this step. Other
+        # branches keep their own lineage.
         set -euo pipefail
-        gh cache list --repo "$GITHUB_REPOSITORY" --key "$CACHE_KEY_PREFIX" --limit 200 --json key,sizeInBytes \
+        gh cache list --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" --key "$CACHE_KEY_PREFIX" --limit 200 --json key,sizeInBytes \
           | jq -r --arg keep "$KEEP_KEY" '.[] | select(.key != $keep or .sizeInBytes > 6000000000) | .key' \
           | while read -r key; do
               echo "delete: $key"

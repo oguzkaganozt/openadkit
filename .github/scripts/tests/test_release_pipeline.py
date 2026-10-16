@@ -25,21 +25,23 @@ from release_fixtures import (
 MARKER = "<!-- openadkit-release-workflow:v1 -->\n"
 
 
-@pytest.mark.parametrize(("version", "ref_type", "input_ref", "accepted"), [
-    ("v2.0.0", "tag", "1.8.0", True),
-    ("v2.0.0-rc.1", "sha", "a" * 40, True),
-    ("v2.0.0", "sha", "a" * 40, False),
-    ("v2.0.0-rc.1", "branch", "main", False),
-    ("v2.0.0-rc.1", "sha", "abc123", False),
+@pytest.mark.parametrize(("version", "branch", "ref_type", "input_ref", "accepted"), [
+    ("v2.0.0", "release/2.0", "tag", "1.9.0", True),
+    ("v2.0.0-rc.4", "release/2.0", "tag", "1.9.0", True),
+    ("v2.0.1", "release/2.0", "tag", "1.9.0", True),
+    ("v2.0.0", "main", "tag", "1.9.0", False),
+    ("v2.1.0", "release/2.0", "tag", "1.9.0", False),
+    ("v2.0.0-rc.4", "release/2.0", "sha", "a" * 40, False),
+    ("v2.0.0-rc.4", "release/2.0", "branch", "main", False),
 ])
-def test_release_ref_policy(tmp_path, version, ref_type, input_ref, accepted):
+def test_release_ref_policy(tmp_path, version, branch, ref_type, input_ref, accepted):
     build = tmp_path / "release-input/build"
     build.mkdir(parents=True)
     (build / "build-metadata.json").write_text(json.dumps({
         "openadkit_sha": RELEASE_SHA, "autoware_input_ref": input_ref,
-        "autoware_ref_type": ref_type, "autoware_base_version": "1.8.0",
+        "autoware_ref_type": ref_type, "autoware_base_version": "1.9.0",
     }))
-    result = run_validator(tmp_path, "validate_release_rules", VERSION=version)
+    result = run_validator(tmp_path, f"source_branch={branch}; validate_release_rules", VERSION=version)
     assert (result.returncode == 0) is accepted, result.stderr
 
 

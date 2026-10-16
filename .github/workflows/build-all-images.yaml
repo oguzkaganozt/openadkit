@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
+      - 'release/*'
     paths:
       - '.dockerignore'
+      - '.github/autoware.ref'
       - '.github/actions/combine-multi-arch-images/**'
       - '.github/actions/free-disk-space/**'
       - '.github/actions/build-image/**'
@@ -20,12 +22,9 @@ on:
 
   schedule:
     - cron: '0 0 * * 0'
+  # The branch's .github/autoware.ref selects the Autoware sources.
   workflow_dispatch:
     inputs:
-      autoware_ref:
-        description: 'Autoware ref to build from (branch, tag, or SHA). Defaults to UPSTREAM_TAG, then main.'
-        required: false
-        default: ''
       run_scan:
         description: 'Run a full image scan after this build completes.'
         required: false
@@ -41,7 +40,7 @@ env:
   IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
   IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
   IS_MAIN_PUSH: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-  SAVE_CCACHE: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule') }}
+  SAVE_CCACHE: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && (github.event_name == 'push' || github.event_name == 'schedule') }}
 
 jobs:
   prepare:
@@ -54,6 +53,8 @@ jobs:
       autoware_ref_type: ${{ steps.prepare.outputs.autoware_ref_type }}
       autoware_ref: ${{ steps.prepare.outputs.autoware_ref }}
       autoware_base_version: ${{ steps.prepare.outputs.autoware_base_version }}
+      upstream_tag: ${{ steps.prepare.outputs.upstream_tag }}
+      cache_scope: ${{ steps.prepare.outputs.cache_scope }}
       upstream_images: ${{ steps.upstream.outputs.upstream_images }}
       autoware_lock_sha256: ${{ steps.lock.outputs.autoware_lock_sha256 }}
       build_tag: ${{ steps.prepare.outputs.build_tag }}
@@ -69,7 +70,6 @@ jobs:
       - name: Resolve shared build inputs
         id: prepare
         env:
-          AUTOWARE_REF_INPUT: ${{ inputs.autoware_ref || vars.UPSTREAM_TAG || 'main' }}
           RUN_SCAN_INPUT: ${{ inputs.run_scan || false }}
         run: bash .github/scripts/resolve_build_inputs.sh
         shell: bash
@@ -89,7 +89,7 @@ jobs:
       - name: Resolve immutable upstream Autoware images
         id: upstream
         env:
-          AUTOWARE_BASE_VERSION: ${{ steps.prepare.outputs.autoware_base_version }}
+          UPSTREAM_TAG: ${{ steps.prepare.outputs.upstream_tag }}
         run: |
           set -euo pipefail
           bash .github/scripts/resolve_upstream_images.sh
@@ -118,11 +118,14 @@ jobs:
 
       - name: Export exact Autoware dependency lockfile
         id: lock
+        env:
+          AUTOWARE_OVERLAY: ${{ steps.prepare.outputs.autoware_overlay }}
         run: |
           set -euo pipefail
           python3 .github/scripts/export_autoware_lock.py \
             autoware-metadata/repositories/autoware.repos \
-            autoware-lock/autoware-lock.repos
+            autoware-lock/autoware-lock.repos \
+            "${AUTOWARE_OVERLAY}"
           autoware_lock_sha256=$(sha256sum autoware-lock/autoware-lock.repos | cut -d ' ' -f1)
           echo "autoware_lock_sha256=${autoware_lock_sha256}" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -140,7 +143,8 @@ jobs:
   build-common:
     needs: prepare
     runs-on: ${{ matrix.platform == 'linux/amd64' && (vars.RUNNER_AMD64 || 'ubuntu-22.04') || (vars.RUNNER_ARM64 || 'ubuntu-22.04-arm') }}
-    timeout-minutes: 120
+    # Development builds also compile Autoware core.
+    timeout-minutes: ${{ needs.prepare.outputs.upstream_tag == '' && 240 || 120 }}
     permissions:
       actions: write
       contents: read

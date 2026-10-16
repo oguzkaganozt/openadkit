@@ -40,9 +40,12 @@ def resolve(url, version):
     raise RuntimeError(f"Could not resolve {url}@{version} to a commit SHA")
 
 
-def export_lock(source, target):
-    data = yaml.safe_load(source.read_text())
-    repos = data.get("repositories", {})
+def export_lock(source, target, overlay=None):
+    repos = yaml.safe_load(source.read_text()).get("repositories", {})
+    if overlay is not None:
+        # Upstream's development manifest moves listed repositories to their
+        # development branches.
+        repos.update(yaml.safe_load(overlay.read_text())["repositories"])
     target.parent.mkdir(parents=True, exist_ok=True)
 
     with target.open("w") as out:
@@ -62,10 +65,11 @@ def export_lock(source, target):
 
 
 def main(argv):
-    if len(argv) != 3:
-        print("usage: export_autoware_lock.py <source.repos> <target.repos>", file=sys.stderr)
+    if len(argv) not in (3, 4):
+        print("usage: export_autoware_lock.py <source.repos> <target.repos> [overlay.repos]", file=sys.stderr)
         return 2
-    export_lock(pathlib.Path(argv[1]), pathlib.Path(argv[2]))
+    overlay = pathlib.Path(argv[3]) if len(argv) == 4 and argv[3] else None
+    export_lock(pathlib.Path(argv[1]), pathlib.Path(argv[2]), overlay)
     return 0
 
 
