@@ -23,13 +23,13 @@ variable "UPSTREAM_TAG" {
   default = ""
 }
 // ROS snapshot (snapshots.ros.org) each distro's upstream images were built
-// from, for UPSTREAM_TAG 1.8.0. Change both together: the universe-common
-// devel build fails when the snapshot does not match the upstream images.
+// from, for UPSTREAM_TAG 1.9.0. Change both together: the builds fail when the
+// snapshot does not match the upstream images (components/shared/ros-snapshot).
 variable "ROS_SNAPSHOT_HUMBLE" {
-  default = "2026-03-29"
+  default = "2026-07-02"
 }
 variable "ROS_SNAPSHOT_JAZZY" {
-  default = "2026-04-13"
+  default = "2026-06-18"
 }
 function "ros_snapshot" {
   params = []

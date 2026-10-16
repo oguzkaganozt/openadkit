@@ -8,12 +8,24 @@ set -euo pipefail
 # that sync's snapshot keeps every stage on the exact ROS versions those
 # binaries, and ours, link against. See README.md.
 #
-# Usage: ros-snapshot.sh <YYYY-MM-DD> [--check]
-#   --check  fail unless every installed ROS package is the snapshot's version
+# Usage: ros-snapshot.sh <YYYY-MM-DD> [--check [BASE_DPKG_DIR]]
+#   An empty date keeps the live source, for upstream development builds.
+#   --check  fail when an installed ROS package is newer than the snapshot
+#            serves, or when one this image installed over the image whose
+#            dpkg database is BASE_DPKG_DIR is not the snapshot's version
+#
+# Upstream images are layered: a base image built from one ROS sync, and core
+# installed later from another. The packages core added are what it compiled
+# against and must be the snapshot's; the base's may be older.
 
-snapshot="${1:?usage: ros-snapshot.sh <YYYY-MM-DD> [--check]}"
+snapshot="${1?usage: ros-snapshot.sh <YYYY-MM-DD> [--check [BASE_DPKG_DIR]]}"
 check="${2:-}"
+base_dpkg="${3:-}"
 : "${ROS_DISTRO:?ROS_DISTRO is required}"
+if [ -z "${snapshot}" ]; then
+    echo "ros snapshot: none, keeping the live ROS source"
+    exit 0
+fi
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=/dev/null
 . /etc/os-release
@@ -35,20 +47,35 @@ apt-get update
 
 [ "${check}" = --check ] || exit 0
 
-mapfile -t installed < <(
-    dpkg-query -W -f='${db:Status-Abbrev} ${Package}=${Version}\n' "ros-${ROS_DISTRO}-*" |
+ros_packages() {
+    dpkg-query "$@" -W -f='${db:Status-Abbrev} ${Package}=${Version}\n' "ros-${ROS_DISTRO}-*" |
         awk '$1 == "ii" { print $2 }' | sort
-)
+}
+mapfile -t installed < <(ros_packages)
 [ "${#installed[@]}" -gt 0 ] || { echo "ros snapshot: no ROS packages installed" >&2; exit 1; }
-# Installed versions the snapshot does not serve.
-mismatched=$(comm -23 <(printf '%s\n' "${installed[@]}") <(
-    apt-cache madison "${installed[@]%%=*}" |
-        awk -F'|' '{ gsub(/ /, "", $1); gsub(/ /, "", $2); print $1 "=" $2 }' | sort -u
-))
-if [ -n "${mismatched}" ]; then
+declare -A served=() added=()
+while IFS='|' read -r package version _; do
+    package=${package// /} version=${version// /}
+    [ -n "${served[${package}]:-}" ] || served[${package}]=${version}
+done < <(apt-cache madison "${installed[@]%%=*}")
+if [ -n "${base_dpkg}" ]; then
+    while read -r entry; do
+        added[${entry}]=1
+    done < <(comm -23 <(printf '%s\n' "${installed[@]}") <(ros_packages --admindir="${base_dpkg}"))
+fi
+
+mismatched=()
+for entry in "${installed[@]}"; do
+    version=${entry#*=} want=${served[${entry%%=*}]:-}
+    if [ -z "${want}" ] || dpkg --compare-versions "${version}" gt "${want}" \
+        || { [ -n "${added[${entry}]:-}" ] && [ "${version}" != "${want}" ]; }; then
+        mismatched+=("${entry} (snapshot: ${want:-none})")
+    fi
+done
+if [ "${#mismatched[@]}" -gt 0 ]; then
     echo "ros snapshot ${snapshot} does not match this image's ROS packages:" >&2
-    printf '%s\n' "${mismatched}" | head -20 | sed 's/^/  /' >&2
+    printf '%s\n' "${mismatched[@]}" | head -20 | sed 's/^/  /' >&2
     echo "Set the ROS snapshot the upstream image was built from (components/docker-bake.hcl)." >&2
     exit 1
 fi
-echo "ros snapshot ${snapshot}: ${#installed[@]} installed ROS packages match"
+echo "ros snapshot ${snapshot}: ${#installed[@]} installed ROS packages match${base_dpkg:+ (${#added[@]} added over the base)}"

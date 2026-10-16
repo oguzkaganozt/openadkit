@@ -7,13 +7,19 @@ never compiled with. `diagnostic_updater` 4.2.6 -> 4.2.7 changed the `Updater`
 constructor and broke the Jazzy images that way.
 
 `ros-snapshot.sh <date> --check` points the ROS apt source at that date's
-snapshot on `snapshots.ros.org` and fails unless every installed ROS package is
-the snapshot's version. The universe-common and CUDA stages run it before any
-apt step, devel and runtime alike; the component images inherit the source.
-Every stage therefore installs the exact ROS versions the upstream images were
-built with, and an upstream image that does not match the snapshot cannot
-build. The images carry the date as the `org.opencontainers.image.ros-snapshot`
-label, and the release notes and BOM name it per distro.
+snapshot on `snapshots.ros.org` and fails when an installed ROS package is newer
+than the snapshot's. The universe-common and CUDA stages run it before any apt
+step, devel and runtime alike; the component images inherit the source.
+
+The upstream images are layered, and their layers can come from different ROS
+syncs: `base` from an older one, `core-devel` installed later from the live
+repository. The packages core added over `base` are what it was compiled
+against, so the universe-common build stage passes the base image's dpkg
+database and also fails unless each of those is exactly the snapshot's version.
+Every stage therefore installs the ROS versions upstream core was built with, and
+a snapshot from before or after that build cannot build. The images carry the
+date as the `org.opencontainers.image.ros-snapshot` label, and the release notes
+and BOM name it per distro.
 
 The snapshot is signed by the vendored `ros-snapshots.asc` (ROS Snapshot
 builder, `4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA`). Ubuntu sources stay
@@ -23,14 +29,17 @@ flowing.
 ## Changing the snapshot
 
 The dates live in `components/docker-bake.hcl` (`ROS_SNAPSHOT_HUMBLE`,
-`ROS_SNAPSHOT_JAZZY`) and belong to `UPSTREAM_TAG`; change them together. Pick,
-from the dates listed on `snapshots.ros.org/<distro>/`, the snapshot whose
-check passes against the new release's `core-devel` image:
+`ROS_SNAPSHOT_JAZZY`) and belong to `UPSTREAM_TAG`; change them together. It is
+the last snapshot listed on `snapshots.ros.org/<distro>/` before the release's
+`core-devel` image was built; confirm that the check passes:
 
 ```bash
+image=ghcr.io/autowarefoundation/autoware
+base=$(docker create "$image:base-jazzy-<tag>")
+docker cp "$base:/var/lib/dpkg" base-dpkg && docker rm "$base"
 docker run --rm -e ROS_DISTRO=jazzy -v "$PWD/components/shared/ros-snapshot:/s:ro" \
-  --entrypoint bash ghcr.io/autowarefoundation/autoware:core-devel-jazzy-<tag> \
-  -c 'bash /s/ros-snapshot.sh <YYYY-MM-DD> --check'
+  -v "$PWD/base-dpkg:/base-dpkg:ro" --entrypoint bash "$image:core-devel-jazzy-<tag>" \
+  -c 'bash /s/ros-snapshot.sh <YYYY-MM-DD> --check /base-dpkg'
 ```
 
 The key expires on 2027-06-01. Replace `ros-snapshots.asc` with the extended

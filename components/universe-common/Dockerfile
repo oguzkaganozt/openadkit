@@ -3,6 +3,10 @@
 ARG CORE_DEVEL_IMAGE
 ARG BASE_IMAGE
 
+# The upstream base core-devel builds on; the snapshot check below reads which
+# ROS packages core added over it.
+FROM ${BASE_IMAGE} AS upstream-base
+
 # =============================================================================
 # Stage: universe-common-build
 # Compiles the universe-common slice into /opt/autoware on top of core-devel.
@@ -19,9 +23,10 @@ ARG ROS_DISTRO
 ARG ROS_SNAPSHOT
 LABEL org.opencontainers.image.ros-snapshot="${ROS_SNAPSHOT}"
 RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snapshot \
+    --mount=from=upstream-base,source=/var/lib/dpkg,target=/tmp/base-dpkg \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check
+    bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check /tmp/base-dpkg
 
 # rosdep install for the universe-common slice (build/test deps).
 # Broad glob so rosdep sees all universe packages as local via --ignore-src,
