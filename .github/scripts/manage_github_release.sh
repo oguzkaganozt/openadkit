@@ -211,14 +211,14 @@ create_draft() {
     --draft \
     "${assets[@]}" >/dev/null
   # The release list can show a new draft only seconds after its creation;
-  # wait up to 45 s in total.
-  for attempt in 1 2 3 4 5; do
+  # look up to six times over 45 s.
+  for delay in 0 3 6 9 12 15; do
+    sleep "${delay}"
     state=$(fetch_release_by_tag) || return
     if [ -n "${state}" ] && verify_owned_draft "${state}"; then
       jq -er '.id' <<<"${state}"
       return
     fi
-    sleep "$((attempt * 3))"
   done
   echo "Created draft release ${VERSION} could not be verified" >&2
   return 1
