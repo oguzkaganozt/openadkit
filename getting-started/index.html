@@ -2178,8 +2178,9 @@ the repository root.</p>
 the default; add <code>--gpu</code> for NVIDIA deployments. <code>--gpu</code> also installs NVIDIA
 OpenGL/Vulkan libraries needed for CARLA. Setup installs Docker only when the
 host has none; it never replaces an existing engine. If Docker is installed but
-Docker Compose 2.20 or newer is missing, install Compose (Ubuntu:
-<code>docker-compose-v2</code>) and rerun setup.</p>
+Docker Compose 5.0 or newer is missing, install Docker's <code>docker-compose-plugin</code>
+(<a href="https://docs.docker.com/compose/install/linux/">instructions</a>) and rerun
+setup. Ubuntu's own <code>docker-compose-v2</code> package is too old.</p>
 <p>Activate the Docker group membership added by <code>openadkit setup</code> before running
 Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
