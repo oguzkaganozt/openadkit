@@ -18,6 +18,7 @@ permissions:
 on:
   pull_request:
     paths:
+      - ".dockerignore"
       - "components/**"
       - ".github/image-inventory.json"
       - ".github/scripts/export_autoware_lock.py"

@@ -38,6 +38,9 @@ def test_inventory_bake_and_runtime_catalog_agree():
 
 @pytest.mark.parametrize(("path", "expected", "flags"), [
     ("components/universe-common/Dockerfile", {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
+    # carla-interface builds the simulator locally, so it is not a separate target.
+    (".dockerignore", {image["target"] for image in INVENTORY["images"]} - {"simulator"},
+     {"use_local_common": True, "use_local_simulator": True}),
     ("components/sensing-perception/Dockerfile.cuda", {"sensing-perception-cuda"}, {}),
     ("components/sensing-perception/scripts/build.sh", {"sensing-perception", "sensing-perception-cuda"}, {}),
     ("components/simulator/Dockerfile", {"carla-interface"}, {"use_local_simulator": True}),
@@ -88,6 +91,13 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
             build = recipe["target"]["universe-common-build"]
             assert build["tags"] == [common_build] and not build["labels"]
             assert build["attest"] == ["type=provenance,disabled=true"]
+            # The build and runtime stages keep separate caches; neither
+            # export may overwrite the other.
+            cache = "type=registry,ref=ghcr.io/example/openadkit-buildcache:{}-amd64-humble-main"
+            assert build["cache-to"] == [cache.format("universe-common-build") + ",mode=max"]
+            assert row["cache-to"] == [cache.format("universe-common") + ",mode=max"]
+            assert "cache-to" not in recipe["target"]["universe-common-devel"]
+            assert row["cache-from"] == [cache.format("universe-common-build"), cache.format("universe-common")]
         else:
             assert row["contexts"]["universe-common-devel"] == "docker-image://" + common_build
     else:

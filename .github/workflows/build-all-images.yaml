@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.dockerignore'
       - '.github/actions/combine-multi-arch-images/**'
       - '.github/actions/free-disk-space/**'
       - '.github/actions/build-image/**'

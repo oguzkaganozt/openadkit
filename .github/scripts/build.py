@@ -108,7 +108,8 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
         for changed_file in changed_files:
             if not changed_file:
                 continue
-            if changed_file == "components/docker-bake.hcl":
+            # Both shape every image's build context and dependency graph.
+            if changed_file in ("components/docker-bake.hcl", ".dockerignore"):
                 targets.update(all_targets)
                 use_local_common = True
                 use_local_simulator = True
@@ -195,7 +196,13 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
         raise ValueError(f"Unsupported build cell: {target}/{distro}/{platform}")
     arch = platform_label(platform)
     build_tag = prepared["build_tag"]
-    cache = f"ghcr.io/{owner}/openadkit-buildcache:{target}-{arch}-{distro}-main"
+    def cache_ref(name):
+        return f"ghcr.io/{owner}/openadkit-buildcache:{name}-{arch}-{distro}-main"
+    cache = cache_ref(target)
+    # universe-common's build and runtime stages export separate caches so one
+    # never overwrites the other; the devel image adds only its per-build
+    # refresh, which nothing reuses.
+    common_cache_from = [f"type=registry,ref={cache_ref(name)}" for name in ("universe-common-build", "universe-common")]
     # Internal compile base for components (the devel image without its
     # per-build refresh). Without per-build labels or provenance its digest
     # only changes with its inputs, which keeps component compiles cached.
@@ -210,6 +217,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             upstream = json.loads(prepared["upstream_images"])[distro]
             contexts.update({f"autoware-{name}": upstream[name]["uri"] for name in ("core-devel", "base")})
             args["SECURITY_REFRESH"] = build_tag
+            cache_from = common_cache_from.copy()
         else:
             contexts["universe-common-devel"] = f"docker-image://{common_build}"
             contexts["universe-common"] = f"docker-image://ghcr.io/{owner}/openadkit-common:universe-common-{arch}-{distro}-{build_tag}"
@@ -238,7 +246,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             contexts["simulator"] = prepared["simulator_context"]
         if not shared_common:
             if prepared.get("use_local_common") == "true":
-                cache_from.append(f"type=registry,ref=ghcr.io/{owner}/openadkit-buildcache:universe-common-{arch}-{distro}-main")
+                cache_from.extend(common_cache_from)
             if common_cached:
                 cache_from.extend(f"type=gha,scope=pr-common-{stage}-{run_id}" for stage in ("devel", "runtime"))
             if prepared.get("use_local_simulator") == "true":
@@ -254,7 +262,9 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             overrides[name]["cache-to"] = [f"type=registry,ref={cache},mode=max"]
     if publish and target == "universe-common":
         overrides["universe-common-build"].update(
-            tags=[common_build], labels={}, attest=["type=provenance,disabled=true"])
+            tags=[common_build], labels={}, attest=["type=provenance,disabled=true"],
+            **{"cache-to": [f"type=registry,ref={cache_ref('universe-common-build')},mode=max"]})
+        del overrides["universe-common-devel"]["cache-to"]
     overrides["sensing-perception-cuda"]["contexts"].update(cuda_contexts)
     if publish and target not in ("universe-common", "carla-interface"):
         overrides["sensing-perception-cuda"]["args"]["SECURITY_REFRESH"] = build_tag
