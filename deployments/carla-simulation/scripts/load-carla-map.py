@@ -39,9 +39,10 @@ def main():
                 break
             time.sleep(min(2.0, remaining()))
 
-    # Phase 2: request the load, leaving slack for phase-3 confirmation so a
-    # slow load cannot consume the entire timeout budget.
-    confirm_slack = 15.0
+    # Phase 2: request the load, leaving up to a quarter of the time left (at
+    # most 15 s) for phase-3 confirmation so a slow load cannot consume the
+    # entire budget, however short CARLA_LOAD_TIMEOUT is.
+    confirm_slack = min(15.0, remaining() / 4)
     if remaining() > confirm_slack:
         budget = max(1.0, remaining() - confirm_slack)
         print(f"Loading CARLA map {map_name} via {host}:{port} (timeout {budget:.0f}s)")
