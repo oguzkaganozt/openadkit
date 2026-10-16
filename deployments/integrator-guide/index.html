@@ -2291,9 +2291,9 @@ This interface requires manifest schema version 2; older manifests are rejected.
 <h2 id="pin-the-base">Pin the Base<a class="headerlink" href="#pin-the-base" title="Permanent link">#</a></h2>
 <p>Set <code>kind</code> to <code>kit</code> and <code>extends</code> to a published schema-v2 release tag in your
 root <code>openadkit.json</code>. The CLI locates that version under
-<code>~/.local/share/openadkit/openadkit-&lt;tag&gt;</code> (<code>OPENADKIT_INSTALL_DIR</code> overrides the
-install root) and delegates to its launcher. Install a missing version with
-<code>openadkit install --version &lt;tag&gt;</code>.</p>
+<code>~/.local/share/openadkit/openadkit-&lt;tag&gt;</code> and delegates to its launcher. Install
+a missing version with <code>openadkit install --version &lt;tag&gt;</code>.
+<code>OPENADKIT_INSTALL_DIR</code> overrides the install root for both.</p>
 <p>A relative or absolute source path is also accepted for development. Only one
 level of <code>extends</code> is supported: a kit extends Open AD Kit, not another kit.
 Each kit deployment names a <code>base</code> deployment in the pinned release. Its
