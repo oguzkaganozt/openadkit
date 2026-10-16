@@ -2269,7 +2269,7 @@ instead (see <a href="../../getting-started/container-images/">Container Images 
 <ul>
 <li>Ubuntu 22.04 or 24.04 (<code>openadkit setup</code> supports Ubuntu only; elsewhere,
   install Docker with Buildx and Compose yourself)</li>
-<li>Git, <code>pipx</code>, and <code>vcs2l</code> to import the Autoware sources</li>
+<li>Git, <code>pipx</code>, <code>vcs2l</code>, and <code>python3-yaml</code> to import the Autoware sources</li>
 <li>Disk space for several multi-gigabyte images</li>
 </ul>
 <p>The component Dockerfiles build on upstream Autoware images from GHCR and
@@ -2347,17 +2347,26 @@ Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># 3. Make the pipx-installed vcs command available in this shell</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">"</span>
 
-<span class="c1"># 4. Import Autoware sources at the release used by the upstream base images</span>
-<span class="nv">AUTOWARE_REF</span><span class="o">=</span><span class="m">1</span>.8.0
-<span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
+<span class="c1"># 4. Import the Autoware sources this branch pins</span>
+<span class="nv">AUTOWARE_REF</span><span class="o">=</span><span class="k">$(</span>cat<span class="w"> </span>.github/autoware.ref<span class="k">)</span>
 git<span class="w"> </span>clone<span class="w"> </span>--branch<span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span><span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>https://github.com/autowarefoundation/autoware.git
+<span class="nv">overlay</span><span class="o">=()</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>main<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span><span class="c1"># Upstream development: its development manifest, and core built locally</span>
+<span class="w">  </span><span class="nv">overlay</span><span class="o">=(</span>autoware/repositories/autoware-nightly.repos<span class="o">)</span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">""</span>
+<span class="k">else</span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
+<span class="k">fi</span>
+python3<span class="w"> </span>.github/scripts/export_autoware_lock.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>autoware/repositories/autoware.repos<span class="w"> </span>autoware.lock<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">overlay</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span>
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src
-vcs<span class="w"> </span>import<span class="w"> </span>--shallow<span class="w"> </span>autoware/src<span class="w"> </span>&lt;<span class="w"> </span>autoware/repositories/autoware.repos
+vcs<span class="w"> </span>import<span class="w"> </span>--shallow<span class="w"> </span>autoware/src<span class="w"> </span>&lt;<span class="w"> </span>autoware.lock
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src/middleware/external
 touch<span class="w"> </span>autoware/src/middleware/external/.keep
 
-<span class="c1"># 5. Build the shared universe-common layer (~2 hours)</span>
+<span class="c1"># 5. Build the shared universe-common layer (~2 hours, more with core)</span>
 docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>universe-common
 
 <span class="c1"># 6. Build the Planning Simulation images (~2 hours)</span>
@@ -2375,6 +2384,8 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
   with <code>--set &lt;target&gt;.tags=...</code>. To use other images, set the <code>*_IMAGE</code>
   variables in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
 <li>For Jazzy, build with <code>ROS_DISTRO=jazzy</code> and run with <code>--ros-distro jazzy</code>.</li>
+<li><code>main</code> builds for upstream development; check out a <code>release/X.Y</code> branch to
+  build a release's sources.</li>
 </ul>
 <p>Other useful targets:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w">                                </span><span class="c1"># everything</span>
@@ -2398,7 +2409,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 </tr>
 <tr>
 <td><code>UPSTREAM_TAG</code></td>
-<td>Upstream Autoware release to build on (e.g. <code>1.8.0</code>). Empty uses the moving <code>&lt;name&gt;-&lt;distro&gt;</code> tag, which is not reproducible.</td>
+<td>Upstream Autoware release to build on (e.g. <code>1.9.0</code>). Empty builds for upstream development: core compiles from <code>autoware/src</code> on the moving <code>base-&lt;distro&gt;</code> image, and ROS installs from the live repository.</td>
 <td><code>""</code></td>
 </tr>
 <tr>
@@ -2409,7 +2420,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 <tr>
 <td><code>ROS_SNAPSHOT_HUMBLE</code>, <code>ROS_SNAPSHOT_JAZZY</code></td>
 <td>ROS apt snapshot the <code>UPSTREAM_TAG</code> images were built from. The build fails when they do not match; see <a href="https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md">ROS snapshot</a>.</td>
-<td>Snapshots for <code>1.8.0</code></td>
+<td>Snapshots for <code>1.9.0</code></td>
 </tr>
 </tbody>
 </table>
@@ -2424,14 +2435,21 @@ Jazzy on amd64 and arm64. <code>create-manifests</code> then combines the per-ar
 into multi-arch tags. CI disables the local tags (<code>LOCAL_IMAGE=""</code>) and tags
 images through <code>docker/metadata-action</code>. A failed scheduled build opens a GitHub
 issue.</p>
+<p>Each branch's <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref"><code>.github/autoware.ref</code></a>
+selects its Autoware sources, resolved into an exact dependency lock per build.
+<code>main</code> pins <code>main</code>: it overlays upstream's development manifest and compiles
+core in the same Bake graph, so integration changes are tested as upstream lands
+them. A <code>release/X.Y</code> branch pins an Autoware release and builds on its official
+images. CI builds <code>main</code> and <code>release/*</code> pushes; registry caches are kept per
+branch. Pull request checks of <code>main</code> build on the Autoware revision of <code>main</code>'s
+latest published images, so unchanged images are reused.</p>
 <h2 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
 <p>Releases promote an existing CI build; nothing is rebuilt.</p>
 <h3 id="before-you-release">Before You Release<a class="headerlink" href="#before-you-release" title="Permanent link">#</a></h3>
 <ul>
-<li><strong><code>vars.UPSTREAM_TAG</code></strong> is set in the repository or organization variables. It
-  selects the Autoware release to build; the workflow's <code>autoware_ref</code> input
-  overrides it. The ROS snapshots in <code>components/docker-bake.hcl</code> must belong
-  to the same release.</li>
+<li><strong>A <code>release/X.Y</code> branch</strong> exists for the version, created from <code>main</code>. Its
+  <code>.github/autoware.ref</code> names the Autoware release (for example <code>1.9.0</code>), and
+  the ROS snapshots in <code>components/docker-bake.hcl</code> belong to that release.</li>
 <li><strong><code>vars.RUNNER_AMD64</code></strong> and <strong><code>vars.RUNNER_ARM64</code></strong> optionally move the build,
   scan and evidence jobs to larger runners (for example
   <code>ubicloud-standard-8-ubuntu-2204</code> and <code>ubicloud-standard-8-arm-ubuntu-2204</code>).
@@ -2441,12 +2459,12 @@ issue.</p>
 <li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise <code>GITHUB_TOKEN</code> is
   used.</li>
-<li><strong>A successful build</strong> of <code>build-all-images</code> exists on <code>main</code> from an exact
-  Autoware release tag. Builds from a full SHA can only become pre-releases. The
-  build summary shows its <code>build_tag</code>. The release ships the CLI and deployments
-  from that build's commit, and pushes that change only those start no build:
-  dispatch <code>build-all-images</code> on <code>main</code> to release them. The release run warns
-  when <code>main</code> has such changes.</li>
+<li><strong>A successful build</strong> of <code>build-all-images</code> exists on <code>release/X.Y</code>; stable
+  and pre-releases <code>vX.Y.Z</code> both come from it, and <code>main</code> builds are never
+  released. The build summary shows its <code>build_tag</code>. The release ships the CLI
+  and deployments from that build's commit, and pushes that change only those
+  start no build: dispatch <code>build-all-images</code> on the branch to release them. The
+  release run warns when the branch has such changes.</li>
 <li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code>.</li>
 <li><strong>Complete signed <code>PASSED</code> evidence</strong> exists for that same build. Required
   cells, source checksums and image digests must match; quarantine does not waive
@@ -2454,7 +2472,7 @@ issue.</p>
 </ul>
 <h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
-with the version and <code>build_tag</code>. Its jobs run in order:</p>
+on <code>main</code> with the version and <code>build_tag</code>. Its jobs run in order:</p>
 <pre class="mermaid"><code>flowchart LR
     V[validate] --&gt; P[package-bundles] --&gt; T[release-tag] --&gt; D[prepare-github-release] --&gt; I[release-images] --&gt; G[release-github] --&gt; W[deploy-docs]</code></pre>
 <ol>

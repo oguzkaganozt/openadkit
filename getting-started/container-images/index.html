@@ -2254,6 +2254,9 @@ image digest.</p>
 </tr>
 </tbody>
 </table>
+<p>CI builds of <code>main</code> follow upstream Autoware development and are never
+released; releases come from <code>release/X.Y</code> branches (see
+<a href="#versioning">Versioning</a>).</p>
 <p>The moving aliases also exist with a <code>-latest</code> suffix
 (<code>planning-control-humble-latest</code>, <code>planning-control-latest</code>). Pre-releases
 never update them.</p>
@@ -2297,7 +2300,8 @@ the same patterns with <code>-jazzy</code> (for example <code>planning-control-j
 pins one upstream Autoware release, the ROS 2 distros, and every image digest,
 and lists them in its
 <a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Release</a>
-notes.</p>
+notes. A <code>release/X.Y</code> branch produces the <code>vX.Y.Z</code> releases and pins their
+Autoware release in <code>.github/autoware.ref</code>; <code>main</code> tracks upstream development.</p>
 <h2 id="ros-2-distro-support">ROS 2 Distro Support<a class="headerlink" href="#ros-2-distro-support" title="Permanent link">#</a></h2>
 <table>
 <thead>
