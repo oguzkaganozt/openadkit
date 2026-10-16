@@ -362,6 +362,8 @@ class Selection:
     node: str | None
     injections: dict[str, str]
     environment: dict[str, str]
+    # Settings a GPU run sees, for GPU-only data (compose.resolve_settings).
+    gpu_environment: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)

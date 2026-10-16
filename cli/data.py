@@ -8,7 +8,6 @@ import json
 import os
 import shutil
 import stat
-import string
 import tempfile
 import time
 import urllib.error
@@ -248,15 +247,16 @@ def selected_resources(
 
 
 def resolve_destination(resource: dict[str, Any], selection: Selection) -> Path:
+    """Where a resource goes, from settings compose.resolve_settings resolved."""
     variable = resource["destinationEnv"]
-    value = selection.environment.get(variable)
+    environment = selection.environment
+    if resource.get("gpu") and selection.gpu_environment is not None:
+        environment = selection.gpu_environment
+    value = environment.get(variable)
     if not value:
         raise OpenADKitError(
             f"{variable} is required for data resource {resource['name']}"
         )
-    # A destination may build on other settings, as Compose values do:
-    # CENTERPOINT_DATA_PATH=${DATA_PATH}/lidar_centerpoint.
-    value = string.Template(value).safe_substitute(selection.environment)
     destination = Path(expand_home(value))
     if not destination.is_absolute():
         raise OpenADKitError(

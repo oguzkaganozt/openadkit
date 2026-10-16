@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import re
@@ -169,6 +170,57 @@ def compose_capture(
         cwd=deployment.directory,
         env=compose_process_environment(deployment, selection),
         check=check,
+    )
+
+
+def _resolved_settings(deployment: Deployment, selection: Selection) -> dict[str, str]:
+    command = ["docker", "compose", "--project-name", "openadkit-settings", "--file", "-"]
+    for env_file in deployment.env_files(selection.gpu):
+        command.extend(("--env-file", str(env_file)))
+    try:
+        result = subprocess.run(
+            command + ["config", "--environment"],
+            input="services: {}\n",
+            capture_output=True,
+            text=True,
+            cwd=deployment.directory,
+            env=compose_process_environment(deployment, selection),
+        )
+    except OSError as error:
+        raise OpenADKitError(f"could not run Docker Compose: {error}") from error
+    if result.returncode != 0:
+        raise OpenADKitError(
+            f"could not resolve {deployment.name} settings: {result.stderr.strip()}"
+        )
+    resolved = dict(
+        line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+    )
+    return {name: resolved.get(name, value) for name, value in selection.environment.items()}
+
+
+def resolve_settings(deployment: Deployment, selection: Selection) -> Selection:
+    """The selection with its env-file settings resolved as Compose resolves them.
+
+    Data paths must match the mounts, so Compose itself interpolates the env
+    files (${VAR:-default}, values built on other settings, quoting). The
+    empty project leaves out the deployment's own required variables. GPU-only
+    data resolves with the GPU env files, as a GPU run would.
+    """
+    require_docker()
+    environment = _resolved_settings(deployment, selection)
+    gpu_environment = environment
+    if not selection.gpu and deployment.has_gpu_files:
+        gpu = dataclasses.replace(
+            selection,
+            gpu=True,
+            environment={
+                **deployment.configuration_environment(True),
+                **selection.injections,
+            },
+        )
+        gpu_environment = _resolved_settings(deployment, gpu)
+    return dataclasses.replace(
+        selection, environment=environment, gpu_environment=gpu_environment
     )
 
 

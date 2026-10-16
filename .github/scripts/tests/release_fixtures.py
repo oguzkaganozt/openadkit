@@ -2,9 +2,12 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / ".github/scripts"))
@@ -73,8 +76,13 @@ def run_validator(tmp_path, function, **env):
 
 
 def packager_env(tmp_path):
+    # The CLI resolves deployment settings with Compose itself.
+    docker = shutil.which("docker")
+    if docker is None or subprocess.run([docker, "compose", "version"], capture_output=True).returncode != 0:
+        pytest.skip("needs Docker Compose")
     calls = tmp_path / "docker-calls"
     executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\n"
+               f'if [[ "$*" == *"config --environment"* ]]; then exec "{docker}" "$@"; fi\n'
                f'printf "%s|%s\\n" "${{ROS_DISTRO:-}}" "$*" >> "{calls}"\n'
                'if [[ "$*" == *"config --services"* ]]; then\n'
                "printf '%s\\n' map map-check planning vehicle system control simulator api visualizer sensing perception localization rosbag scenario_simulator carla carla-interface carla-map-loader zenoh-bridge\nfi\n")

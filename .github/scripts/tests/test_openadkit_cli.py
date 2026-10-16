@@ -603,14 +603,45 @@ def test_failed_post_exchange_verification_never_cleans_displaced_data(tmp_path,
     assert (staged / "dataset/user-file").read_text() == "keep"
 
 
-def test_data_destinations_follow_the_settings_they_build_on(tmp_path, monkeypatch):
+class SettingsDeployment:
+    """The parts of a Deployment that settings resolution reads."""
+
+    def __init__(self, directory, files, gpu_files):
+        self.name, self.directory, self.has_gpu_files = "example", directory, True
+        self.files, self.gpu_files = files, gpu_files
+
+    def env_files(self, gpu=False):
+        return self.files + (self.gpu_files if gpu else [])
+
+    def configuration_environment(self, gpu=False):
+        values = {}
+        for path in self.env_files(gpu):
+            values.update(cli_manifest.parse_dotenv(path))
+        return values
+
+
+@pytest.mark.skipif(
+    shutil.which("docker") is None
+    or subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
+    reason="needs Docker Compose",
+)
+def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
-    resource = {"name": "models", "destinationEnv": "MODEL_PATH"}
-    environment = {"DATA_PATH": "$HOME/data", "MODEL_PATH": "${DATA_PATH}/models"}
-    selection = cli_manifest.Selection("humble", False, None, {}, environment)
-    assert cli_data.resolve_destination(resource, selection) == tmp_path / "data/models"
-    moved = cli_manifest.Selection("humble", False, None, {}, {**environment, "DATA_PATH": "/srv/data"})
-    assert cli_data.resolve_destination(resource, moved) == Path("/srv/data/models")
+    monkeypatch.setenv("MAP_ROOT", "/srv/maps")
+    (tmp_path / "config.env").write_text(
+        "DATA_PATH=$HOME/data\nMODEL_PATH=${DATA_PATH}/models\n"
+        "MAP_PATH=${MAP_ROOT:-/tmp/openadkit-map}\nROSBAG_PATH=${ROSBAG_ROOT:-/tmp/rosbag}\n")
+    (tmp_path / "config.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
+    deployment = SettingsDeployment(tmp_path, [tmp_path / "config.env"], [tmp_path / "config.gpu.env"])
+    selection = cli_manifest.Selection("humble", False, None, {}, deployment.configuration_environment())
+    resolved = cli_compose.resolve_settings(deployment, selection)
+    destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
+        {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
+    assert destination("MODEL_PATH") == tmp_path / "data/models"
+    assert destination("MAP_PATH") == Path("/srv/maps")
+    assert destination("ROSBAG_PATH") == Path("/tmp/rosbag")
+    # GPU-only data goes where a GPU run mounts it.
+    assert destination("ROSBAG_PATH", gpu=True) == Path("/srv/gpu-rosbag")
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="every link a root test creates is root-owned")

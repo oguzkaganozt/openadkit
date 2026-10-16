@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import string
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -395,11 +394,8 @@ def warn_if_modified(root, deployment, kit) -> None:
 
 
 def output_path(selection) -> str | None:
-    """Where the deployment writes results, as Compose will resolve it."""
-    value = selection.environment.get("OUTPUT_HOST_PATH")
-    if not value:
-        return None
-    return string.Template(value).safe_substitute(selection.environment)
+    """Where the deployment writes results (resolved by compose.resolve_settings)."""
+    return selection.environment.get("OUTPUT_HOST_PATH") or None
 
 
 def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> None:
@@ -478,6 +474,8 @@ def main() -> int:
             return 2
         deployment = get_deployment(root, kit, args.deployment)
         selection = deployment.select(kit, None, False, operational=True)
+        if deployment.data:
+            selection = compose.resolve_settings(deployment, selection)
         installed = data.check_installed_data(
             deployment, selection, include_gpu=True
         )
@@ -512,6 +510,7 @@ def main() -> int:
             node=getattr(args, "node", None),
             require_gpu=args.command != "fetch",
         )
+        selection = compose.resolve_settings(deployment, selection)
         if args.command == "fetch":
             if args.force:
                 # Replacing data a live container mounts deletes it under that container.
