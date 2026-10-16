@@ -94,8 +94,9 @@ Run setup as your normal user. It requests `sudo` only for host changes. CPU is
 the default; add `--gpu` for NVIDIA deployments. `--gpu` also installs NVIDIA
 OpenGL/Vulkan libraries needed for CARLA. Setup installs Docker only when the
 host has none; it never replaces an existing engine. If Docker is installed but
-Docker Compose 2.20 or newer is missing, install Compose (Ubuntu:
-`docker-compose-v2`) and rerun setup.
+Docker Compose 5.0 or newer is missing, install Docker's `docker-compose-plugin`
+([instructions](https://docs.docker.com/compose/install/linux/)) and rerun
+setup. Ubuntu's own `docker-compose-v2` package is too old.
 
 --8<-- "includes/docker-group-activation.md"
 

@@ -53,6 +53,8 @@ esac
 RUNTIME_PACKAGES=(ca-certificates curl git gzip python3 tar)
 MISSING_PACKAGES=()
 
+# Deployments override services they include, which Compose rejects before
+# 5.0 ("conflicts with imported resource"). Probe that instead of a version.
 compose_capable() {
   local temporary
   temporary=$(mktemp -d)
@@ -265,7 +267,7 @@ collect_missing_packages
 # Docker CE conflicts with the distribution's docker.io and containerd; never
 # replace an engine the host already runs.
 if [[ $FORCE_DOCKER_INSTALL != true ]] && command -v docker >/dev/null 2>&1 && ! compose_capable; then
-  fail "Docker is installed but Docker Compose 2.20 or newer is missing; install it (Ubuntu: docker-compose-v2) and rerun setup"
+  fail "Docker is installed but Docker Compose 5.0 or newer is missing; install Docker's docker-compose-plugin (https://docs.docker.com/compose/install/linux/) and rerun setup"
 fi
 need_sudo=false
 if ((${#MISSING_PACKAGES[@]} > 0)) || ! docker_stack_ready || ! user_in_docker_group; then
