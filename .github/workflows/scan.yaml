@@ -8,9 +8,12 @@ permissions:
 name: scan-images
 
 on:
+  # Builds of main only: a release line scans and verifies its builds by
+  # dispatch on its own branch, where the release gate expects them.
   workflow_run:
     workflows: [build-all-images]
     types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       build_tag:

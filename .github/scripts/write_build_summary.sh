@@ -28,11 +28,7 @@ if [ -n "${release_line}" ] && [ "${AUTOWARE_REF_TYPE}" = "tag" ] \
   && printf '%s\n' "${AUTOWARE_INPUT_REF}" | grep -Eq "${autoware_stable_re}"; then
   echo "This build can be released as an OpenADKit v${release_line}.Z version after a passed full scan."
   echo ""
-  echo "To release this build, run **Actions -> release -> Run workflow** on main and set \`build_tag\` to \`${BUILD_TAG}\`."
-  if [ "${SCAN_REQUESTED}" != "true" ]; then
-    echo ""
-    echo "Run **Actions -> scan-images -> Run workflow** with \`build_tag\` set to \`${BUILD_TAG}\` before releasing."
-  fi
+  echo "On \`release/${release_line}\`, run **Actions -> scan-images** and **Actions -> evidence** with \`build_tag\` \`${BUILD_TAG}\`, then **Actions -> release** with the same \`build_tag\`."
 else
   echo "This is a development build. Releases come from release/X.Y branches, whose \`.github/autoware.ref\` pins an Autoware X.Y.Z release."
 fi

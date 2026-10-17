@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       run_scan:
-        description: 'Run a full image scan after this build completes.'
+        description: 'Run a full image scan after this build completes (main only; release branches dispatch scan-images on the branch).'
         required: false
         type: boolean
         default: false

@@ -162,15 +162,19 @@ Releases promote an existing CI build; nothing is rebuilt.
   and deployments from that build's commit, and pushes that change only those
   start no build: dispatch `build-all-images` on the branch to release them. The
   release run warns when the branch has such changes.
-- **A passing scan** of `scan-images` exists for that `build_tag`.
-- **Complete signed `PASSED` evidence** exists for that same build. Required
+- **A passing scan** of `scan-images` exists for that `build_tag`, dispatched on
+  the same `release/X.Y` branch.
+- **Complete signed `PASSED` evidence** exists for that same build, from
+  `evidence` dispatched on the same branch. Required
   cells, source checksums and image digests must match; quarantine does not waive
   the gate. See [Evidence Policy](../releases/evidence.md).
 
 ### Workflow
 
 Run [`release.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml)
-on `main` with the version and `build_tag`. Its jobs run in order:
+on the same `release/X.Y` branch with the version and `build_tag`. A release
+line releases with its own workflows and scripts, so a later `main` cannot
+change how an older line is validated. Its jobs run in order:
 
 ```mermaid
 flowchart LR

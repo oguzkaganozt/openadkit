@@ -35,13 +35,19 @@ fail() {
   exit 1
 }
 
+# The X.Y release line of VERSION.
+release_line() {
+  printf '%s\n' "${VERSION#v}" | cut -d. -f1-2
+}
+
 validate_inputs() {
   printf '%s\n' "${VERSION}" | grep -Eq "${openadkit_semver_re}" \
     || fail "Invalid version format '${VERSION}': must be strict SemVer vX.Y.Z or vX.Y.Z-prerelease"
   printf '%s\n' "${BUILD_TAG}" | grep -Eq '^[0-9]+-[0-9]+$' \
     || fail "Invalid build_tag format '${BUILD_TAG}': must be RUN_ID-RUN_ATTEMPT"
-  [ "${GITHUB_REF}" = "refs/heads/main" ] \
-    || fail "Release must be triggered from main branch (got ${GITHUB_REF})"
+  # A release line releases from its own branch, with its own scripts.
+  [ "${GITHUB_REF}" = "refs/heads/release/$(release_line)" ] \
+    || fail "Release ${VERSION} must be triggered from release/$(release_line) (got ${GITHUB_REF})"
   case "${DEFAULT_ROS_DISTRO:-humble}" in
     humble|jazzy) ;;
     *) fail "Invalid default_ros_distro '${DEFAULT_ROS_DISTRO}': must be one of humble, jazzy" ;;
@@ -208,9 +214,9 @@ select_scan_metadata() {
 
     if [ "${scan_workflow_name}" != "scan-images" ] || \
       [ "${scan_workflow_path}" != ".github/workflows/scan.yaml" ] || \
-      { [ "${scan_head_branch}" != "main" ] && [ "${scan_head_branch}" != "${source_branch}" ]; } || \
+      [ "${scan_head_branch}" != "${source_branch}" ] || \
       [ "${scan_status}" != "completed" ]; then
-      echo "Ignoring scan artifact ${scan_artifact_id}: scan run ${scan_run_id}-${scan_run_attempt} is not a completed scan-images run on main or ${source_branch}" >&2
+      echo "Ignoring scan artifact ${scan_artifact_id}: scan run ${scan_run_id}-${scan_run_attempt} is not a completed scan-images run on ${source_branch}" >&2
       continue
     fi
 
@@ -236,15 +242,14 @@ validate_metadata() {
 # Releases come from release/X.Y branches, whose .github/autoware.ref pins the
 # Autoware release their builds use; main builds for upstream development.
 validate_release_rules() {
-  local metadata_sha autoware_input_ref autoware_ref_type autoware_base_version line
+  local metadata_sha autoware_input_ref autoware_ref_type autoware_base_version
 
   metadata_sha=$(jq -r '.openadkit_sha' release-input/build/build-metadata.json)
   [ "${metadata_sha}" = "${release_sha}" ] \
     || fail "Build metadata SHA ${metadata_sha} does not match workflow SHA ${release_sha}"
 
-  line=$(printf '%s\n' "${VERSION#v}" | cut -d. -f1-2)
-  [ "${source_branch}" = "release/${line}" ] \
-    || fail "${VERSION} must be built from release/${line} (got '${source_branch}')"
+  [ "${source_branch}" = "release/$(release_line)" ] \
+    || fail "${VERSION} must be built from release/$(release_line) (got '${source_branch}')"
 
   autoware_input_ref=$(jq -r '.autoware_input_ref' release-input/build/build-metadata.json)
   autoware_ref_type=$(jq -r '.autoware_ref_type' release-input/build/build-metadata.json)
@@ -290,7 +295,7 @@ verify_evidence() (
     --repo "${GITHUB_REPOSITORY}" \
     --predicate-type "https://in-toto.io/attestation/test-result/v0.1" \
     --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/evidence.yaml" \
-    --source-ref "refs/heads/main" \
+    --source-ref "refs/heads/${source_branch}" \
     --deny-self-hosted-runners \
     --format json >"${verify_json}" 2>release-input/evidence-verify.err; then
     sed 's/^/  /' release-input/evidence-verify.err >&2
@@ -302,6 +307,7 @@ verify_evidence() (
     --source-root "${RELEASE_SOURCE_ROOT}" \
     --default-ros-distro "${DEFAULT_ROS_DISTRO:-humble}" \
     --repository "${GITHUB_REPOSITORY}" \
+    --source-ref "refs/heads/${source_branch}" \
     --output release-input/evidence-report.json
 )
 

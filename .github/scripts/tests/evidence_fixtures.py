@@ -29,4 +29,4 @@ def passing_statement(metadata, source_root=ROOT):
 
 
 def passing_report(metadata, source_root=ROOT):
-    return release_gate.statement_report(passing_statement(metadata, source_root), metadata, source_root, "humble", "example/repo")
+    return release_gate.statement_report(passing_statement(metadata, source_root), metadata, source_root, "humble", "example/repo", "refs/heads/release/2.0")

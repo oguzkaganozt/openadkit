@@ -9,7 +9,7 @@ complete, cryptographically verified Test Result with `result: PASSED`**.
 The release validation job checks these independently before creating a tag:
 
 1. **Identity:** GitHub verifies the signature, the repository, the
-   `.github/workflows/evidence.yaml` signer, the `refs/heads/main` source ref,
+   `.github/workflows/evidence.yaml` signer, the `release/X.Y` source ref,
    and that the attestation was signed on a hosted runner.
 2. **Subject:** all build image digests and the deployment, shared asset and
    example-kit source/config checksums match the exact promoted source tree.
