@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from evidence.cells import legacy_release_cells, predicate_cells  # noqa: E402
 from evidence.subjects import build_subjects  # noqa: E402
 
 PREDICATE_TYPE = "https://in-toto.io/attestation/test-result/v0.1"
+RELEASE_REF_RE = re.compile(r"refs/heads/release/(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
 
 
 def require(condition: bool, message: str) -> None:
@@ -40,7 +42,7 @@ def expected_cells(source_root: Path) -> dict[str, dict[str, str]]:
 
 def statement_report(
     statement: dict[str, Any], metadata: dict[str, Any], source_root: Path,
-    default_distro: str, repository: str,
+    default_distro: str, repository: str, source_ref: str,
 ) -> dict[str, Any]:
     require(isinstance(statement, dict), "invalid statement")
     require(statement.get("_type") == "https://in-toto.io/Statement/v1", "invalid statement type")
@@ -106,7 +108,7 @@ def statement_report(
         "schemaVersion": 2, "result": "PASSED", "build_tag": metadata["build_tag"],
         "source_sha": metadata["openadkit_sha"], "predicateType": PREDICATE_TYPE,
         "signerWorkflow": f"{repository}/.github/workflows/evidence.yaml",
-        "sourceRef": "refs/heads/main", "url": predicate.get("url"),
+        "sourceRef": source_ref, "url": predicate.get("url"),
         "statementSha256": hashlib.sha256(canonical).hexdigest(),
         "defaultRosDistroDecision": {
             "selected": default_distro, "source": "openadkit.json",
@@ -119,14 +121,14 @@ def statement_report(
 
 def verified_report(
     verified: Any, metadata: dict[str, Any], source_root: Path,
-    default_distro: str, repository: str,
+    default_distro: str, repository: str, source_ref: str,
 ) -> dict[str, Any]:
     require(isinstance(verified, list) and bool(verified), "no verified evidence statements")
     problems = []
     for entry in verified:
         try:
             statement = entry["verificationResult"]["statement"]
-            return statement_report(statement, metadata, source_root, default_distro, repository)
+            return statement_report(statement, metadata, source_root, default_distro, repository, source_ref)
         except (ValueError, KeyError, TypeError) as error:
             problems.append(str(error))
     raise ValueError("no complete PASSED evidence statement for this release: " + "; ".join(problems))
@@ -139,7 +141,10 @@ def validate_report(report: dict[str, Any], metadata: dict[str, Any], source_roo
     require(isinstance(signer, str) and signer.endswith("/.github/workflows/evidence.yaml"), "invalid evidence signer")
     repository = signer.removesuffix("/.github/workflows/evidence.yaml")
     require(bool(repository), "missing evidence repository")
-    expected = statement_report(report.get("statement", {}), metadata, source_root, default_distro, repository)
+    # Evidence is signed on the release line that built the images.
+    source_ref = report.get("sourceRef", "")
+    require(isinstance(source_ref, str) and RELEASE_REF_RE.fullmatch(source_ref) is not None, "invalid evidence source ref")
+    expected = statement_report(report.get("statement", {}), metadata, source_root, default_distro, repository, source_ref)
     if report.get("schemaVersion") == 1:
         expected["schemaVersion"] = 1
         expected["cells"] = legacy_release_cells(predicate_cells(expected["statement"]["predicate"]))
@@ -153,12 +158,13 @@ def main() -> int:
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--default-ros-distro", required=True)
     parser.add_argument("--repository", required=True)
+    parser.add_argument("--source-ref", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         report = verified_report(
             json.loads(args.verified.read_text()), json.loads(args.build_metadata.read_text()),
-            args.source_root.resolve(), args.default_ros_distro, args.repository,
+            args.source_root.resolve(), args.default_ros_distro, args.repository, args.source_ref,
         )
         args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     except (OSError, ValueError, KeyError, TypeError) as error:

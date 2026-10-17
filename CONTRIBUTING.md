@@ -115,7 +115,7 @@ For split-host (`--node`) topology testing, follow the [documentation](https://a
 
 ### Releasing
 
-Use the `release.yaml` workflow (GitHub Actions), run on `main`, to promote a `release/X.Y` build to a `vX.Y.Z` release or pre-release. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
+Run the `scan-images`, `evidence` and `release.yaml` workflows (GitHub Actions) on a `release/X.Y` branch to promote its build to a `vX.Y.Z` release or pre-release. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
 
 Both release candidates and stable releases require complete signed `PASSED`
 runtime evidence for the promoted build. CI quarantine does not bypass the gate;

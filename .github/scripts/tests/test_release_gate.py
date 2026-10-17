@@ -32,7 +32,7 @@ def metadata():
 
 def verify(statement, metadata):
     return release_gate.verified_report(
-        [{"verificationResult": {"statement": statement}}], metadata, ROOT, "humble", "example/repo",
+        [{"verificationResult": {"statement": statement}}], metadata, ROOT, "humble", "example/repo", "refs/heads/release/2.0",
     )
 
 
@@ -92,7 +92,7 @@ def test_statements_cannot_be_unioned_to_fill_missing_coverage(metadata):
     with pytest.raises(ValueError, match="no complete PASSED"):
         release_gate.verified_report(
             [{"verificationResult": {"statement": statement}} for statement in (first, second)],
-            metadata, ROOT, "humble", "example/repo",
+            metadata, ROOT, "humble", "example/repo", "refs/heads/release/2.0",
         )
 
 
@@ -102,7 +102,7 @@ def test_one_complete_successful_retry_is_sufficient(metadata):
     passed = passing_statement(metadata)
     report = release_gate.verified_report(
         [{"verificationResult": {"statement": statement}} for statement in (failed, passed)],
-        metadata, ROOT, "humble", "example/repo",
+        metadata, ROOT, "humble", "example/repo", "refs/heads/release/2.0",
     )
     assert report["statement"] == passed
 
@@ -110,7 +110,7 @@ def test_one_complete_successful_retry_is_sufficient(metadata):
 @pytest.mark.parametrize("verified", [[], {}, None, [{}], [{"verificationResult": {"statement": None}}]])
 def test_empty_or_malformed_verification_cannot_pass(metadata, verified):
     with pytest.raises((ValueError, AttributeError)):
-        release_gate.verified_report(verified, metadata, ROOT, "humble", "example/repo")
+        release_gate.verified_report(verified, metadata, ROOT, "humble", "example/repo", "refs/heads/release/2.0")
 
 
 def test_plan_rejects_tampered_validated_report(metadata):
@@ -141,7 +141,7 @@ def test_changed_release_source_cannot_reuse_old_evidence(tmp_path, metadata):
     path.write_text(path.read_text() + "\nchanged kit\n")
     with pytest.raises(ValueError, match="subjects differ"):
         release_gate.verified_report(
-            [{"verificationResult": {"statement": statement}}], metadata, source, "humble", "example/repo",
+            [{"verificationResult": {"statement": statement}}], metadata, source, "humble", "example/repo", "refs/heads/release/2.0",
         )
 
 
@@ -149,7 +149,7 @@ def test_release_default_cannot_silently_switch_distros(metadata):
     with pytest.raises(ValueError, match="default distro must match"):
         release_gate.verified_report(
             [{"verificationResult": {"statement": passing_statement(metadata)}}],
-            metadata, ROOT, "jazzy", "example/repo",
+            metadata, ROOT, "jazzy", "example/repo", "refs/heads/release/2.0",
         )
 
 
@@ -335,10 +335,10 @@ def test_shell_gate_requires_verifier_success_and_trusted_identity(tmp_path, met
     report_path = tmp_path / "release-input/evidence-report.json"
     report_path.write_text('{"result":"PASSED"}')
     result = pipeline.run_validator(
-        tmp_path, "verify_evidence", RELEASE_SOURCE_ROOT=str(ROOT),
+        tmp_path, "source_branch=release/2.0; verify_evidence", RELEASE_SOURCE_ROOT=str(ROOT),
         PATH=f"{bin_dir}:{os.environ['PATH']}",
     )
     assert (result.returncode == 0) is (gh_status == 0), result.stderr
     assert report_path.exists() is (gh_status == 0)
-    for flag in ("--repo example/repo", "--signer-workflow example/repo/.github/workflows/evidence.yaml", "--source-ref refs/heads/main", "--deny-self-hosted-runners", f"--predicate-type {release_gate.PREDICATE_TYPE}"):
+    for flag in ("--repo example/repo", "--signer-workflow example/repo/.github/workflows/evidence.yaml", "--source-ref refs/heads/release/2.0", "--deny-self-hosted-runners", f"--predicate-type {release_gate.PREDICATE_TYPE}"):
         assert flag in log.read_text()
