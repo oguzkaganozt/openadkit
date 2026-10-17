@@ -186,7 +186,9 @@ jobs:
   # =============================================================================
   build-components:
     runs-on: ${{ matrix.platform == 'linux/amd64' && (vars.RUNNER_AMD64 || 'ubuntu-22.04') || (vars.RUNNER_ARM64 || 'ubuntu-22.04-arm') }}
-    timeout-minutes: 120
+    # A compile with a cold ccache, such as the first build of new Autoware
+    # sources, takes planning-control close to two hours.
+    timeout-minutes: 180
     needs: [prepare, build-common]
     # A single common matrix failure must not skip cells whose common image
     # was already published. Missing contexts fail at pull.
