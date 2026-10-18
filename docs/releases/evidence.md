@@ -62,11 +62,11 @@ Do not use it to hide a known product failure in a normally tested cell.
 
 Pin the latest stable Autoware release at the release cut. If it has a blocking
 issue, keep the previous verified stable pin and explain the exception, date
-and follow-up in the release notes. v2.0's planned pin is **Autoware 1.8.0**;
-the evidence-backed 1.9.0 update belongs in a subsequent release.
+and follow-up in the release notes. v2.0 pins **Autoware 1.9.0**.
 
-Stable Open AD Kit builds must originate from an Autoware release tag.
-Release candidates may also use a full upstream commit SHA. The build's
+Every release, stable or candidate, is built on its `release/X.Y` branch from
+the Autoware release tag in `.github/autoware.ref`. Builds of `main` track
+upstream development and are never released. The build's
 `autoware-lock.repos`, resolved SHA and upstream image digests record the input.
 
 `defaultRosDistro` in the promoted `openadkit.json` explicitly selects the ROS
