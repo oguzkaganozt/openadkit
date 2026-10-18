@@ -11,13 +11,14 @@ services:
       - ../runtime.env
     volumes:
       - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+      - ../launch/component.launch.py:/openadkit/launch/component.launch.py:ro
       # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
       - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
       - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
       - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
-      ros2 launch autoware_launch tier4_simulator_component.launch.xml
+      ros2 launch /openadkit/launch/component.launch.py component:=tier4_simulator_component
       initial_engage_state:=${INITIAL_ENGAGE_STATE}
       launch_dummy_doors:=${LAUNCH_DUMMY_DOORS}
       launch_dummy_perception:=${LAUNCH_DUMMY_PERCEPTION}
