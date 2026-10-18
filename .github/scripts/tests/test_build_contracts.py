@@ -160,9 +160,9 @@ def compose_context(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(("name", "node", "present", "absent"), [
-    ("scenario-simulation", None, {"scenario_simulator", "map"}, {"zenoh-bridge"}),
-    ("scenario-simulation", "autoware", {"map", "zenoh-bridge"}, {"scenario_simulator"}),
-    ("scenario-simulation", "scenario", {"scenario_simulator", "zenoh-bridge"}, {"map", "vehicle"}),
+    ("scenario-simulation", None, {"scenario_simulator", "map", "mrm-state-relay"}, {"zenoh-bridge"}),
+    ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario_simulator"}),
+    ("scenario-simulation", "scenario", {"scenario_simulator", "zenoh-bridge"}, {"map", "vehicle", "mrm-state-relay"}),
     ("carla-simulation", None, {"carla", "carla-interface", "map"}, {"zenoh-bridge"}),
     ("carla-simulation", "autoware", {"map", "zenoh-bridge"}, {"carla", "carla-interface"}),
     ("carla-simulation", "carla", {"carla", "carla-interface", "carla-map-loader", "zenoh-bridge"}, {"map", "vehicle"}),

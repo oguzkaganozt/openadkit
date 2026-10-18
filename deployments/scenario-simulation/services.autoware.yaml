@@ -57,3 +57,30 @@ services:
   visualizer:
     depends_on:
       - map
+
+  # Scenario Simulator V2 25.0.20 subscribes /api/fail_safe/mrm_state as
+  # volatile, and its node ignores launch remaps, while the ADAPI publishes it
+  # transient-local and only on change. Autoware keeps running across the
+  # scenarios of a workflow, so a scenario without an MRM transition never
+  # receives NORMAL and cannot succeed. Relay the 10 Hz source to the ADAPI
+  # topic until Scenario Simulator V2 subscribes transient-local.
+  mrm-state-relay:
+    image: ${SIMULATOR_IMAGE:-ghcr.io/autowarefoundation/openadkit:simulator}
+    container_name: autoware-mrm-state-relay
+    network_mode: host
+    init: true
+    ipc: host
+    env_file:
+      - ../shared/runtime.env
+    volumes:
+      - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
+      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
+      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
+      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
+    command: >
+      ros2 run topic_tools relay /system/fail_safe/mrm_state /api/fail_safe/mrm_state
+      --ros-args -p use_sim_time:=${USE_SIM_TIME}
+    depends_on:
+      - system
+    restart: on-failure
