@@ -1007,13 +1007,14 @@ def _parse_artifacts(value: Any, component_images: dict[str, str]) -> dict[str, 
             raise OpenADKitError(f"invalid {where}.workload: {workload}")
         if ("ref" in artifact) == ("distros" in artifact):
             raise OpenADKitError(f"{where} needs exactly one of ref or distros")
+        # `ref` serves every distro; `distros` names each one.
         references = (
             {"*": artifact["ref"]} if "ref" in artifact else artifact["distros"]
         )
         if not isinstance(references, dict) or not references:
             raise OpenADKitError(f"{where}.distros must be a nonempty object")
         for distro, reference in references.items():
-            if distro != "*" and not NAME_RE.fullmatch(distro):
+            if "ref" not in artifact and not NAME_RE.fullmatch(distro):
                 raise OpenADKitError(f"invalid ROS distro in {where}: {distro}")
             if not isinstance(reference, str) or not IMAGE_REFERENCE_RE.fullmatch(reference):
                 raise OpenADKitError(f"{where} must use digest-pinned image references")

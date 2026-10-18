@@ -107,6 +107,13 @@ def test_overrides_without_a_base_are_reported(overlay, tmp_path, monkeypatch, c
     assert "use_emergncy_handling" in err
 
 
+@pytest.mark.parametrize("text", ["", "# vel_lim: 8.0\n"])
+def test_empty_yaml_overrides_change_nothing(overlay, tmp_path, monkeypatch, capsys, text):
+    layer(tmp_path, "deployment", "autoware_launch", GATE, text)
+    _, _, root = run(overlay, tmp_path, monkeypatch, capsys)
+    assert (root / "autoware_launch/share/autoware_launch" / GATE).read_text() == BASE_GATE
+
+
 @pytest.mark.parametrize("override", [False, True])
 def test_non_yaml_files_replace_and_the_vehicle_description_is_linked(
     overlay, tmp_path, monkeypatch, capsys, override

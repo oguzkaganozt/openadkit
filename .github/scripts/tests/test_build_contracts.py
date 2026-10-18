@@ -213,3 +213,17 @@ def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_conte
     assert report["overlayConformant"] is (rule is None)
     assert {warning["rule"] for warning in report["overlayWarnings"]} == ({rule} if rule else set())
     assert all(warning.get("service") != "acme-probe" for warning in report["overlayWarnings"])
+
+
+def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, tmp_path):
+    import data
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/logging-simulation.env").write_text("DATA_PATH=/srv/autoware_data\n")
+    deployment = manifest.get_deployment(ROOT, compose_context, "logging-simulation")
+    selection = compose.resolve_settings(
+        deployment, deployment.select(compose_context, "humble", True, require_gpu=False))
+    resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")
+    result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
+    mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["perception"]["volumes"]}
+    assert mounts["/autoware_data"] == "/srv/autoware_data"
+    assert mounts["/autoware_data/lidar_centerpoint"] == str(data.resolve_destination(resource, selection))

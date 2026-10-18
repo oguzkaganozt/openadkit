@@ -524,12 +524,14 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
 
 def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
-    inspect = "kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
+    # Reset services may exit, but not fail: "init" finished, "rosbag" crashed.
+    inspect = ("kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
+               "bag rosbag 0 exited 1\n")
     monkeypatch.setattr(cli_compose, "capture_process",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init"})})()
+    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_manifest.Selection("humble", False, None, {}, {})
-    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning"]
+    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning", "rosbag"]
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
@@ -787,6 +789,19 @@ def test_kit_artifact_fallback_and_wildcard_override(tmp_path, base_refs):
     assert context.artifact_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
     edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"workload": "api", "ref": OTHER_PIN}}))
     assert cli_manifest.load_kit(kit).artifact_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
+    # Every distro is `ref`, never a "*" distro.
+    edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"workload": "api", "distros": {"*": OTHER_PIN}}}))
+    with pytest.raises(cli_manifest.OpenADKitError, match="invalid ROS distro"):
+        cli_manifest.load_kit(kit)
+
+
+@pytest.mark.parametrize("text", ["[]", "{"])
+def test_a_broken_nearest_manifest_is_an_error_not_another_kit(tmp_path, text):
+    root, _ = runtime_tree(tmp_path)
+    (tmp_path / "kit").mkdir()
+    (tmp_path / "kit/openadkit.json").write_text(text)
+    result = run_cli(root, "list", directory=tmp_path / "kit")
+    assert result.returncode == 1 and f"invalid manifest {tmp_path / 'kit/openadkit.json'}" in result.stderr
 
 
 @pytest.mark.parametrize("release", [False, True])

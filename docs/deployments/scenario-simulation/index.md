@@ -39,7 +39,8 @@ Put overrides in `~/.config/openadkit/scenario-simulation.env`:
 | `SCENARIO_READY_TIMEOUT` | Seconds to wait for Autoware before running | `300` |
 | `MAP_PATH` | Host map directory | `~/autoware_map/kashiwanoha_map` |
 
-Relative paths resolve from `deployments/scenario-simulation/`.
+A relative `SCENARIO_HOST_DIR` resolves from `deployments/scenario-simulation/`. `MAP_PATH` must be absolute; use `$HOME`
+rather than `~`.
 
 To run your own scenario, keep it outside the release. Create a directory, put
 the YAML there, and point the deployment at it in the host settings file:
@@ -52,9 +53,11 @@ SCENARIO=/scenarios/my-scenario.yaml
 The default `./scenarios` lies inside the installed release: files placed there
 mark the deployment as modified and are lost on `upgrade` or `uninstall`.
 
-Scenarios must match the map: a custom map needs matching `MAP_PATH`,
-`LANELET2_MAP_FILE`, and `POINTCLOUD_MAP_FILE` values, and the planning sample
-map does not work here.
+Scenarios must match the map, and the planning sample map does not work here.
+To use your own map, point `MAP_PATH` at a directory that holds the same files
+as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
+`pointcloud_map.pcd`, `global_map_center.pcd.yaml`,
+`lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
 
 This deployment changes two Autoware parameters, each in a file that holds only
 the changed value. On every start, the images merge these files into the
