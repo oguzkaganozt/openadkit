@@ -572,7 +572,10 @@ def failed_services(
     failed = set()
     for line in result.stdout.splitlines():
         container, service, restarts, state, exit_code = line.split()
+        # Reset services may finish, as map-check does, but not fail.
         if service in deployment.reset_services(selection.node):
+            if state == "exited" and exit_code != "0":
+                failed.add(service)
             continue
         # `up` keeps unchanged containers, and with them earlier restarts.
         restarted = int(restarts) > baseline.get(container, 0)

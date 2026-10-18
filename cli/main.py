@@ -41,8 +41,8 @@ def find_kit(start: Path) -> Path | None:
         if manifest.is_file():
             try:
                 kind = json.loads(manifest.read_text(encoding="utf-8")).get("kind")
-            except (OSError, ValueError, AttributeError):
-                return None
+            except (OSError, ValueError, AttributeError) as error:
+                raise OpenADKitError(f"invalid manifest {manifest}: {error}") from error
             return directory if kind == "kit" else None
     return None
 
