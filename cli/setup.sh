@@ -119,6 +119,10 @@ docker_run() {
 install_docker() {
   if docker_stack_ready; then
     log "Docker and Compose are already available"
+    if ! docker info >/dev/null 2>&1 && ! sudo docker info >/dev/null 2>&1; then
+      log "starting the Docker daemon"
+      sudo systemctl enable --now docker
+    fi
   else
     log "installing Docker from the official Ubuntu repository"
     sudo apt-get update
@@ -276,7 +280,8 @@ fi
 if [[ $INSTALL_GPU == true ]]; then
   need_sudo=true
 fi
-if [[ $RUN_VERIFY == true ]] && ! docker info >/dev/null 2>&1; then
+# A stopped daemon, or one this user cannot reach yet, is checked with sudo.
+if ! docker info >/dev/null 2>&1; then
   need_sudo=true
 fi
 if [[ $need_sudo == true ]]; then

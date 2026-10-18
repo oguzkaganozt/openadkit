@@ -87,7 +87,6 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,display
-      - RVIZ_GPU=auto
     depends_on:
       - map
       - api

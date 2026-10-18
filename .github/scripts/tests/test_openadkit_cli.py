@@ -264,16 +264,20 @@ def test_install_rejects_corrupt_or_unsafe_bundle(tmp_path, options, message):
     assert not (tmp_path / "escape").exists()
 
 
-def test_failed_replacement_restores_previous_release(tmp_path):
+@pytest.mark.parametrize(("stop", "message"), [
+    ("exit 1", "could not replace"),
+    ("kill -TERM $PPID; exit 1", ""),
+])
+def test_failed_replacement_restores_previous_release(tmp_path, stop, message):
     bin_dir = release_bin(tmp_path)
     assert install(tmp_path, bin_dir).returncode == 0
     root = installed(tmp_path).parent
     (root / "marker").write_text("previous")
     executable(bin_dir / "mv", "#!/usr/bin/env bash\n"
-               f'if [[ $# -eq 2 && "$2" == "{root}" && "$1" == *".openadkit-stage."* ]]; then exit 1; fi\n'
+               f'if [[ $# -eq 2 && "$2" == "{root}" && "$1" == *".openadkit-stage."* ]]; then {stop}; fi\n'
                f'exec {shutil.which("mv")} "$@"\n')
     result = install(tmp_path, bin_dir, "--force")
-    assert result.returncode != 0 and "could not replace" in result.stderr
+    assert result.returncode != 0 and message in result.stderr
     assert (root / "marker").read_text() == "previous"
     assert installed(tmp_path).is_file()
     assert (tmp_path / "home/.local/bin/openadkit").resolve() == installed(tmp_path)

@@ -472,11 +472,12 @@ def check_overlay(
         for path in layer.files(selection.gpu):
             declared.update(parse_dotenv(path))
     declared.update(item["destinationEnv"] for item in deployment.data)
-    # Include variables used by shared services, including host values such as
-    # HOME. This remains static: no image pull or inspection is needed.
+    # Include variables used by shared services and their env files, including
+    # host values such as HOME. This remains static: no image pull or inspection
+    # is needed.
     for directory in [base.directory, *(base.root / "deployments" / name for name in base.shared)]:
         for path in directory.rglob("*"):
-            if path.suffix not in (".yaml", ".yml") or not path.is_file():
+            if path.suffix not in (".yaml", ".yml", ".env") or not path.is_file():
                 continue
             declared.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
     used = set(deployment.configuration_environment(selection.gpu))

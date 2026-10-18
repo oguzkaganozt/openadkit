@@ -154,7 +154,7 @@ def example_kit_roots(runtime: ModuleType, source_root: Path) -> list[Path]:
     relative = "deployments/custom-kit"
     root = source_root / relative
     if not (root / "openadkit.json").is_file():
-        return []
+        fail(f"custom-kit example is missing ({relative}); its cells are required evidence")
     if runtime.load_json(root / "openadkit.json").get("kind") != "kit":
         fail(f"custom-kit example must declare kind: kit ({relative})")
     return [root]

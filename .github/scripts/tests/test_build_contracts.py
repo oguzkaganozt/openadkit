@@ -200,7 +200,10 @@ def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_conte
     document["extends"] = str(ROOT)
     path.write_text(json.dumps(document))
     directory = kit
-    (directory / "config.env").write_text("VEHICLE_ID=custom\n")
+    # Documented site settings, used by the shared services and runtime.env.
+    (directory / "config.env").write_text(
+        "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
+    )
     with (directory / "docker-compose.yaml").open("a") as output:
         output.write(override)
     result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-kit", "--json"],
