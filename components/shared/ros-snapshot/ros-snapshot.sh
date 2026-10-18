@@ -32,7 +32,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 # Replace the live ROS source: ros2-apt-source links ros2.sources, older images
 # carry a .list entry.
-grep -l 'packages\.ros\.org' /etc/apt/sources.list.d/* 2>/dev/null | xargs -r rm -f
+{ grep -l 'packages\.ros\.org' /etc/apt/sources.list.d/* 2>/dev/null || true; } | xargs -r rm -f
 [ ! -f /etc/apt/sources.list ] || sed -i '/packages\.ros\.org/d' /etc/apt/sources.list
 # Key 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA (ROS Snapshot builder).
 install -m 0644 "${script_dir}/ros-snapshots.asc" /usr/share/keyrings/ros-snapshots.asc
