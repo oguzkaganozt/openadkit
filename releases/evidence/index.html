@@ -2179,7 +2179,7 @@ complete, cryptographically verified Test Result with <code>result: PASSED</code
 <p>The release validation job checks these independently before creating a tag:</p>
 <ol>
 <li><strong>Identity:</strong> GitHub verifies the signature, the repository, the
-   <code>.github/workflows/evidence.yaml</code> signer, the <code>refs/heads/main</code> source ref,
+   <code>.github/workflows/evidence.yaml</code> signer, the <code>release/X.Y</code> source ref,
    and that the attestation was signed on a hosted runner.</li>
 <li><strong>Subject:</strong> all build image digests and the deployment, shared asset and
    example-kit source/config checksums match the exact promoted source tree.

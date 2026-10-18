@@ -2112,6 +2112,7 @@ older previews may not have these attestations or metadata fields.</p>
 <p>Replace the example version with the release you intend to use:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
 <span class="nv">VERSION</span><span class="o">=</span>v2.0.0
+<span class="nv">LINE</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">VERSION</span><span class="p">#v</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1-2<span class="k">)</span><span class="w">  </span><span class="c1"># the release/X.Y branch that released it</span>
 <span class="nv">REPO</span><span class="o">=</span>autowarefoundation/openadkit
 gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span><span class="s2">"</span><span class="nv">$VERSION</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--pattern<span class="w"> </span>openadkit<span class="w"> </span>--pattern<span class="w"> </span><span class="s2">"openadkit-</span><span class="nv">$VERSION</span><span class="s2">.tar.gz"</span><span class="w"> </span><span class="se">\</span>
@@ -2120,7 +2121,7 @@ gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"
 <span class="k">for</span><span class="w"> </span>asset<span class="w"> </span><span class="k">in</span><span class="w"> </span>openadkit<span class="w"> </span><span class="s2">"openadkit-</span><span class="nv">$VERSION</span><span class="s2">.tar.gz"</span><span class="w"> </span>release-plan.json<span class="w"> </span>release-metadata.json<span class="p">;</span><span class="w"> </span><span class="k">do</span>
 <span class="w">  </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span><span class="s2">"</span><span class="nv">$asset</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--signer-workflow<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">/.github/workflows/release.yaml"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--source-ref<span class="w"> </span>refs/heads/main<span class="w"> </span>--deny-self-hosted-runners
+<span class="w">    </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span>--deny-self-hosted-runners
 <span class="k">done</span>
 </code></pre></div>
 <p>The default predicate verifies SLSA build provenance. Provenance binds the bytes
@@ -2140,7 +2141,7 @@ The metadata's <code>.evidence</code> must match the plan's <code>.evidence</cod
 gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span><span class="s2">"</span><span class="nv">$IMAGE</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--predicate-type<span class="w"> </span>https://in-toto.io/attestation/test-result/v0.1<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--signer-workflow<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">/.github/workflows/evidence.yaml"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--source-ref<span class="w"> </span>refs/heads/main<span class="w"> </span>--deny-self-hosted-runners<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span>--deny-self-hosted-runners<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--format<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>evidence-verified.json
 </code></pre></div>
 <p>Authenticate with GHCR if the CLI requests registry access. <strong>Successful

@@ -2465,14 +2465,18 @@ latest published images, so unchanged images are reused.</p>
   and deployments from that build's commit, and pushes that change only those
   start no build: dispatch <code>build-all-images</code> on the branch to release them. The
   release run warns when the branch has such changes.</li>
-<li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code>.</li>
-<li><strong>Complete signed <code>PASSED</code> evidence</strong> exists for that same build. Required
+<li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code>, dispatched on
+  the same <code>release/X.Y</code> branch.</li>
+<li><strong>Complete signed <code>PASSED</code> evidence</strong> exists for that same build, from
+  <code>evidence</code> dispatched on the same branch. Required
   cells, source checksums and image digests must match; quarantine does not waive
   the gate. See <a href="../../releases/evidence/">Evidence Policy</a>.</li>
 </ul>
 <h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
-on <code>main</code> with the version and <code>build_tag</code>. Its jobs run in order:</p>
+on the same <code>release/X.Y</code> branch with the version and <code>build_tag</code>. A release
+line releases with its own workflows and scripts, so a later <code>main</code> cannot
+change how an older line is validated. Its jobs run in order:</p>
 <pre class="mermaid"><code>flowchart LR
     V[validate] --&gt; P[package-bundles] --&gt; T[release-tag] --&gt; D[prepare-github-release] --&gt; I[release-images] --&gt; G[release-github] --&gt; W[deploy-docs]</code></pre>
 <ol>
