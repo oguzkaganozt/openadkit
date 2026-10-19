@@ -23,9 +23,10 @@ while (($#)); do
       cat <<'EOF'
 Usage: openadkit setup [--gpu] [--verify]
 
-Installs the Ubuntu host dependencies needed to run Open AD Kit.
+Installs the Ubuntu host dependencies needed to run Open AD Kit and raises the
+kernel's UDP buffer limits for DDS.
 
-  --gpu     also install the NVIDIA Container Toolkit and DDS UDP buffer sysctls
+  --gpu     also install the NVIDIA Container Toolkit
   --verify  run hello-world (and GPU) checks after installing
 EOF
       exit 0
@@ -248,23 +249,45 @@ install_gpu() {
   install_nvidia_gl_libraries
 }
 
-configure_dds_buffers() {
-  local config temporary
-  config=/etc/sysctl.d/99-openadkit-dds.conf
-  temporary=$(mktemp)
-  trap 'rm -f "$temporary"; trap - RETURN' RETURN
-  cat >"$temporary" <<'EOF'
-# Open AD Kit CycloneDDS buffers for high-bandwidth sensor data.
+DDS_SYSCTL=/etc/sysctl.d/99-openadkit-dds.conf
+
+# Every deployment moves point clouds between containers over DDS, GPU or not.
+# deployments/shared/cyclonedds.xml asks for the buffer sizes it needs; these
+# only raise the caps on what a socket may ask for, so sockets that ask for
+# nothing keep the kernel defaults.
+dds_buffer_settings() {
+  cat <<'EOF'
+# Open AD Kit: let CycloneDDS request large UDP buffers for sensor data.
 net.core.rmem_max=2147483647
 net.core.wmem_max=2147483647
-net.core.rmem_default=134217728
-net.core.wmem_default=134217728
 EOF
-  if ! sudo test -f "$config" || ! sudo cmp --silent "$temporary" "$config"; then
-    log "configuring kernel UDP buffers for DDS"
-    sudo install -m 0644 "$temporary" "$config"
-    sudo sysctl --system >/dev/null
+}
+
+dds_buffers_configured() {
+  [[ -f $DDS_SYSCTL ]] && cmp --silent <(dds_buffer_settings) "$DDS_SYSCTL"
+}
+
+configure_dds_buffers() {
+  local temporary legacy=false
+  if dds_buffers_configured; then
+    log "kernel UDP buffer limits for DDS are already configured"
+    return 0
   fi
+  # Earlier releases also raised the defaults for every socket on the host.
+  # Removing them from the file does not reset the running values.
+  if grep -qs '^net\.core\.[rw]mem_default' "$DDS_SYSCTL"; then
+    legacy=true
+  fi
+  temporary=$(mktemp)
+  trap 'rm -f "$temporary"; trap - RETURN' RETURN
+  dds_buffer_settings >"$temporary"
+  log "configuring kernel UDP buffer limits for DDS"
+  sudo install -m 0644 "$temporary" "$DDS_SYSCTL"
+  if [[ $legacy == true ]]; then
+    # The Linux default; any other sysctl.d setting is reapplied below.
+    sudo sysctl -qw net.core.rmem_default=212992 net.core.wmem_default=212992
+  fi
+  sudo sysctl --system >/dev/null
 }
 
 collect_missing_packages
@@ -277,7 +300,7 @@ need_sudo=false
 if ((${#MISSING_PACKAGES[@]} > 0)) || ! docker_stack_ready || ! user_in_docker_group; then
   need_sudo=true
 fi
-if [[ $INSTALL_GPU == true ]]; then
+if [[ $INSTALL_GPU == true ]] || ! dds_buffers_configured; then
   need_sudo=true
 fi
 # A stopped daemon, or one this user cannot reach yet, is checked with sudo.
@@ -296,10 +319,10 @@ else
   log "runtime packages are already installed"
 fi
 install_docker
+configure_dds_buffers
 
 if [[ $INSTALL_GPU == true ]]; then
   install_gpu
-  configure_dds_buffers
 fi
 
 if [[ $RUN_VERIFY == true ]]; then
