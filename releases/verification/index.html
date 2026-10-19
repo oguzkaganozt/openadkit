@@ -2160,7 +2160,8 @@ python3<span class="w"> </span>.github/scripts/evidence/release_gate.py<span cla
 <span class="w">  </span>--build-metadata<span class="w"> </span>release-metadata.json<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--source-root<span class="w"> </span>release-source<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--default-ros-distro<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.release.defaultRosDistro'</span><span class="w"> </span>release-plan.json<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--repository<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span>--output<span class="w"> </span>evidence-report.json
+<span class="w">  </span>--repository<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>evidence-report.json
 </code></pre></div>
 <p>This recomputes subjects and manifest-derived coverage and accepts only one
 complete <code>PASSED</code> statement. It never verifies signatures itself: feed it only

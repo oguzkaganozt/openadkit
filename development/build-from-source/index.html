@@ -2349,18 +2349,21 @@ Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 
 <span class="c1"># 4. Import the Autoware sources this branch pins</span>
 <span class="nv">AUTOWARE_REF</span><span class="o">=</span><span class="k">$(</span>cat<span class="w"> </span>.github/autoware.ref<span class="k">)</span>
-git<span class="w"> </span>clone<span class="w"> </span>--branch<span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span><span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>https://github.com/autowarefoundation/autoware.git
-<span class="nv">overlay</span><span class="o">=()</span>
-<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>main<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">  </span><span class="c1"># Upstream development: its development manifest, and core built locally</span>
-<span class="w">  </span><span class="nv">overlay</span><span class="o">=(</span>autoware/repositories/autoware-nightly.repos<span class="o">)</span>
+git<span class="w"> </span>init<span class="w"> </span>autoware
+git<span class="w"> </span>-C<span class="w"> </span>autoware<span class="w"> </span>fetch<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://github.com/autowarefoundation/autoware.git<span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
+git<span class="w"> </span>-C<span class="w"> </span>autoware<span class="w"> </span>checkout<span class="w"> </span>--detach<span class="w"> </span>FETCH_HEAD
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span>.github/autoware-lock.repos<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span><span class="c1"># main: a snapshot of upstream development, every dependency pinned, and</span>
+<span class="w">  </span><span class="c1"># core built locally</span>
+<span class="w">  </span>cp<span class="w"> </span>.github/autoware-lock.repos<span class="w"> </span>autoware.lock
 <span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">""</span>
 <span class="k">else</span>
+<span class="w">  </span><span class="c1"># release/X.Y: an Autoware release, built on its official images</span>
+<span class="w">  </span>python3<span class="w"> </span>.github/scripts/export_autoware_lock.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>autoware/repositories/autoware.repos<span class="w"> </span>autoware.lock
 <span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
 <span class="k">fi</span>
-python3<span class="w"> </span>.github/scripts/export_autoware_lock.py<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>autoware/repositories/autoware.repos<span class="w"> </span>autoware.lock<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">overlay</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span>
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src
 vcs<span class="w"> </span>import<span class="w"> </span>--shallow<span class="w"> </span>autoware/src<span class="w"> </span>&lt;<span class="w"> </span>autoware.lock
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src/middleware/external
@@ -2436,13 +2439,17 @@ into multi-arch tags. CI disables the local tags (<code>LOCAL_IMAGE=""</code>) a
 images through <code>docker/metadata-action</code>. A failed scheduled build opens a GitHub
 issue.</p>
 <p>Each branch's <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref"><code>.github/autoware.ref</code></a>
-selects its Autoware sources, resolved into an exact dependency lock per build.
-<code>main</code> pins <code>main</code>: it overlays upstream's development manifest and compiles
-core in the same Bake graph, so integration changes are tested as upstream lands
-them. A <code>release/X.Y</code> branch pins an Autoware release and builds on its official
-images. CI builds <code>main</code> and <code>release/*</code> pushes; registry caches are kept per
-branch. Pull request checks of <code>main</code> build on the Autoware revision of <code>main</code>'s
-latest published images, so unchanged images are reused.</p>
+pins its Autoware sources. A <code>release/X.Y</code> branch pins an Autoware release and
+builds on its official images. <code>main</code> pins a commit of upstream <code>main</code> together
+with its dependency lock,
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-lock.repos"><code>.github/autoware-lock.repos</code></a>,
+and compiles core in the same Bake graph. Once a week
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/bump-autoware.yaml"><code>bump-autoware.yaml</code></a>
+moves that snapshot to the current upstream <code>main</code> in a pull request from
+<code>ci/bump-autoware</code>, which builds every image and runs the evidence cells, so an
+upstream change that breaks Open AD Kit fails that pull request instead of
+<code>main</code>. CI builds <code>main</code> and <code>release/*</code> pushes; registry caches are kept per
+branch, and the bump shares <code>main</code>'s.</p>
 <h2 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
 <p>Releases promote an existing CI build; nothing is rebuilt.</p>
 <h3 id="before-you-release">Before You Release<a class="headerlink" href="#before-you-release" title="Permanent link">#</a></h3>

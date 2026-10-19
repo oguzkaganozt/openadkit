@@ -2206,7 +2206,7 @@
 
 
 <h1 id="container-images-versioning">Container Images &amp; Versioning<a class="headerlink" href="#container-images-versioning" title="Permanent link">#</a></h1>
-<p>Open AD Kit publishes images to the GitHub Container Registry (<code>ghcr.io/oguzkaganozt/openadkit</code>).
+<p>Open AD Kit publishes images to the GitHub Container Registry (<code>ghcr.io/autowarefoundation/openadkit</code>).
 This page is the reference for image tags, versions, and what "supported" means.</p>
 <h2 id="tag-reference">Tag Reference<a class="headerlink" href="#tag-reference" title="Permanent link">#</a></h2>
 <p>Releases are promoted from existing CI builds rather than rebuilt, so the images
@@ -2301,7 +2301,8 @@ pins one upstream Autoware release, the ROS 2 distros, and every image digest,
 and lists them in its
 <a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Release</a>
 notes. A <code>release/X.Y</code> branch produces the <code>vX.Y.Z</code> releases and pins their
-Autoware release in <code>.github/autoware.ref</code>; <code>main</code> tracks upstream development.</p>
+Autoware release in <code>.github/autoware.ref</code>; <code>main</code> builds a snapshot of
+upstream development that moves weekly.</p>
 <h2 id="ros-2-distro-support">ROS 2 Distro Support<a class="headerlink" href="#ros-2-distro-support" title="Permanent link">#</a></h2>
 <table>
 <thead>
@@ -2335,7 +2336,7 @@ of that release were built from. Compiled code and runtime therefore use the
 same ROS versions, and the build fails if they would differ. Release notes and
 the release BOM name the snapshot per distro; an image carries it as a label:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>inspect<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{ index .Config.Labels "org.opencontainers.image.ros-snapshot" }}'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>ghcr.io/oguzkaganozt/openadkit:planning-control-humble
+<span class="w">  </span>ghcr.io/autowarefoundation/openadkit:planning-control-humble
 </code></pre></div>
 <p>The snapshot changes only with the upstream Autoware release. Ubuntu packages
 are not pinned, so security updates keep flowing into new builds.</p>

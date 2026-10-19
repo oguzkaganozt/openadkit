@@ -2244,10 +2244,10 @@ Do not use it to hide a known product failure in a normally tested cell.</p>
 <h2 id="autoware-and-ros-distro-decisions">Autoware and ROS distro decisions<a class="headerlink" href="#autoware-and-ros-distro-decisions" title="Permanent link">#</a></h2>
 <p>Pin the latest stable Autoware release at the release cut. If it has a blocking
 issue, keep the previous verified stable pin and explain the exception, date
-and follow-up in the release notes. v2.0's planned pin is <strong>Autoware 1.8.0</strong>;
-the evidence-backed 1.9.0 update belongs in a subsequent release.</p>
-<p>Stable Open AD Kit builds must originate from an Autoware release tag.
-Release candidates may also use a full upstream commit SHA. The build's
+and follow-up in the release notes. v2.0 pins <strong>Autoware 1.9.0</strong>.</p>
+<p>Every release, stable or candidate, is built on its <code>release/X.Y</code> branch from
+the Autoware release tag in <code>.github/autoware.ref</code>. Builds of <code>main</code> use a
+weekly snapshot of upstream development and are never released. The build's
 <code>autoware-lock.repos</code>, resolved SHA and upstream image digests record the input.</p>
 <p><code>defaultRosDistro</code> in the promoted <code>openadkit.json</code> explicitly selects the ROS
 distro. The release input must agree, and its required runtime cells must pass.

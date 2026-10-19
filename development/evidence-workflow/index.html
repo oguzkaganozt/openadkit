@@ -2108,7 +2108,8 @@
 <h1 id="run-the-evidence-workflow">Run the Evidence Workflow<a class="headerlink" href="#run-the-evidence-workflow" title="Permanent link">#</a></h1>
 <p>The reusable <code>.github/workflows/evidence.yaml</code> verifies a specific Open AD Kit
 build and emits a signed in-toto Test Result. It runs automatically after a
-successful <code>build-all-images</code> run, and can also be dispatched with <code>build_tag</code>.</p>
+successful <code>build-all-images</code> run on <code>main</code>. For a release, dispatch it with
+<code>build_tag</code> on the <code>release/X.Y</code> branch that built it.</p>
 <h2 id="reuse-it-in-the-build-owning-repository">Reuse it in the build-owning repository<a class="headerlink" href="#reuse-it-in-the-build-owning-repository" title="Permanent link">#</a></h2>
 <p>A caller workflow in the same repository (or a fork hosting the same build and
 evidence workflows) can call it without duplicating the runner:</p>
@@ -2135,7 +2136,7 @@ evidence workflows) can call it without duplicating the runner:</p>
 </code></pre></div>
 <p>This runs containers and publishes attestations. A fork's attestations belong
 to that fork, not the Autoware Foundation release identity. For release
-verification the source ref must be <code>main</code> and the signer must be the expected
+verification the source ref must be a <code>release/X.Y</code> branch and the signer must be the expected
 evidence workflow. Do not replace the signer check with merely an owner check.</p>
 <p>The current reusable interface takes <strong>only <code>build_tag</code></strong>. Metadata and source
 come from the caller's build-owning repository. It stages that exact source's

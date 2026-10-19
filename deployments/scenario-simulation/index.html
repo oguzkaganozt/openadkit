@@ -2132,7 +2132,8 @@ sign in with the default password <strong><code>openadkit</code></strong>. Set y
 </tr>
 </tbody>
 </table>
-<p>Relative paths resolve from <code>deployments/scenario-simulation/</code>.</p>
+<p>A relative <code>SCENARIO_HOST_DIR</code> resolves from <code>deployments/scenario-simulation/</code>. <code>MAP_PATH</code> must be absolute; use <code>$HOME</code>
+rather than <code>~</code>.</p>
 <p>To run your own scenario, keep it outside the release. Create a directory, put
 the YAML there, and point the deployment at it in the host settings file:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">SCENARIO_HOST_DIR</span><span class="o">=</span><span class="nv">$HOME</span>/openadkit-scenarios
@@ -2140,9 +2141,11 @@ the YAML there, and point the deployment at it in the host settings file:</p>
 </code></pre></div>
 <p>The default <code>./scenarios</code> lies inside the installed release: files placed there
 mark the deployment as modified and are lost on <code>upgrade</code> or <code>uninstall</code>.</p>
-<p>Scenarios must match the map: a custom map needs matching <code>MAP_PATH</code>,
-<code>LANELET2_MAP_FILE</code>, and <code>POINTCLOUD_MAP_FILE</code> values, and the planning sample
-map does not work here.</p>
+<p>Scenarios must match the map, and the planning sample map does not work here.
+To use your own map, point <code>MAP_PATH</code> at a directory that holds the same files
+as the bundled map, which the CLI checks before starting: <code>lanelet2_map.osm</code>,
+<code>pointcloud_map.pcd</code>, <code>global_map_center.pcd.yaml</code>,
+<code>lanelet2_map_provider.osm.yaml</code> and <code>map.map_publisher.yaml</code>.</p>
 <p>This deployment changes two Autoware parameters, each in a file that holds only
 the changed value. On every start, the images merge these files into the
 upstream parameter files:</p>
