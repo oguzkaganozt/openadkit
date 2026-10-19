@@ -460,6 +460,13 @@ def files_resource(tmp_path, *, env="MAP_PATH", name="dataset", **extra):
                        "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}], **extra}
 
 
+@pytest.mark.parametrize("name", ["../escape", "maps/town", "Map", ""])
+def test_data_resource_names_must_be_safe_path_names(tmp_path, name):
+    resource = files_resource(tmp_path) | {"name": name}
+    with pytest.raises(cli_manifest.OpenADKitError, match="name"):
+        cli_manifest._validate_data([resource], {})
+
+
 def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
     target = tmp_path / "home/data/map"
