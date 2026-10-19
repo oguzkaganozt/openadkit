@@ -432,21 +432,37 @@ jobs:
         run: bash .github/scripts/write_build_summary.sh >> "$GITHUB_STEP_SUMMARY"
 
   # The weekly Autoware snapshot bump (bump-autoware.yaml) is verified like
-  # main. evidence.yaml follows main's builds only, so start it here; it runs
-  # on the bump's commit and reports on its pull request.
-  bump-evidence:
+  # main. A dispatched run does not show as a pull request check, so report the
+  # build as a commit status, then start the evidence cells, which follow
+  # main's builds only on their own.
+  bump-report:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [prepare, capture-metadata]
-    if: success() && github.ref == 'refs/heads/ci/bump-autoware'
+    if: always() && github.ref == 'refs/heads/ci/bump-autoware'
     permissions:
       actions: write
+      statuses: write
     steps:
-      - name: Dispatch the evidence cells
+      - name: Report the build and dispatch the evidence cells
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
-        run: gh workflow run evidence.yaml --repo "${GITHUB_REPOSITORY}" --ref ci/bump-autoware -f build_tag="${BUILD_TAG}"
+          BUILT: ${{ needs.capture-metadata.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          status() {  # context, state, description
+            gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state="$2" \
+              -f context="bump-autoware / $1" -f description="$3" -f target_url="${RUN_URL}" >/dev/null
+          }
+          if [ "${BUILT}" = success ]; then
+            status build success "build ${BUILD_TAG}"
+            gh workflow run evidence.yaml --repo "${GITHUB_REPOSITORY}" --ref ci/bump-autoware -f build_tag="${BUILD_TAG}"
+          else
+            status build failure "the image build did not complete"
+            status evidence error "not run: the image build did not complete"
+          fi
         shell: bash
 
   notify-failure:

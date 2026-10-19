@@ -98,7 +98,8 @@ def render_body(old_ref: str, new_ref: str, old_lock: str, new_lock: str) -> str
         lines += ["| Repository | Change |", "| --- | --- |", *rows, ""]
     lines += [
         "bump-autoware.yaml builds every image on this branch and then runs "
-        "the evidence cells; both show as checks on this pull request. When "
+        "the evidence cells; they report as the `bump-autoware / build` and "
+        "`bump-autoware / evidence` statuses of this pull request. When "
         "upstream breaks a deployment, push the adaptation to this branch: "
         "the next weekly run moves the snapshot on top of it.",
     ]

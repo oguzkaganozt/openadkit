@@ -308,3 +308,28 @@ jobs:
             exit 1
           fi
         shell: bash
+
+  # Report evidence for the weekly Autoware snapshot bump (bump-autoware.yaml)
+  # as a commit status on its pull request, where a dispatched run shows no check.
+  bump-status:
+    needs: [prepare, attest]
+    if: ${{ always() && github.ref == 'refs/heads/ci/bump-autoware' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      statuses: write
+    steps:
+      - name: Report the evidence result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ needs.prepare.outputs.source_sha || github.sha }}
+          ATTESTED: ${{ needs.attest.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          state=failure
+          [ "${ATTESTED}" != success ] || state=success
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${SOURCE_SHA}" -f state="${state}" \
+            -f context="bump-autoware / evidence" -f description="evidence cells: ${ATTESTED}" \
+            -f target_url="${RUN_URL}" >/dev/null
+        shell: bash
