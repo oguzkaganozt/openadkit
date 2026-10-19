@@ -53,7 +53,8 @@ pins one upstream Autoware release, the ROS 2 distros, and every image digest,
 and lists them in its
 [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
 notes. A `release/X.Y` branch produces the `vX.Y.Z` releases and pins their
-Autoware release in `.github/autoware.ref`; `main` tracks upstream development.
+Autoware release in `.github/autoware.ref`; `main` builds a snapshot of
+upstream development that moves weekly.
 
 ## ROS 2 Distro Support
 

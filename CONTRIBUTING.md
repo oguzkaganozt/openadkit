@@ -31,11 +31,20 @@ If you are a member of the Autoware Foundation contributing to active developmen
 - `release/X.Y` — an Open AD Kit release line, pinned to one Autoware release
 - `feat/...`, `fix/...`, `refactor/...` — active development branches merged into `main` via PR
 
-`.github/autoware.ref` selects the Autoware sources a branch builds: `main` on
-`main`, an exact release such as `1.9.0` on `release/X.Y`. A change that only
-upstream development needs, such as a moved package, lands on `main` without
-breaking the release line. Create `release/X.Y` from `main` when stabilizing a
-release, set its pin, and cherry-pick fixes into it.
+`.github/autoware.ref` pins the Autoware sources a branch builds: an exact
+release such as `1.9.0` on `release/X.Y`, and a commit of upstream `main` on
+`main`, with every dependency pinned next to it in `.github/autoware-lock.repos`.
+A change that only upstream development needs, such as a moved package, lands
+on `main` without breaking the release line. Create `release/X.Y` from `main`
+when stabilizing a release, set its pin to the release tag, remove
+`.github/autoware-lock.repos`, and cherry-pick fixes into it.
+
+`main` moves to upstream development once a week: `bump-autoware.yaml` opens a
+`chore(autoware): bump development snapshot` pull request from
+`ci/bump-autoware`, builds every image on it and runs the evidence cells. When
+upstream breaks a deployment, only that pull request fails; push the
+adaptation to its branch, and merge it once its checks pass. Run the workflow
+by hand to move sooner.
 
 ### Local CI Commands
 

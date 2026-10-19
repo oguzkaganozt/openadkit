@@ -8,6 +8,7 @@ on:
     paths:
       - '.dockerignore'
       - '.github/autoware.ref'
+      - '.github/autoware-lock.repos'
       - '.github/actions/combine-multi-arch-images/**'
       - '.github/actions/free-disk-space/**'
       - '.github/actions/build-image/**'
@@ -120,12 +121,19 @@ jobs:
         id: lock
         env:
           AUTOWARE_OVERLAY: ${{ steps.prepare.outputs.autoware_overlay }}
+          AUTOWARE_LOCK_FILE: ${{ steps.prepare.outputs.autoware_lock_file }}
         run: |
           set -euo pipefail
-          python3 .github/scripts/export_autoware_lock.py \
-            autoware-metadata/repositories/autoware.repos \
-            autoware-lock/autoware-lock.repos \
-            "${AUTOWARE_OVERLAY}"
+          mkdir -p autoware-lock
+          if [ -n "${AUTOWARE_LOCK_FILE}" ]; then
+            # A commit pin builds the dependency lock committed with it.
+            cp "${AUTOWARE_LOCK_FILE}" autoware-lock/autoware-lock.repos
+          else
+            python3 .github/scripts/export_autoware_lock.py \
+              autoware-metadata/repositories/autoware.repos \
+              autoware-lock/autoware-lock.repos \
+              "${AUTOWARE_OVERLAY}"
+          fi
           autoware_lock_sha256=$(sha256sum autoware-lock/autoware-lock.repos | cut -d ' ' -f1)
           echo "autoware_lock_sha256=${autoware_lock_sha256}" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -422,6 +430,24 @@ jobs:
           SCAN_REQUESTED: ${{ needs.prepare.outputs.scan_requested }}
           SOURCE_REF: ${{ github.ref }}
         run: bash .github/scripts/write_build_summary.sh >> "$GITHUB_STEP_SUMMARY"
+
+  # The weekly Autoware snapshot bump (bump-autoware.yaml) is verified like
+  # main. evidence.yaml follows main's builds only, so start it here; it runs
+  # on the bump's commit and reports on its pull request.
+  bump-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [prepare, capture-metadata]
+    if: success() && github.ref == 'refs/heads/ci/bump-autoware'
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch the evidence cells
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
+        run: gh workflow run evidence.yaml --repo "${GITHUB_REPOSITORY}" --ref ci/bump-autoware -f build_tag="${BUILD_TAG}"
+        shell: bash
 
   notify-failure:
     runs-on: ubuntu-latest

@@ -1,0 +1,93 @@
+name: bump-autoware
+
+# Moves main's Autoware development snapshot, .github/autoware.ref and
+# .github/autoware-lock.repos, to the current upstream main once a week, as a
+# pull request from ci/bump-autoware. main itself never builds a moving
+# upstream, so an upstream change that breaks Open AD Kit fails this pull
+# request instead of main; adaptations are pushed to the same branch.
+#
+# Pull requests and pushes made with GITHUB_TOKEN start no workflows, so this
+# dispatches build-all-images on the branch, and that build dispatches the
+# evidence cells. Both report as checks on the pull request. The repository
+# must allow GitHub Actions to create pull requests (Settings > Actions).
+
+on:
+  schedule:
+    # Mondays 03:00 UTC, after Sunday's scheduled build of main.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bump-autoware
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH: ci/bump-autoware
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Continue the open bump
+        # Keep adaptations pushed to the branch; bring in what main gained since.
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git show HEAD:.github/autoware.ref >"${RUNNER_TEMP}/base.ref"
+          git show HEAD:.github/autoware-lock.repos >"${RUNNER_TEMP}/base-lock.repos" 2>/dev/null || : >"${RUNNER_TEMP}/base-lock.repos"
+          if git fetch origin "${BRANCH}"; then
+            git switch -C "${BRANCH}" FETCH_HEAD
+            git merge --no-edit origin/main
+          else
+            git switch -C "${BRANCH}"
+          fi
+        shell: bash
+
+      - name: Install YAML parser
+        run: sudo apt-get update && sudo apt-get install -y python3-yaml
+        shell: bash
+
+      - name: Resolve the upstream development snapshot
+        id: bump
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/bump_autoware.py \
+            --base-ref-file "${RUNNER_TEMP}/base.ref" \
+            --base-lock-file "${RUNNER_TEMP}/base-lock.repos" \
+            --body "${RUNNER_TEMP}/body.md" \
+            --github-output "${GITHUB_OUTPUT}"
+        shell: bash
+
+      - name: Propose the snapshot
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTOWARE_REF: ${{ steps.bump.outputs.autoware_ref }}
+        run: |
+          set -euo pipefail
+          title="chore(autoware): bump development snapshot to ${AUTOWARE_REF:0:12}"
+          git add .github/autoware.ref .github/autoware-lock.repos
+          git commit -s -m "${title}"
+          git push origin "${BRANCH}"
+          pr=$(gh pr list --head "${BRANCH}" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "${pr}" ]; then
+            gh pr edit "${pr}" --title "${title}" --body-file "${RUNNER_TEMP}/body.md"
+          else
+            gh pr create --base main --head "${BRANCH}" --title "${title}" --body-file "${RUNNER_TEMP}/body.md"
+          fi
+          gh workflow run build-all-images.yaml --ref "${BRANCH}"
+        shell: bash

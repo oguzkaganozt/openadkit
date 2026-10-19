@@ -60,18 +60,21 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # 4. Import the Autoware sources this branch pins
 AUTOWARE_REF=$(cat .github/autoware.ref)
-git clone --branch "$AUTOWARE_REF" --depth 1 \
-  https://github.com/autowarefoundation/autoware.git
-overlay=()
-if [ "$AUTOWARE_REF" = main ]; then
-  # Upstream development: its development manifest, and core built locally
-  overlay=(autoware/repositories/autoware-nightly.repos)
+git init autoware
+git -C autoware fetch --depth 1 \
+  https://github.com/autowarefoundation/autoware.git "$AUTOWARE_REF"
+git -C autoware checkout --detach FETCH_HEAD
+if [ -f .github/autoware-lock.repos ]; then
+  # main: a snapshot of upstream development, every dependency pinned, and
+  # core built locally
+  cp .github/autoware-lock.repos autoware.lock
   export UPSTREAM_TAG=""
 else
+  # release/X.Y: an Autoware release, built on its official images
+  python3 .github/scripts/export_autoware_lock.py \
+    autoware/repositories/autoware.repos autoware.lock
   export UPSTREAM_TAG="$AUTOWARE_REF"
 fi
-python3 .github/scripts/export_autoware_lock.py \
-  autoware/repositories/autoware.repos autoware.lock "${overlay[@]}"
 mkdir -p autoware/src
 vcs import --shallow autoware/src < autoware.lock
 mkdir -p autoware/src/middleware/external
@@ -130,13 +133,17 @@ images through `docker/metadata-action`. A failed scheduled build opens a GitHub
 issue.
 
 Each branch's [`.github/autoware.ref`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref)
-selects its Autoware sources, resolved into an exact dependency lock per build.
-`main` pins `main`: it overlays upstream's development manifest and compiles
-core in the same Bake graph, so integration changes are tested as upstream lands
-them. A `release/X.Y` branch pins an Autoware release and builds on its official
-images. CI builds `main` and `release/*` pushes; registry caches are kept per
-branch. Pull request checks of `main` build on the Autoware revision of `main`'s
-latest published images, so unchanged images are reused.
+pins its Autoware sources. A `release/X.Y` branch pins an Autoware release and
+builds on its official images. `main` pins a commit of upstream `main` together
+with its dependency lock,
+[`.github/autoware-lock.repos`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-lock.repos),
+and compiles core in the same Bake graph. Once a week
+[`bump-autoware.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/bump-autoware.yaml)
+moves that snapshot to the current upstream `main` in a pull request from
+`ci/bump-autoware`, which builds every image and runs the evidence cells, so an
+upstream change that breaks Open AD Kit fails that pull request instead of
+`main`. CI builds `main` and `release/*` pushes; registry caches are kept per
+branch, and the bump shares `main`'s.
 
 ## Release Process
 
