@@ -208,9 +208,11 @@ install_nvidia_gl_libraries() {
 }
 
 install_gpu() {
-  sudo apt-get install -y --no-install-recommends gnupg
   if ! command -v nvidia-ctk >/dev/null 2>&1; then
     log "installing NVIDIA Container Toolkit"
+    # gnupg dearmors the repository key; refresh the lists it installs from.
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends gnupg
     local key list
     key=$(mktemp)
     list=$(mktemp)
