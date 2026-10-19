@@ -148,6 +148,9 @@ def test_stages_pin_ros_snapshot_and_runtime_checks_linked_libraries(path):
 def compose_context(tmp_path, monkeypatch):
     if shutil.which("docker") is None:
         pytest.skip("docker compose is required")
+    # Keep Docker's own config: CI installs Compose v5 into ~/.docker/cli-plugins,
+    # and without it Docker falls back to the runner's older plugin.
+    monkeypatch.setenv("DOCKER_CONFIG", os.environ.get("DOCKER_CONFIG") or str(Path.home() / ".docker"))
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("OPENADKIT_CONFIG_DIR", str(tmp_path / "config"))
     monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))

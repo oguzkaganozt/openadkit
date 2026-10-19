@@ -460,6 +460,13 @@ def files_resource(tmp_path, *, env="MAP_PATH", name="dataset", **extra):
                        "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}], **extra}
 
 
+@pytest.mark.parametrize("name", ["../escape", "maps/town", "Map", ""])
+def test_data_resource_names_must_be_safe_path_names(tmp_path, name):
+    resource = files_resource(tmp_path) | {"name": name}
+    with pytest.raises(cli_manifest.OpenADKitError, match="name"):
+        cli_manifest._validate_data([resource], {})
+
+
 def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
     target = tmp_path / "home/data/map"
@@ -855,6 +862,43 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
         assert record.read_text().strip() == f"{kit}|1|run custom --pull never"
     else:
         assert "openadkit install --version v1.2.3" in result.stderr
+
+
+def test_overlay_contract_leaves_the_hosts_site_settings_out(tmp_path, monkeypatch):
+    # A documented image override in the site file is not a kit variable.
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for name in ISOLATED_ENV:
+        monkeypatch.delenv(name, raising=False)
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    (kit / "deployments/custom/config.env").write_text("VALUE=kit\nKIT_TYPO=1\n")
+    site_config(root, f"API_IMAGE={OTHER_PIN}\nHOST_ONLY=1\n", name="custom")
+    deployment = cli_manifest.get_deployment(kit, cli_manifest.load_kit(kit), "custom")
+    used = cli_compose.kit_variables(deployment, False)
+    assert {"VALUE", "KIT_TYPO", "OPENADKIT_BASE_DEPLOYMENT"} <= used
+    assert not used & {"API_IMAGE", "HOST_ONLY"}
+
+
+@pytest.mark.parametrize("site", [False, True])
+def test_overlay_baseline_runs_the_hosts_images_but_not_the_kits(tmp_path, monkeypatch, site):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for name in ISOLATED_ENV:
+        monkeypatch.delenv(name, raising=False)
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, artifacts={"API_IMAGE": {"workload": "api", "ref": OTHER_PIN}})
+    host_image = "example.com/host/vehicle:1"
+    if site:
+        site_config(root, f"VEHICLE_SYSTEM_IMAGE={host_image}\n", name="custom")
+    context = cli_manifest.load_kit(kit)
+    deployment = cli_manifest.get_deployment(kit, context, "custom")
+    selection = deployment.select(context, "humble", False)
+    base_selection = deployment.base.select(context.base, "humble", False)
+    baseline = cli_compose.baseline_injections(deployment, selection, context, base_selection)
+    # The kit's artifact replaces the base's api image: the baseline keeps the base's.
+    assert selection.injections["API_IMAGE"] == OTHER_PIN != baseline["API_IMAGE"]
+    assert baseline["API_IMAGE"] == base_selection.injections["API_IMAGE"]
+    # The host's override reaches both models, so it is no replacement.
+    assert (baseline["VEHICLE_SYSTEM_IMAGE"] == selection.injections["VEHICLE_SYSTEM_IMAGE"] == host_image) is site
 
 
 def test_overlay_contract_distinguishes_base_changes_from_added_services():
