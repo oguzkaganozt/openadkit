@@ -9,9 +9,11 @@ include:
   - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
   - ../shared/services/system.yaml
+  - ../shared/services/vehicle.yaml
   - ../shared/services/sensing.yaml
   - ../shared/services/perception.yaml
   - ../shared/services/localization.yaml
+  - ../shared/services/api.yaml
   - ../shared/services/visualizer.yaml
 
 services:
@@ -24,10 +26,19 @@ services:
     depends_on:
       - map
 
+  # Publishes the vehicle and sensor-kit TF (robot_state_publisher), which the
+  # rosbag does not carry: without it sensing cannot transform any lidar or IMU
+  # frame. The bag supplies the vehicle status, so the interface stays off
+  # (LAUNCH_VEHICLE_INTERFACE=false in config.env).
+  vehicle:
+    depends_on:
+      - map
+
   sensing:
     depends_on:
       - map
       - system
+      - vehicle
     volumes:
       # Shared with perception (models); sensing mounts it only in this stack.
       - ${DATA_PATH}:/autoware_data:rw
@@ -44,6 +55,13 @@ services:
       - system
       - sensing
       - perception
+
+  # The AD API initializes localization: its automatic pose initializer starts
+  # it from the bag's GNSS, and RViz's 2D Pose Estimate goes through it too.
+  api:
+    depends_on:
+      - map
+      - localization
 
   visualizer:
     depends_on:
