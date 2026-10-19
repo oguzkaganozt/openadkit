@@ -647,6 +647,9 @@ def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
             raise OpenADKitError(f"{where} must be an object")
         reject_unknown(resource, ALLOWED_DATA_KEYS, where)
         resource_name = require_string(resource.get("name"), f"{where}.name")
+        # The name also names the staging directory of its download.
+        if not NAME_RE.fullmatch(resource_name):
+            raise OpenADKitError(f"invalid {where}.name: {resource_name}")
         if resource_name in names:
             raise OpenADKitError(f"duplicate data resource: {resource_name}")
         names.add(resource_name)
