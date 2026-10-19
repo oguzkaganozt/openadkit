@@ -12,6 +12,7 @@ include:
   - ../shared/services/system.yaml
   - ../shared/services/control.yaml
   - ../shared/services/simulator.yaml
+  - ../shared/services/perception-simulation.yaml
   - ../shared/services/api.yaml
   - ../shared/services/visualizer.yaml
 
@@ -47,6 +48,10 @@ services:
         condition: service_started
       vehicle:
         condition: service_started
+
+  perception-simulation:
+    depends_on:
+      - map
 
   api:
     depends_on:

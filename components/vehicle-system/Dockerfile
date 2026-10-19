@@ -40,6 +40,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
         /tmp/autoware/src/launcher/autoware_launch/vehicle/sample_vehicle_launch/sample_vehicle_launch \
         /tmp/autoware/src/universe/autoware_universe/vehicle \
         /tmp/autoware/src/universe/autoware_universe/system \
+        /tmp/autoware/src/universe/autoware_universe/simulator/autoware_dummy_diag_publisher \
         /tmp/autoware/src/universe/autoware_universe/planning/planning_validator \
         /tmp/autoware/src/sensor_component/external/sensor_component_description \
       > /opt/openadkit/colcon-base-paths && \

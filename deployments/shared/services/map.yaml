@@ -32,7 +32,7 @@ services:
       - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
-      ros2 launch /openadkit/launch/component.launch.py component:=tier4_map_component
+      ros2 launch /openadkit/launch/component.launch.py component:=component_map
       lanelet2_map_file:=${LANELET2_MAP_FILE}
       map_path:=/autoware_map
       pointcloud_map_file:=${POINTCLOUD_MAP_FILE}
