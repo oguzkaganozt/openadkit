@@ -26,6 +26,7 @@ services:
       launch_scenario_simulator_v2_adapter:=${LAUNCH_SCENARIO_SIMULATOR_V2_ADAPTER}
       localization_sim_mode:=${LOCALIZATION_SIM_MODE}
       raw_vehicle_cmd_converter_param_path:=/tmp/openadkit/autoware_launch/share/autoware_launch/config/vehicle/raw_vehicle_cmd_converter/raw_vehicle_cmd_converter.param.yaml
+      scenario_simulation:=${SCENARIO_SIMULATION}
       use_sim_time:=${USE_SIM_TIME}
       vehicle_info_param_file:=/tmp/openadkit/vehicle_description/config/vehicle_info.param.yaml
       vehicle_model:=${VEHICLE_MODEL}
