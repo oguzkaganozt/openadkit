@@ -41,7 +41,6 @@
           "/api/external/get/rtc_status",
           "/api/external/get/emergency",
           "/api/fail_safe/mrm_state",
-          "/api/autoware/get/engage",
         ],
         subscribers: [
           "/clock",
@@ -65,7 +64,6 @@
           "/api/external/get/rtc_status",
           "/api/external/get/emergency",
           "/api/fail_safe/mrm_state",
-          "/api/autoware/get/engage",
         ],
         service_servers: [
           "/control/control_mode_request",
@@ -78,7 +76,6 @@
           "/api/operation_mode/enable_autoware_control",
           "/api/operation_mode/change_to_autonomous",
           "/api/external/set/engage",
-          "/api/autoware/set/engage",
           "/api/external/set/rtc_commands",
           "/api/external/set/rtc_auto_mode",
           "/api/autoware/set/velocity_limit",
@@ -94,7 +91,6 @@
           "/api/operation_mode/enable_autoware_control",
           "/api/operation_mode/change_to_autonomous",
           "/api/external/set/engage",
-          "/api/autoware/set/engage",
           "/api/external/set/rtc_commands",
           "/api/external/set/rtc_auto_mode",
           "/api/autoware/set/velocity_limit",

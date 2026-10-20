@@ -90,8 +90,8 @@ services:
         if [ "$${WAIT_FOR_POINTCLOUD_MAP:-}" = 1 ]; then
           wait_for_topic /map/pointcloud_map
         fi
-        wait_for_topic /api/autoware/get/engage
-        wait_for_service /api/autoware/set/engage
+        # The interfaces scenario_test_runner engages Autoware through.
+        wait_for_service /api/external/set/engage
         wait_for_service /api/operation_mode/change_to_autonomous
 
         set -- "$$SCENARIO"
