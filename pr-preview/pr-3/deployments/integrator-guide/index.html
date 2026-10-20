@@ -2328,10 +2328,10 @@ component images and artifact references remain pinned.</p>
 <h3 id="2-config-differences">2. Config Differences<a class="headerlink" href="#2-config-differences" title="Permanent link">#</a></h3>
 <p>Store overrides under
 <code>config/autoware/&lt;package&gt;/&lt;path-relative-to-package-share&gt;</code>. For example,
-<code>config/autoware/autoware_control_config/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml</code>:</p>
+<code>config/autoware/autoware_control_config/config/control_command_gate/control_command_gate.param.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">/**</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">ros__parameters</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">nominal</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">nominal_filter</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">vel_lim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.0</span>
 </code></pre></div>
 <p>On each start, the entrypoint hook copies the package share directory into
@@ -2344,7 +2344,9 @@ use the same stable paths. No change is written into the image. Removing an
 override and restarting returns to the remaining layers.</p>
 <p>Unknown packages, files or YAML keys are warnings, not startup failures. The
 hook logs them and writes <code>/tmp/openadkit/overlay-report.json</code> in each container.
-After changing the base version, inspect those reports for renamed parameters.</p>
+After changing the base version, inspect those reports for renamed parameters.
+Every service gets the same layers, so a package is reported as unknown in the
+images that do not install it; it is a mistake only when no service has it.</p>
 <h3 id="3-overlay-workspace">3. Overlay Workspace<a class="headerlink" href="#3-overlay-workspace" title="Permanent link">#</a></h3>
 <p>Put ROS packages in <code>overlay_ws/src</code> and build them in the
 <code>universe-common-devel</code> image from the <strong>same build</strong> as your runtime images.
