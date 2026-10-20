@@ -54,7 +54,7 @@ component images and artifact references remain pinned.
 
 Store overrides under
 `config/autoware/<package>/<path-relative-to-package-share>`. For example,
-`config/autoware/autoware_launch/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml`:
+`config/autoware/autoware_control_config/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml`:
 
 ```yaml
 /**:
