@@ -24,6 +24,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 START = dict(x=3648.464, y=73505.020, z=18.924, qz=0.750460, qw=0.660916)
 GOAL = dict(x=3638.004, y=73587.122, z=19.612, qz=0.750462, qw=0.660913)
 TIMEOUT_READY, TIMEOUT_DRIVE = 300.0, 300.0
+AVAILABLE_HOLD = 5.0
 
 
 def pose(p):
@@ -40,11 +41,22 @@ class Golden(Node):
         self.route = self.loc = self.op = None
         self.create_subscription(RouteState, "/api/routing/state", lambda m: setattr(self, "route", m.state), latched)
         self.create_subscription(LocalizationInitializationState, "/api/localization/initialization_state", lambda m: setattr(self, "loc", m.state), latched)
-        self.create_subscription(OperationModeState, "/api/operation_mode/state", lambda m: setattr(self, "op", m), latched)
+        self.create_subscription(OperationModeState, "/api/operation_mode/state", self.on_operation_mode, latched)
+        self.available_since = None
         self.init_cli = self.create_client(InitializeLocalization, "/api/localization/initialize")
         self.route_cli = self.create_client(SetRoutePoints, "/api/routing/set_route_points")
         self.auto_cli = self.create_client(ChangeOperationMode, "/api/operation_mode/change_to_autonomous")
         self.t0 = time.monotonic()
+
+    def on_operation_mode(self, m):
+        self.op = m
+        if not m.is_autonomous_mode_available:
+            self.available_since = None
+        elif self.available_since is None:
+            self.available_since = time.monotonic()
+
+    def available_for(self):
+        return 0.0 if self.available_since is None else time.monotonic() - self.available_since
 
     def spin_until(self, cond, timeout, what):
         end = time.monotonic() + timeout
@@ -107,10 +119,12 @@ class Golden(Node):
             return 4
         self.mark("route set")
 
-        # 3) engage
-        if not self.spin_until(
-            lambda: self.op is not None and self.op.is_autonomous_mode_available, TIMEOUT_READY, "autonomous available"
-        ):
+        # 3) engage once autonomous mode has stayed available for a while.
+        # Availability turns true as the trajectory follower starts; engaging
+        # in the same second makes the control command gate find its input
+        # timed out, and the driving mode manager falls back to an emergency
+        # stop that holds until the next mode change.
+        if not self.spin_until(lambda: self.available_for() >= AVAILABLE_HOLD, TIMEOUT_READY, "autonomous available"):
             return 5
         ok = False
         for _ in range(30):
