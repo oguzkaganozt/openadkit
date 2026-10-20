@@ -59,12 +59,9 @@ as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
 `pointcloud_map.pcd`, `global_map_center.pcd.yaml`,
 `lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
 
-This deployment changes two Autoware parameters, each in a file that holds only
-the changed value. On every start, the images merge these files into the
-upstream parameter files:
-
-- `config/autoware/autoware_launch/config/system/mrm_handler/mrm_handler.param.yaml`
-- `config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`
+This deployment changes one Autoware parameter, in a file that holds only the
+changed value. On every start, the images merge it into the upstream parameter
+file: `config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`.
 
 ## Stop and Recover
 

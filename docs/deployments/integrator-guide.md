@@ -54,12 +54,12 @@ component images and artifact references remain pinned.
 
 Store overrides under
 `config/autoware/<package>/<path-relative-to-package-share>`. For example,
-`config/autoware/autoware_control_config/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml`:
+`config/autoware/autoware_control_config/config/control_command_gate/control_command_gate.param.yaml`:
 
 ```yaml
 /**:
   ros__parameters:
-    nominal:
+    nominal_filter:
       vel_lim: 8.0
 ```
 
