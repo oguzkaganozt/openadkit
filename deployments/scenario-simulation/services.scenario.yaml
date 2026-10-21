@@ -1,7 +1,7 @@
 # Scenario-host service for scenario simulation.
 #
 # Shared by the single-host entry point (docker-compose.yaml, which adds
-# pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--node scenario`
+# pid/depends_on and the single-host waits back) and the `--node scenario`
 # view (this file plus deployments/shared/compose.zenoh.yaml, attached by the
 # CLI). Autoware edges and pid: service:map live in the default entry point,
 # not here: the node view has no Autoware services and no map.
@@ -28,7 +28,7 @@ services:
       # Passed as runtime environment data (not interpolated into the command
       # program) so shell metacharacters in a value cannot alter the script.
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      - SCENARIO_READY_TIMEOUT=${SCENARIO_READY_TIMEOUT:-300}
+      - SCENARIO_READY_TIMEOUT=${SCENARIO_READY_TIMEOUT:-600}
       - SCENARIO=${SCENARIO}
       - ARCHITECTURE_TYPE=${ARCHITECTURE_TYPE}
       - GLOBAL_FRAME_RATE=${GLOBAL_FRAME_RATE}
@@ -93,6 +93,15 @@ services:
         # The interfaces scenario_test_runner engages Autoware through.
         wait_for_service /api/external/set/engage
         wait_for_service /api/operation_mode/change_to_autonomous
+        # Each scenario starts by switching Autoware to STOP, which the driving
+        # mode manager refuses until it has reached these gates; on a small
+        # host the control container loads them minutes after the API is up.
+        # They are local to the Autoware graph, so the single-host graph asks.
+        if [ "$${WAIT_FOR_DRIVING_MODE_GATES:-}" = 1 ]; then
+          wait_for_service /control/trajectory_gate/source/change
+          wait_for_service /control/control_command_gate/source/change
+          wait_for_service /control/control_command_gate/filter/change
+        fi
 
         set -- "$$SCENARIO"
         if [ -z "$1" ]; then
