@@ -112,11 +112,13 @@ def edit_kit(root, change):
     path.write_text(json.dumps(document))
 
 
-def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}'):
+def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
+                services=("app", "acme")):
     """One stateful stub shared by runtime and integrator subprocess tests."""
     calls = tmp_path / "docker-calls"
     live = tmp_path / "projects.json"
     live.write_text(json.dumps([{"Name": name, "Status": "running(1)"} for name in projects]))
+    service_lines = "\n".join(services)
     executable(tmp_path / "bin/docker", f'''#!/usr/bin/env python3
 import json, os, sys
 from pathlib import Path
@@ -140,7 +142,7 @@ elif args[0] == "inspect":
 elif "config --format json" in text:
     print('{{"services": {{}}}}')
 elif "config --services" in text:
-    print("app\\nacme")
+    print({service_lines!r})
 elif "config --quiet" in text:
     sys.exit({config})
 elif "up --detach" in text:
@@ -388,6 +390,21 @@ def test_split_node_run_discovery_and_safe_stop(tmp_path):
     assert result.returncode == 0, result.stderr
     down = next(row["args"] for row in recorded(calls) if "down" in row["args"])
     assert "openadkit-example-secondary" in down and "--volumes" not in down
+
+
+@pytest.mark.parametrize("headless", [False, True])
+def test_run_can_leave_out_the_visualizer(tmp_path, headless):
+    root, _ = runtime_tree(tmp_path)
+    calls = fake_docker(tmp_path, services=("app", "visualizer"))
+    result = run_cli(root, "run", "example", *(["--no-visualizer"] if headless else []))
+    assert result.returncode == 0, result.stderr
+    rows = [row["args"] for row in recorded(calls)]
+    up = next(args for args in rows if "up" in args)
+    pull = next(args for args in rows if "pull" in args)
+    assert ("--scale=visualizer=0" in up) is headless
+    # A left-out service is not pulled either.
+    assert pull[pull.index("missing") + 1:] == (["app"] if headless else [])
+    assert ("visualizer: https://localhost:6080" in result.stdout) is not headless
 
 
 @pytest.mark.parametrize(("projects", "args", "message"), [

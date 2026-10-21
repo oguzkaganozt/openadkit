@@ -137,7 +137,9 @@ if [ "${l0_rc}" -eq 0 ]; then
     for i in "${!nodes[@]}"; do
         suffix=""
         [ "${split}" = true ] && suffix="-${nodes[i]}"
-        node_cli run "${i}" --ros-distro "${distro}" >"${out}/run${suffix}.log" 2>&1 || run_rc=1
+        # Nothing watches the visualizer here; its software-rendered RViz
+        # would take CPU from Autoware on a 4-vCPU runner.
+        node_cli run "${i}" --ros-distro "${distro}" --no-visualizer >"${out}/run${suffix}.log" 2>&1 || run_rc=1
     done
 
     if [ "${run_rc}" -eq 0 ] && docker inspect "${api_container}" >/dev/null 2>&1; then
