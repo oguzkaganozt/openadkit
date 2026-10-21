@@ -2412,7 +2412,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 </tr>
 <tr>
 <td><code>UPSTREAM_TAG</code></td>
-<td>Upstream Autoware release to build on (e.g. <code>1.9.0</code>). Empty builds for upstream development: core compiles from <code>autoware/src</code> on the moving <code>base-&lt;distro&gt;</code> image, and ROS installs from the live repository.</td>
+<td>Upstream Autoware release to build on (e.g. <code>1.9.0</code>). Empty builds for upstream development: core compiles from <code>autoware/src</code> on the moving <code>base-&lt;distro&gt;</code> image (CI uses the digest pinned in <code>.github/autoware-base-images.json</code>), and ROS installs from the live repository.</td>
 <td><code>""</code></td>
 </tr>
 <tr>
@@ -2443,7 +2443,10 @@ pins its Autoware sources. A <code>release/X.Y</code> branch pins an Autoware re
 builds on its official images. <code>main</code> pins a commit of upstream <code>main</code> together
 with its dependency lock,
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-lock.repos"><code>.github/autoware-lock.repos</code></a>,
-and compiles core in the same Bake graph. Once a week
+and the digests of the upstream base images it builds on,
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-base-images.json"><code>.github/autoware-base-images.json</code></a>.
+It compiles core on those bases and pushes it before the common images, so
+rebuilding an unchanged snapshot reuses every cached layer. Once a week
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/bump-autoware.yaml"><code>bump-autoware.yaml</code></a>
 moves that snapshot to the current upstream <code>main</code> in a pull request from
 <code>ci/bump-autoware</code>, which builds every image and runs the evidence cells, so an
