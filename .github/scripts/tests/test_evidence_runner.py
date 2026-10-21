@@ -167,3 +167,37 @@ def test_scenario_metrics_pass_only_complete_runs(tmp_path, cases, log, ok):
                              "--json", str(tmp_path / "metrics.json")], capture_output=True, text=True)
     assert (result.returncode == 0) is ok, result.stdout
     assert json.loads((tmp_path / "metrics.json").read_text())["ok"] is ok
+
+
+FAKE_ROS2 = """#!/usr/bin/env bash
+# Lists every name; publishes on the topic only from the FRESH_AFTER-th echo.
+case "$1 $2" in
+  "service list"|"topic list") printf '%s\\n' /api/a /api/b ;;
+  "topic echo")
+    count=$(( $(cat "${ECHO_COUNT}" 2>/dev/null || echo 0) + 1 ))
+    echo "${count}" > "${ECHO_COUNT}"
+    [ "${count}" -ge "${FRESH_AFTER}" ] || exit 1
+    echo "data: 1" ;;
+esac
+"""
+
+
+@pytest.mark.parametrize(("fresh_after", "timeout", "ok", "echoes"), [
+    # A topic that starts publishing late still passes within the deadline.
+    (2, "60", True, 2),
+    # Past the deadline, one window is all it gets.
+    (99, "1", False, 1),
+])
+def test_readiness_waits_for_late_publishers_until_the_deadline(tmp_path, fresh_after, timeout, ok, echoes):
+    executable(tmp_path / "ros2", FAKE_ROS2)
+    env = os.environ | {"PATH": f"{tmp_path}:{os.environ['PATH']}", "ECHO_COUNT": str(tmp_path / "count"),
+                        "FRESH_AFTER": str(fresh_after)}
+    result = subprocess.run(
+        [sys.executable, str(ROOT / ".github/scripts/evidence/readiness.py"), "--service", "/api/a",
+         "--topic", "/api/b", "--fresh", "/api/b", "--timeout", timeout, "--fresh-timeout", "1",
+         "--output", str(tmp_path / "readiness.json")],
+        env=env, capture_output=True, text=True)
+    assert (result.returncode == 0) is ok, result.stdout + result.stderr
+    timeline = json.loads((tmp_path / "readiness.json").read_text())
+    assert timeline["items"][-1]["ok"] is ok
+    assert int((tmp_path / "count").read_text()) == echoes
