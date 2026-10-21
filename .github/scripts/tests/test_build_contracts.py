@@ -124,6 +124,31 @@ def test_development_recipe_compiles_core_on_the_pinned_base():
     assert core["cache-to"] == ["type=registry,ref=ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-release-2.0,mode=max"]
 
 
+def test_development_core_is_pushed_and_pinned_by_digest():
+    uri = "docker-image://example/base@sha256:" + "c" * 64
+    prepared = {"build_tag": "123-1", "cache_scope": "main", "autoware_input_ref": "a" * 40, "autoware_ref_type": "sha",
+                "autoware_ref": "a" * 40, "autoware_base_version": "1.9.0", "autoware_lock_sha256": "e" * 64,
+                "upstream_images": json.dumps({"humble": {name: {"uri": uri} for name in ("base", "base-cuda-runtime", "base-cuda-devel")}})}
+    recipe, image = matrices.core_recipe(prepared, "humble", "linux/amd64", owner="example")
+    core = recipe["target"]["autoware-core-devel"]
+    assert image == "ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-123-1"
+    # Nothing per build may reach the image universe-common starts from.
+    assert core["tags"] == [image] and not core["labels"] and core["args"] == {"ROS_DISTRO": "humble"}
+    assert core["attest"] == ["type=provenance,disabled=true"] and core["contexts"]["autoware-base"] == uri
+    assert core["cache-to"] == ["type=registry,ref=ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-main,mode=max"]
+
+    pinned = image + "@sha256:" + "d" * 64
+    recipe, _ = matrices.bake_recipe(INVENTORY, prepared, "universe-common", "humble", "linux/amd64", publish=True,
+                                     shared_common=False, common_cached=False, owner="example", source_sha="b" * 40, run_id="123",
+                                     core_devel=pinned)
+    for name in ("universe-common-build", "universe-common-devel", "universe-common"):
+        assert recipe["target"][name]["contexts"]["autoware-core-devel"] == "docker-image://" + pinned
+
+    # Release builds start from the upstream core image.
+    prepared["upstream_images"] = json.dumps({"humble": {name: {"uri": uri} for name in ("core-devel", "base")}})
+    assert matrices.core_recipe(prepared, "humble", "linux/amd64", owner="example") is None
+
+
 def test_lock_overlay_moves_repositories_to_development_versions(tmp_path):
     import export_autoware_lock
     source, overlay, lock = tmp_path / "a.repos", tmp_path / "b.repos", tmp_path / "lock.repos"

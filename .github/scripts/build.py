@@ -189,8 +189,13 @@ def format_outputs(matrices):
     return "\n".join(lines) + "\n"
 
 
-def bake_recipe(inventory, prepared, target, distro, platform, *, publish, shared_common, common_cached, owner, source_sha, run_id):
-    """Overlay the local HCL graph, preserving local dependency builds in PRs."""
+def bake_recipe(inventory, prepared, target, distro, platform, *, publish, shared_common, common_cached, owner, source_sha, run_id,
+                core_devel=None):
+    """Overlay the local HCL graph, preserving local dependency builds in PRs.
+
+    core_devel is the pushed development core (ref@digest, see core_recipe)
+    that universe-common builds on instead of compiling it in the same Bake.
+    """
     images = {image["target"]: image for image in inventory["images"]}
     if target not in images or distro not in image_distros(images[target], inventory["ros_distros"]) or platform not in images[target]["platforms"]:
         raise ValueError(f"Unsupported build cell: {target}/{distro}/{platform}")
@@ -218,6 +223,8 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             # Development builds have no upstream core image; HCL compiles it.
             upstream = json.loads(prepared["upstream_images"])[distro]
             contexts.update({f"autoware-{name}": upstream[name]["uri"] for name in ("core-devel", "base") if name in upstream})
+            if core_devel:
+                contexts["autoware-core-devel"] = f"docker-image://{core_devel}"
             args["SECURITY_REFRESH"] = build_tag
         else:
             contexts["universe-common-devel"] = f"docker-image://{common_build}"
@@ -281,21 +288,59 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
     return {"target": overrides}, targets
 
 
+def core_recipe(prepared, distro, platform, *, owner):
+    """The development core image, pushed before universe-common builds on it.
+
+    Development builds have no upstream core-devel image, so they compile it.
+    Built in the same Bake as universe-common (a target: context), every
+    stage on top of it missed the registry cache on each new build, while
+    release builds, which start from the upstream image's digest, stayed
+    cached. Pushing core first lets universe-common start from a digest too.
+    Returns None when the upstream image exists.
+    """
+    upstream = json.loads(prepared["upstream_images"])[distro]
+    if "core-devel" in upstream:
+        return None
+    arch = platform_label(platform)
+    def cache_ref(name):
+        return f"ghcr.io/{owner}/openadkit-buildcache:{name}-{arch}-{distro}-{prepared['cache_scope']}"
+    image = f"ghcr.io/{owner}/openadkit-buildcache:autoware-core-devel-{arch}-{distro}-{prepared['build_tag']}"
+    # No per-build labels, arguments or provenance: they would change the
+    # digest universe-common starts from.
+    recipe = {"target": {"autoware-core-devel": {
+        "platforms": [platform], "args": {"ROS_DISTRO": distro}, "labels": {},
+        "contexts": {"autoware-base": upstream["base"]["uri"]},
+        "cache-from": [f"type=registry,ref={cache_ref(name)}" for name in ("autoware-core-devel", "universe-common-build", "universe-common")],
+        "cache-to": [f"type=registry,ref={cache_ref('autoware-core-devel')},mode=max"],
+        "tags": [image], "attest": ["type=provenance,disabled=true"],
+    }}}
+    return recipe, image
+
+
 def write_recipe():
     inventory = json.loads(pathlib.Path(DEFAULT_INVENTORY).read_text())
     target = os.environ["BUILD_TARGET"]
     distro = os.environ["ROS_DISTRO"]
     platform = os.environ["BUILD_PLATFORM"]
+    prepared = json.loads(os.environ["BUILD_INPUTS"])
+    publish = os.environ["PUBLISH"] == "true"
+    owner = os.environ["GITHUB_REPOSITORY"].split("/")[0]
+    # Set on the second run, after the core image was pushed (build-image).
+    core_devel = os.environ.get("CORE_DEVEL_IMAGE") or None
+    core = core_recipe(prepared, distro, platform, owner=owner) if publish and target == "universe-common" else None
     recipe, targets = bake_recipe(
-        inventory, json.loads(os.environ["BUILD_INPUTS"]), target, distro, platform,
-        publish=os.environ["PUBLISH"] == "true", shared_common=os.environ["SHARED_COMMON"] == "true",
-        common_cached=os.environ["COMMON_CACHED"] == "true", owner=os.environ["GITHUB_REPOSITORY"].split("/")[0],
-        source_sha=os.environ["GITHUB_SHA"], run_id=os.environ["GITHUB_RUN_ID"],
+        inventory, prepared, target, distro, platform,
+        publish=publish, shared_common=os.environ["SHARED_COMMON"] == "true",
+        common_cached=os.environ["COMMON_CACHED"] == "true", owner=owner,
+        source_sha=os.environ["GITHUB_SHA"], run_id=os.environ["GITHUB_RUN_ID"], core_devel=core_devel,
     )
     pathlib.Path(".build-recipe.json").write_text(json.dumps(recipe))
+    if core:
+        pathlib.Path(".core-recipe.json").write_text(json.dumps(core[0]))
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         output.write(f"cache_prefix=buildkit-mounts-{target}-{distro}-{platform_label(platform)}-\n")
         output.write("targets<<BUILD_TARGETS\n" + "\n".join(targets) + "\nBUILD_TARGETS\n")
+        output.write(f"core_image={core[1] if core else ''}\n")
 
 
 def main(argv):
