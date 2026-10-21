@@ -20,7 +20,10 @@ split nodes of the same deployment can still run together.
 After starting, `run` watches the services for 10 seconds and fails if one
 crashes.
 `openadkit run <deployment> --pull always` refreshes images before starting,
-and `openadkit --version` prints the installed version.
+and `openadkit --version` prints the installed version. `--no-visualizer`
+starts everything except the visualizer, for a host nobody watches; its
+software-rendered RViz needs CPU that Autoware lacks on a small host. CI
+evidence runs this way.
 
 ## Validate Before Running
 

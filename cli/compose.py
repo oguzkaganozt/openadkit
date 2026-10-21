@@ -638,9 +638,18 @@ def check_services_stay_up(
         time.sleep(1)
 
 
-def start(deployment: Deployment, selection: Selection, pull_policy: str) -> None:
+def start(
+    deployment: Deployment,
+    selection: Selection,
+    pull_policy: str,
+    services: set[str],
+    skipped: set[str] | None = None,
+) -> None:
+    """Start `services` of the rendered set; `skipped` ones get no container."""
+    skipped = skipped or set()
     if pull_policy != "never":
-        compose_run(deployment, selection, ["pull", "--policy", pull_policy])
+        pull = ["pull", "--policy", pull_policy]
+        compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
 
     for service in deployment.reset_services(selection.node):
         compose_run(
@@ -662,6 +671,7 @@ def start(deployment: Deployment, selection: Selection, pull_policy: str) -> Non
             "--pull",
             "never",
             "--remove-orphans",
+            *(f"--scale={service}=0" for service in sorted(skipped)),
         ],
     )
     check_services_stay_up(deployment, selection, baseline)
