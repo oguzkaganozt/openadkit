@@ -55,12 +55,25 @@ def main():
             )
             failed = failed or not found
 
+    def wait_for_message(name):
+        # A listed topic can start publishing much later on a loaded host
+        # (sim-time publishers wait for the scenario to start), so retry
+        # within the same deadline as the listings, at least once.
+        while True:
+            remaining = args.timeout - (time.monotonic() - start)
+            window = max(1, int(min(args.fresh_timeout, remaining)))
+            rc, _ = run(
+                ["timeout", str(window), "ros2", "topic", "echo", "--once", name],
+                timeout=window + 5,
+            )
+            if rc == 0:
+                return True
+            if remaining <= window:
+                return False
+            time.sleep(2)
+
     for name in args.fresh:
-        rc, _ = run(
-            ["timeout", str(int(args.fresh_timeout)), "ros2", "topic", "echo", "--once", name],
-            timeout=args.fresh_timeout + 5,
-        )
-        fresh = rc == 0
+        fresh = wait_for_message(name)
         timeline["items"].append(
             {
                 "kind": "fresh",
