@@ -21,6 +21,7 @@ on:
       - ".dockerignore"
       - ".github/autoware.ref"
       - ".github/autoware-lock.repos"
+      - ".github/autoware-base-images.json"
       - "components/**"
       - ".github/image-inventory.json"
       - ".github/scripts/export_autoware_lock.py"
@@ -186,6 +187,7 @@ jobs:
         id: upstream
         env:
           UPSTREAM_TAG: ${{ steps.prepare.outputs.upstream_tag }}
+          UPSTREAM_PINS: ${{ steps.prepare.outputs.upstream_pins }}
           TARGETS_JSON: ${{ steps.detect.outputs.targets_json }}
           UPSTREAM_ROS_DISTRO: ${{ inputs.ros-distro || 'humble' }}
           USE_LOCAL_COMMON: ${{ steps.contexts.outputs.use_local_common }}

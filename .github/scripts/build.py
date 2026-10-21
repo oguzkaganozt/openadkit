@@ -109,7 +109,8 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
             if not changed_file:
                 continue
             # These shape every image's sources, context and dependency graph.
-            if changed_file in ("components/docker-bake.hcl", ".dockerignore", ".github/autoware.ref", ".github/autoware-lock.repos"):
+            if changed_file in ("components/docker-bake.hcl", ".dockerignore", ".github/autoware.ref", ".github/autoware-lock.repos",
+                                ".github/autoware-base-images.json"):
                 targets.update(all_targets)
                 use_local_common = True
                 use_local_simulator = True

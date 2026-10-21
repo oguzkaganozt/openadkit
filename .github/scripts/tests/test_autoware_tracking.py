@@ -41,17 +41,26 @@ def test_body_from_a_release_pin_links_the_new_commit():
     assert f"`1.9.0` → [`{NEW[:12]}`](https://github.com/autowarefoundation/autoware/commit/{NEW})" in body
 
 
-def run_bump(tmp_path, monkeypatch, ref, current_lock, upstream_lock, base_ref=None):
+PINS = '{\n  "base-humble": "sha256:%s"\n}\n'
+
+
+def run_bump(tmp_path, monkeypatch, ref, current_lock, upstream_lock, base_ref=None,
+             current_pins=None, upstream_pins=PINS % NEW):
     ref_file, lock_file = tmp_path / "autoware.ref", tmp_path / "autoware-lock.repos"
+    pins_file = tmp_path / "autoware-base-images.json"
     ref_file.write_text(ref + "\n")
     if current_lock is not None:
         lock_file.write_text(current_lock)
+    if current_pins is not None:
+        pins_file.write_text(current_pins)
     monkeypatch.setattr(bump_autoware, "upstream_head", lambda branch: NEW)
+    monkeypatch.setattr(bump_autoware, "resolve_base_images", lambda: upstream_pins)
     # A release pin is compared with its own manifest, here universe at OLD.
     monkeypatch.setattr(bump_autoware, "export_snapshot",
                         lambda ref, development=True: upstream_lock if development else lock(universe=OLD))
     output, body = tmp_path / "output", tmp_path / "body.md"
-    argv = ["--ref-file", str(ref_file), "--lock-file", str(lock_file), "--body", str(body), "--github-output", str(output)]
+    argv = ["--ref-file", str(ref_file), "--lock-file", str(lock_file), "--pins-file", str(pins_file),
+            "--body", str(body), "--github-output", str(output)]
     if base_ref is not None:
         base = tmp_path / "base.ref"
         base.write_text(base_ref + "\n")
@@ -64,7 +73,15 @@ def test_bump_writes_the_new_snapshot(tmp_path, monkeypatch):
     ref_file, lock_file, output, _ = run_bump(tmp_path, monkeypatch, "1.9.0", None, lock(universe=NEW))
     assert ref_file.read_text() == NEW + "\n"
     assert lock_file.read_text() == lock(universe=NEW)
+    assert (tmp_path / "autoware-base-images.json").read_text() == PINS % NEW
     assert output == f"changed=true\nautoware_ref={NEW}\n"
+
+
+def test_bump_follows_republished_base_images(tmp_path, monkeypatch):
+    current = lock(universe=NEW)
+    *_, output, _ = run_bump(tmp_path, monkeypatch, NEW, current, current, current_pins=PINS % OLD)
+    assert (tmp_path / "autoware-base-images.json").read_text() == PINS % NEW
+    assert output.startswith("changed=true\n")
 
 
 def test_bump_from_a_release_compares_with_that_release(tmp_path, monkeypatch):
@@ -75,7 +92,7 @@ def test_bump_from_a_release_compares_with_that_release(tmp_path, monkeypatch):
 
 def test_bump_leaves_a_current_snapshot_alone(tmp_path, monkeypatch):
     current = lock(universe=NEW)
-    _, lock_file, output, _ = run_bump(tmp_path, monkeypatch, NEW, current, current)
+    _, lock_file, output, _ = run_bump(tmp_path, monkeypatch, NEW, current, current, current_pins=PINS % NEW)
     assert lock_file.read_text() == current
     assert output.startswith("changed=false\n")
 
@@ -105,12 +122,15 @@ esac
 """
 
 
-def resolve(tmp_path, pin, *, lock_file=False, ref_name="main", **fake):
+def resolve(tmp_path, pin, *, lock_file=False, pins_file=None, ref_name="main", **fake):
     work = tmp_path / "work"
     (work / ".github").mkdir(parents=True)
     (work / ".github/autoware.ref").write_text(pin + "\n")
     if lock_file:
         (work / ".github/autoware-lock.repos").write_text(lock(universe=NEW))
+    # A development snapshot pins its base images along with its lock.
+    if pins_file if pins_file is not None else lock_file:
+        (work / ".github/autoware-base-images.json").write_text(PINS % NEW)
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     (bin_dir / "git").write_text(FAKE_GIT)
@@ -136,14 +156,19 @@ def test_a_commit_pin_builds_its_committed_lock(tmp_path):
     assert result.returncode == 0, result.stderr
     assert values["autoware_ref_type"] == "sha"
     assert values["autoware_lock_file"] == ".github/autoware-lock.repos"
+    assert values["upstream_pins"] == ".github/autoware-base-images.json"
     assert values["autoware_overlay"] == ""
     assert values["upstream_tag"] == ""
 
 
-def test_a_commit_pin_without_its_lock_fails(tmp_path):
-    result, _ = resolve(tmp_path, NEW)
+@pytest.mark.parametrize(("lock_file", "pins_file", "message"), [
+    (False, False, "needs its dependency lock"),
+    (True, False, "needs its base image digests"),
+])
+def test_a_commit_pin_without_its_snapshot_fails(tmp_path, lock_file, pins_file, message):
+    result, _ = resolve(tmp_path, NEW, lock_file=lock_file, pins_file=pins_file)
     assert result.returncode != 0
-    assert "needs its dependency lock" in result.stderr
+    assert message in result.stderr
 
 
 def test_a_release_pin_uses_the_release_manifest(tmp_path):
@@ -152,12 +177,17 @@ def test_a_release_pin_uses_the_release_manifest(tmp_path):
     assert values["autoware_ref_type"] == "tag"
     assert values["upstream_tag"] == "1.9.0"
     assert values["autoware_lock_file"] == ""
+    assert values["upstream_pins"] == ""
 
 
-def test_a_release_pin_rejects_an_inherited_development_lock(tmp_path):
-    result, _ = resolve(tmp_path, "1.9.0", lock_file=True, FAKE_TAG="1.9.0")
+@pytest.mark.parametrize(("lock_file", "pins_file", "path"), [
+    (True, True, ".github/autoware-lock.repos"),
+    (False, True, ".github/autoware-base-images.json"),
+])
+def test_a_release_pin_rejects_an_inherited_development_snapshot(tmp_path, lock_file, pins_file, path):
+    result, _ = resolve(tmp_path, "1.9.0", lock_file=lock_file, pins_file=pins_file, FAKE_TAG="1.9.0")
     assert result.returncode != 0
-    assert "remove .github/autoware-lock.repos" in result.stderr
+    assert f"remove {path}" in result.stderr
 
 
 def test_a_branch_pin_resolves_the_development_manifest(tmp_path):
@@ -165,6 +195,7 @@ def test_a_branch_pin_resolves_the_development_manifest(tmp_path):
     assert result.returncode == 0, result.stderr
     assert values["autoware_ref_type"] == "branch"
     assert values["autoware_overlay"].endswith("autoware-nightly.repos")
+    assert values["upstream_pins"] == ""
 
 
 @pytest.mark.parametrize(("ref_name", "scope"), [("ci/bump-autoware", "main"), ("release/2.0", "release-2.0"), ("main", "main")])

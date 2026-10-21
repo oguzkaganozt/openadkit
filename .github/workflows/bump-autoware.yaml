@@ -1,10 +1,11 @@
 name: bump-autoware
 
-# Moves main's Autoware development snapshot, .github/autoware.ref and
-# .github/autoware-lock.repos, to the current upstream main once a week, as a
-# pull request from ci/bump-autoware. main itself never builds a moving
-# upstream, so an upstream change that breaks Open AD Kit fails this pull
-# request instead of main; adaptations are pushed to the same branch.
+# Moves main's Autoware development snapshot, .github/autoware.ref,
+# .github/autoware-lock.repos and .github/autoware-base-images.json, to the
+# current upstream main once a week, as a pull request from ci/bump-autoware.
+# main itself never builds a moving upstream, so an upstream change that
+# breaks Open AD Kit fails this pull request instead of main; adaptations are
+# pushed to the same branch.
 #
 # Pull requests and pushes made with GITHUB_TOKEN start no workflows, so this
 # dispatches build-all-images on the branch, and that build dispatches the
@@ -89,7 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           title="chore(autoware): bump development snapshot to ${AUTOWARE_REF:0:12}"
-          git add .github/autoware.ref .github/autoware-lock.repos
+          git add .github/autoware.ref .github/autoware-lock.repos .github/autoware-base-images.json
           git diff --cached --quiet || git commit -s -m "${title}"
           git push origin "${BRANCH}"
           pr=$(gh pr list --head "${BRANCH}" --base main --state open --json number --jq '.[0].number // empty')

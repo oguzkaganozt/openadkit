@@ -9,6 +9,7 @@ on:
       - '.dockerignore'
       - '.github/autoware.ref'
       - '.github/autoware-lock.repos'
+      - '.github/autoware-base-images.json'
       - '.github/actions/combine-multi-arch-images/**'
       - '.github/actions/free-disk-space/**'
       - '.github/actions/build-image/**'
@@ -91,6 +92,7 @@ jobs:
         id: upstream
         env:
           UPSTREAM_TAG: ${{ steps.prepare.outputs.upstream_tag }}
+          UPSTREAM_PINS: ${{ steps.prepare.outputs.upstream_pins }}
         run: |
           set -euo pipefail
           bash .github/scripts/resolve_upstream_images.sh
