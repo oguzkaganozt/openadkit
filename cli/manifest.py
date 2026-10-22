@@ -397,7 +397,6 @@ class Deployment:
         # Runtime layers below are resolved once; they never delegate to base.
         self.base = base
         self.directory = directory
-        self.manifest_path = directory / "deployment.json"
         self.manifest = manifest
         self.name: str = manifest["name"]
         self.compose: dict[str, Any] = manifest["compose"]

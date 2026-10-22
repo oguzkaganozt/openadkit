@@ -1,4 +1,4 @@
-"""Legacy artifact contracts shared by capture, scanner and release planning."""
+"""Artifact contracts shared by capture, scanner and release planning."""
 import copy
 import hashlib
 import json
@@ -71,7 +71,7 @@ def test_artifact_checks_stay_exact_at_the_shell_boundary(tmp_path, artifacts, p
     assert (result.returncode == 0) is (problem is None), result.stderr
 
 
-def test_capture_uses_registry_platforms_and_legacy_scan_rows(artifacts, monkeypatch):
+def test_capture_uses_registry_platforms_and_scan_rows(artifacts, monkeypatch):
     directory, metadata, scan = artifacts
     by_ref = {row["ref"]: row for row in metadata["images"]}
     def inspect(command, **kwargs):
@@ -91,7 +91,7 @@ def test_capture_uses_registry_platforms_and_legacy_scan_rows(artifacts, monkeyp
     assert images.capture(directory, env)["images"][0]["platforms"] == ["linux/arm64"]
 
 
-def test_legacy_scan_duplicates_and_distro_overrides_remain_supported(artifacts):
+def test_scan_duplicates_and_distro_overrides_are_supported(artifacts):
     directory, metadata, scan = artifacts
     (directory / "build-metadata.json").write_text(json.dumps(metadata))
     scan["scanned_images"].append(dict(scan["scanned_images"][0]))

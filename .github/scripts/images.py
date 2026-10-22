@@ -136,7 +136,7 @@ def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, co
     validate_scan(scan, build_tag)
     require(scan["policy_sha"] == metadata["openadkit_sha"], "scan policy SHA does not match build SHA")
     fields = ("repo", "target", "ros_distro", "digest", "platform")
-    # Legacy comparison used sort -u: repeated identical scan rows stay readable.
+    # Compared as sets: an identical scan row listed twice is still one image.
     require({tuple(row[key] for key in fields) for row in scan_rows(metadata)} ==
             {tuple(row[key] for key in fields) for row in scan["scanned_images"]},
             "scan metadata does not cover exactly the build digest/platforms")
