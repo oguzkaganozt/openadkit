@@ -54,12 +54,12 @@ component images and artifact references remain pinned.
 
 Store overrides under
 `config/autoware/<package>/<path-relative-to-package-share>`. For example,
-`config/autoware/autoware_launch/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml`:
+`config/autoware/autoware_control_config/config/control_command_gate/control_command_gate.param.yaml`:
 
 ```yaml
 /**:
   ros__parameters:
-    nominal:
+    nominal_filter:
       vel_lim: 8.0
 ```
 
@@ -76,6 +76,8 @@ override and restarting returns to the remaining layers.
 Unknown packages, files or YAML keys are warnings, not startup failures. The
 hook logs them and writes `/tmp/openadkit/overlay-report.json` in each container.
 After changing the base version, inspect those reports for renamed parameters.
+Every service gets the same layers, so a package is reported as unknown in the
+images that do not install it; it is a mistake only when no service has it.
 
 ### 3. Overlay Workspace
 

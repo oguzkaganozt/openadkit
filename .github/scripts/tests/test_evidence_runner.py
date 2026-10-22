@@ -167,3 +167,48 @@ def test_scenario_metrics_pass_only_complete_runs(tmp_path, cases, log, ok):
                              "--json", str(tmp_path / "metrics.json")], capture_output=True, text=True)
     assert (result.returncode == 0) is ok, result.stdout
     assert json.loads((tmp_path / "metrics.json").read_text())["ok"] is ok
+
+
+
+FAKE_ROS2 = """#!/usr/bin/env bash
+# Lists every name. /flaky exits at once until its FLAKY_AFTER-th echo, like
+# an echo before discovery; /late and /soon publish 3 s and 1 s after the
+# subscriber starts; /never stays silent.
+case "$1 $2" in
+  "service list"|"topic list") printf '%s\\n' /api/a /flaky /late /soon /never ;;
+  "topic echo")
+    echo "$4" >> "${ECHO_LOG}"
+    case "$4" in
+      /flaky) [ "$(grep -c /flaky "${ECHO_LOG}")" -ge "${FLAKY_AFTER}" ] || exit 1 ;;
+      /late) sleep 3 ;;
+      /soon) sleep 1 ;;
+      /never) sleep 1000 ;;
+    esac
+    echo "data: 1" ;;
+esac
+"""
+
+
+@pytest.mark.parametrize(("fresh", "timeout", "ok", "echoes"), [
+    # Echo exits at once while the topic is unknown: retried until it arrives.
+    (["/flaky"], "60", [True], ["/flaky", "/flaky"]),
+    # A publisher later than the 2 s window reaches the one subscriber that
+    # keeps waiting until the deadline.
+    (["/late"], "60", [True], ["/late"]),
+    # A silent topic waits out the deadline; the next topic still gets its
+    # own full window.
+    (["/never", "/soon"], "2", [False, True], ["/never", "/soon"]),
+])
+def test_readiness_waits_for_late_publishers_until_the_deadline(tmp_path, fresh, timeout, ok, echoes):
+    executable(tmp_path / "ros2", FAKE_ROS2)
+    env = os.environ | {"PATH": f"{tmp_path}:{os.environ['PATH']}", "ECHO_LOG": str(tmp_path / "echoes"),
+                        "FLAKY_AFTER": "2"}
+    command = [sys.executable, str(ROOT / ".github/scripts/evidence/readiness.py"), "--service", "/api/a",
+               "--timeout", timeout, "--fresh-timeout", "2", "--output", str(tmp_path / "readiness.json")]
+    for name in fresh:
+        command += ["--fresh", name]
+    result = subprocess.run(command, env=env, capture_output=True, text=True)
+    assert (result.returncode == 0) is all(ok), result.stdout + result.stderr
+    items = json.loads((tmp_path / "readiness.json").read_text())["items"][1:]
+    assert [item["ok"] for item in items] == ok
+    assert (tmp_path / "echoes").read_text().split() == echoes

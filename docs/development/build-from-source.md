@@ -114,7 +114,7 @@ docker buildx bake -f components/docker-bake.hcl --load sensing-perception      
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ROS_DISTRO` | `humble` or `jazzy` | `humble` |
-| `UPSTREAM_TAG` | Upstream Autoware release to build on (e.g. `1.9.0`). Empty builds for upstream development: core compiles from `autoware/src` on the moving `base-<distro>` image, and ROS installs from the live repository. | `""` |
+| `UPSTREAM_TAG` | Upstream Autoware release to build on (e.g. `1.9.0`). Empty builds for upstream development: core compiles from `autoware/src` on the moving `base-<distro>` image (CI uses the digest pinned in `.github/autoware-base-images.json`), and ROS installs from the live repository. | `""` |
 | `UPSTREAM_REPO` | Upstream Autoware image repository | `ghcr.io/autowarefoundation/autoware` |
 | `ROS_SNAPSHOT_HUMBLE`, `ROS_SNAPSHOT_JAZZY` | ROS apt snapshot the `UPSTREAM_TAG` images were built from. The build fails when they do not match; see [ROS snapshot](https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md). | Snapshots for `1.9.0` |
 
@@ -137,7 +137,10 @@ pins its Autoware sources. A `release/X.Y` branch pins an Autoware release and
 builds on its official images. `main` pins a commit of upstream `main` together
 with its dependency lock,
 [`.github/autoware-lock.repos`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-lock.repos),
-and compiles core in the same Bake graph. Once a week
+and the digests of the upstream base images it builds on,
+[`.github/autoware-base-images.json`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-base-images.json).
+It compiles core on those bases and pushes it before the common images, so
+rebuilding an unchanged snapshot reuses every cached layer. Once a week
 [`bump-autoware.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/bump-autoware.yaml)
 moves that snapshot to the current upstream `main` in a pull request from
 `ci/bump-autoware`, which builds every image and runs the evidence cells, so an

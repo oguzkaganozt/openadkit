@@ -2,7 +2,8 @@
 #
 # Assembles the shared Autoware and scenario service files and restores the
 # single-host wiring: scenario_simulator waits for Autoware, including the
-# local /map/pointcloud_map topic, and joins the map PID namespace.
+# local /map/pointcloud_map topic and driving mode gates, and joins the map
+# PID namespace.
 # Split-host runs use --node autoware / --node scenario, where the CLI
 # selects a compose.<node>.yaml entrypoint with an explicit bridge. This file never
 # includes the Zenoh bridge.
@@ -15,6 +16,7 @@ services:
     pid: service:map
     environment:
       - WAIT_FOR_POINTCLOUD_MAP=1
+      - WAIT_FOR_DRIVING_MODE_GATES=1
     depends_on:
       - api
       - control

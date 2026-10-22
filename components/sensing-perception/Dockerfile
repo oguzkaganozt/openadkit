@@ -61,6 +61,12 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       "${pkg_prefix}/share/autoware_ground_segmentation_cuda/" && \
     rm -rf build log
 
+# This image's launch and config packages, in their own layer after the
+# compile (components/shared/launch-packages.sh).
+RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
+    --mount=type=bind,source=components/shared/launch-packages.sh,target=/tmp/launch-packages.sh \
+    bash /tmp/launch-packages.sh autoware_sensing_launch autoware_sensor_driver_launch autoware_perception_launch autoware_perception_config
+
 RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     apt-get update && \

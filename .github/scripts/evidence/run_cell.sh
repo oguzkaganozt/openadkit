@@ -137,12 +137,15 @@ if [ "${l0_rc}" -eq 0 ]; then
     for i in "${!nodes[@]}"; do
         suffix=""
         [ "${split}" = true ] && suffix="-${nodes[i]}"
-        node_cli run "${i}" --ros-distro "${distro}" >"${out}/run${suffix}.log" 2>&1 || run_rc=1
+        # Nothing watches the visualizer here; its software-rendered RViz
+        # would take CPU from Autoware on a 4-vCPU runner.
+        node_cli run "${i}" --ros-distro "${distro}" --no-visualizer >"${out}/run${suffix}.log" 2>&1 || run_rc=1
     done
 
     if [ "${run_rc}" -eq 0 ] && docker inspect "${api_container}" >/dev/null 2>&1; then
         docker cp "${script_dir}/readiness.py" "${api_container}:/tmp/openadkit-readiness.py" >/dev/null 2>&1 || true
-        read_args=(--timeout 300 --output /tmp/readiness.json)
+        # A 4-vCPU runner loads the Autoware containers in about five minutes.
+        read_args=(--timeout 600 --output /tmp/readiness.json)
         for name in ${api_services}; do read_args+=(--service "${name}"); done
         for name in ${api_topics}; do read_args+=(--topic "${name}"); done
         for name in ${fresh_topics}; do read_args+=(--fresh "${name}"); done

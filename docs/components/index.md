@@ -18,10 +18,10 @@ Sensor preprocessing and environment understanding in one image.
 
 - **Sensing** — LiDAR distortion correction, filtering, and point cloud
   preprocessing; camera and radar preprocessing; GNSS/INS preprocessing; shared
-  point cloud container. Launch: `tier4_sensing_component.launch.xml`
+  point cloud container. Launch: `component_sensing.launch.xml`
 - **Perception** — camera, LiDAR, and radar object detection and fusion;
   multi-object tracking and trajectory prediction; traffic light recognition;
-  occupancy grid mapping. Launch: `tier4_perception_component.launch.xml`
+  occupancy grid mapping. Launch: `component_perception.launch.xml`
 - **CUDA variant** — `sensing-perception-cuda` accelerates point cloud
   processing and neural-network inference on NVIDIA GPUs. It is amd64-only and
   requires the NVIDIA Container Toolkit. Used by
@@ -34,10 +34,10 @@ Serves HD maps and estimates the vehicle pose within them.
 
 - **Localization** — GNSS/RTK positioning and IMU dead reckoning; visual
   odometry and LiDAR map matching; automatic pose initialization; EKF state
-  estimation. Launch: `tier4_localization_component.launch.xml`
+  estimation. Launch: `component_localization.launch.xml`
 - **Mapping** — Lanelet2 vector map and point cloud map serving; occupancy grid
   and point cloud map construction; map coordinate transforms. Launch:
-  `tier4_map_component.launch.xml`
+  `component_map.launch.xml`
 
 Planning and Scenario Simulation run only the `map` service; the simulator
 supplies map-to-odometry transforms. Logging and CARLA Simulation also run
@@ -51,11 +51,11 @@ containers from the same image.
 - **Planning** — route planning on Lanelet2 road networks; behavior planning for
   lanes, intersections, and obstacles; kinematically feasible motion planning;
   goal and parking maneuvers; emergency fallback trajectories. Launch:
-  `tier4_planning_component.launch.xml`
+  `component_planning.launch.xml`
 - **Control** — lateral steering and longitudinal velocity control; PID and
   Model Predictive Control modes; vehicle-specific command conversion;
   emergency stop and heartbeat monitoring. Launch:
-  `tier4_control_component.launch.xml`
+  `component_control.launch.xml`
 
 ### Vehicle and System {: #vehicle-and-system }
 
@@ -96,8 +96,11 @@ hardware:
   map-based prediction
 - occupancy and elevation map handling; vehicle command conversion
 
-Launch: `tier4_simulator_component.launch.xml`. `carla-interface` builds on this
-image for CARLA-specific sensor and control translation.
+Launch: `tier4_simulator_component.launch.xml`, with the perception simulation
+(dummy objects, tracking, prediction and the occupancy grid map) in its own
+`perception-simulation` service from `planning_simulator/perception_simulation.launch.xml`.
+`carla-interface` builds on this image for CARLA-specific sensor and control
+translation.
 
 ### Visualizer {: #visualizer }
 

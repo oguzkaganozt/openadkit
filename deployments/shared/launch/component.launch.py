@@ -7,6 +7,9 @@ a new scenario resets the clock. Usage:
 
     ros2 launch component.launch.py component:=tier4_simulator_component \
         use_sim_time:=true <component arguments>
+
+A component is a file of autoware_launch's launch/components; a path such as
+planning_simulator/perception_simulation names a file under launch/ instead.
 """
 
 import os
@@ -26,9 +29,8 @@ def include_component(context):
     path = os.path.join(
         get_package_share_directory("autoware_launch"),
         "launch",
-        "components",
-        f"{component}.launch.xml",
-    )
+        component if "/" in component else os.path.join("components", component),
+    ) + ".launch.xml"
     return [
         SetParameter(name="use_sim_time", value=LaunchConfiguration("use_sim_time")),
         IncludeLaunchDescription(

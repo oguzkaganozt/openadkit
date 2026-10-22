@@ -2,19 +2,24 @@
 """Move main's Autoware development snapshot to the current upstream main.
 
 main builds one committed snapshot of upstream development: the Autoware
-commit in .github/autoware.ref and every dependency pinned to a commit in
-.github/autoware-lock.repos. bump-autoware.yaml runs this weekly and proposes
-the result as a pull request, so an upstream change that breaks Open AD Kit
-fails that pull request instead of main.
+commit in .github/autoware.ref, every dependency pinned to a commit in
+.github/autoware-lock.repos, and the upstream base images it builds on pinned
+by digest in .github/autoware-base-images.json. bump-autoware.yaml runs this
+weekly and proposes the result as a pull request, so an upstream change that
+breaks Open AD Kit fails that pull request instead of main.
 
-Writes both files when the snapshot moved, a pull request body, and
+Writes the three files when the snapshot moved, a pull request body, and
 `changed`/`autoware_ref` lines for $GITHUB_OUTPUT. Uses only the standard
-library and PyYAML, like export_autoware_lock.py.
+library and PyYAML, like export_autoware_lock.py, and resolve_upstream_images.sh
+for the base image digests.
 """
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 import urllib.request
@@ -29,6 +34,7 @@ RAW_URL = "https://raw.githubusercontent.com/autowarefoundation/autoware"
 # The release manifest, and upstream's development overlay that moves the
 # listed repositories to their development branches.
 MANIFESTS = ("repositories/autoware.repos", "repositories/autoware-nightly.repos")
+RESOLVE_UPSTREAM_IMAGES = pathlib.Path(__file__).resolve().parent / "resolve_upstream_images.sh"
 
 
 def fetch_text(url: str) -> str:
@@ -56,6 +62,22 @@ def export_snapshot(ref: str, fetch: Callable[[str], str] = fetch_text, *, devel
         target = root / "autoware-lock.repos"
         export_lock(paths[0], target, paths[1] if development else None)
         return target.read_text(encoding="utf-8")
+
+
+def resolve_base_images() -> str:
+    """The digests the development base image tags point at now, as
+    .github/autoware-base-images.json records them."""
+    with tempfile.TemporaryDirectory() as directory:
+        output = pathlib.Path(directory) / "upstream-images.json"
+        env = {key: value for key, value in os.environ.items()
+               if key not in ("UPSTREAM_PINS", "UPSTREAM_ROS_DISTRO", "UPSTREAM_IMAGE_NAMES")}
+        env |= {"UPSTREAM_TAG": "", "UPSTREAM_IMAGES_OUTPUT": str(output)}
+        subprocess.run(["bash", str(RESOLVE_UPSTREAM_IMAGES)], env=env, check=True)
+        images = json.loads(output.read_text(encoding="utf-8"))
+    pins = {f"{image['name']}-{image['ros_distro']}": image["digest"] for image in images}
+    if not pins:
+        raise RuntimeError("resolved no upstream base images")
+    return json.dumps(pins, indent=2, sort_keys=True) + "\n"
 
 
 def repositories(lock: str) -> dict[str, dict[str, str]]:
@@ -89,7 +111,8 @@ def render_body(old_ref: str, new_ref: str, old_lock: str, new_lock: str) -> str
         rows.append(f"| `{path}` | {change} |")
     lines = [
         "Moves `main` to the current Autoware development snapshot "
-        "(`.github/autoware.ref`, `.github/autoware-lock.repos`).",
+        "(`.github/autoware.ref`, `.github/autoware-lock.repos`, "
+        "`.github/autoware-base-images.json`).",
         "",
         f"Autoware: {autoware}",
         "",
@@ -111,6 +134,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--branch", default="main", help="upstream Autoware branch to snapshot")
     parser.add_argument("--ref-file", type=pathlib.Path, default=pathlib.Path(".github/autoware.ref"))
     parser.add_argument("--lock-file", type=pathlib.Path, default=pathlib.Path(".github/autoware-lock.repos"))
+    parser.add_argument("--pins-file", type=pathlib.Path, default=pathlib.Path(".github/autoware-base-images.json"))
     parser.add_argument("--base-ref-file", type=pathlib.Path, help="the pull request base's ref file (default: --ref-file)")
     parser.add_argument("--base-lock-file", type=pathlib.Path, help="the pull request base's lock (default: --lock-file)")
     parser.add_argument("--body", type=pathlib.Path, required=True, help="where to write the pull request body")
@@ -122,12 +146,15 @@ def main(argv: list[str]) -> int:
 
     old_ref = read(args.ref_file).strip()
     old_lock = read(args.lock_file)
+    old_pins = read(args.pins_file)
     new_ref = upstream_head(args.branch)
     new_lock = export_snapshot(new_ref)
-    changed = new_ref != old_ref or new_lock != old_lock
+    new_pins = resolve_base_images()
+    changed = new_ref != old_ref or new_lock != old_lock or new_pins != old_pins
     if changed:
         args.ref_file.write_text(new_ref + "\n", encoding="utf-8")
         args.lock_file.write_text(new_lock, encoding="utf-8")
+        args.pins_file.write_text(new_pins, encoding="utf-8")
     # The body describes the whole pull request: the base's snapshot to the new one.
     base_ref = read(args.base_ref_file).strip() if args.base_ref_file else old_ref
     base_lock = read(args.base_lock_file) if args.base_lock_file else old_lock

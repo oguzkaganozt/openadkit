@@ -40,6 +40,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
         /tmp/autoware/src/launcher/autoware_launch/vehicle/sample_vehicle_launch/sample_vehicle_launch \
         /tmp/autoware/src/universe/autoware_universe/vehicle \
         /tmp/autoware/src/universe/autoware_universe/system \
+        /tmp/autoware/src/universe/autoware_universe/simulator/autoware_dummy_diag_publisher \
         /tmp/autoware/src/universe/autoware_universe/planning/planning_validator \
         /tmp/autoware/src/sensor_component/external/sensor_component_description \
       > /opt/openadkit/colcon-base-paths && \
@@ -51,6 +52,12 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --install-base /opt/autoware \
       --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     rm -rf build log
+
+# This image's launch and config packages, in their own layer after the
+# compile (components/shared/launch-packages.sh).
+RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
+    --mount=type=bind,source=components/shared/launch-packages.sh,target=/tmp/launch-packages.sh \
+    bash /tmp/launch-packages.sh autoware_sensing_launch autoware_sensor_driver_launch
 
 RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \

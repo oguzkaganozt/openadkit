@@ -14,9 +14,9 @@ import time
 def run(command, timeout):
     try:
         proc = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
-        return proc.returncode, proc.stdout
+        return proc.returncode, proc.stdout, proc.stderr
     except subprocess.TimeoutExpired:
-        return 124, ""
+        return 124, "", ""
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     def wait_for_listing(kind, name):
         command = ["ros2", kind, "list"]
         while args.timeout - (time.monotonic() - start) > 0:
-            rc, out = run(command, timeout=30)
+            rc, out, _ = run(command, timeout=30)
             if rc == 0 and name in out.split():
                 return True
             time.sleep(2)
@@ -55,18 +55,35 @@ def main():
             )
             failed = failed or not found
 
+    def wait_for_message(name):
+        # Keep one subscriber waiting until the deadline: on a loaded host a
+        # new DDS participant can take longer than a window to discover the
+        # graph, and a restarted one starts discovery over. Echo exits at once
+        # while the topic is unknown; retry that. Every topic gets at least
+        # one full window, also after the listings used up the deadline.
+        attempts = 0
+        while True:
+            window = int(max(args.fresh_timeout, args.timeout - (time.monotonic() - start)))
+            rc, _, err = run(
+                ["timeout", str(window), "ros2", "topic", "echo", "--once", name],
+                timeout=window + 5,
+            )
+            attempts += 1
+            if rc == 0:
+                return True, {"attempts": attempts}
+            if rc == 124 or time.monotonic() - start >= args.timeout:
+                return False, {"attempts": attempts, "rc": rc, "stderr": err.strip()[-500:]}
+            time.sleep(2)
+
     for name in args.fresh:
-        rc, _ = run(
-            ["timeout", str(int(args.fresh_timeout)), "ros2", "topic", "echo", "--once", name],
-            timeout=args.fresh_timeout + 5,
-        )
-        fresh = rc == 0
+        fresh, detail = wait_for_message(name)
         timeline["items"].append(
             {
                 "kind": "fresh",
                 "name": name,
                 "ok": fresh,
                 "ready_s": round(time.monotonic() - start, 1) if fresh else None,
+                **detail,
             }
         )
         failed = failed or not fresh

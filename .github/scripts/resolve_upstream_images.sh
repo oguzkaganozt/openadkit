@@ -6,6 +6,18 @@ set -euo pipefail
 # UPSTREAM_TAG names the upstream release; empty selects the development tags,
 # for which core is compiled rather than pulled.
 : "${UPSTREAM_TAG?UPSTREAM_TAG is required}"
+# UPSTREAM_PINS names a development snapshot's base image digests
+# (.github/autoware-base-images.json). Upstream republishes the development
+# tags often; a pinned snapshot keeps building on the same bases, and so on
+# the same registry caches.
+pins="${UPSTREAM_PINS:-}"
+if [ -n "${pins}" ]; then
+  [ -z "${UPSTREAM_TAG}" ] || {
+    echo "Base image pins are for development builds; release ${UPSTREAM_TAG} builds on its own tags" >&2
+    exit 1
+  }
+  [ -f "${pins}" ] || { echo "Base image pins not found: ${pins}" >&2; exit 1; }
+fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=.github/scripts/registry_lookup.sh
@@ -13,6 +25,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "${script_dir}/registry_lookup.sh"
 
 inventory="${IMAGE_INVENTORY:-.github/image-inventory.json}"
+[ -f "${inventory}" ] || { echo "Image inventory not found: ${inventory}" >&2; exit 1; }
 output="${UPSTREAM_IMAGES_OUTPUT:-upstream-images/upstream-images.json}"
 repo="${UPSTREAM_REPO:-ghcr.io/autowarefoundation/autoware}"
 tmp=$(mktemp)
@@ -56,7 +69,15 @@ for distro in "${distros[@]}"; do
       continue
     fi
     ref="${repo}:${name}-${distro}${UPSTREAM_TAG:+-${UPSTREAM_TAG}}"
-    digest=$(registry_manifest_digest "${ref}")
+    if [ -n "${pins}" ]; then
+      digest=$(jq -er --arg tag "${name}-${distro}" \
+        '.[$tag] | strings | select(test("^sha256:[0-9a-f]{64}$"))' "${pins}") || {
+        echo "${pins} pins no digest for ${name}-${distro}" >&2
+        exit 1
+      }
+    else
+      digest=$(registry_manifest_digest "${ref}")
+    fi
     jq -n \
       --arg name "${name}" \
       --arg distro "${distro}" \

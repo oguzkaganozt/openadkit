@@ -12,7 +12,7 @@ both JSON manifests; the CLI checks that they agree.
 | `deployment.json` | The base deployment (`planning-simulation`) and Compose entrypoint |
 | `config.env` | Values that differ from the base |
 | `docker-compose.yaml` | Includes the base and adds the pinned heartbeat and overlay node |
-| `config/autoware/` | One parameter difference: `nominal.vel_lim=8.0` |
+| `config/autoware/` | One parameter difference: the control command gate's `nominal_filter.vel_lim=8.0` |
 | `overlay_ws/src/acme_probe` | A small C++ node publishing `/acme/probe` |
 
 Here `extends` points at this source checkout (`../..`). After copying the
@@ -43,9 +43,8 @@ Add `--ros-distro jazzy` to
 `validate` and `run` after building a fresh Jazzy workspace. `validate` only
 renders/checks the model; it does not prove that the runtime or overlay works.
 
-The evidence cell checks fresh `/acme/probe` publication, the shared
-`use_emergency_handling=false` value, this kit's velocity limit and an untouched
-base parameter, then runs the Planning Simulation golden path. Static contract
+The evidence cell checks fresh `/acme/probe` publication, this kit's velocity
+limit and an untouched base parameter, then runs the Planning Simulation golden path. Static contract
 warnings and every container's hook report produce `overlayConformant`; the
 kit source/config checksum is an attestation subject.
 

@@ -4,8 +4,9 @@
 #
 # .github/autoware.ref selects the Autoware sources: an exact release tag
 # builds on that release's upstream images (release/X.Y); a commit of upstream
-# main builds for upstream development from the dependency lock committed next
-# to it, .github/autoware-lock.repos (main, moved weekly by bump-autoware.yaml).
+# main builds for upstream development from the dependency lock and upstream
+# base image digests committed next to it, .github/autoware-lock.repos and
+# .github/autoware-base-images.json (main, moved weekly by bump-autoware.yaml).
 # A branch name still works for local experiments, resolved anew each build.
 set -euo pipefail
 
@@ -115,19 +116,27 @@ fi
 upstream_tag=""
 autoware_overlay=autoware-metadata/repositories/autoware-nightly.repos
 autoware_lock_file=""
+upstream_pins=""
 if [ "${autoware_ref_type}" = tag ]; then
   upstream_tag="${autoware_base_version}"
   autoware_overlay=""
-  # A release line created from main inherits main's development lock.
-  [ ! -f .github/autoware-lock.repos ] || {
-    echo "A release pin builds that release's own manifest; remove .github/autoware-lock.repos" >&2
-    exit 1
-  }
+  # A release line created from main inherits main's development snapshot.
+  for snapshot_file in .github/autoware-lock.repos .github/autoware-base-images.json; do
+    [ ! -f "${snapshot_file}" ] || {
+      echo "A release pin builds on that release's own manifest and images; remove ${snapshot_file}" >&2
+      exit 1
+    }
+  done
 elif [ "${autoware_ref_type}" = sha ]; then
   autoware_lock_file=.github/autoware-lock.repos
+  upstream_pins=.github/autoware-base-images.json
   autoware_overlay=""
   [ -f "${autoware_lock_file}" ] || {
     echo "An Autoware commit pin needs its dependency lock in ${autoware_lock_file}; run .github/scripts/bump_autoware.py" >&2
+    exit 1
+  }
+  [ -f "${upstream_pins}" ] || {
+    echo "An Autoware commit pin needs its base image digests in ${upstream_pins}; run .github/scripts/bump_autoware.py" >&2
     exit 1
   }
 elif [ ! -f "${autoware_overlay}" ]; then
@@ -143,6 +152,7 @@ fi
   echo "upstream_tag=${upstream_tag}"
   echo "autoware_overlay=${autoware_overlay}"
   echo "autoware_lock_file=${autoware_lock_file}"
+  echo "upstream_pins=${upstream_pins}"
   echo "lock_build_tag=${lock_build_tag}"
   echo "cache_scope=${cache_scope}"
   echo "build_tag=${build_tag}"

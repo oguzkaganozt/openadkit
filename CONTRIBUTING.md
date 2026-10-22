@@ -33,11 +33,13 @@ If you are a member of the Autoware Foundation contributing to active developmen
 
 `.github/autoware.ref` pins the Autoware sources a branch builds: an exact
 release such as `1.9.0` on `release/X.Y`, and a commit of upstream `main` on
-`main`, with every dependency pinned next to it in `.github/autoware-lock.repos`.
+`main`, with every dependency pinned next to it in `.github/autoware-lock.repos`
+and the upstream base images it builds on in `.github/autoware-base-images.json`.
 A change that only upstream development needs, such as a moved package, lands
 on `main` without breaking the release line. Create `release/X.Y` from `main`
 when stabilizing a release, set its pin to the release tag, remove
-`.github/autoware-lock.repos`, and cherry-pick fixes into it.
+`.github/autoware-lock.repos` and `.github/autoware-base-images.json`, and
+cherry-pick fixes into it.
 
 `main` moves to upstream development once a week: `bump-autoware.yaml` opens a
 `chore(autoware): bump development snapshot` pull request from

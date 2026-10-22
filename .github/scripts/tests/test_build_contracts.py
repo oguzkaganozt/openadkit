@@ -44,6 +44,8 @@ def test_inventory_bake_and_runtime_catalog_agree():
      {"use_local_common": True, "use_local_simulator": True}),
     (".github/autoware.ref", {image["target"] for image in INVENTORY["images"]} - {"simulator"},
      {"use_local_common": True, "use_local_simulator": True}),
+    (".github/autoware-base-images.json", {image["target"] for image in INVENTORY["images"]} - {"simulator"},
+     {"use_local_common": True, "use_local_simulator": True}),
     ("components/sensing-perception/Dockerfile.cuda", {"sensing-perception-cuda"}, {}),
     ("components/sensing-perception/scripts/build.sh", {"sensing-perception", "sensing-perception-cuda"}, {}),
     ("components/simulator/Dockerfile", {"carla-interface"}, {"use_local_simulator": True}),
@@ -94,6 +96,9 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
             build = recipe["target"]["universe-common-build"]
             assert build["tags"] == [common_build] and not build["labels"]
             assert build["attest"] == ["type=provenance,disabled=true"]
+            # Nor may the build time: the config records it.
+            assert build["args"]["SOURCE_DATE_EPOCH"] == matrices.COMPILE_BASE_EPOCH
+            assert "SOURCE_DATE_EPOCH" not in row["args"]
             # The build and runtime stages keep separate caches; neither
             # export may overwrite the other.
             cache = "type=registry,ref=ghcr.io/example/openadkit-buildcache:{}-amd64-humble-main"
@@ -122,6 +127,32 @@ def test_development_recipe_compiles_core_on_the_pinned_base():
     assert "autoware-core-devel" not in recipe["target"]["universe-common"]["contexts"]
     assert core["contexts"]["autoware-base"] == uri and not core["labels"]
     assert core["cache-to"] == ["type=registry,ref=ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-release-2.0,mode=max"]
+
+
+def test_development_core_is_pushed_and_pinned_by_digest():
+    uri = "docker-image://example/base@sha256:" + "c" * 64
+    prepared = {"build_tag": "123-1", "cache_scope": "main", "autoware_input_ref": "a" * 40, "autoware_ref_type": "sha",
+                "autoware_ref": "a" * 40, "autoware_base_version": "1.9.0", "autoware_lock_sha256": "e" * 64,
+                "upstream_images": json.dumps({"humble": {name: {"uri": uri} for name in ("base", "base-cuda-runtime", "base-cuda-devel")}})}
+    recipe, image = matrices.core_recipe(prepared, "humble", "linux/amd64", owner="example")
+    core = recipe["target"]["autoware-core-devel"]
+    assert image == "ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-123-1"
+    # Nothing per build may reach the image universe-common starts from.
+    assert core["tags"] == [image] and not core["labels"]
+    assert core["args"] == {"ROS_DISTRO": "humble", "SOURCE_DATE_EPOCH": matrices.COMPILE_BASE_EPOCH}
+    assert core["attest"] == ["type=provenance,disabled=true"] and core["contexts"]["autoware-base"] == uri
+    assert core["cache-to"] == ["type=registry,ref=ghcr.io/example/openadkit-buildcache:autoware-core-devel-amd64-humble-main,mode=max"]
+
+    pinned = image + "@sha256:" + "d" * 64
+    recipe, _ = matrices.bake_recipe(INVENTORY, prepared, "universe-common", "humble", "linux/amd64", publish=True,
+                                     shared_common=False, common_cached=False, owner="example", source_sha="b" * 40, run_id="123",
+                                     core_devel=pinned)
+    for name in ("universe-common-build", "universe-common-devel", "universe-common"):
+        assert recipe["target"][name]["contexts"]["autoware-core-devel"] == "docker-image://" + pinned
+
+    # Release builds start from the upstream core image.
+    prepared["upstream_images"] = json.dumps({"humble": {name: {"uri": uri} for name in ("core-devel", "base")}})
+    assert matrices.core_recipe(prepared, "humble", "linux/amd64", owner="example") is None
 
 
 def test_lock_overlay_moves_repositories_to_development_versions(tmp_path):
