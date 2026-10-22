@@ -178,44 +178,87 @@ def ensure_safe_existing(
     return current
 
 
-def _dotenv_value(raw: str, where: str) -> str:
-    """Read a value the way Compose does: quotes group, ` #` starts a comment."""
-    value = raw.strip()
-    quote = value[:1]
-    if quote in ("'", '"'):
-        end = value.find(quote, 1)
-        while end != -1 and value[end - 1] == "\\":
-            end = value.find(quote, end + 1)
-        if end == -1:
-            raise OpenADKitError(f"unterminated quoted value at {where}")
-        rest = value[end + 1 :].strip()
-        if rest and not rest.startswith("#"):
-            raise OpenADKitError(f"unexpected text after quoted value at {where}")
-        return value[1:end].replace("\\" + quote, quote)
-    comment = value.find(" #")
-    return (value if comment == -1 else value[:comment]).strip()
+# The escapes Compose applies inside a double-quoted value.
+DOTENV_ESCAPES = {"n": "\n", "r": "\r", "t": "\t", "\\": "\\", '"': '"', "$": "$"}
+
+
+def _dotenv_unescape(value: str) -> str:
+    result, index = [], 0
+    while index < len(value):
+        char = value[index]
+        if char == "\\" and index + 1 < len(value):
+            following = value[index + 1]
+            if following in DOTENV_ESCAPES:
+                result.append(DOTENV_ESCAPES[following])
+                index += 2
+                continue
+        result.append(char)
+        index += 1
+    return "".join(result)
 
 
 def parse_dotenv(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
+    """Read a Compose env file the way Compose does.
+
+    Quoted values may span lines and keep comments; a double-quoted value
+    unescapes \\n, \\r, \\t, \\", \\\\ and \\$; an unquoted one ends at " #".
+    """
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        text = path.read_text(encoding="utf-8")
     except OSError as error:
         raise OpenADKitError(f"could not read environment file {path}: {error}") from error
-    for number, raw in enumerate(lines, 1):
-        line = raw.strip()
-        if not line or line.startswith("#"):
+    values: dict[str, str] = {}
+    index, line = 0, 1
+    length = len(text)
+    while index < length:
+        start_of_line = index
+        line_end = text.find("\n", index)
+        line_end = length if line_end == -1 else line_end
+        raw = text[start_of_line:line_end]
+        index = line_end + 1
+        where = f"{path}:{line}"
+        stripped = raw.strip()
+        line += 1
+        if not stripped or stripped.startswith("#"):
             continue
-        if "=" not in line:
-            raise OpenADKitError(f"invalid dotenv assignment at {path}:{number}")
-        name, value = line.split("=", 1)
+        if "=" not in raw:
+            raise OpenADKitError(f"invalid dotenv assignment at {where}")
+        name, value_start = raw.split("=", 1)
         name = name.strip()
         words = name.split(None, 1)
         if len(words) == 2 and words[0] == "export":
             name = words[1]
         if not ENV_NAME_RE.fullmatch(name):
-            raise OpenADKitError(f"invalid environment name at {path}:{number}: {name}")
-        values[name] = _dotenv_value(value, f"{path}:{number}")
+            raise OpenADKitError(f"invalid environment name at {where}: {name}")
+        # Position of the value in the whole text, for multi-line values.
+        offset = start_of_line + raw.index("=") + 1
+        while offset < length and text[offset] in " \t":
+            offset += 1
+        if offset < length and text[offset] in ("'", '"'):
+            quote = text[offset]
+            cursor = offset + 1
+            while cursor < length:
+                if quote == '"' and text[cursor] == "\\":
+                    cursor += 2
+                    continue
+                if text[cursor] == quote:
+                    break
+                cursor += 1
+            if cursor >= length:
+                raise OpenADKitError(f"unterminated quoted value at {where}")
+            content = text[offset + 1 : cursor]
+            line += content.count("\n")
+            rest_end = text.find("\n", cursor + 1)
+            rest_end = length if rest_end == -1 else rest_end
+            rest = text[cursor + 1 : rest_end].strip()
+            if rest and not rest.startswith("#"):
+                raise OpenADKitError(f"unexpected text after quoted value at {where}")
+            values[name] = _dotenv_unescape(content) if quote == '"' else content
+            index = rest_end + 1
+            continue
+        value = value_start
+        comment = value.find(" #")
+        values[name] = (value if comment == -1 else value[:comment]).strip()
     return values
 
 
