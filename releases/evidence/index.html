@@ -1987,6 +1987,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#testing-a-change-without-a-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing a change without a build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explicit-ci-exemptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2114,6 +2125,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#testing-a-change-without-a-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing a change without a build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explicit-ci-exemptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2233,7 +2255,22 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 </ul>
 <p>The workflow retries a failed runtime cell once. A short, reasoned, dated CI
 quarantine can label a failure <code>WARNED</code> for investigation; <strong>it still blocks a
-release</strong>. The release gate does not consult quarantine to waive a failed test.</p>
+release</strong>. The release gate does not consult quarantine to waive a failed test.
+The cells start deployments with <code>openadkit run --no-visualizer</code>.</p>
+<h2 id="testing-a-change-without-a-build">Testing a change without a build<a class="headerlink" href="#testing-a-change-without-a-build" title="Permanent link">#</a></h2>
+<p>A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against an existing build:</p>
+<ul>
+<li>A pull request that touches <code>deployments/</code>, <code>cli/</code> or the evidence checks
+  runs them against its base branch's latest successful build. When it also
+  changes an image's inputs, it waits for the build after merge instead.</li>
+<li>A dispatch of <code>evidence.yaml</code> with <code>source_ref</code> tests that branch or commit;
+  <code>build_tag</code> defaults to the dispatched branch's latest successful build.</li>
+</ul>
+<p>The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. Such a run is not release evidence: it is not attested,
+its summary names both commits, and its cells carry the tested commit, which
+the gate rejects.</p>
 <h2 id="explicit-ci-exemptions">Explicit CI exemptions<a class="headerlink" href="#explicit-ci-exemptions" title="Permanent link">#</a></h2>
 <p>CARLA Simulation requires a GPU; Logging Simulation has no hosted runtime
 cell. Their deployment manifests contain a reasoned <code>evidence.exempt</code> entry.
