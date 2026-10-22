@@ -13,8 +13,10 @@
 // Autoware host consumes/visualizes them and the single-host graph kept them
 // local; autonomous emergency braking needs the IMU, and autonomous-mode
 // availability on the Autoware host depends on that control stack coming up.
-// Map blobs, camera images, and visualization/teleop interfaces are
-// intentionally excluded.
+// The driving mode gates' change services are bridged only so that the runner
+// can wait for them before a scenario switches Autoware to STOP; nothing on the
+// scenario host calls them. Map blobs, camera images, and visualization/teleop
+// interfaces are intentionally excluded.
 {
   plugins: {
     ros2dds: {
@@ -67,6 +69,9 @@
         ],
         service_servers: [
           "/control/control_mode_request",
+          "/control/trajectory_gate/source/change",
+          "/control/control_command_gate/source/change",
+          "/control/control_command_gate/filter/change",
           "/simulation/.*",
           "/api/localization/initialize",
           "/api/routing/set_route",
@@ -82,6 +87,9 @@
         ],
         service_clients: [
           "/control/control_mode_request",
+          "/control/trajectory_gate/source/change",
+          "/control/control_command_gate/source/change",
+          "/control/control_command_gate/filter/change",
           "/simulation/.*",
           "/api/localization/initialize",
           "/api/routing/set_route",
