@@ -80,7 +80,7 @@ lock_build_tag=""
 if [ "${autoware_ref_type}" = branch ] && [ -n "${REUSE_IMAGE:-}" ] \
   && labels=$(registry_inspect_json "${REUSE_IMAGE}" | jq -c '.image.config.Labels // {}'); then
   label() {
-    jq -r --arg key "org.opencontainers.image.$1" '.[$key] // .["\"" + $key + "\""] // empty' <<<"${labels}"
+    jq -r --arg key "org.opencontainers.image.$1" '.[$key] // empty' <<<"${labels}"
   }
   if [ "$(label autoware-input-ref)" = "${autoware_input_ref}" ] \
     && [[ "$(label autoware-ref)" =~ ^[0-9a-f]{40}$ ]] && [[ "$(label build-tag)" =~ ^[0-9]+-[0-9]+$ ]]; then

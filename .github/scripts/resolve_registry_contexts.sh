@@ -34,12 +34,12 @@ resolve_registry_context() {
     return 2
   fi
   labels=$(jq '.image.config.Labels' <<<"${metadata}")
-  input_ref=$(jq -r '.["org.opencontainers.image.autoware-input-ref"] // .["\"org.opencontainers.image.autoware-input-ref\""] // empty' <<<"${labels}")
-  ref_type=$(jq -r '.["org.opencontainers.image.autoware-ref-type"] // .["\"org.opencontainers.image.autoware-ref-type\""] // empty' <<<"${labels}")
-  image_autoware_ref=$(jq -r '.["org.opencontainers.image.autoware-ref"] // .["\"org.opencontainers.image.autoware-ref\""] // empty' <<<"${labels}")
-  base_version=$(jq -r '.["org.opencontainers.image.autoware-base-version"] // .["\"org.opencontainers.image.autoware-base-version\""] // empty' <<<"${labels}")
-  lock_sha256=$(jq -r '.["org.opencontainers.image.autoware-lock-sha256"] // .["\"org.opencontainers.image.autoware-lock-sha256\""] // empty' <<<"${labels}")
-  openadkit_sha=$(jq -r '.["org.opencontainers.image.openadkit-sha"] // .["\"org.opencontainers.image.openadkit-sha\""] // empty' <<<"${labels}")
+  input_ref=$(jq -r '.["org.opencontainers.image.autoware-input-ref"] // empty' <<<"${labels}")
+  ref_type=$(jq -r '.["org.opencontainers.image.autoware-ref-type"] // empty' <<<"${labels}")
+  image_autoware_ref=$(jq -r '.["org.opencontainers.image.autoware-ref"] // empty' <<<"${labels}")
+  base_version=$(jq -r '.["org.opencontainers.image.autoware-base-version"] // empty' <<<"${labels}")
+  lock_sha256=$(jq -r '.["org.opencontainers.image.autoware-lock-sha256"] // empty' <<<"${labels}")
+  openadkit_sha=$(jq -r '.["org.opencontainers.image.openadkit-sha"] // empty' <<<"${labels}")
   if [ "${image_autoware_ref}" != "${AUTOWARE_REF}" ] \
     || [ "${base_version}" != "${AUTOWARE_BASE_VERSION}" ]; then
     echo "Registry context ${ref} was built from ${ref_type}:${input_ref}@${image_autoware_ref} with base ${base_version}; expected Autoware ${AUTOWARE_REF} with base ${AUTOWARE_BASE_VERSION}" >&2

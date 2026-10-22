@@ -86,8 +86,8 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
                        if publish and target == "universe-common" else [target])
     common_build = "ghcr.io/example/openadkit-buildcache:universe-common-build-amd64-humble-123-1"
     if publish:
-        assert row["labels"]['"org.opencontainers.image.autoware-lock-sha256"'] == "e" * 64
-        assert row["labels"]['"org.opencontainers.image.openadkit-sha"'] == "b" * 40
+        assert row["labels"]["org.opencontainers.image.autoware-lock-sha256"] == "e" * 64
+        assert row["labels"]["org.opencontainers.image.openadkit-sha"] == "b" * 40
         assert row["cache-to"][0].endswith(",mode=max")
         assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is (target == "sensing-perception-cuda")
         if target == "universe-common":

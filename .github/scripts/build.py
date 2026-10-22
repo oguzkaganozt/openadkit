@@ -248,9 +248,6 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
         )}
         labels.update({"org.opencontainers.image.build-tag": build_tag, "org.opencontainers.image.run-id": run_id,
                        "org.opencontainers.image.openadkit-sha": source_sha})
-        # Match the existing Bake --set label spelling; context readers accept
-        # these legacy quoted keys as well as canonical OCI keys.
-        labels = {f'"{key}"': value for key, value in labels.items()}
     else:
         for key, name in (("upstream_core_devel", "autoware-core-devel"), ("upstream_base", "autoware-base"),
                           ("devel_context", "universe-common-devel"), ("runtime_context", "universe-common")):
