@@ -293,3 +293,26 @@ def test_a_commit_tested_against_other_images_is_not_release_evidence(tmp_path, 
     values = dict(line.split("=", 1) for line in output.read_text().splitlines())
     assert (values["release_evidence"], values["skip"]) == (release, skip)
     assert (values["source_sha"] == build_sha) is (change is None)
+
+
+@pytest.mark.parametrize(("machine", "platform", "ok"), [
+    ("x86_64", "linux/amd64", True),
+    ("aarch64", "linux/arm64", True),
+    # A cell planned for another machine must not claim this one.
+    ("aarch64", "linux/amd64", False),
+    ("x86_64", "linux/arm64", False),
+])
+def test_a_cell_only_runs_on_the_machine_it_is_planned_for(tmp_path, machine, platform, ok):
+    executable(tmp_path / "bin/openadkit", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/uname", f"#!/usr/bin/env bash\necho {machine}\n")
+    out = tmp_path / "out"
+    env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
+                        "OPENADKIT_CLI": str(tmp_path / "bin/openadkit")}
+    cell = matrix_cell("planning-simulation") | {"platform": platform}
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
+    assert (result.returncode == 0) is ok, result.stderr
+    if not ok:
+        assert f"planned for {platform}" in result.stderr
+        assert not (out / "cell.json").exists()
