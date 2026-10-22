@@ -16,13 +16,14 @@ def passing_statement(metadata, source_root=ROOT):
             "result": "PASSED", "passedTests": sorted(cells), "warnedTests": [], "failedTests": [],
             "url": "https://github.com/example/repo/actions/runs/456",
             "configuration": [
-                {"name": name, "annotations": {
-                    "deployment": cell["deployment"], "rosDistro": cell["distro"],
+                {"name": name, "annotations": {"openadkitCell": {
+                    "schemaVersion": 1, "name": name, "deployment": cell["deployment"], "distro": cell["distro"],
                     "node": cell.get("node") or None, "kit": cell.get("kit") or None,
-                    "platform": "linux/amd64", "buildTag": metadata["build_tag"],
-                    "sourceSha": metadata["openadkit_sha"], "levels": {"L0": True, "L1": True, "L2": True},
-                    "overlayConformant": True, "readyS": 26, "arrivalS": 35, "peakMib": 2151,
-                }} for name, cell in sorted(cells.items())
+                    "platform": "linux/amd64", "build_tag": metadata["build_tag"],
+                    "source_sha": metadata["openadkit_sha"], "result": "PASSED",
+                    "levels": {"L0": {"ok": True}, "L1": {"ok": True}, "L2": {"ok": True}},
+                    "overlayConformant": True, "metrics": {"ready_s": 26, "arrival_s": 35, "peak_mib": 2151},
+                }}} for name, cell in sorted(cells.items())
             ],
         },
     }

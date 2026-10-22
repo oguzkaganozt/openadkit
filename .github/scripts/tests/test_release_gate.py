@@ -18,7 +18,6 @@ from evidence_fixtures import passing_statement  # noqa: E402
 
 from evidence import release_gate  # noqa: E402
 from evidence.cells import (  # noqa: E402
-    legacy_release_cells,
     predicate_cells,
     report_cells,
 )
@@ -54,7 +53,7 @@ def test_only_exact_passed_is_accepted(metadata, result):
         verify(statement, metadata)
 
 
-@pytest.mark.parametrize("case", ["subject", "duplicate-subject", "digest", "cell", "duplicate-cell", "passedTests", "warnedTests", "failedTests", "level", "overlay", "distro", "platform", "build", "source", "kit", "predicate"])
+@pytest.mark.parametrize("case", ["subject", "duplicate-subject", "digest", "cell", "duplicate-cell", "passedTests", "warnedTests", "failedTests", "predicate"])
 def test_incomplete_or_inconsistent_signed_claim_is_rejected(metadata, case):
     statement = passing_statement(metadata)
     predicate = statement["predicate"]
@@ -71,15 +70,8 @@ def test_incomplete_or_inconsistent_signed_claim_is_rejected(metadata, case):
         config.append(config[0])
     elif case in ("passedTests", "warnedTests", "failedTests"):
         predicate[case] = ["not-a-required-cell"]
-    elif case == "level":
-        config[0]["annotations"]["levels"]["L2"] = None
-    elif case == "overlay":
-        next(cell for cell in config if cell["annotations"]["kit"])["annotations"]["overlayConformant"] = False
     elif case == "predicate":
         statement["predicateType"] = "https://slsa.dev/provenance/v1"
-    else:
-        field = {"distro": "rosDistro", "platform": "platform", "build": "buildTag", "source": "sourceSha", "kit": "kit"}[case]
-        config[0]["annotations"][field] = "wrong"
     with pytest.raises(ValueError):
         verify(statement, metadata)
 
@@ -115,17 +107,7 @@ def test_empty_or_malformed_verification_cannot_pass(metadata, verified):
 
 def test_plan_rejects_tampered_validated_report(metadata):
     report = verify(passing_statement(metadata), metadata)
-    report["statement"]["predicate"]["configuration"][0]["annotations"]["readyS"] = 0
-    with pytest.raises(ValueError, match="differs"):
-        release_gate.validate_report(report, metadata, ROOT, "humble")
-
-
-def test_legacy_validated_report_is_rechecked_without_trusting_its_cell_copy(metadata):
-    report = verify(passing_statement(metadata), metadata)
-    report["schemaVersion"] = 1
-    report["cells"] = legacy_release_cells(report_cells(report))
-    release_gate.validate_report(report, metadata, ROOT, "humble")
-    report["cells"][0]["ready_s"] = 0
+    report["statement"]["predicate"]["configuration"][0]["annotations"]["openadkitCell"]["metrics"]["ready_s"] = 0
     with pytest.raises(ValueError, match="differs"):
         release_gate.validate_report(report, metadata, ROOT, "humble")
 
@@ -270,7 +252,7 @@ def test_real_aggregator_output_passes_the_gate_with_workflow_matrix(tmp_path, m
         directory = tmp_path / "cells" / name
         directory.mkdir(parents=True)
         (directory / "cell.json").write_text(json.dumps({
-            "name": name, "deployment": row["deployment"], "distro": row["distro"],
+            "schemaVersion": 1, "name": name, "deployment": row["deployment"], "distro": row["distro"],
             "node": row.get("node") or "", "kit": row.get("kit") or "", "platform": "linux/amd64",
             "build_tag": metadata["build_tag"], "source_sha": metadata["openadkit_sha"],
             "result": "PASSED", "overlayConformant": True,
@@ -300,10 +282,6 @@ def test_real_aggregator_output_passes_the_gate_with_workflow_matrix(tmp_path, m
 def test_versioned_cell_cannot_bypass_the_release_policy(metadata, case):
     statement = passing_statement(metadata)
     predicate = statement["predicate"]
-    predicate["configuration"] = [
-        {"name": cell["name"], "annotations": {"openadkitCell": cell}}
-        for cell in predicate_cells(predicate)
-    ]
     cell = predicate["configuration"][0]["annotations"]["openadkitCell"]
     if case == "levels":
         cell["levels"]["L2"]["ok"] = False
