@@ -212,3 +212,42 @@ def test_readiness_waits_for_late_publishers_until_the_deadline(tmp_path, fresh,
     items = json.loads((tmp_path / "readiness.json").read_text())["items"][1:]
     assert [item["ok"] for item in items] == ok
     assert (tmp_path / "echoes").read_text().split() == echoes
+
+
+def resolve_tested_commit_step():
+    jobs = yaml.safe_load((ROOT / ".github/workflows/evidence.yaml").read_text())["jobs"]
+    return next(step for step in jobs["prepare"]["steps"] if step["name"] == "Resolve the tested commit")["run"]
+
+
+@pytest.mark.parametrize(("event", "change", "release", "skip"), [
+    # A build verified at its own commit is release evidence.
+    ("workflow_dispatch", None, "true", "false"),
+    # A deployment change runs against the build's images but is not attested.
+    ("workflow_dispatch", "deployments/planning-simulation/config.env", "false", "false"),
+    ("pull_request", "deployments/planning-simulation/config.env", "false", "false"),
+    # A pull request whose images would differ waits for its build.
+    ("pull_request", "components/api/Dockerfile", "false", "true"),
+    ("workflow_dispatch", "components/api/Dockerfile", "false", "false"),
+])
+def test_a_commit_tested_against_other_images_is_not_release_evidence(tmp_path, event, change, release, skip):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    # What build.py reads to tell which images a change touches.
+    for path in (".github", "components", "deployments"):
+        subprocess.run(["cp", "-r", str(ROOT / path), str(repo / path)], check=True)
+    git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(git[:3] + ["init", "-q"], check=True)
+    subprocess.run(git + ["add", "-A"], check=True)
+    subprocess.run(git + ["commit", "-qm", "build"], check=True)
+    build_sha = subprocess.run(git[:3] + ["rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    if change:
+        with open(repo / change, "a", encoding="utf-8") as handle:
+            handle.write("\n# changed\n")
+        subprocess.run(git + ["commit", "-qam", "change"], check=True)
+    output = tmp_path / "outputs"
+    env = os.environ | {"GITHUB_EVENT_NAME": event, "BUILD_SHA": build_sha, "GITHUB_OUTPUT": str(output)}
+    result = subprocess.run(["bash", "-c", resolve_tested_commit_step()], cwd=repo, env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+    assert (values["release_evidence"], values["skip"]) == (release, skip)
+    assert (values["source_sha"] == build_sha) is (change is None)
