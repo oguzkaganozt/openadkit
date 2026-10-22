@@ -2123,7 +2123,7 @@ sign in with the default password <strong><code>openadkit</code></strong>. Set y
 <tr>
 <td><code>SCENARIO_READY_TIMEOUT</code></td>
 <td>Seconds to wait for Autoware before running</td>
-<td><code>300</code></td>
+<td><code>600</code></td>
 </tr>
 <tr>
 <td><code>MAP_PATH</code></td>
@@ -2146,13 +2146,9 @@ To use your own map, point <code>MAP_PATH</code> at a directory that holds the s
 as the bundled map, which the CLI checks before starting: <code>lanelet2_map.osm</code>,
 <code>pointcloud_map.pcd</code>, <code>global_map_center.pcd.yaml</code>,
 <code>lanelet2_map_provider.osm.yaml</code> and <code>map.map_publisher.yaml</code>.</p>
-<p>This deployment changes two Autoware parameters, each in a file that holds only
-the changed value. On every start, the images merge these files into the
-upstream parameter files:</p>
-<ul>
-<li><code>config/autoware/autoware_launch/config/system/mrm_handler/mrm_handler.param.yaml</code></li>
-<li><code>config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml</code></li>
-</ul>
+<p>This deployment changes one Autoware parameter, in a file that holds only the
+changed value. On every start, the images merge it into the upstream parameter
+file: <code>config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml</code>.</p>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop<span class="w"> </span>scenario-simulation
 </code></pre></div>

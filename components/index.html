@@ -2143,10 +2143,10 @@ build graph. The <a href="#image-reference">image reference</a> lists tags and p
 <ul>
 <li><strong>Sensing</strong> — LiDAR distortion correction, filtering, and point cloud
   preprocessing; camera and radar preprocessing; GNSS/INS preprocessing; shared
-  point cloud container. Launch: <code>tier4_sensing_component.launch.xml</code></li>
+  point cloud container. Launch: <code>component_sensing.launch.xml</code></li>
 <li><strong>Perception</strong> — camera, LiDAR, and radar object detection and fusion;
   multi-object tracking and trajectory prediction; traffic light recognition;
-  occupancy grid mapping. Launch: <code>tier4_perception_component.launch.xml</code></li>
+  occupancy grid mapping. Launch: <code>component_perception.launch.xml</code></li>
 <li><strong>CUDA variant</strong> — <code>sensing-perception-cuda</code> accelerates point cloud
   processing and neural-network inference on NVIDIA GPUs. It is amd64-only and
   requires the NVIDIA Container Toolkit. Used by
@@ -2158,10 +2158,10 @@ build graph. The <a href="#image-reference">image reference</a> lists tags and p
 <ul>
 <li><strong>Localization</strong> — GNSS/RTK positioning and IMU dead reckoning; visual
   odometry and LiDAR map matching; automatic pose initialization; EKF state
-  estimation. Launch: <code>tier4_localization_component.launch.xml</code></li>
+  estimation. Launch: <code>component_localization.launch.xml</code></li>
 <li><strong>Mapping</strong> — Lanelet2 vector map and point cloud map serving; occupancy grid
   and point cloud map construction; map coordinate transforms. Launch:
-  <code>tier4_map_component.launch.xml</code></li>
+  <code>component_map.launch.xml</code></li>
 </ul>
 <p>Planning and Scenario Simulation run only the <code>map</code> service; the simulator
 supplies map-to-odometry transforms. Logging and CARLA Simulation also run
@@ -2173,11 +2173,11 @@ containers from the same image.</p>
 <li><strong>Planning</strong> — route planning on Lanelet2 road networks; behavior planning for
   lanes, intersections, and obstacles; kinematically feasible motion planning;
   goal and parking maneuvers; emergency fallback trajectories. Launch:
-  <code>tier4_planning_component.launch.xml</code></li>
+  <code>component_planning.launch.xml</code></li>
 <li><strong>Control</strong> — lateral steering and longitudinal velocity control; PID and
   Model Predictive Control modes; vehicle-specific command conversion;
   emergency stop and heartbeat monitoring. Launch:
-  <code>tier4_control_component.launch.xml</code></li>
+  <code>component_control.launch.xml</code></li>
 </ul>
 <h3 id="vehicle-and-system">Vehicle and System<a class="headerlink" href="#vehicle-and-system" title="Permanent link">#</a></h3>
 <p>Vehicle actuation and system diagnostics, run as separate containers from one
@@ -2214,8 +2214,11 @@ hardware:</p>
   map-based prediction</li>
 <li>occupancy and elevation map handling; vehicle command conversion</li>
 </ul>
-<p>Launch: <code>tier4_simulator_component.launch.xml</code>. <code>carla-interface</code> builds on this
-image for CARLA-specific sensor and control translation.</p>
+<p>Launch: <code>tier4_simulator_component.launch.xml</code>, with the perception simulation
+(dummy objects, tracking, prediction and the occupancy grid map) in its own
+<code>perception-simulation</code> service from <code>planning_simulator/perception_simulation.launch.xml</code>.
+<code>carla-interface</code> builds on this image for CARLA-specific sensor and control
+translation.</p>
 <h3 id="visualizer">Visualizer<a class="headerlink" href="#visualizer" title="Permanent link">#</a></h3>
 <p>Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
 TigerVNC, and a TLS-enabled noVNC server. The VNC backend stays loopback-only,
