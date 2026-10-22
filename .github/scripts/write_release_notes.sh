@@ -7,25 +7,15 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 
 plan_file=${RELEASE_PLAN_FILE:-release-plan.json}
+# release_plan.py validated this plan, and the workflow checks its digest
+# before every use. It also plans evidence kits, which carry no evidence:
+# release notes need the release's own PASSED report.
 jq -e '
-  . as $plan
-  | ($plan.releaseContext.componentImages | [.[]] | unique | sort) as $targets
-  | $plan.schemaVersion == 1 and
-  ($plan.release.version | type == "string") and
-  ($plan.release.releaseSha | test("^[0-9a-f]{40}$")) and
-  ($plan.release.packagerSha | test("^[0-9a-f]{40}$")) and
-  ($plan.bundle.asset | type == "string") and
-  ($plan.bundle.root | type == "string") and
-  ($targets | length) > 0 and
-  ($plan.bundle.deployments | type == "array" and length > 0) and
-  (($plan.releaseContext.deployments | keys | sort) == ($plan.bundle.deployments | sort)) and
-  (($plan.releaseContext.shared | keys | sort) == ($plan.bundle.shared | sort)) and
-  ($plan.releaseContext.images | type == "object" and length > 0) and
-  all($plan.releaseContext.images[]; type == "object" and (keys | sort) == $targets) and
-  $plan.evidence.result == "PASSED" and
-  $plan.evidence.build_tag == $plan.release.buildTag and
-  $plan.evidence.source_sha == $plan.release.releaseSha and
-  $plan.evidence.defaultRosDistroDecision.selected == $plan.release.defaultRosDistro
+  .schemaVersion == 1 and
+  .evidence.result == "PASSED" and
+  .evidence.build_tag == .release.buildTag and
+  .evidence.source_sha == .release.releaseSha and
+  .evidence.defaultRosDistroDecision.selected == .release.defaultRosDistro
 ' "${plan_file}" >/dev/null
 
 VERSION=$(jq -r '.release.version' "${plan_file}")

@@ -8,21 +8,9 @@ source "${script_dir}/release_tag.sh"
 
 readonly RELEASE_WORKFLOW_MARKER='<!-- openadkit-release-workflow:v1 -->'
 plan_file=${RELEASE_PLAN_FILE:-release-plan.json}
-jq -e '
-  .schemaVersion == 1 and
-  (.release.version | type == "string") and
-  (.release.releaseSha | test("^[0-9a-f]{40}$")) and
-  (.release.stable | type == "boolean") and
-  (.release.publishLatestAliases | type == "boolean") and
-  (.githubAssets | type == "array" and length > 0) and
-  ([.githubAssets[].name] | length == (unique | length)) and
-  all(.githubAssets[];
-    (.name | test("^[A-Za-z0-9._-]+$")) and
-    (.path | type == "string" and length > 0) and
-    (.path | startswith("/") | not) and
-    (.path | split("/") | all(. != ".." and . != ""))
-  )
-' "${plan_file}" >/dev/null
+# release_plan.py validated this plan, and the workflow checks its digest
+# before every use.
+jq -e '.schemaVersion == 1' "${plan_file}" >/dev/null
 VERSION=$(jq -r '.release.version' "${plan_file}")
 RELEASE_SHA=$(jq -r '.release.releaseSha' "${plan_file}")
 STABLE_RELEASE=$(jq -r '.release.stable' "${plan_file}")
