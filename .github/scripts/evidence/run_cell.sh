@@ -40,6 +40,11 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 mkdir -p "${out}"
 # Keep run results with this cell's evidence instead of the runner's home.
 export OPENADKIT_STATE_DIR="${out}/state"
+# Read no host settings either: a site file, or an inherited kit selection,
+# would change the deployment, its data, or its DDS settings under the cell.
+export OPENADKIT_CONFIG_DIR="${out}/config"
+unset OPENADKIT_KIT OPENADKIT_DELEGATED
+mkdir -p "${OPENADKIT_CONFIG_DIR}"
 scenario_output="${OPENADKIT_STATE_DIR}/${deployment}/output"
 
 # Several nodes on one host: each gets its own project, logs and Zenoh endpoint.
