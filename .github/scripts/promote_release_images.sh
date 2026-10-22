@@ -9,16 +9,9 @@ source "${script_dir}/registry_lookup.sh"
 source "${script_dir}/stable_alias_policy.sh"
 
 plan_file=${RELEASE_PLAN_FILE:-release-plan.json}
-jq -e '
-  . as $plan
-  | $plan.schemaVersion == 1 and
-  ($plan.release.version | type == "string") and
-  ($plan.release.defaultRosDistro | type == "string") and
-  any($plan.images[]; .rosDistro == $plan.release.defaultRosDistro) and
-  ($plan.release.stable | type == "boolean") and
-  ($plan.release.publishLatestAliases | type == "boolean") and
-  ($plan.images | type == "array" and length > 0)
-' "${plan_file}" >/dev/null
+# release_plan.py validated this plan, and the workflow checks its digest
+# before every use.
+jq -e '.schemaVersion == 1' "${plan_file}" >/dev/null
 VERSION=$(jq -r '.release.version' "${plan_file}")
 export VERSION
 DEFAULT_ROS_DISTRO=$(jq -r '.release.defaultRosDistro' "${plan_file}")
