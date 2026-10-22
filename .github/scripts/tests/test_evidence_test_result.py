@@ -62,7 +62,8 @@ def test_summary_names_the_tested_commit_and_the_build(tmp_path, source_sha, rel
     cells = tmp_path / "cells/one"
     cells.mkdir(parents=True)
     (cells / "cell.json").write_text(json.dumps({
-        "schemaVersion": 1, "name": "one", "deployment": "planning-simulation", "result": "PASSED", "levels": {}}))
+        "schemaVersion": 1, "name": "one", "deployment": "planning-simulation", "result": "PASSED", "levels": {},
+        "metrics": {"ready_s": 1, "arrival_s": None, "peak_mib": None}}))
     metadata = tmp_path / "build-metadata.json"
     metadata.write_text(json.dumps({"build_tag": "1-1", "openadkit_sha": "b" * 40, "images": []}))
     command = [sys.executable, str(root / ".github/scripts/evidence/test_result.py"), "--cells-dir", str(tmp_path / "cells"),
