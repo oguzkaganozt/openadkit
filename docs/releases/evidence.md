@@ -49,6 +49,14 @@ quarantine can label a failure `WARNED` for investigation; **it still blocks a
 release**. The release gate does not consult quarantine to waive a failed test.
 The cells start deployments with `openadkit run --no-visualizer`.
 
+On the 4-vCPU GitHub-hosted runners a scenario-simulation cell occasionally
+fails although the change is sound, about one run in five: Autoware main
+takes minutes to load its components there, and Scenario Simulator V2
+sometimes checks a reused Autoware's state before it has left the previous
+scenario. Hosts with 16 vCPUs pass these cells consistently. Rerun the failed
+jobs once, and investigate only a failure that repeats or a new error. Such a
+failure can turn a run red; it cannot pass a broken change.
+
 ## Testing a change without a build
 
 A change that rebuilds no image, such as a deployment setting, the CLI or a
