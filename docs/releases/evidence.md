@@ -47,6 +47,23 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.
 The workflow retries a failed runtime cell once. A short, reasoned, dated CI
 quarantine can label a failure `WARNED` for investigation; **it still blocks a
 release**. The release gate does not consult quarantine to waive a failed test.
+The cells start deployments with `openadkit run --no-visualizer`.
+
+## Testing a change without a build
+
+A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against an existing build:
+
+- A pull request that touches `deployments/`, `cli/` or the evidence checks
+  runs them against its base branch's latest successful build. When it also
+  changes an image's inputs, it waits for the build after merge instead.
+- A dispatch of `evidence.yaml` with `source_ref` tests that branch or commit;
+  `build_tag` defaults to the dispatched branch's latest successful build.
+
+The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. Such a run is not release evidence: it is not attested,
+its summary names both commits, and its cells carry the tested commit, which
+the gate rejects.
 
 ## Explicit CI exemptions
 

@@ -1,5 +1,7 @@
 """Quarantine classification does not turn a failed claim into PASSED."""
 
+import json
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
@@ -52,3 +54,24 @@ def test_expected_names_match_workflow_matrix(include):
         "scenario-simulation-humble-linux-amd64",
     ]
     assert test_result.expected_cell_names({"include": []} if include else []) == []
+
+
+@pytest.mark.parametrize(("source_sha", "release"), [(None, True), ("b" * 40, True), ("c" * 40, False)])
+def test_summary_names_the_tested_commit_and_the_build(tmp_path, source_sha, release):
+    root = Path(__file__).resolve().parents[3]
+    cells = tmp_path / "cells/one"
+    cells.mkdir(parents=True)
+    (cells / "cell.json").write_text(json.dumps({
+        "schemaVersion": 1, "name": "one", "deployment": "planning-simulation", "result": "PASSED", "levels": {}}))
+    metadata = tmp_path / "build-metadata.json"
+    metadata.write_text(json.dumps({"build_tag": "1-1", "openadkit_sha": "b" * 40, "images": []}))
+    command = [sys.executable, str(root / ".github/scripts/evidence/test_result.py"), "--cells-dir", str(tmp_path / "cells"),
+               "--build-metadata", str(metadata), "--source-root", str(root), "--output-dir", str(tmp_path / "out")]
+    if source_sha:
+        command += ["--source-sha", source_sha]
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((tmp_path / "out/evidence-summary.json").read_text())
+    assert summary["build_sha"] == "b" * 40
+    assert summary["source_sha"] == (source_sha or "b" * 40)
+    assert summary["release_evidence"] is release
