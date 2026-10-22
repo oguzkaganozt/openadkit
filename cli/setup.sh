@@ -11,51 +11,6 @@ log() { printf '[openadkit] %s\n' "$*"; }
 fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 usage_fail() { printf 'error: %s\n' "$*" >&2; exit 2; }
 
-if [[ ${1:-} != setup ]]; then
-  usage_fail "setup helper must be invoked through openadkit setup"
-fi
-shift
-while (($#)); do
-  case "$1" in
-    --gpu) INSTALL_GPU=true ;;
-    --verify) RUN_VERIFY=true ;;
-    -h|--help)
-      cat <<'EOF'
-Usage: openadkit setup [--gpu] [--verify]
-
-Installs the Ubuntu host dependencies needed to run Open AD Kit and raises the
-kernel's UDP buffer limits for DDS.
-
-  --gpu     also install the NVIDIA Container Toolkit
-  --verify  run hello-world (and GPU) checks after installing
-EOF
-      exit 0
-      ;;
-    *) usage_fail "unknown setup option: $1" ;;
-  esac
-  shift
-done
-
-if [[ $EUID -eq 0 ]]; then
-  fail "run openadkit setup as your normal user; it requests sudo when needed"
-fi
-if [[ $FORCE_DOCKER_INSTALL == true && ${CI:-false} != true ]]; then
-  fail "OPENADKIT_CI_FORCE_DOCKER_INSTALL is restricted to disposable CI hosts"
-fi
-[[ -r /etc/os-release ]] || fail "only Ubuntu hosts are supported"
-# shellcheck disable=SC1091
-source /etc/os-release
-[[ ${ID:-} == ubuntu ]] || fail "unsupported OS: ${ID:-unknown}; expected Ubuntu"
-case "$(uname -m)" in
-  x86_64|amd64|aarch64|arm64) ;;
-  *) fail "unsupported architecture: $(uname -m)" ;;
-esac
-
-RUNTIME_PACKAGES=(ca-certificates curl git gzip python3 tar)
-MISSING_PACKAGES=()
-
-# Deployments override services they include, which Compose rejects before
-# 5.0 ("conflicts with imported resource"). Probe that instead of a version.
 compose_capable() {
   local temporary
   temporary=$(mktemp -d)
@@ -142,7 +97,11 @@ install_docker() {
 }
 
 nvidia_gl_libraries_present() {
-  ldconfig -p 2>/dev/null | grep -q 'libGLX_nvidia\.so'
+  # No pipe: under pipefail, grep -q's early exit can fail ldconfig with
+  # SIGPIPE and report a present library as missing.
+  local libraries
+  libraries="$(ldconfig -p 2>/dev/null || true)"
+  grep -q 'libGLX_nvidia\.so' <<<"${libraries}"
 }
 
 apt_package_has_candidate() {
@@ -179,7 +138,8 @@ install_nvidia_gl_libraries() {
   local driver_version driver_branch pkg compute_pkg compute_ver gl_ver dep dep_ver
   local -a install_pkgs
 
-  driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1 | tr -d '[:space:]')"
+  driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | awk 'NR == 1')"
+  driver_version="${driver_version//[[:space:]]/}"
   driver_branch="${driver_version%%.*}"
   pkg="libnvidia-gl-${driver_branch}"
   compute_pkg="libnvidia-compute-${driver_branch}"
@@ -228,7 +188,9 @@ install_gpu() {
     sudo apt-get update
     sudo apt-get install -y nvidia-container-toolkit
   fi
-  if ! sudo docker info --format '{{json .Runtimes}}' | grep -q '"nvidia"'; then
+  local runtimes
+  runtimes="$(sudo docker info --format '{{json .Runtimes}}' || true)"
+  if ! grep -q '"nvidia"' <<<"${runtimes}"; then
     local config=/etc/docker/daemon.json backup=
     if sudo test -f "$config"; then
       backup=$(mktemp)
@@ -292,6 +254,53 @@ configure_dds_buffers() {
   sudo sysctl --system >/dev/null
 }
 
+
+main() {
+if [[ ${1:-} != setup ]]; then
+  usage_fail "setup helper must be invoked through openadkit setup"
+fi
+shift
+while (($#)); do
+  case "$1" in
+    --gpu) INSTALL_GPU=true ;;
+    --verify) RUN_VERIFY=true ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: openadkit setup [--gpu] [--verify]
+
+Installs the Ubuntu host dependencies needed to run Open AD Kit and raises the
+kernel's UDP buffer limits for DDS.
+
+  --gpu     also install the NVIDIA Container Toolkit
+  --verify  run hello-world (and GPU) checks after installing
+EOF
+      exit 0
+      ;;
+    *) usage_fail "unknown setup option: $1" ;;
+  esac
+  shift
+done
+
+if [[ $EUID -eq 0 ]]; then
+  fail "run openadkit setup as your normal user; it requests sudo when needed"
+fi
+if [[ $FORCE_DOCKER_INSTALL == true && ${CI:-false} != true ]]; then
+  fail "OPENADKIT_CI_FORCE_DOCKER_INSTALL is restricted to disposable CI hosts"
+fi
+[[ -r /etc/os-release ]] || fail "only Ubuntu hosts are supported"
+# shellcheck disable=SC1091
+source /etc/os-release
+[[ ${ID:-} == ubuntu ]] || fail "unsupported OS: ${ID:-unknown}; expected Ubuntu"
+case "$(uname -m)" in
+  x86_64|amd64|aarch64|arm64) ;;
+  *) fail "unsupported architecture: $(uname -m)" ;;
+esac
+
+RUNTIME_PACKAGES=(ca-certificates curl git gzip python3 tar)
+MISSING_PACKAGES=()
+
+# Deployments override services they include, which Compose rejects before
+# 5.0 ("conflicts with imported resource"). Probe that instead of a version.
 collect_missing_packages
 # Docker CE conflicts with the distribution's docker.io and containerd; never
 # replace an engine the host already runs.
@@ -342,4 +351,10 @@ if [[ $DOCKER_GROUP_ADDED == true ]]; then
   log "run 'newgrp docker' to start a shell with the new membership, then run Open AD Kit"
 elif ! docker info >/dev/null 2>&1; then
   log "log out and back in, or run 'newgrp docker', to activate Docker group membership"
+fi
+}
+
+# Sourceable for tests: only a direct run sets up the host.
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
 fi
