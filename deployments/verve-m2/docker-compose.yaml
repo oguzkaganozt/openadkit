@@ -27,14 +27,27 @@ services:
         condition: service_completed_successfully
   system:
     depends_on: [map]
+  # The CUDA image, as the base runs it: the occupancy grid map and the
+  # perception preprocessors are built there, and the CPU image has neither
+  # ("Failed to find class ... PointcloudBasedOccupancyGridMapNode").
   sensing:
+    image: ${SENSING_PERCEPTION_GPU_IMAGE:-ghcr.io/autowarefoundation/openadkit:sensing-perception-cuda}
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     depends_on: [map, system]
   perception:
-    depends_on: [map]
+    image: ${SENSING_PERCEPTION_GPU_IMAGE:-ghcr.io/autowarefoundation/openadkit:sensing-perception-cuda}
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    depends_on: [map, sensing, system]
   localization:
-    depends_on: [map]
+    depends_on: [map, sensing, perception, system]
   planning:
-    depends_on: [map]
+    depends_on: [map, localization, perception]
   vehicle:
     depends_on: [map]
   control:

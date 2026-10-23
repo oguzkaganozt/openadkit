@@ -34,7 +34,7 @@
     },
     "SENSING_PERCEPTION_GPU_IMAGE": {
       "workload": "sensing-perception-cuda",
-      "ref": "ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-39409976777-1@sha256:00bf33c0aeb8a0f4016d4021709f593a37f902579b7a742879efe7abf815d17c"
+      "ref": "ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-amd64-humble-39875951447-1@sha256:fea594c8561919206c8d16e6bee0b76d5c8d1a3b073ee933036539274b889c01"
     }
   }
 }

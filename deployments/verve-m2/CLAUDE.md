@@ -56,18 +56,31 @@ edits out, or they will be lost the next time the packages are copied.
   it in `resetServices`, so Compose must resolve it; it is only ever
   `compose rm`'d and never starts. Without it, `openadkit run` fails with
   "manifest references unknown Compose service(s)".
-- **`SYSTEM_RUN_MODE=planning_simulation`, `IS_SIMULATION_MODE=false`.** The
-  mode only decides the pose initializer's stop check
-  (`autoware_launch component_localization.launch.xml`); `online` turns it on
-  and the M2's tire jitter never reports a stop.
+- **`SYSTEM_RUN_MODE=online`, `IS_SIMULATION_MODE=false`.** The mode only
+  decides the pose initializer's stop check
+  (`autoware_launch component_localization.launch.xml`). It passes because
+  verve_sim's plant now has a park brake that holds the M2 genuinely still;
+  without one the tire jitter trips the check.
 - **`LAUNCH_VEHICLE_INTERFACE=false`.** verve_sim's `ros` service is the
   vehicle interface; a second one fights it for the command topics.
 - The `overlay contract: ... replaces the base image` warnings are expected:
   the kit runs the fork's images, not upstream's.
 
-## Known open item
+## What works
 
-The mission planner fails with "Failed to find a proper route!" even with the
-ego and the goal in the same lanelet (lanelet 1157, Town01's flat east-west
-road at y ≈ −59). Localization, sensing and control are up; route planning is
-the remaining M5 gate.
+Localization initializes in `online` mode, a route sets, autonomous mode
+engages and the M2 drives the route to its goal. The route has to stay on
+lanelet 1157's straight (Town01's flat east-west road at y ≈ −59): a goal
+much past x ≈ 340 comes back "The planned route is empty", because the
+lanelet ends there, not because of a fault.
+
+Localization is started by hand, as on any Autoware stack:
+
+```bash
+# in autoware-localization, with ROS_DOMAIN_ID=1 and CycloneDDS on lo:
+ros2 service call /api/localization/initialize ...  # or an initial pose in RViz
+```
+
+The pose to give it is the one verve_sim publishes on
+`/sensing/gnss/pose_with_covariance`; `y` there is already in Autoware's map
+frame (CARLA's y negated).
