@@ -37,9 +37,26 @@ read -ra nodes <<<"$(field nodes)"
 [ "${#nodes[@]}" -gt 0 ] || nodes=("${node}")
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# The cell's platform comes from the matrix; the host must be that machine,
+# or the evidence would describe the wrong architecture.
+case "$(uname -m)" in
+    x86_64) host_platform=linux/amd64 ;;
+    aarch64) host_platform=linux/arm64 ;;
+    *) echo "unsupported evidence architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+if [ "${platform}" != "${host_platform}" ]; then
+    echo "cell ${cell_name} is planned for ${platform}, but this host is ${host_platform}" >&2
+    exit 1
+fi
+
 mkdir -p "${out}"
 # Keep run results with this cell's evidence instead of the runner's home.
 export OPENADKIT_STATE_DIR="${out}/state"
+# Read no host settings either: a site file, or an inherited kit selection,
+# would change the deployment, its data, or its DDS settings under the cell.
+export OPENADKIT_CONFIG_DIR="${out}/config"
+unset OPENADKIT_KIT OPENADKIT_DELEGATED
+mkdir -p "${OPENADKIT_CONFIG_DIR}"
 scenario_output="${OPENADKIT_STATE_DIR}/${deployment}/output"
 
 # Several nodes on one host: each gets its own project, logs and Zenoh endpoint.

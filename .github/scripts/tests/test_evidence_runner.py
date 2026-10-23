@@ -78,6 +78,48 @@ sys.exit(1 if args[0] == os.environ['FAILURE'] else 0)
                 ("tcp/127.0.0.1:7447", env.get("ZENOH_PEER")), ("tcp/127.0.0.1:7448", "tcp/127.0.0.1:7447")]
 
 
+def test_cell_ignores_host_site_config_and_inherited_kit(tmp_path):
+    # The CLI prints the paths it would use; the cell must point them at its own
+    # output and inherit no kit selection from the runner's environment.
+    cli = tmp_path / "bin/openadkit"
+    executable(cli, '''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+args = sys.argv[1:]
+report = {
+    "config": os.environ.get("OPENADKIT_CONFIG_DIR"),
+    "kit": os.environ.get("OPENADKIT_KIT"),
+    "delegated": os.environ.get("OPENADKIT_DELEGATED"),
+    "state": os.environ.get("OPENADKIT_STATE_DIR"),
+    "site_exists": Path(os.environ["HOME"], ".config/openadkit/planning-simulation.env").exists(),
+}
+with Path(os.environ["CALLS"]).open("a") as log:
+    log.write(json.dumps(report) + "\\n")
+if args[0] == "validate":
+    print(json.dumps({"overlayConformant": True, "deployment": args[1]}))
+''')
+    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    home = tmp_path / "home"
+    site = home / ".config/openadkit/planning-simulation.env"
+    site.parent.mkdir(parents=True)
+    site.write_text("MAP_PATH=/from/site\nCYCLONEDDS_NETWORK_INTERFACE=eth0\n")
+    calls = tmp_path / "calls"
+    out = tmp_path / "out"
+    env = os.environ | {
+        "PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli), "CALLS": str(calls),
+        "BUILD_TAG": "123-1", "SOURCE_SHA": "b" * 40, "HOME": str(home),
+        "OPENADKIT_KIT": str(tmp_path / "elsewhere"), "OPENADKIT_DELEGATED": "1",
+    }
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(matrix_cell("planning-simulation")), str(out)],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
+    assert result.returncode == 0, result.stderr
+    seen = [json.loads(line) for line in calls.read_text().splitlines()]
+    assert seen and all(row["kit"] is None and row["delegated"] is None for row in seen)
+    assert all(row["config"] == f"{out}/config" and row["state"] == f"{out}/state" for row in seen)
+    # The host site file is outside the cell's configuration directory.
+    assert all(row["site_exists"] for row in seen)
+
+
 def test_split_l0_uses_real_manifest_endpoint_requirements(tmp_path):
     cli = tmp_path / "bin/openadkit"
     executable(cli, f'''#!{sys.executable}
@@ -251,3 +293,26 @@ def test_a_commit_tested_against_other_images_is_not_release_evidence(tmp_path, 
     values = dict(line.split("=", 1) for line in output.read_text().splitlines())
     assert (values["release_evidence"], values["skip"]) == (release, skip)
     assert (values["source_sha"] == build_sha) is (change is None)
+
+
+@pytest.mark.parametrize(("machine", "platform", "ok"), [
+    ("x86_64", "linux/amd64", True),
+    ("aarch64", "linux/arm64", True),
+    # A cell planned for another machine must not claim this one.
+    ("aarch64", "linux/amd64", False),
+    ("x86_64", "linux/arm64", False),
+])
+def test_a_cell_only_runs_on_the_machine_it_is_planned_for(tmp_path, machine, platform, ok):
+    executable(tmp_path / "bin/openadkit", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/uname", f"#!/usr/bin/env bash\necho {machine}\n")
+    out = tmp_path / "out"
+    env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
+                        "OPENADKIT_CLI": str(tmp_path / "bin/openadkit")}
+    cell = matrix_cell("planning-simulation") | {"platform": platform}
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
+    assert (result.returncode == 0) is ok, result.stderr
+    if not ok:
+        assert f"planned for {platform}" in result.stderr
+        assert not (out / "cell.json").exists()
