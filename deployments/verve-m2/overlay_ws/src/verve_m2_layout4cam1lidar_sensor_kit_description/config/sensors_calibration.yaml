@@ -1,0 +1,10 @@
+# M2 tasarım ilkesi: sensor_kit_base_link ≡ base_link (offset 0).
+# (Etron'daki 1.3855 kaydırması M2'de YOK — tek doğruluk kaynağı sensor_kit_calibration.yaml.)
+base_link:
+  sensor_kit_base_link:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0

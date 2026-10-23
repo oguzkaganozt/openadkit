@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!--
+  AVP - MOVING-OBSTACLE STOP FOR THE PARKING PHASE
+  ================================================
+  STATUS (2026-09-22): this launch file is currently INERT. It needs a one-line patch on
+  planning.launch.xml that was DELETED on user request, so nothing routes through it
+  today. Kept because the wiring itself was verified end to end; the rebuild recipe is in
+  docs/autoware_collision_avoidance_review.md.
+
+  WHY IT EXISTS (measured 2026-09-22):
+    scenario_selector splits the world in two. The `lane_driving` branch runs nine
+    obstacle modules; the `parking` branch contains ONLY costmap_generator +
+    freespace_planner. Measured: while reversing, Autoware classified an approaching
+    pedestrian, tracked it and predicted its motion - and still drove into it without
+    braking, because the only check in the parking phase asks "is the obstacle inside the
+    NARROW swept corridor of my planned trajectory".
+
+  WHAT IT DOES:
+    Starts a SECOND motion_velocity_planner instance loaded with ONLY
+    `DynamicObstacleStopModule` and places it AFTER scenario_selector, i.e. on the path
+    shared by both scenarios:
+
+      velocity_smoother -> [THIS NODE] -> planning_validator -> /planning/trajectory
+
+    The module inserts a stop point where the ego trajectory intersects a moving object's
+    "immediate path" (the area it sweeps at constant velocity over `time_horizon`).
+
+  NO LANE DEPENDENCY: the module uses `lanelet` only as a geometry header, not as map
+    semantics, so it is meaningful on an apron as well.
+
+  REVERSE IS UNVERIFIED - MEASURED AS NOT WORKING: the module builds its ego footprint
+    FORWARD from every trajectory pose (`to_footprint(pose, ego_longitudinal_offset, 0.0,
+    width)`, footprint.cpp:74-77) and computes `min_stop_distance` from the SIGNED
+    velocity. In the forward phase no problem is expected; in a reverse run on 2026-09-22
+    the module was loaded, saw the tracked pedestrian from 4.98 m, and inserted no stop
+    point - the collision repeated.
+
+  IT SITS IN THE CHAIN: if this node goes silent the vehicle gets no trajectory. That is
+    why enabling it is OPT-IN: the planning.launch.xml patch uses
+    `$(env AVP_DOS_TRAJECTORY ...)` and without that variable the chain stays as before.
+
+  USAGE (inside the Autoware container, with the stack already up):
+    ros2 launch /autoware/src/verve_m2_vehicle_launch/verve_m2_vehicle_launch/launch/avp_dynamic_obstacle_stop.launch.xml
+  and the main launch must have been started with
+  AVP_DOS_TRAJECTORY=/planning/scenario_planning/avp_dos/trajectory
+-->
+<launch>
+  <arg name="input_trajectory"  default="/planning/scenario_planning/velocity_smoother/trajectory"/>
+  <arg name="output_trajectory" default="/planning/scenario_planning/avp_dos/trajectory"/>
+  <arg name="input_objects_topic_name"    default="/perception/object_recognition/objects"/>
+  <arg name="input_pointcloud_topic_name" default="/perception/obstacle_segmentation/pointcloud"/>
+
+  <!-- Parameters are read from the stock Autoware files; no private copy is kept so that
+       this file cannot go stale when the upstream tuning changes. -->
+  <arg name="common_config_path" default="$(find-pkg-share autoware_launch)/config/planning/scenario_planning/common"/>
+  <arg name="motion_config_path" default="$(find-pkg-share autoware_launch)/config/planning/scenario_planning/lane_driving/motion_planning"/>
+  <arg name="vehicle_param_file" default="$(find-pkg-share verve_m2_vehicle_description)/config/vehicle_info.param.yaml"/>
+
+  <node_container pkg="rclcpp_components" exec="component_container" name="avp_safety_container" namespace="">
+    <composable_node pkg="autoware_motion_velocity_planner"
+                     plugin="autoware::motion_velocity_planner::MotionVelocityPlannerNode"
+                     name="avp_dynamic_obstacle_stop" namespace="">
+      <remap from="~/input/trajectory"                  to="$(var input_trajectory)"/>
+      <remap from="~/input/vector_map"                  to="/map/vector_map"/>
+      <remap from="~/input/vehicle_odometry"            to="/localization/kinematic_state"/>
+      <remap from="~/input/accel"                       to="/localization/acceleration"/>
+      <remap from="~/input/dynamic_objects"             to="$(var input_objects_topic_name)"/>
+      <remap from="~/input/no_ground_pointcloud"        to="$(var input_pointcloud_topic_name)"/>
+      <remap from="~/input/traffic_signals"             to="/perception/traffic_light_recognition/traffic_signals"/>
+      <remap from="~/input/virtual_traffic_light_states" to="/perception/virtual_traffic_light_states"/>
+      <remap from="~/input/occupancy_grid"              to="/perception/occupancy_grid_map/map"/>
+      <remap from="~/output/trajectory"                 to="$(var output_trajectory)"/>
+      <!-- The velocity-limit channels are NOT shared with the main planner: two nodes
+           writing the same channel would overwrite each other's limit. This instance only
+           inserts stop points. -->
+      <remap from="~/output/velocity_limit"             to="~/velocity_limit_unused"/>
+      <remap from="~/output/clear_velocity_limit"       to="~/clear_velocity_limit_unused"/>
+      <remap from="~/output/stop_reasons"               to="/planning/avp_dos/stop_reasons"/>
+      <remap from="~/output/velocity_factors"           to="/planning/velocity_factors/avp_dynamic_obstacle_stop"/>
+
+      <!-- ONLY this module is loaded -->
+      <param name="launch_modules" value="[autoware::motion_velocity_planner::DynamicObstacleStopModule]"/>
+      <param from="$(var common_config_path)/common.param.yaml"/>
+      <param from="$(var vehicle_param_file)"/>
+      <param from="$(var common_config_path)/nearest_search.param.yaml"/>
+      <param from="$(var common_config_path)/autoware_velocity_smoother/velocity_smoother.param.yaml"/>
+      <param from="$(var common_config_path)/autoware_velocity_smoother/Analytical.param.yaml"/>
+      <param from="$(var motion_config_path)/motion_velocity_planner/motion_velocity_planner.param.yaml"/>
+      <param from="$(var motion_config_path)/motion_velocity_planner/dynamic_obstacle_stop.param.yaml"/>
+      <extra_arg name="use_intra_process_comms" value="false"/>
+    </composable_node>
+  </node_container>
+</launch>

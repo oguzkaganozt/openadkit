@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "name": "verve-m2",
+  "description": "Autoware drives Verve's M2 in the verve_sim co-simulation",
+  "base": "carla-simulation",
+  "compose": {
+    "files": [
+      "docker-compose.yaml"
+    ]
+  }
+}

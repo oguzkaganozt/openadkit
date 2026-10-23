@@ -1,0 +1,51 @@
+# Verve M2: Autoware on top of the pinned CARLA simulation, without its CARLA
+# services.
+#
+# verve_sim owns the world and the ego: its cosim service steps the Chrono M2
+# and ticks CARLA, and its ros service carries the vehicle state and the CARLA
+# sensors over ROS 2. The base's carla, carla-map-loader and carla-interface
+# would spawn a second ego and tick the world themselves, so this kit lists
+# the shared Autoware services itself instead of including the base's entry
+# file, whose depends_on edges all point at carla-interface.
+include:
+  - ${KIT_openadkit}/deployments/shared/services/map-check.yaml
+  - ${KIT_openadkit}/deployments/shared/services/map.yaml
+  - ${KIT_openadkit}/deployments/shared/services/system.yaml
+  - ${KIT_openadkit}/deployments/shared/services/sensing.yaml
+  - ${KIT_openadkit}/deployments/shared/services/perception.yaml
+  - ${KIT_openadkit}/deployments/shared/services/localization.yaml
+  - ${KIT_openadkit}/deployments/shared/services/planning.yaml
+  - ${KIT_openadkit}/deployments/shared/services/vehicle.yaml
+  - ${KIT_openadkit}/deployments/shared/services/control.yaml
+  - ${KIT_openadkit}/deployments/shared/services/api.yaml
+  - ${KIT_openadkit}/deployments/shared/services/visualizer.yaml
+
+services:
+  map:
+    depends_on:
+      map-check:
+        condition: service_completed_successfully
+  system:
+    depends_on: [map]
+  sensing:
+    depends_on: [map, system]
+  perception:
+    depends_on: [map]
+  localization:
+    depends_on: [map]
+  planning:
+    depends_on: [map]
+  vehicle:
+    depends_on: [map]
+  control:
+    depends_on: [map, planning, system]
+  api:
+    depends_on: [map]
+  visualizer:
+    depends_on: [map, api, planning, control]
+  carla-map-loader:
+    # The base lists this as a reset service, so Compose must resolve it; it
+    # only ever gets `compose rm` and never starts.
+    image: busybox:1.36.1
+    network_mode: none
+    command: ["sleep", "infinity"]

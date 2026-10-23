@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "kind": "kit",
+  "extends": "../..",
+  "deployments": {
+    "verve-m2": {
+      "path": "."
+    }
+  },
+  "artifacts": {
+    "LOCALIZATION_MAPPING_IMAGE": {
+      "workload": "localization-mapping",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:localization-mapping-humble-39409976777-1@sha256:61603c0d646afd29d8596780ed71f4a0a89ea27155536b62b35cee4abd4f9006"
+    },
+    "PLANNING_CONTROL_IMAGE": {
+      "workload": "planning-control",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:planning-control-humble-39409976777-1@sha256:16a586fe0a07d0ce8feedd9e09ce9de145b47bb478b849eb26710e08c0da9ca2"
+    },
+    "VEHICLE_SYSTEM_IMAGE": {
+      "workload": "vehicle-system",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:vehicle-system-humble-39409976777-1@sha256:6ce5872b9926c5042dbf4bfa3f3710c8bcb1c525ab222c66eadd75fc379dfce9"
+    },
+    "API_IMAGE": {
+      "workload": "api",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:api-humble-39409976777-1@sha256:189e5b38fbd87f2eafbaf39da9412664ef30220f3d11dd4c49313241af65f25d"
+    },
+    "VISUALIZER_IMAGE": {
+      "workload": "visualizer",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:visualizer-humble-39409976777-1@sha256:585733a3c57467314441a3d2f9852cd56273a0dd25b92be0dfad74fd16854155"
+    },
+    "SENSING_PERCEPTION_IMAGE": {
+      "workload": "sensing-perception",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:sensing-perception-humble-39409976777-1@sha256:f4f5966ae7da26d7611bef31d49a285279f4dda6e95d5030602a97d3ec637cdf"
+    },
+    "SENSING_PERCEPTION_GPU_IMAGE": {
+      "workload": "sensing-perception-cuda",
+      "ref": "ghcr.io/oguzkaganozt/openadkit:sensing-perception-cuda-humble-39409976777-1@sha256:00bf33c0aeb8a0f4016d4021709f593a37f902579b7a742879efe7abf815d17c"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+# Verve M2 — ADAMS/Chrono kanonik geometrisi (verve_m2_vehicle/doc/canonical_dimensions.md).
+# KARAR (2026-07-08): Autoware ADAMS/Chrono geometrisiyle kurulur; CARLA mesh'i ~%10 sapar (görsel-only).
+# base_link = arka aks merkezi (zemin). Chrono aktifken CARLA actor origin = ADAMS origin →
+# base_link = origin + (−1.52532, 0, −0.27637) (araç-lokal; aw_converter.py uygular).
+/**:
+  ros__parameters:
+    wheel_radius: 0.254 # 145/70R12 (ADAMS)
+    wheel_width: 0.145 # ön tek lastik (arka ikiz ~0.29; dead-reckoning için ön esas)
+    wheel_base: 1.7289 # ADAMS wheelbase (mesh 1.5505 KULLANILMAZ — plant gerçeği Chrono/ADAMS)
+    wheel_tread: 0.7969 # ADAMS track (ön=arka)
+    front_overhang: 0.346 # mesh bbox, ön aks→ön tampon
+    rear_overhang: 0.159 # 2.234 − 1.7289 − 0.346 (mesh ön-aks hizalamasıyla tutarlı)
+    left_overhang: 0.056 # (0.909 − 0.7969)/2
+    right_overhang: 0.056
+    vehicle_height: 1.436 # mesh bbox H
+    # ★★★ 0.56 -> 0.6435 rad (2026-09-08). ESKI DEGER OLCULMEMISTI.
+    # 0.56 rad (32°) `doc/m2_dynamic_limits.md`'de "rack strok 70 mm / pinyon R 6.369 mm"
+    # diye turetilmisti; o bolme pinyonun DONME ACISINI (10.99 rad) verir, teker acisini
+    # DEGIL — linkaj hic cozulmemis. ADAMS zaten "max rack strok .adm'de modellenmemis"
+    # diyor (08_steering/steering.md), yani 70 mm de bir varsayim.
+    # OLCULDU, iki bagimsiz yontem:
+    #   kinematik (steer_kinematics.py, tierod uzunlugu korunarak) : 39.03°
+    #   canli    (steer_bench.py, daimi hal donus yaricapi)        : 36.87°  <- bu
+    # 36.87° = 0.6435 rad, R_min 2.31 m (eski inanis 2.767 m).
+    # NEDEN ONEMLI: kontrolcunun yolun egriliginin USTUNE, birikmis hatayi duzeltmek
+    # icin paya ihtiyaci var. 2026-09-08 kosusunda geri manevrada delta_cmd tam
+    # -32.09°'de KIRPILDI = eski sinir; arac gercekte 36.87° yapabiliyorken %15
+    # kabiliyet kontrolcuden saklaniyordu.
+    max_steer_angle: 0.6435 # rad (36.87° — OLCULDU, bkz. yukarisi)

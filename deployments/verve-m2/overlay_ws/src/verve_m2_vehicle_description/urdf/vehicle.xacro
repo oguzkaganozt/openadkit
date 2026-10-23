@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- load parameter -->
+  <xacro:property name="vehicle_info" value="${xacro.load_yaml('$(find verve_m2_vehicle_description)/config/vehicle_info.param.yaml')}"/>
+
+  <!-- NOT; bu dosyadaki yorumlarda ASLA "iki nokta + bosluk" kullanma — uretilen URDF
+       robot_description parametresi olarak yaml.safe_load()'dan gecer, "x= y" tarzi
+       yazim guvenli, "x= ...=" de guvenli ama "kelime[:][bosluk]" YAML mapping sanilir ve launch patlar. -->
+  <!-- vehicle body = m2_body.stl (metre, Z-up, origin=ON AKS).
+       x=+1.7289 → mesh on aksi base_link'ten wheel_base kadar one (on-aks hizalama);
+       z=-0.02 → tekerlek zemine (sensor_placement/configs ile ayni offset). -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="1.7289 0 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://verve_m2_vehicle_description/mesh/m2_body.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

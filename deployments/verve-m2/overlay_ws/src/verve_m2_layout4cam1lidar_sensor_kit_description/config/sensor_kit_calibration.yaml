@@ -1,0 +1,83 @@
+# ★ MASTER SENSÖR TABLOSU — m2_layout4cam1lidar (Tek Doğruluk Kaynağı) ★
+# Kaynak: verve_m2_vehicle/sensor_placement/configs/m2_layout4cam1lidar.yaml
+#         (RViz'de yerleştirilip gövde mesh'ine karşı doğrulandı — docs/sensor_layout_layout4cam1lidar.md §12)
+#
+# DONANIM: 1× Hesai OT128 (128ch 360°) + 4× Neousys AC-ISX031 (1× H60 tele, 3× H120 geniş).
+#          Gerçek araçta kullanılacak sensörlerin ta kendisi; simülasyon bunlara göre kuruldu.
+#
+# sensor_kit_base_link ≡ base_link (arka aks, ZEMİN; sensors_calibration.yaml offset=0).
+# Açı birimi RADYAN (ROS/URDF). x ileri · y SOL · z yukarı.
+#
+# CARLA tarafı (aw_e2e.py sensors(), concept=layout4cam1lidar) bu tablodan türetilir:
+#   x_carla = x − 1.52532        (base_link → ADAMS/CARLA origin)
+#   z_carla = z − 0.02637        (Chrono'nun hardcoded −0.25 z ofseti dahil)
+#   ★ y_carla = −y   ve   yaw_carla = −yaw   (CARLA SOL-EL: +Y SAĞ)
+#   pitch_carla = −(pitch + 2.5) (Chrono'nun hardcoded +2.5° pitch ofseti telafisi)
+sensor_kit_base_link:
+  lidar_top:                    # ★ Hesai XT32M2X — 32ch · 360° × 40.3° (+19.5°/−20.8°) · 0.5–80 m
+    # ★ 2026-09-15: OT128 → XT32M2X (araçtaki gerçek lidar; kullanıcı kararı).
+    # Datasheet: xt32m_lidar.pdf · origin TABANDAN 46.4 mm (OT128'de 88.33 mm idi)
+    # ★ z KULLANICI TARAFINDAN RViz'DE YERLEŞTİRİLDİ (2026-09-15): 1.6020
+    #   -> sensör tabanı 1.5556 · tepe (= ARAÇ YÜKSEKLİĞİ) 1.6306 · çatı kabuğuna 122 mm yükselti
+    # ✔ Zemin kör yarıçapı 4.22 m (ön tamponun 2.67 m ötesi).
+    # ✔ 490 g çatı kütlesi devrilme eşiğini yalnız %0.34 düşürür (0.625 -> 0.6229 g).
+    # ⚠ TAM 360° TARAMADA MİKRO KESİLME: bearing 160-161°'de (arka-sol çatı köşesi) gövde
+    #   silueti -20.75°, en alt ışın -20.8° -> 0.05° pay EKSİĞİ. Etkisi: taramanın %0.14'ünde
+    #   32 kanaldan 1'i = **%0.004 nokta kaybı** (pratikte ölçülemez). Tam sıfırlamak
+    #   istenirse z: 1.6061 (+4 mm) yeter; kör bölge yalnız 2 cm büyür.
+    # ✔ CARLA SADAKATİ: dikey dağılım 1.3° SABİT → CARLA'nın uniform kanal modeliyle BİREBİR
+    #   (OT128 düzgün değildi; sim ufuk bandında gerçeğin 0.40 katı kanala sahip oluyordu).
+    x: 0.53
+    y: 0.0
+    z: 1.602
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  camera0:                      # ★ ISX031-H120 GENİŞ (ön/burun) — Autoware'in ANA kamerası
+    # 120.6° × 109° (türetilmiş) · 1920×1536 · 0.0628 °/px
+    # ROL: trafik ışığını YAKINDA tutar (1.98 m'den itibaren kadrajda, 13.7 m'ye kadar okur)
+    #      + kamera-lidar füzyonu / irregular_object_detector bu topic'i kullanır.
+    # ⚠ stop_margin 2.0 ŞART: araç dur çizgisini 1.03 m'den fazla aşarsa ışık kadraj dışı kalır.
+    x: 1.935
+    y: 0.0
+    z: 0.77
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  camera1:                      # ★ ISX031-H60 TELE (ön cam üstü) — UZAK trafik ışığı
+    # 63.9° × 53.0° · 1920×1536 · 0.0333 °/px → ışığı 25.8 m'den okur (geniş kamera 13.7 m)
+    # Işığı ancak 5.56 m'den UZAKTA kadraja alır (dar açı) — yakını camera0 halleder.
+    x: 1.031
+    y: 0.0
+    z: 1.397
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  camera2:                      # ★ ISX031-H120 SOL (ön çamurluk) — yaw +120° = +2.0944 rad
+    x: 1.453
+    y: 0.459
+    z: 0.769
+    roll: 0.0
+    pitch: 0.0
+    yaw: 2.0943951
+  camera3:                      # ★ ISX031-H120 SAĞ (ön çamurluk) — yaw −120° = −2.0944 rad
+    x: 1.436
+    y: -0.459
+    z: 0.769
+    roll: 0.0
+    pitch: 0.0
+    yaw: -2.0943951
+  gnss_link:                    # agent GNSS pozunu doğrudan base_link pozu olarak yayınlar → offset 0
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  imu_link:                     # agent IMU verisini araç gövde frame'inde yayınlar → offset 0
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0

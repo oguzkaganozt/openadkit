@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="sensor_kit_macro" params="parent x y z roll pitch yaw">
+    <xacro:include filename="$(find camera_description)/urdf/monocular_camera.xacro"/>
+    <xacro:include filename="$(find imu_description)/urdf/imu.xacro"/>
+
+    <xacro:arg name="gpu" default="false"/>
+    <xacro:arg name="config_dir" default="$(find verve_m2_layout4cam1lidar_sensor_kit_description)/config"/>
+
+    <xacro:property name="sensor_kit_base_link" default="sensor_kit_base_link"/>
+
+    <joint name="${sensor_kit_base_link}_joint" type="fixed">
+      <origin rpy="${roll} ${pitch} ${yaw}" xyz="${x} ${y} ${z}"/>
+      <parent link="${parent}"/>
+      <child link="${sensor_kit_base_link}"/>
+    </joint>
+    <link name="${sensor_kit_base_link}">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </link>
+
+    <!-- sensor -->
+    <xacro:property name="calibration" value="${xacro.load_yaml('$(arg config_dir)/sensor_kit_calibration.yaml')}"/>
+
+    <!-- lidar = Hesai OT128 360 (velodyne makrosu kullanilmaz; TF icin duz link yeter).
+         Link adi C++ bridge frame_id'siyle AYNI olmali (lidar_top).
+         NOT — yorumlarda "iki nokta + bosluk" YASAK (robot_description yaml.safe_load'dan gecer). -->
+    <xacro:macro name="flat_lidar" params="name">
+      <joint name="${name}_joint" type="fixed">
+        <origin
+          xyz="${calibration['sensor_kit_base_link'][name]['x']}
+               ${calibration['sensor_kit_base_link'][name]['y']}
+               ${calibration['sensor_kit_base_link'][name]['z']}"
+          rpy="${calibration['sensor_kit_base_link'][name]['roll']}
+               ${calibration['sensor_kit_base_link'][name]['pitch']}
+               ${calibration['sensor_kit_base_link'][name]['yaw']}"
+        />
+        <parent link="${sensor_kit_base_link}"/>
+        <child link="${name}"/>
+      </joint>
+      <link name="${name}"/>
+    </xacro:macro>
+
+    <xacro:flat_lidar name="lidar_top"/>
+
+    <!-- kameralar - 4x Neousys AC-ISX031 (GMSL2, Sony ISX031 2.95 MP) -->
+    <!-- ISX031-H120 GENIS (on/burun) - Autoware ana kamerasi
+         fps/width/height/fov GERCEK sensor degerleridir (AC-ISX031 datasheet).
+         Simulasyonda cozunurluk M2_CAM_SCALE ile dusurulebilir; camera_info'yu C++ bridge
+         yayinlar, buradaki degerler URDF gorsellestirmesi icindir. -->
+    <xacro:monocular_camera_macro
+      name="camera0"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['camera0']['x']}"
+      y="${calibration['sensor_kit_base_link']['camera0']['y']}"
+      z="${calibration['sensor_kit_base_link']['camera0']['z']}"
+      roll="${calibration['sensor_kit_base_link']['camera0']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['camera0']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['camera0']['yaw']}"
+      fps="30"
+      width="1920"
+      height="1536"
+      fov="120.6"
+    />
+
+    <!-- ISX031-H60 TELE (on cam ustu) - uzak trafik isigi
+         fps/width/height/fov GERCEK sensor degerleridir (AC-ISX031 datasheet).
+         Simulasyonda cozunurluk M2_CAM_SCALE ile dusurulebilir; camera_info'yu C++ bridge
+         yayinlar, buradaki degerler URDF gorsellestirmesi icindir. -->
+    <xacro:monocular_camera_macro
+      name="camera1"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['camera1']['x']}"
+      y="${calibration['sensor_kit_base_link']['camera1']['y']}"
+      z="${calibration['sensor_kit_base_link']['camera1']['z']}"
+      roll="${calibration['sensor_kit_base_link']['camera1']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['camera1']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['camera1']['yaw']}"
+      fps="30"
+      width="1920"
+      height="1536"
+      fov="63.9"
+    />
+
+    <!-- ISX031-H120 SOL (on camurluk, yaw +120)
+         fps/width/height/fov GERCEK sensor degerleridir (AC-ISX031 datasheet).
+         Simulasyonda cozunurluk M2_CAM_SCALE ile dusurulebilir; camera_info'yu C++ bridge
+         yayinlar, buradaki degerler URDF gorsellestirmesi icindir. -->
+    <xacro:monocular_camera_macro
+      name="camera2"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['camera2']['x']}"
+      y="${calibration['sensor_kit_base_link']['camera2']['y']}"
+      z="${calibration['sensor_kit_base_link']['camera2']['z']}"
+      roll="${calibration['sensor_kit_base_link']['camera2']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['camera2']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['camera2']['yaw']}"
+      fps="30"
+      width="1920"
+      height="1536"
+      fov="120.6"
+    />
+
+    <!-- ISX031-H120 SAG (on camurluk, yaw -120)
+         fps/width/height/fov GERCEK sensor degerleridir (AC-ISX031 datasheet).
+         Simulasyonda cozunurluk M2_CAM_SCALE ile dusurulebilir; camera_info'yu C++ bridge
+         yayinlar, buradaki degerler URDF gorsellestirmesi icindir. -->
+    <xacro:monocular_camera_macro
+      name="camera3"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['camera3']['x']}"
+      y="${calibration['sensor_kit_base_link']['camera3']['y']}"
+      z="${calibration['sensor_kit_base_link']['camera3']['z']}"
+      roll="${calibration['sensor_kit_base_link']['camera3']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['camera3']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['camera3']['yaw']}"
+      fps="30"
+      width="1920"
+      height="1536"
+      fov="120.6"
+    />
+
+    <!-- gnss -->
+    <xacro:imu_macro
+      name="gnss"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['gnss_link']['x']}"
+      y="${calibration['sensor_kit_base_link']['gnss_link']['y']}"
+      z="${calibration['sensor_kit_base_link']['gnss_link']['z']}"
+      roll="${calibration['sensor_kit_base_link']['gnss_link']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['gnss_link']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['gnss_link']['yaw']}"
+      fps="100"
+    />
+
+    <!-- imu -->
+    <xacro:imu_macro
+      name="imu"
+      parent="sensor_kit_base_link"
+      namespace=""
+      x="${calibration['sensor_kit_base_link']['imu_link']['x']}"
+      y="${calibration['sensor_kit_base_link']['imu_link']['y']}"
+      z="${calibration['sensor_kit_base_link']['imu_link']['z']}"
+      roll="${calibration['sensor_kit_base_link']['imu_link']['roll']}"
+      pitch="${calibration['sensor_kit_base_link']['imu_link']['pitch']}"
+      yaw="${calibration['sensor_kit_base_link']['imu_link']['yaw']}"
+      fps="100"
+    />
+  </xacro:macro>
+</robot>

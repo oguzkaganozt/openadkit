@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>verve_m2_layout4cam1lidar_sensor_kit_description</name>
+  <version>0.1.0</version>
+  <description>The Verve M2 mapper sensor_kit_description package (m2_mapper layout: 360 Hesai Pandar128 + oToCAM271)</description>
+  <maintainer email="mbingol@vervetech.com.tr">Mahsun Bingol</maintainer>
+  <license>LGPLv3</license>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <exec_depend>camera_description</exec_depend>
+  <exec_depend>imu_description</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

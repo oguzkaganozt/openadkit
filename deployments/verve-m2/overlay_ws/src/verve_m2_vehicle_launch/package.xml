@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>verve_m2_vehicle_launch</name>
+  <version>0.1.0</version>
+  <description>The Verve M2 vehicle_launch package</description>
+  <maintainer email="mbingol@vervetech.com.tr">Mahsun Bingol</maintainer>
+  <license>LGPLv3</license>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <!-- runtime'da $(find-pkg-share verve_m2_vehicle_description) ile bulunur;
+       exec_depend sayesinde 'colcon build ...-up-to verve_m2_vehicle_launch' onu da derler -->
+  <exec_depend>verve_m2_vehicle_description</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

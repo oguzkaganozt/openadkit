@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- CARLA e2e akışında araç arayüzünü leaderboard agent'ı (aw_e2e.py) sağlar — burada node yok. -->
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+</launch>
