@@ -84,3 +84,18 @@ ros2 service call /api/localization/initialize ...  # or an initial pose in RViz
 The pose to give it is the one verve_sim publishes on
 `/sensing/gnss/pose_with_covariance`; `y` there is already in Autoware's map
 frame (CARLA's y negated).
+
+## RViz
+
+`http://localhost:6080/vnc.html`, password `REMOTE_PASSWORD` (`openadkit`).
+**Use `http://`, not `https://`**: the page picks `wss://` when it is loaded
+over https, and websockify's self-signed certificate is what the browser then
+refuses. Over http it uses plain `ws://`, which the same websockify serves.
+
+## Steering
+
+`max_steer_angle` in the M2's `vehicle_info.param.yaml` (0.6435 rad, 36.87°)
+is the measured limit of the real vehicle, but the Chrono plant stops at
+29° (30.8° with tire compliance). Autoware asks for up to 36.87° and the plant
+saturates, so the lateral controller sees a persistent error at full lock.
+Not a blocker -- the route here is straight -- but it will matter on a turn.
