@@ -1,0 +1,31 @@
+# Verve M2: control-validator thresholds that match the plant.
+#
+# nominal_latency -- upstream 0.01 s assumes a real-time ECU. Here the
+# command crosses DDS between containers and is stamped at the start of a
+# 30 Hz control cycle, so a single hiccup exceeds 10 ms. When it did, the
+# validator raised ERROR and /system/driving_mode_manager answered with a
+# comfortable stop: measured twice in one 273 s run, about 6 s each.
+# 0.1 s is the same order as the planning pipeline's own limit (its
+# latency monitor allows 1 s end to end) and still catches a stuck
+# controller.
+#
+# assumed_limit_acc -- how hard the validator believes the vehicle can
+# brake when it decides whether the next stop point is reachable. Upstream
+# 5.0 m/s^2 is a road car. The M2's plant gives
+#   2 hubs x 220 N.m / (0.254 m x 443 kg) = 3.9 m/s^2   (plant/m2.py:
+#   BRAKE_TORQUE, TIRE_RADIUS; 443 kg is the Chrono model's total mass)
+# so at 5.0 m/s^2 Autoware planned a 1.6 m stop where the plant needs
+# 2.05 m, the controller fell behind the trajectory, and at the goal the
+# deviation passed trajectory_validator.max_distance_deviation (1.0 m) and
+# raised MRM while the M2 was still rolling.
+#
+# KEEP IN STEP WITH THE PLANT: if BRAKE_TORQUE, TIRE_RADIUS or the model's
+# mass changes in verve_sim, recompute this and ros/interface.py's
+# BRAKE_ACCEL, or the validator will again plan stops the vehicle cannot
+# make.
+/**:
+  ros__parameters:
+    latency_validator:
+      nominal_latency: 0.1 # stock 0.01
+    overrun_validator:
+      assumed_limit_acc: 3.9 # stock 5.0; the M2's brake, see above

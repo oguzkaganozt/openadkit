@@ -1,0 +1,21 @@
+# Verve M2: a looser Mahalanobis gate on the NDT pose.
+#
+# The M2's park brake holds the vehicle at exactly zero speed while it
+# waits, so the EKF gets no motion noise to inflate its own covariance and
+# shrinks to a few centimetres. After a few minutes standing still, the
+# 8 cm it differs from NDT by scores 62 against upstream's gate of 49.5
+# (10^-10 significance), every pose is dropped, sensor_fusion_status goes
+# WARN, /autoware/modes/autonomous with it, and the AUTO button stays
+# disabled until the stack is restarted.
+#
+# 100 is not a silenced fault: at the 2 m error this stack actually had
+# (a sign in verve_sim's lidar_at, fixed in 0466374) the distance measured
+# 91-128 and would still trip. It only stops the gate from rejecting NDT's
+# ordinary 5-10 cm of noise.
+#
+# Revisit if the plant ever reports a noisy standstill instead of an exact
+# zero: that is the real fix, and this override can go with it.
+/**:
+  ros__parameters:
+    pose_measurement:
+      pose_gate_dist: 100.0 # stock 49.5

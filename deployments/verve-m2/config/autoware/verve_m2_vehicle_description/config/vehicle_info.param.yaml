@@ -1,0 +1,21 @@
+# Verve M2 in this stack can steer 29 degrees, not the real vehicle's 36.87.
+#
+# verve_m2_vehicle measures 0.6435 rad (36.87 deg) on the real car and that
+# stays true there; this file only overrides it for the Chrono plant, whose
+# rack stops at 60 mm (chronoPhysicsCoSim/src/quad_vehicle.py, RACK_LIMIT_M,
+# "kingpin stop bounds the basin"), which at 0.535 deg/mm is the 29 deg the
+# plant reaches at full lock.
+#
+# With 36.87 declared the lateral controller kept asking for steering the
+# plant could not give. On a 90 deg turn it fell behind the trajectory by
+# more than trajectory_validator.max_distance_deviation (1.0 m) and raised
+# MRM mid-corner; measured in two consecutive runs.
+#
+# REMOVE THIS OVERRIDE when the Chrono model's rack limit is opened to the
+# real vehicle's: at that point both numbers are 0.6435 and this file only
+# hides a difference that no longer exists. Keep it in step with
+# chronoPhysicsCoSim/src/quad_vehicle.py RACK_LIMIT_M x plant/m2.py
+# RACK_GAIN_DEG_PER_MM.
+/**:
+  ros__parameters:
+    max_steer_angle: 0.5061 # 29 deg = RACK_LIMIT_M 0.060 x 0.535 deg/mm
