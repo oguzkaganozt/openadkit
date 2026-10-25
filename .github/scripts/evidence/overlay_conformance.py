@@ -32,6 +32,16 @@ def collect_reports(containers, read_report):
             reports.append({"container": name, "conformant": not any(data.values()), "report": data})
         except (ValueError, TypeError):
             reports.append({"container": name, "conformant": False, "error": "missing or invalid overlay report"})
+    # Every service gets the same layers, so a package installed in one image
+    # is unknown in the others. It is a typo only when no service has it.
+    valid = [item["report"] for item in reports if "report" in item]
+    nowhere = set.intersection(*(set(data["unknownPackages"]) for data in valid)) if valid else set()
+    for item in reports:
+        if "report" in item:
+            data = item["report"]
+            item["conformant"] = not (
+                data["unknownFiles"] or data["unknownKeys"] or nowhere & set(data["unknownPackages"])
+            )
     return reports
 
 

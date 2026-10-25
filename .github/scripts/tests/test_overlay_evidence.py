@@ -135,14 +135,14 @@ def test_a_package_is_unknown_only_when_no_service_has_it():
     assert [item["conformant"] for item in reports] == [False, False]
 
 
- (Merge pull request #14 from oguzkaganozt/feat/kit-overlay-layers)
 def test_test_result_preserves_overlay_conformance(tmp_path):
     cells = tmp_path / "cells"
     cells.mkdir()
     (cells / "cell.json").write_text(json.dumps({
-        "name": "custom-kit-humble-linux-amd64", "deployment": "custom-kit",
+        "schemaVersion": 1, "name": "custom-kit-humble-linux-amd64", "deployment": "custom-kit",
         "distro": "humble", "result": "PASSED", "overlayConformant": False,
         "levels": {"L0": {"ok": True}, "L1": {"ok": True}, "L2": {"ok": True}},
+        "metrics": {"ready_s": None, "arrival_s": None, "peak_mib": None},
     }))
     metadata = tmp_path / "metadata.json"
     metadata.write_text('{}')
