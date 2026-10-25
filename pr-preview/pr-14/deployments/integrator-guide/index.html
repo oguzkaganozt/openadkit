@@ -2375,10 +2375,11 @@ deliberately to test the devel/runtime ABI boundary, then publishes
 <h3 id="4-extra-services">4. Extra Services<a class="headerlink" href="#4-extra-services" title="Permanent link">#</a></h3>
 <p>Include the base's Compose file using <code>OPENADKIT_BASE_DEPLOYMENT</code>, then define your services
 under <code>services:</code>. Keep communicating ROS services on the base ROS domain and
-middleware. An extra Open AD Kit runtime service can load the workspace by
-mounting <code>${OPENADKIT_OVERLAY_WS}</code> at <code>/openadkit/overlay_ws:ro</code> and
-<code>${OPENADKIT_OVERLAY_WS_DEPLOYMENT}</code> at <code>/openadkit/overlay_ws_deployment:ro</code>; the example's
-<code>acme-probe</code> service shows this pattern.</p>
+middleware. An extra Open AD Kit runtime service can load the kit workspace by
+mounting <code>${OPENADKIT_OVERLAY_WS}</code> at <code>/openadkit/overlay_ws:ro</code>; add
+<code>${OPENADKIT_OVERLAY_WS_DEPLOYMENT}</code> at <code>/openadkit/overlay_ws_deployment:ro</code>
+if it also needs the deployment's own packages. The example's <code>acme-probe</code>
+service mounts the first: its kit has one workspace.</p>
 <h3 id="5-image-replacement">5. Image Replacement<a class="headerlink" href="#5-image-replacement" title="Permanent link">#</a></h3>
 <p>Declare consumed images in your kit's <code>artifacts</code>, with a <code>workload</code> and either
 one digest-pinned <code>ref</code> or a <code>distros</code> map of digest-pinned references. An
@@ -2417,7 +2418,11 @@ Arbitrary external kit input is not yet supported by that interface.</p>
 <h2 id="upgrade-without-losing-your-work">Upgrade Without Losing Your Work<a class="headerlink" href="#upgrade-without-losing-your-work" title="Permanent link">#</a></h2>
 <p>Install the new base next to the old version, update <code>extends</code>, rebuild your
 workspace against its devel digest, then validate and run your acceptance
-checks. Your repository, host config, downloaded data and output directories
+checks. A workspace kept in a nested deployment directory still loads as that
+deployment's layer, but a kit service that mounts only
+<code>${OPENADKIT_OVERLAY_WS}</code> will not see it: mount
+<code>${OPENADKIT_OVERLAY_WS_DEPLOYMENT}</code> too, or move the shared workspace to the
+kit root. Your repository, host config, downloaded data and output directories
 are outside the base release. Updating the default launcher does not change a
 kit's explicit version pin. See <a href="../../getting-started/cli/">CLI &amp; Maintenance</a>
 for config/state roots and marker-protected data cleanup.</p>
