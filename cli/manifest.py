@@ -457,13 +457,18 @@ class Deployment:
             (directory, name) for name in self.compose["gpuFiles"]
         ] + (base.gpu_files if base else [])
         owner = base if base else self
+        # A kit's ROS packages serve all of its deployments, so its workspace
+        # lives at the kit root; a deployment may layer its own on top. A kit
+        # whose deployment is the root itself has the one workspace.
+        own_workspace = base is not None and directory.resolve() != root.resolve()
         self.overlay_paths = {
             "OPENADKIT_CONFIG_SHARED": (
                 owner.root / "deployments/shared/config" if "shared" in owner.shared else None
             ),
             "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
-            "OPENADKIT_OVERLAY_WS": directory / "overlay_ws",
+            "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
+            "OPENADKIT_OVERLAY_WS_DEPLOYMENT": directory / "overlay_ws" if own_workspace else None,
         }
         self.kit_environment = {
             BASE_KIT_ENV: str(base.root),
@@ -543,8 +548,9 @@ class Deployment:
 
         Config overrides apply in order: shared (every deployment that uses
         the shared services), the base a kit builds on, then this deployment.
-        A missing layer mounts an empty directory, so Docker never creates a
-        root-owned one in its place.
+        Overlay workspaces are sourced in order: the kit's, then this
+        deployment's. A missing layer mounts an empty directory, so Docker
+        never creates a root-owned one in its place.
         """
         empty = state_root() / "empty"
 
