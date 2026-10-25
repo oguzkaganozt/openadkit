@@ -161,6 +161,8 @@ Releases promote an existing CI build; nothing is rebuilt.
   scan and evidence jobs to larger runners (for example
   `ubicloud-standard-8-ubuntu-2204` and `ubicloud-standard-8-arm-ubuntu-2204`).
   Unset, they run on the GitHub-hosted `ubuntu-22.04` and `ubuntu-22.04-arm`.
+  Pull request jobs run on them too, so point them only at ephemeral hosted
+  runners, never at a persistent self-hosted machine.
 - **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-common`, and
   `openadkit-buildcache` under `ghcr.io/autowarefoundation/`.
 - **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
