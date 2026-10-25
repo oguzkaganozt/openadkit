@@ -115,10 +115,11 @@ deliberately to test the devel/runtime ABI boundary, then publishes
 
 Include the base's Compose file using `OPENADKIT_BASE_DEPLOYMENT`, then define your services
 under `services:`. Keep communicating ROS services on the base ROS domain and
-middleware. An extra Open AD Kit runtime service can load the workspace by
-mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro` and
-`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` at `/openadkit/overlay_ws_deployment:ro`; the example's
-`acme-probe` service shows this pattern.
+middleware. An extra Open AD Kit runtime service can load the kit workspace by
+mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; add
+`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` at `/openadkit/overlay_ws_deployment:ro`
+if it also needs the deployment's own packages. The example's `acme-probe`
+service mounts the first: its kit has one workspace.
 
 ### 5. Image Replacement
 
@@ -167,7 +168,11 @@ Arbitrary external kit input is not yet supported by that interface.
 
 Install the new base next to the old version, update `extends`, rebuild your
 workspace against its devel digest, then validate and run your acceptance
-checks. Your repository, host config, downloaded data and output directories
+checks. A workspace kept in a nested deployment directory still loads as that
+deployment's layer, but a kit service that mounts only
+`${OPENADKIT_OVERLAY_WS}` will not see it: mount
+`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` too, or move the shared workspace to the
+kit root. Your repository, host config, downloaded data and output directories
 are outside the base release. Updating the default launcher does not change a
 kit's explicit version pin. See [CLI & Maintenance](../getting-started/cli.md)
 for config/state roots and marker-protected data cleanup.

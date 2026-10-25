@@ -102,6 +102,19 @@ def test_hook_reports_are_required_and_unknown_keys_are_nonconformant(report, ex
     assert reports[0]["conformant"] is expected
 
 
+def test_deployment_overlay_workspace_is_a_hooked_service():
+    containers = [
+        {"Id": "kit", "Name": "/acme", "Mounts": [{"Destination": "/openadkit/overlay_ws_deployment"}]},
+        {"Id": "external", "Name": "/heartbeat", "Mounts": []},
+    ]
+    reports = conformance.collect_reports(
+        containers,
+        lambda _: json.dumps({"unknownPackages": [], "unknownFiles": [], "unknownKeys": []}),
+    )
+    assert [item["container"] for item in reports] == ["acme"]
+    assert reports[0]["conformant"] is True
+
+
 def test_a_package_is_unknown_only_when_no_service_has_it():
     def report(packages):
         return json.dumps({"unknownPackages": packages, "unknownFiles": [], "unknownKeys": []})
