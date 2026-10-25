@@ -97,6 +97,12 @@ that default as a production pin. Keep separate workspace outputs for different
 ROS distros. The CLI mounts the workspace and the hook sources
 `overlay_ws/install/local_setup.bash` on top of Autoware.
 
+The workspace belongs to the kit: `overlay_ws` at the kit root serves every
+deployment of the kit, since they all extend one base and its images. A
+deployment may add its own `overlay_ws` in its directory; the hook sources it
+after the kit's, so it can add packages or shadow the kit's. A kit whose
+deployment is the root itself (`"path": "."`) has the one workspace.
+
 The devel and runtime images install ROS packages from the same
 [ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
 an overlay built in the devel image links the ROS versions the runtime image
@@ -110,7 +116,8 @@ deliberately to test the devel/runtime ABI boundary, then publishes
 Include the base's Compose file using `OPENADKIT_BASE_DEPLOYMENT`, then define your services
 under `services:`. Keep communicating ROS services on the base ROS domain and
 middleware. An extra Open AD Kit runtime service can load the workspace by
-mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; the example's
+mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro` and
+`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` at `/openadkit/overlay_ws_deployment:ro`; the example's
 `acme-probe` service shows this pattern.
 
 ### 5. Image Replacement

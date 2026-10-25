@@ -855,7 +855,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     kit = integrator_kit(tmp_path, root, artifacts={"API_IMAGE": {"workload": "api", "ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "config.gpu.env").write_text("VALUE=kit-gpu\n")
-    for path in (base / "config", directory / "config", directory / "overlay_ws"):
+    for path in (base / "config", directory / "config", kit / "overlay_ws", directory / "overlay_ws"):
         path.mkdir()
     site_config(root, "VALUE=site\n", name="custom")
     context = cli_manifest.load_kit(kit)
@@ -870,12 +870,62 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     result = run_cli(root, "validate", "custom", "--gpu", directory=kit)
     assert result.returncode == 0, result.stderr
     env = recorded(calls)[0]["env"]
-    assert [env[name] for name in ("OPENADKIT_CONFIG_BASE", "OPENADKIT_CONFIG_DEPLOYMENT", "OPENADKIT_OVERLAY_WS")] == [
-        str(base / "config"), str(directory / "config"), str(directory / "overlay_ws"),
+    assert [env[name] for name in (
+        "OPENADKIT_CONFIG_BASE", "OPENADKIT_CONFIG_DEPLOYMENT",
+        "OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT",
+    )] == [
+        str(base / "config"), str(directory / "config"),
+        str(kit / "overlay_ws"), str(directory / "overlay_ws"),
     ]
     bom = json.loads(run_cli(root, "version", "--json", directory=kit).stdout)["bom"]
     assert bom["artifacts"]["INHERITED_IMAGE"]["ref"] == PIN
     assert (bom["images"] is not None) is release
+
+
+OVERLAY_LAYERS = ("OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT")
+
+
+def overlay_layers(root, name, monkeypatch, tmp_path):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for variable in ISOLATED_ENV:
+        monkeypatch.delenv(variable, raising=False)
+    context = cli_manifest.load_kit(root)
+    injections = cli_manifest.get_deployment(root, context, name).select(context, "humble", False).injections
+    return [injections[variable] for variable in OVERLAY_LAYERS], str(cli_manifest.state_root() / "empty")
+
+
+@pytest.mark.parametrize("own", [False, True])
+def test_kit_overlay_serves_every_deployment_and_one_may_layer_its_own(tmp_path, monkeypatch, own):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    directory = kit / "deployments/custom"
+    (kit / "overlay_ws").mkdir()
+    if own:
+        (directory / "overlay_ws").mkdir()
+    layers, empty = overlay_layers(kit, "custom", monkeypatch, tmp_path)
+    assert layers == [str(kit / "overlay_ws"), str(directory / "overlay_ws") if own else empty]
+
+
+def test_kit_whose_deployment_is_its_root_mounts_its_overlay_once(tmp_path, monkeypatch):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    directory = kit / "deployments/custom"
+    for item in directory.iterdir():
+        shutil.move(str(item), kit)
+    shutil.rmtree(kit / "deployments")
+    edit_kit(kit, lambda document: document["deployments"].update(custom={"path": "."}))
+    # The deployment is the kit root, so the root is named after it (as deployments/custom-kit).
+    kit = kit.rename(tmp_path / "custom")
+    (kit / "overlay_ws").mkdir()
+    layers, empty = overlay_layers(kit, "custom", monkeypatch, tmp_path)
+    assert layers == [str(kit / "overlay_ws"), empty]
+
+
+def test_base_deployment_keeps_its_own_overlay(tmp_path, monkeypatch):
+    root, directory = runtime_tree(tmp_path)
+    (directory / "overlay_ws").mkdir()
+    layers, empty = overlay_layers(root, "example", monkeypatch, tmp_path)
+    assert layers == [str(directory / "overlay_ws"), empty]
 
 
 @pytest.mark.parametrize("available", [False, True])
