@@ -126,7 +126,7 @@ args = sys.argv[1:]
 text = " ".join(args)
 with open({str(calls)!r}, "a") as output:
     env = {{name: value for name, value in os.environ.items()
-           if name.startswith("OPENADKIT_") or name in ("API_IMAGE", "VALUE", "ROS_DISTRO")}}
+           if name.startswith("OPENADKIT_") or name in ("API_IMAGE", "VALUE", "ROS_DISTRO", "CYCLONEDDS_NETWORK_INTERFACE")}}
     output.write(json.dumps({{"args": args, "env": env}}) + "\\n")
 live = Path({str(live)!r})
 if text == "info":
@@ -369,6 +369,22 @@ def test_run_preflight_does_not_touch_data_or_start_containers(tmp_path, options
     assert result.returncode != 0 and message in result.stderr
     assert not any("up" in row["args"] or "pull" in row["args"] for row in recorded(calls))
     assert not (tmp_path / "home/data").exists()
+
+
+@pytest.mark.parametrize("node", [None, "secondary"])
+def test_a_split_node_keeps_dds_on_loopback(tmp_path, node):
+    # A LAN interface in the host settings would put DDS on the network and
+    # around the Zenoh allowlist; only a single-host run may opt in to that.
+    root, _ = runtime_tree(tmp_path, document=manifest(nodes=node is not None))
+    site = root.parent / "home/.config/openadkit/example.env"
+    site.parent.mkdir(parents=True, exist_ok=True)
+    site.write_text("CYCLONEDDS_NETWORK_INTERFACE=eth0\n")
+    calls = fake_docker(tmp_path)
+    args = ["--node", node] if node else []
+    result = run_cli(root, "run", "example", *args, "--pull", "never", NODE_TOKEN="token")
+    assert result.returncode == 0, result.stderr
+    up = next(row for row in recorded(calls) if "up" in row["args"])
+    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if node else None)
 
 
 def test_split_node_run_discovery_and_safe_stop(tmp_path):
