@@ -95,6 +95,12 @@ that default as a production pin. Keep separate workspace outputs for different
 ROS distros. The CLI mounts the workspace and the hook sources
 `overlay_ws/install/local_setup.bash` on top of Autoware.
 
+The workspace belongs to the kit: `overlay_ws` at the kit root serves every
+deployment of the kit, since they all extend one base and its images. A
+deployment may add its own `overlay_ws` in its directory; the hook sources it
+after the kit's, so it can add packages or shadow the kit's. A kit whose
+deployment is the root itself (`"path": "."`) has the one workspace.
+
 The devel and runtime images install ROS packages from the same
 [ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
 an overlay built in the devel image links the ROS versions the runtime image
@@ -107,9 +113,11 @@ deliberately to test the devel/runtime ABI boundary, then publishes
 
 Include the base's Compose file using `OPENADKIT_BASE_DEPLOYMENT`, then define your services
 under `services:`. Keep communicating ROS services on the base ROS domain and
-middleware. An extra Open AD Kit runtime service can load the workspace by
-mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; the example's
-`acme-probe` service shows this pattern.
+middleware. An extra Open AD Kit runtime service can load the kit workspace by
+mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; add
+`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` at `/openadkit/overlay_ws_deployment:ro`
+if it also needs the deployment's own packages. The example's `acme-probe`
+service mounts the first: its kit has one workspace.
 
 ### 5. Image Replacement
 
@@ -158,7 +166,11 @@ Arbitrary external kit input is not yet supported by that interface.
 
 Install the new base next to the old version, update `extends`, rebuild your
 workspace against its devel digest, then validate and run your acceptance
-checks. Your repository, host config, downloaded data and output directories
+checks. A workspace kept in a nested deployment directory still loads as that
+deployment's layer, but a kit service that mounts only
+`${OPENADKIT_OVERLAY_WS}` will not see it: mount
+`${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` too, or move the shared workspace to the
+kit root. Your repository, host config, downloaded data and output directories
 are outside the base release. Updating the default launcher does not change a
 kit's explicit version pin. See [CLI & Maintenance](../getting-started/cli.md)
 for config/state roots and marker-protected data cleanup.

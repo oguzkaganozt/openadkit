@@ -14,7 +14,11 @@ def collect_reports(containers, read_report):
     reports = []
     for container in containers:
         mounts = [mount.get("Destination", "") for mount in container.get("Mounts", [])]
-        if not any(path.startswith("/openadkit/config/") or path == "/openadkit/overlay_ws" for path in mounts):
+        if not any(
+            path.startswith("/openadkit/config/")
+            or path in ("/openadkit/overlay_ws", "/openadkit/overlay_ws_deployment")
+            for path in mounts
+        ):
             continue
         name = container["Name"].lstrip("/")
         report = read_report(container["Id"])
