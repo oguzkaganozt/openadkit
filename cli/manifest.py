@@ -568,6 +568,9 @@ class Deployment:
         # runtime.env reads this, so each node joins its own DDS domain and
         # two nodes on one host stay isolated until the Zenoh bridge links them.
         injections["OPENADKIT_ROS_DOMAIN_ID"] = str(self.nodes[node]["rosDomainId"])
+        # Only the Zenoh bridge and its allowlist link nodes: DDS stays on
+        # loopback even when the host settings name a LAN interface.
+        injections["CYCLONEDDS_NETWORK_INTERFACE"] = "lo"
         return injections
 
     def select(
