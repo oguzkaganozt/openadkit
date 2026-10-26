@@ -1010,6 +1010,50 @@ def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_pa
     assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
 
 
+def test_build_overlay_builds_each_layer_in_the_pinned_devel_image(tmp_path):
+    root, _ = runtime_tree(tmp_path, release=True)
+    kit = integrator_kit(tmp_path, root)
+    directory = kit / "deployments/custom"
+    for workspace in (kit / "overlay_ws", directory / "overlay_ws"):
+        (workspace / "src").mkdir(parents=True)
+        (workspace / "install").mkdir()
+    calls = fake_docker(tmp_path)
+    # A release from before the devel pin: only an explicit image will do.
+    result = run_cli(root, "build-overlay", "custom", directory=kit)
+    assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
+
+    devel = "ghcr.io/example/openadkit-common:universe-common-devel-humble@sha256:" + "d" * 64
+    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    result = run_cli(root, "build-overlay", "custom", directory=kit)
+    assert result.returncode == 0, result.stderr
+    builds = [row["args"] for row in recorded(calls) if row["args"][:1] == ["run"]]
+    assert len(builds) == 2 and all(devel in args for args in builds)
+    # Each layer builds where the services mount it, on top of the layers below.
+    assert f"{kit / 'overlay_ws'}:/openadkit/overlay_ws" in builds[0]
+    assert f"{kit / 'overlay_ws'}:/openadkit/overlay_ws:ro" in builds[1]
+    assert f"{directory / 'overlay_ws'}:/openadkit/overlay_ws_deployment" in builds[1]
+    assert builds[1][-1] == "/openadkit/overlay_ws"
+    stamp = json.loads((directory / "overlay_ws/install/.openadkit-overlay.json").read_text())
+    assert stamp == {"image": devel, "rosDistro": "humble"}
+    assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
+
+    # After a base upgrade the installs are stale until rebuilt.
+    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 0 and "openadkit build-overlay custom" in result.stderr
+    result = run_cli(root, "build-overlay", "custom", directory=kit, DEVEL_IMAGE="local/devel:test")
+    assert result.returncode == 0 and "local/devel:test" in recorded(calls)[-1]["args"]
+
+    # Without a deployment a kit builds its own workspace, which all its deployments share.
+    before = len(recorded(calls))
+    result = run_cli(root, "build-overlay", directory=kit)
+    assert result.returncode == 0, result.stderr
+    builds = [row["args"] for row in recorded(calls)[before:] if row["args"][:1] == ["run"]]
+    assert len(builds) == 1 and f"{kit / 'overlay_ws'}:/openadkit/overlay_ws" in builds[0]
+    # Outside a kit there is no such workspace: a deployment is required.
+    assert run_cli(root, "build-overlay").returncode == 2
+
+
 OVERLAY_LAYERS = ("OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT")
 
 

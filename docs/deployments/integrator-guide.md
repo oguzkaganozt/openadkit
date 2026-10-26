@@ -81,23 +81,41 @@ its package does not have. After a base version change these usually are
 renamed packages, files or parameters. Every service gets the same layers, so a
 package installed in only some images is not reported.
 
+#### A New Vehicle
+
+Autoware's defaults describe a passenger car. Review these for your vehicle;
+their package and path depend on the base's Autoware version, so look them up
+in its images and check `run`'s override warnings.
+
+| Parameters | File | Why |
+| --- | --- | --- |
+| Dimensions, `wheel_base`, `max_steer_angle` | `vehicle_info.param.yaml` of your vehicle description | Planning and control use them as limits; a steering limit above the vehicle's makes control ask for angles it cannot reach. |
+| Sensor poses | your sensor kit's `sensor_kit_calibration.yaml` and `sensors_calibration.yaml` | A wrong sign or offset shows up as a localization error of the same size. |
+| `nominal_latency`, `assumed_limit_acc` | `control_validator.param.yaml` | Your actuation latency and achievable braking. With car values a slower or weaker vehicle fails validation and triggers an MRM. |
+| `pose_measurement.pose_gate_dist` | `ekf_localizer.param.yaml` | The Mahalanobis gate for pose updates. A start pose far from the truth can be rejected for good. |
+| Velocity, acceleration, jerk and steering-rate limits | `vehicle_cmd_gate.param.yaml` | The last limits before the vehicle interface. |
+
 ### 3. Overlay Workspace
 
 Put ROS packages in `overlay_ws/src` and build them in the
 `universe-common-devel` image from the **same build** as your runtime images.
-The example's build script accepts a digest-pinned `DEVEL_IMAGE`:
+A release pins that image next to its runtime images, so the CLI builds with
+the right one:
 
 ```bash
-cd deployments/custom-kit
-DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit-common@sha256:<digest> \
-  bash overlay_ws/build.sh humble
+openadkit build-overlay [--ros-distro humble]               # the kit's workspace
+openadkit build-overlay <deployment> [--ros-distro humble]  # and the deployment's own
 ```
 
-Obtain the matching digest from the build metadata or release BOM. Without an
-override, the example script uses a moving source-development tag; do not use
-that default as a production pin. Keep separate workspace outputs for different
-ROS distros. The CLI mounts the workspace and the hook sources
-`overlay_ws/install/local_setup.bash` on top of Autoware.
+Without a deployment it builds the kit's workspace, which all its deployments
+share. With one, it builds each workspace that deployment mounts, the kit's
+first. Each builds at the path the services mount it, and the CLI records the image and distro in
+`install/.openadkit-overlay.json`. After a base upgrade or a distro change,
+`validate` and `run` warn until you rebuild. Releases before this pin, and
+source checkouts, pin no devel image: set `DEVEL_IMAGE` to the matching
+`universe-common-devel` digest from the build metadata or release BOM. The
+CLI mounts the workspace and the hook sources `overlay_ws/install/local_setup.bash`
+on top of Autoware.
 
 The workspace belongs to the kit: `overlay_ws` at the kit root serves every
 deployment of the kit, since they all extend one base and its images. A

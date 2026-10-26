@@ -25,22 +25,23 @@ not a claim that it is published; the CLI uses the pinned release's own launcher
 For this source-checkout example, first build the matching runtime and devel
 images from this checkout. Pre-v2 public image aliases do not have the overlay
 hook; validation alone cannot detect that missing runtime interface.
-Before building the workspace, set `DEVEL_IMAGE` to the matching
-`universe-common-devel` digest from that build's metadata/BOM. The script's
-moving default tag does not guarantee a match to your checkout or registry.
+A source checkout pins no devel image, so set `DEVEL_IMAGE` to the matching
+`universe-common-devel` digest from that build's metadata/BOM before building
+the workspace. A kit that extends a release needs no `DEVEL_IMAGE`.
 
 ```bash
 cd deployments/custom-kit
-bash overlay_ws/build.sh humble
+DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit-common@sha256:<digest> \
+  ../../openadkit build-overlay custom-kit
 ../../openadkit validate custom-kit
 ../../openadkit run custom-kit
 ../../openadkit stop custom-kit
 ```
 
-The default image tag is for source development, not production. Use a fresh
-workspace per ROS distro. CI pins the devel image for both Humble and Jazzy.
-Add `--ros-distro jazzy` to
-`validate` and `run` after building a fresh Jazzy workspace. `validate` only
+Rebuild the workspace per ROS distro (`build-overlay custom-kit --ros-distro
+jazzy`); CI builds it with `overlay_ws/build.sh` and a pinned devel image for
+both Humble and Jazzy. Add `--ros-distro jazzy` to `validate` and `run` after
+building the Jazzy workspace. `validate` only
 renders/checks the model; it does not prove that the runtime or overlay works.
 
 The evidence cell checks fresh `/acme/probe` publication, this kit's velocity
