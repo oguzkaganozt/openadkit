@@ -212,7 +212,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
 
     kit = product["kit"]
     component_images = dict(kit.component_images)
-    runtime_targets = sorted(set(component_images.values()))
+    # The devel image ships pinned too, so integrators build overlays in it.
+    runtime_targets = sorted(set(component_images.values()) | {runtime.DEVEL_IMAGE_TARGET})
     context_images: dict[str, dict[str, str]] = {}
     for distro in product["distros"]:
         distro_images: dict[str, str] = {}

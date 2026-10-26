@@ -59,7 +59,9 @@ def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     assert result.returncode == 0, result.stderr
     plan = json.loads(output.read_text())
     context = plan["releaseContext"]
+    # The runtime images, and the devel image integrators build overlays in.
     expected = set(json.loads((ROOT / "openadkit.json").read_text())["componentImages"].values())
+    expected.add("universe-common-devel")
     assert set(context["images"]) == {"humble", "jazzy"}
     for distro, refs in context["images"].items():
         assert set(refs) == expected

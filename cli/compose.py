@@ -741,6 +741,84 @@ def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
     return warnings
 
 
+# Overlay workspaces build where the services mount them, so CMake paths
+# recorded against the kit's layer resolve in the deployment's layer too.
+OVERLAY_TARGETS = {
+    "OPENADKIT_OVERLAY_WS": "/openadkit/overlay_ws",
+    "OPENADKIT_OVERLAY_WS_DEPLOYMENT": "/openadkit/overlay_ws_deployment",
+}
+# Written into install/ by build-overlay: the image and distro it built with.
+OVERLAY_STAMP = ".openadkit-overlay.json"
+OVERLAY_BUILD = """set -eo pipefail
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+source /opt/autoware/setup.bash
+for layer in "$@"; do source "${layer}/install/local_setup.bash"; done
+colcon build --install-base install --cmake-args -DCMAKE_BUILD_TYPE=Release
+"""
+
+
+def overlay_workspaces(deployment: Deployment) -> list[tuple[Path, str]]:
+    """The deployment's overlay workspaces with sources, the kit's first."""
+    return [
+        (path, OVERLAY_TARGETS[name])
+        for name, path in deployment.overlay_paths.items()
+        if name in OVERLAY_TARGETS and path is not None and (path / "src").is_dir()
+    ]
+
+
+def build_overlay(deployment: Deployment, selection: Selection, image: str) -> None:
+    """Build each overlay layer in the devel image, on top of the ones before it."""
+    workspaces = overlay_workspaces(deployment)
+    if not workspaces:
+        raise OpenADKitError(f"{deployment.name} has no overlay_ws/src to build")
+    require_docker()
+    below: list[tuple[Path, str]] = []
+    for host, target in workspaces:
+        mounts = [arg for path, mount in below for arg in ("--volume", f"{path}:{mount}:ro")]
+        # The image compiles through ccache in the aw home, which only uid
+        # 1000 can write; keep HOME and the cache in the container's /tmp.
+        run_process(
+            [
+                "docker", "run", "--rm",
+                "--user", f"{os.getuid()}:{os.getgid()}",
+                "--env", "HOME=/tmp",
+                "--env", "CCACHE_DIR=/tmp/ccache",
+                *mounts,
+                "--volume", f"{host}:{target}",
+                "--workdir", target,
+                "--entrypoint", "bash",
+                image, "-c", OVERLAY_BUILD, "bash", *(mount for _, mount in below),
+            ],
+            env=process_environment(selection),
+        )
+        (host / "install" / OVERLAY_STAMP).write_text(
+            json.dumps({"image": image, "rosDistro": selection.ros_distro}) + "\n",
+            encoding="utf-8",
+        )
+        print(f"built overlay: {host}")
+        below.append((host, target))
+
+
+def check_overlay_builds(deployment: Deployment, selection: Selection, image: str | None) -> list[str]:
+    """Warn about overlay installs that build-overlay made for another image."""
+    warnings: list[str] = []
+    for host, _ in overlay_workspaces(deployment):
+        try:
+            stamp = json.loads((host / "install" / OVERLAY_STAMP).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(stamp, dict):
+            continue
+        if stamp.get("rosDistro") != selection.ros_distro or (image and stamp.get("image") != image):
+            warnings.append(
+                f"{host} was built for {stamp.get('rosDistro')} in {stamp.get('image')}; "
+                f"rebuild it: openadkit build-overlay {deployment.name}"
+            )
+    for warning in warnings:
+        print(f"warning: overlay workspace: {warning}", file=sys.stderr)
+    return warnings
+
+
 def status(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["ps"])
 
