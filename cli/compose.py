@@ -817,16 +817,122 @@ def check_overlay_builds(deployment: Deployment, selection: Selection, image: st
     return warnings
 
 
+# Sourced before a ROS command runs in a service container: docker exec skips
+# the entrypoint that sources them for the service itself.
+ROS_SHELL = 'source "/opt/ros/${ROS_DISTRO}/setup.bash"; source /opt/autoware/setup.bash; '
+
+
+def autoware_state(deployment: Deployment, selection: Selection) -> dict[str, Any] | None:
+    """The AD API state from the running api service, or None without one."""
+    command = compose_command(deployment, selection)
+    environment = compose_process_environment(deployment, selection)
+    running = capture_process(
+        command + ["ps", "--services", "--status", "running"],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    if "api" not in running.stdout.split():
+        return None
+    script = (Path(__file__).parent / "autoware_state.py").read_text(encoding="utf-8")
+    result = capture_process(
+        command + ["exec", "-T", "api", "bash", "-c", ROS_SHELL + 'exec python3 -c "$0"', script],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    try:
+        state = json.loads(result.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return None
+    return state if isinstance(state, dict) else None
+
+
+def format_autoware_state(state: dict[str, Any]) -> list[str]:
+    lines = []
+    for name in ("localization", "routing", "mode", "mrm"):
+        item = state.get(name)
+        if not isinstance(item, dict):
+            lines.append(f"{name:<13}no data")
+            continue
+        text = item["state"]
+        if name == "mode":
+            notes = [] if item.get("autowareControl", True) else ["manual control"]
+            if item.get("autonomousAvailable"):
+                notes.append("autonomous available")
+            text += f" ({', '.join(notes)})" if notes else ""
+        elif name == "mrm" and item.get("behavior"):
+            text += f": {item['behavior']}"
+        lines.append(f"{name:<13}{text}")
+    return lines
+
+
 def status(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["ps"])
+    state = autoware_state(deployment, selection)
+    if state is not None:
+        print()
+        print("\n".join(format_autoware_state(state)))
 
 
-def logs(deployment: Deployment, selection: Selection, follow: bool) -> None:
+def logs(
+    deployment: Deployment, selection: Selection, follow: bool, services: list[str] | None = None
+) -> None:
     arguments = ["logs"]
     if follow:
         arguments.append("--follow")
-    compose_run(deployment, selection, arguments)
+    compose_run(deployment, selection, arguments + list(services or []))
 
+
+def record(
+    deployment: Deployment, selection: Selection, topics: list[str], output: Path
+) -> Path:
+    """Record topics into a bag on the host until interrupted.
+
+    The recorder runs as a copy of the running api container: its image,
+    environment, user and mounts, so it joins the same ROS domain and
+    middleware, and its entrypoint sources the overlay workspaces for
+    integrator message types. The bag is written to a host directory, so it
+    survives the deployment's containers.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet", "api"], check=False).stdout.split()
+    if not ids:
+        raise OpenADKitError(f"{deployment.name} has no running api service to record from")
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", ids[0]], env=environment, check=False, trace=False
+    )
+    try:
+        config = json.loads(inspected.stdout)[0]["Config"]
+    except (ValueError, LookupError, TypeError) as error:
+        raise OpenADKitError("could not inspect the api container") from error
+    label = deployment.name if selection.node is None else f"{deployment.name}-{selection.node}"
+    bag = output / f"{label}-{time.strftime('%Y%m%d-%H%M%S')}"
+    output.mkdir(parents=True, exist_ok=True)
+    # The container's own entrypoint, which a service may have overridden.
+    entrypoint = config.get("Entrypoint") or []
+    command = [
+        "docker", "run", "--rm", "--init",
+        *(["--entrypoint", entrypoint[0]] if entrypoint else []),
+        "--network", "host", "--ipc", "host",
+        "--volumes-from", f"{ids[0]}:ro",
+        "--volume", f"{output}:/openadkit/recordings",
+        *(["--user", config["User"]] if config.get("User") else []),
+        *(argument for variable in config.get("Env") or [] for argument in ("--env", variable)),
+        config["Image"], *entrypoint[1:],
+        "bash", "-c", 'exec ros2 bag record --output "$0" "$@"',
+        f"/openadkit/recordings/{bag.name}", *(topics or ["--all"]),
+    ]
+    print_command(command)
+    process = subprocess.Popen(command, env=environment)
+    while True:
+        try:
+            returncode = process.wait()
+            break
+        except KeyboardInterrupt:
+            # Ctrl+C reached the recorder too; killing the client would leave
+            # it recording, so wait while it closes the bag.
+            continue
+    # Ctrl+C ends ros2 bag record with a nonzero status; a bag is a result.
+    if returncode != 0 and not bag.is_dir():
+        raise OpenADKitError(f"recording failed with exit status {returncode}")
+    return bag
 
 def stop(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["down", "--remove-orphans"])
