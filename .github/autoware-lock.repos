@@ -22,7 +22,7 @@ repositories:
   "core/autoware_utils":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_utils.git"
-    version: "6b89a2e1d9151f1c94d3336b6b8fa54bb50c9217"
+    version: "055603dad8480d446be65d32de40ff8caa231e74"
   "core/autoware_lanelet2_extension":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_lanelet2_extension.git"
@@ -30,23 +30,23 @@ repositories:
   "core/autoware_core":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_core.git"
-    version: "5e648de043cb3426f2638decd37880a02674a1da"
+    version: "0ed769bb8aa56edb4e1b573140868aba01bfc984"
   "core/autoware_rviz_plugins":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_rviz_plugins.git"
-    version: "4e59a74facf189eec5d970fc230e8b5b61fc6a6e"
+    version: "f69d82b2f66d877608cc23b9f09e55969c05e5f6"
   "core/autoware_simple_planning_simulator":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_simple_planning_simulator.git"
-    version: "91e68ee268a71e1ed10858fb68d254183b34005a"
+    version: "fced0c53b3a049c7b300f2ae87b394d1e4c8aaef"
   "core/autoware_system_designer":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_system_designer.git"
-    version: "825aa7d6076e74b9ea551103d0902596e43f17ee"
+    version: "d8a78ff4f81dd6de4dd3ddfac4189c122be7b839"
   "universe/autoware_universe":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_universe.git"
-    version: "e24472651191288006c0f764a4dd121dff2ce87b"
+    version: "ef57fd4f6fbd8878f75a1ddf39712e0fa956dce7"
   "universe/external/tier4_autoware_msgs":
     type: "git"
     url: "https://github.com/tier4/tier4_autoware_msgs.git"
@@ -98,7 +98,7 @@ repositories:
   "launcher/autoware_launch":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_launch.git"
-    version: "4824f75c1b7614b6ec4edcd5a36b4665f680fd8c"
+    version: "8f7c6e01a2ce4afc0b7b5d95d98417b075933bbd"
   "sensor_component/external/sensor_component_description":
     type: "git"
     url: "https://github.com/tier4/sensor_component_description.git"
