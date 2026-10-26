@@ -12,6 +12,9 @@ services:
               capabilities: [gpu]
   perception:
     image: ${SENSING_PERCEPTION_GPU_IMAGE:-ghcr.io/autowarefoundation/openadkit:sensing-perception-cuda}
+    # The CLI installs the CenterPoint models here; mount the same path.
+    volumes:
+      - ${CENTERPOINT_DATA_PATH}:/autoware_data/lidar_centerpoint:rw
     deploy:
       resources:
         reservations:

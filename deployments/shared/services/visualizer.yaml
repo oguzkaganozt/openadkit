@@ -17,6 +17,8 @@ services:
       - USE_SIM_TIME=${USE_SIM_TIME}
       - REMOTE_DISPLAY=${REMOTE_DISPLAY}
       - REMOTE_PASSWORD=${REMOTE_PASSWORD}
+      - WEBSOCKIFY_BIND=${WEBSOCKIFY_BIND:-127.0.0.1}
+      - RVIZ_GPU=${RVIZ_GPU:-auto}
     volumes:
       - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).

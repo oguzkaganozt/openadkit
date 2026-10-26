@@ -2,7 +2,8 @@
 
 The reusable `.github/workflows/evidence.yaml` verifies a specific Open AD Kit
 build and emits a signed in-toto Test Result. It runs automatically after a
-successful `build-all-images` run, and can also be dispatched with `build_tag`.
+successful `build-all-images` run on `main`. For a release, dispatch it with
+`build_tag` on the `release/X.Y` branch that built it.
 
 ## Reuse it in the build-owning repository
 
@@ -38,7 +39,7 @@ jobs:
 
 This runs containers and publishes attestations. A fork's attestations belong
 to that fork, not the Autoware Foundation release identity. For release
-verification the source ref must be `main` and the signer must be the expected
+verification the source ref must be a `release/X.Y` branch and the signer must be the expected
 evidence workflow. Do not replace the signer check with merely an owner check.
 
 The current reusable interface takes **only `build_tag`**. Metadata and source

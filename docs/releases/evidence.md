@@ -47,6 +47,31 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.
 The workflow retries a failed runtime cell once. A short, reasoned, dated CI
 quarantine can label a failure `WARNED` for investigation; **it still blocks a
 release**. The release gate does not consult quarantine to waive a failed test.
+The cells start deployments with `openadkit run --no-visualizer`.
+
+On the 4-vCPU GitHub-hosted runners a scenario-simulation cell occasionally
+fails although the change is sound, about one run in five: Autoware main
+takes minutes to load its components there, and Scenario Simulator V2
+sometimes checks a reused Autoware's state before it has left the previous
+scenario. Hosts with 16 vCPUs pass these cells consistently. Rerun the failed
+jobs once, and investigate only a failure that repeats or a new error. Such a
+failure can turn a run red; it cannot pass a broken change.
+
+## Testing a change without a build
+
+A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against an existing build:
+
+- A pull request that touches `deployments/`, `cli/` or the evidence checks
+  runs them against its base branch's latest successful build. When it also
+  changes an image's inputs, it waits for the build after merge instead.
+- A dispatch of `evidence.yaml` with `source_ref` tests that branch or commit;
+  `build_tag` defaults to the dispatched branch's latest successful build.
+
+The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. Such a run is not release evidence: it is not attested,
+its summary names both commits, and its cells carry the tested commit, which
+the gate rejects.
 
 ## Explicit CI exemptions
 
@@ -62,11 +87,11 @@ Do not use it to hide a known product failure in a normally tested cell.
 
 Pin the latest stable Autoware release at the release cut. If it has a blocking
 issue, keep the previous verified stable pin and explain the exception, date
-and follow-up in the release notes. v2.0's planned pin is **Autoware 1.8.0**;
-the evidence-backed 1.9.0 update belongs in a subsequent release.
+and follow-up in the release notes. v2.0 pins **Autoware 1.9.0**.
 
-Stable Open AD Kit builds must originate from an Autoware release tag.
-Release candidates may also use a full upstream commit SHA. The build's
+Every release, stable or candidate, is built on its `release/X.Y` branch from
+the Autoware release tag in `.github/autoware.ref`. Builds of `main` track
+upstream development and are never released. The build's
 `autoware-lock.repos`, resolved SHA and upstream image digests record the input.
 
 `defaultRosDistro` in the promoted `openadkit.json` explicitly selects the ROS

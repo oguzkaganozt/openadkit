@@ -41,8 +41,8 @@ def find_kit(start: Path) -> Path | None:
         if manifest.is_file():
             try:
                 kind = json.loads(manifest.read_text(encoding="utf-8")).get("kind")
-            except (OSError, ValueError, AttributeError):
-                return None
+            except (OSError, ValueError, AttributeError) as error:
+                raise OpenADKitError(f"invalid manifest {manifest}: {error}") from error
             return directory if kind == "kit" else None
     return None
 
@@ -206,6 +206,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("missing", "always", "never"),
         default="missing",
         help="image pull policy (default: missing)",
+    )
+    run.add_argument(
+        "--no-visualizer",
+        action="store_true",
+        help="start without the visualizer, for hosts nobody watches",
     )
     for catalog in (validate, fetch, run):
         catalog.help_inventory = "catalog"
@@ -586,9 +591,10 @@ def main() -> int:
             raise OpenADKitError(conflict)
         data.install_data(deployment, selection, force=False)
         compose.create_writable_mounts(deployment, selection)
-        compose.start(deployment, selection, args.pull)
+        skipped = configured_services & ({"visualizer"} if args.no_visualizer else set())
+        compose.start(deployment, selection, args.pull, configured_services, skipped)
         print_run_next_steps(
-            deployment, configured_services, selection.node, output_path(selection)
+            deployment, configured_services - skipped, selection.node, output_path(selection)
         )
         return 0
 

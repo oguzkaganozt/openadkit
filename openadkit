@@ -10,6 +10,9 @@ readonly OPENADKIT_VERSION_RE='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]
 
 INSTALL_TEMP=
 INSTALL_STAGE=
+# A replaced release moved aside, and where it goes back if the swap stops.
+INSTALL_ASIDE=
+INSTALL_FINAL=
 RESOLVED_VERSION=
 RESOLVED_ARCHIVE=
 RESOLVED_SHA256=
@@ -19,6 +22,9 @@ usage_fail() { printf 'error: %s\n' "$*" >&2; exit 2; }
 log() { printf '[openadkit] %s\n' "$*"; }
 
 cleanup_install() {
+  if [[ -n $INSTALL_ASIDE && ! -e $INSTALL_FINAL ]]; then
+    mv -T "$INSTALL_ASIDE" "$INSTALL_FINAL"
+  fi
   [[ -z $INSTALL_TEMP ]] || rm -rf "$INSTALL_TEMP"
   [[ -z $INSTALL_STAGE ]] || rm -rf "$INSTALL_STAGE"
 }
@@ -162,14 +168,12 @@ PY
     while [[ -e $moved_aside ]]; do
       moved_aside="${moved_aside}-x"
     done
+    INSTALL_ASIDE=$moved_aside INSTALL_FINAL=$final_root
     mv -T "$final_root" "$moved_aside"
   fi
-  if ! mv "${INSTALL_STAGE}/${root_name}" "$final_root"; then
-    if [[ -n $moved_aside ]]; then
-      mv -T "$moved_aside" "$final_root"
-    fi
-    fail "could not replace ${final_root}"
-  fi
+  # On failure or interruption, cleanup_install moves the old release back.
+  mv "${INSTALL_STAGE}/${root_name}" "$final_root" || fail "could not replace ${final_root}"
+  INSTALL_ASIDE=
   if [[ -n $moved_aside ]]; then
     rm -rf "$moved_aside"
   fi

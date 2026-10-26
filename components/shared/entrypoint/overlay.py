@@ -74,6 +74,9 @@ def apply(layer_package: Path, share: Path, report: dict[str, list[str]]) -> Non
         if source.suffix in (".yaml", ".yml"):
             base = yaml.safe_load(destination.read_text(encoding="utf-8"))
             override = yaml.safe_load(source.read_text(encoding="utf-8"))
+            if override is None:
+                # An empty or comments-only override changes nothing.
+                continue
             if isinstance(base, dict) and isinstance(override, dict):
                 unknown: list[str] = []
                 merge(base, override, "", unknown)

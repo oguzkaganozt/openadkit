@@ -73,7 +73,8 @@ python3 .github/scripts/evidence/release_gate.py \
   --build-metadata release-metadata.json \
   --source-root release-source \
   --default-ros-distro "$(jq -r '.release.defaultRosDistro' release-plan.json)" \
-  --repository "$REPO" --output evidence-report.json
+  --repository "$REPO" --source-ref "refs/heads/release/$LINE" \
+  --output evidence-report.json
 ```
 
 This recomputes subjects and manifest-derived coverage and accepts only one

@@ -148,6 +148,9 @@ def test_stages_pin_ros_snapshot_and_runtime_checks_linked_libraries(path):
 def compose_context(tmp_path, monkeypatch):
     if shutil.which("docker") is None:
         pytest.skip("docker compose is required")
+    # Keep Docker's own config: CI installs Compose v5 into ~/.docker/cli-plugins,
+    # and without it Docker falls back to the runner's older plugin.
+    monkeypatch.setenv("DOCKER_CONFIG", os.environ.get("DOCKER_CONFIG") or str(Path.home() / ".docker"))
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("OPENADKIT_CONFIG_DIR", str(tmp_path / "config"))
     monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))
@@ -200,7 +203,10 @@ def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_conte
     document["extends"] = str(ROOT)
     path.write_text(json.dumps(document))
     directory = kit
-    (directory / "config.env").write_text("VEHICLE_ID=custom\n")
+    # Documented site settings, used by the shared services and runtime.env.
+    (directory / "config.env").write_text(
+        "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
+    )
     with (directory / "docker-compose.yaml").open("a") as output:
         output.write(override)
     result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-kit", "--json"],
@@ -210,3 +216,17 @@ def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_conte
     assert report["overlayConformant"] is (rule is None)
     assert {warning["rule"] for warning in report["overlayWarnings"]} == ({rule} if rule else set())
     assert all(warning.get("service") != "acme-probe" for warning in report["overlayWarnings"])
+
+
+def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, tmp_path):
+    import data
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/logging-simulation.env").write_text("DATA_PATH=/srv/autoware_data\n")
+    deployment = manifest.get_deployment(ROOT, compose_context, "logging-simulation")
+    selection = compose.resolve_settings(
+        deployment, deployment.select(compose_context, "humble", True, require_gpu=False))
+    resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")
+    result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
+    mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["perception"]["volumes"]}
+    assert mounts["/autoware_data"] == "/srv/autoware_data"
+    assert mounts["/autoware_data/lidar_centerpoint"] == str(data.resolve_destination(resource, selection))

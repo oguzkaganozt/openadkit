@@ -59,6 +59,18 @@ check `openadkit logs <deployment> --follow`.
 Port 6080 serves the visualizer. Stop the service that holds the port. The CLI deployments use host
 networking, so adding a `ports:` mapping to `docker-compose.yaml` has no effect.
 
+### Point clouds arrive at a lower rate than they are published
+
+Large messages need large UDP buffers between the containers.
+`deployments/shared/cyclonedds.xml` requests them, and `openadkit setup` raises
+the kernel limits that cap them (`/etc/sysctl.d/99-openadkit-dds.conf`). Check
+the limit and whether the kernel drops packets:
+
+```bash
+sysctl net.core.rmem_max      # 2147483647 after setup
+nstat -az UdpRcvbufErrors     # a growing count means drops
+```
+
 ### ROS 2 nodes on another machine cannot see the stack
 
 DDS stays on loopback by default. To reach other hosts, set
@@ -69,6 +81,8 @@ DDS stays on loopback by default. To reach other hosts, set
 CYCLONEDDS_NETWORK_INTERFACE=eth0
 ```
 
+This applies to single-host runs; a split-host node always keeps DDS on
+loopback and reaches the other host through its Zenoh bridge.
 `ROS_DOMAIN_ID` separates traffic but provides no authentication or encryption.
 
 ## Getting Help

@@ -451,6 +451,40 @@ def overlay_warnings(
 INTERPOLATION_RE = re.compile(r"(?<!\$)\$(?:\{)?([A-Za-z_][A-Za-z0-9_]*)")
 
 
+def baseline_injections(
+    deployment: Deployment, selection: Selection, kit: RuntimeContext, base_selection: Selection
+) -> dict[str, str]:
+    """The kit's injections with the base's images, as the base runs on this host.
+
+    The kit's config/state mounts and public env values stay, so only what the
+    kit replaces differs. An image override in the host's site file applies to
+    the base as well: a source checkout reads it there (a pinned one ignores
+    image overrides), and it is the host's choice, not the kit's replacement.
+    """
+    injections = dict(selection.injections)
+    image_names = set(kit.base.component_images) | set(kit.base.artifacts) if kit.base else set()
+    images = {name: value for name, value in base_selection.injections.items() if name in image_names}
+    if not kit.pinned and deployment.site_config.is_file():
+        site = parse_dotenv(deployment.site_config)
+        images.update({name: value for name, value in site.items() if name in image_names and value})
+    injections.update(images)
+    return injections
+
+
+def kit_variables(deployment: Deployment, gpu: bool) -> set[str]:
+    """Variables the kit sets in its env files or reads in its Compose files.
+
+    The host's site file is not part of the kit: what it sets, such as the
+    documented *_IMAGE overrides, belongs to this host, not to the contract.
+    """
+    used: set[str] = set()
+    for path in deployment.env_layers[-1].files(gpu):
+        used.update(parse_dotenv(path))
+    for path in deployment.compose_files(gpu):
+        used.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
+    return used
+
+
 def check_overlay(
     deployment: Deployment, selection: Selection, kit: RuntimeContext
 ) -> list[dict[str, str]]:
@@ -459,11 +493,7 @@ def check_overlay(
     assert kit.base is not None
     base = deployment.base
     base_selection = base.select(kit.base, selection.ros_distro, selection.gpu)
-    # Keep the kit's config/state mounts and public env values in the baseline,
-    # but not its replacement images.
-    injections = dict(selection.injections)
-    image_names = set(kit.base.component_images) | set(kit.base.artifacts)
-    injections.update({name: value for name, value in base_selection.injections.items() if name in image_names})
+    injections = baseline_injections(deployment, selection, kit, base_selection)
     baseline = Selection(selection.ros_distro, selection.gpu, None, injections, selection.environment)
     original = compose_model(base, baseline, environment_from=deployment)
     current = compose_model(deployment, selection)
@@ -472,16 +502,15 @@ def check_overlay(
         for path in layer.files(selection.gpu):
             declared.update(parse_dotenv(path))
     declared.update(item["destinationEnv"] for item in deployment.data)
-    # Include variables used by shared services, including host values such as
-    # HOME. This remains static: no image pull or inspection is needed.
+    # Include variables used by shared services and their env files, including
+    # host values such as HOME. This remains static: no image pull or inspection
+    # is needed.
     for directory in [base.directory, *(base.root / "deployments" / name for name in base.shared)]:
         for path in directory.rglob("*"):
-            if path.suffix not in (".yaml", ".yml") or not path.is_file():
+            if path.suffix not in (".yaml", ".yml", ".env") or not path.is_file():
                 continue
             declared.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
-    used = set(deployment.configuration_environment(selection.gpu))
-    for path in deployment.compose_files(selection.gpu):
-        used.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
+    used = kit_variables(deployment, selection.gpu)
     warnings = overlay_warnings(original, current, used - declared)
     for warning in warnings:
         print(f"warning: overlay contract: {warning['message']}", file=sys.stderr)
@@ -571,7 +600,10 @@ def failed_services(
     failed = set()
     for line in result.stdout.splitlines():
         container, service, restarts, state, exit_code = line.split()
+        # Reset services may finish, as map-check does, but not fail.
         if service in deployment.reset_services(selection.node):
+            if state == "exited" and exit_code != "0":
+                failed.add(service)
             continue
         # `up` keeps unchanged containers, and with them earlier restarts.
         restarted = int(restarts) > baseline.get(container, 0)
@@ -606,9 +638,18 @@ def check_services_stay_up(
         time.sleep(1)
 
 
-def start(deployment: Deployment, selection: Selection, pull_policy: str) -> None:
+def start(
+    deployment: Deployment,
+    selection: Selection,
+    pull_policy: str,
+    services: set[str],
+    skipped: set[str] | None = None,
+) -> None:
+    """Start `services` of the rendered set; `skipped` ones get no container."""
+    skipped = skipped or set()
     if pull_policy != "never":
-        compose_run(deployment, selection, ["pull", "--policy", pull_policy])
+        pull = ["pull", "--policy", pull_policy]
+        compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
 
     for service in deployment.reset_services(selection.node):
         compose_run(
@@ -630,6 +671,7 @@ def start(deployment: Deployment, selection: Selection, pull_policy: str) -> Non
             "--pull",
             "never",
             "--remove-orphans",
+            *(f"--scale={service}=0" for service in sorted(skipped)),
         ],
     )
     check_services_stay_up(deployment, selection, baseline)

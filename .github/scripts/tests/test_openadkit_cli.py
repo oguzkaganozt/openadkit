@@ -112,11 +112,13 @@ def edit_kit(root, change):
     path.write_text(json.dumps(document))
 
 
-def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}'):
+def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
+                services=("app", "acme")):
     """One stateful stub shared by runtime and integrator subprocess tests."""
     calls = tmp_path / "docker-calls"
     live = tmp_path / "projects.json"
     live.write_text(json.dumps([{"Name": name, "Status": "running(1)"} for name in projects]))
+    service_lines = "\n".join(services)
     executable(tmp_path / "bin/docker", f'''#!/usr/bin/env python3
 import json, os, sys
 from pathlib import Path
@@ -124,7 +126,7 @@ args = sys.argv[1:]
 text = " ".join(args)
 with open({str(calls)!r}, "a") as output:
     env = {{name: value for name, value in os.environ.items()
-           if name.startswith("OPENADKIT_") or name in ("API_IMAGE", "VALUE", "ROS_DISTRO")}}
+           if name.startswith("OPENADKIT_") or name in ("API_IMAGE", "VALUE", "ROS_DISTRO", "CYCLONEDDS_NETWORK_INTERFACE")}}
     output.write(json.dumps({{"args": args, "env": env}}) + "\\n")
 live = Path({str(live)!r})
 if text == "info":
@@ -140,7 +142,7 @@ elif args[0] == "inspect":
 elif "config --format json" in text:
     print('{{"services": {{}}}}')
 elif "config --services" in text:
-    print("app\\nacme")
+    print({service_lines!r})
 elif "config --quiet" in text:
     sys.exit({config})
 elif "up --detach" in text:
@@ -264,16 +266,20 @@ def test_install_rejects_corrupt_or_unsafe_bundle(tmp_path, options, message):
     assert not (tmp_path / "escape").exists()
 
 
-def test_failed_replacement_restores_previous_release(tmp_path):
+@pytest.mark.parametrize(("stop", "message"), [
+    ("exit 1", "could not replace"),
+    ("kill -TERM $PPID; exit 1", ""),
+])
+def test_failed_replacement_restores_previous_release(tmp_path, stop, message):
     bin_dir = release_bin(tmp_path)
     assert install(tmp_path, bin_dir).returncode == 0
     root = installed(tmp_path).parent
     (root / "marker").write_text("previous")
     executable(bin_dir / "mv", "#!/usr/bin/env bash\n"
-               f'if [[ $# -eq 2 && "$2" == "{root}" && "$1" == *".openadkit-stage."* ]]; then exit 1; fi\n'
+               f'if [[ $# -eq 2 && "$2" == "{root}" && "$1" == *".openadkit-stage."* ]]; then {stop}; fi\n'
                f'exec {shutil.which("mv")} "$@"\n')
     result = install(tmp_path, bin_dir, "--force")
-    assert result.returncode != 0 and "could not replace" in result.stderr
+    assert result.returncode != 0 and message in result.stderr
     assert (root / "marker").read_text() == "previous"
     assert installed(tmp_path).is_file()
     assert (tmp_path / "home/.local/bin/openadkit").resolve() == installed(tmp_path)
@@ -365,6 +371,22 @@ def test_run_preflight_does_not_touch_data_or_start_containers(tmp_path, options
     assert not (tmp_path / "home/data").exists()
 
 
+@pytest.mark.parametrize("node", [None, "secondary"])
+def test_a_split_node_keeps_dds_on_loopback(tmp_path, node):
+    # A LAN interface in the host settings would put DDS on the network and
+    # around the Zenoh allowlist; only a single-host run may opt in to that.
+    root, _ = runtime_tree(tmp_path, document=manifest(nodes=node is not None))
+    site = root.parent / "home/.config/openadkit/example.env"
+    site.parent.mkdir(parents=True, exist_ok=True)
+    site.write_text("CYCLONEDDS_NETWORK_INTERFACE=eth0\n")
+    calls = fake_docker(tmp_path)
+    args = ["--node", node] if node else []
+    result = run_cli(root, "run", "example", *args, "--pull", "never", NODE_TOKEN="token")
+    assert result.returncode == 0, result.stderr
+    up = next(row for row in recorded(calls) if "up" in row["args"])
+    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if node else None)
+
+
 def test_split_node_run_discovery_and_safe_stop(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
     calls = fake_docker(tmp_path)
@@ -384,6 +406,21 @@ def test_split_node_run_discovery_and_safe_stop(tmp_path):
     assert result.returncode == 0, result.stderr
     down = next(row["args"] for row in recorded(calls) if "down" in row["args"])
     assert "openadkit-example-secondary" in down and "--volumes" not in down
+
+
+@pytest.mark.parametrize("headless", [False, True])
+def test_run_can_leave_out_the_visualizer(tmp_path, headless):
+    root, _ = runtime_tree(tmp_path)
+    calls = fake_docker(tmp_path, services=("app", "visualizer"))
+    result = run_cli(root, "run", "example", *(["--no-visualizer"] if headless else []))
+    assert result.returncode == 0, result.stderr
+    rows = [row["args"] for row in recorded(calls)]
+    up = next(args for args in rows if "up" in args)
+    pull = next(args for args in rows if "pull" in args)
+    assert ("--scale=visualizer=0" in up) is headless
+    # A left-out service is not pulled either.
+    assert pull[pull.index("missing") + 1:] == (["app"] if headless else [])
+    assert ("visualizer: https://localhost:6080" in result.stdout) is not headless
 
 
 @pytest.mark.parametrize(("projects", "args", "message"), [
@@ -456,6 +493,13 @@ def files_resource(tmp_path, *, env="MAP_PATH", name="dataset", **extra):
                        "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}], **extra}
 
 
+@pytest.mark.parametrize("name", ["../escape", "maps/town", "Map", ""])
+def test_data_resource_names_must_be_safe_path_names(tmp_path, name):
+    resource = files_resource(tmp_path) | {"name": name}
+    with pytest.raises(cli_manifest.OpenADKitError, match="name"):
+        cli_manifest._validate_data([resource], {})
+
+
 def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
     target = tmp_path / "home/data/map"
@@ -520,12 +564,14 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
 
 def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
-    inspect = "kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
+    # Reset services may exit, but not fail: "init" finished, "rosbag" crashed.
+    inspect = ("kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
+               "bag rosbag 0 exited 1\n")
     monkeypatch.setattr(cli_compose, "capture_process",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init"})})()
+    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_manifest.Selection("humble", False, None, {}, {})
-    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning"]
+    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning", "rosbag"]
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
@@ -783,6 +829,19 @@ def test_kit_artifact_fallback_and_wildcard_override(tmp_path, base_refs):
     assert context.artifact_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
     edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"workload": "api", "ref": OTHER_PIN}}))
     assert cli_manifest.load_kit(kit).artifact_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
+    # Every distro is `ref`, never a "*" distro.
+    edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"workload": "api", "distros": {"*": OTHER_PIN}}}))
+    with pytest.raises(cli_manifest.OpenADKitError, match="invalid ROS distro"):
+        cli_manifest.load_kit(kit)
+
+
+@pytest.mark.parametrize("text", ["[]", "{"])
+def test_a_broken_nearest_manifest_is_an_error_not_another_kit(tmp_path, text):
+    root, _ = runtime_tree(tmp_path)
+    (tmp_path / "kit").mkdir()
+    (tmp_path / "kit/openadkit.json").write_text(text)
+    result = run_cli(root, "list", directory=tmp_path / "kit")
+    assert result.returncode == 1 and f"invalid manifest {tmp_path / 'kit/openadkit.json'}" in result.stderr
 
 
 @pytest.mark.parametrize("release", [False, True])
@@ -886,6 +945,43 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
         assert record.read_text().strip() == f"{kit}|1|run custom --pull never"
     else:
         assert "openadkit install --version v1.2.3" in result.stderr
+
+
+def test_overlay_contract_leaves_the_hosts_site_settings_out(tmp_path, monkeypatch):
+    # A documented image override in the site file is not a kit variable.
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for name in ISOLATED_ENV:
+        monkeypatch.delenv(name, raising=False)
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    (kit / "deployments/custom/config.env").write_text("VALUE=kit\nKIT_TYPO=1\n")
+    site_config(root, f"API_IMAGE={OTHER_PIN}\nHOST_ONLY=1\n", name="custom")
+    deployment = cli_manifest.get_deployment(kit, cli_manifest.load_kit(kit), "custom")
+    used = cli_compose.kit_variables(deployment, False)
+    assert {"VALUE", "KIT_TYPO", "OPENADKIT_BASE_DEPLOYMENT"} <= used
+    assert not used & {"API_IMAGE", "HOST_ONLY"}
+
+
+@pytest.mark.parametrize("site", [False, True])
+def test_overlay_baseline_runs_the_hosts_images_but_not_the_kits(tmp_path, monkeypatch, site):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for name in ISOLATED_ENV:
+        monkeypatch.delenv(name, raising=False)
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, artifacts={"API_IMAGE": {"workload": "api", "ref": OTHER_PIN}})
+    host_image = "example.com/host/vehicle:1"
+    if site:
+        site_config(root, f"VEHICLE_SYSTEM_IMAGE={host_image}\n", name="custom")
+    context = cli_manifest.load_kit(kit)
+    deployment = cli_manifest.get_deployment(kit, context, "custom")
+    selection = deployment.select(context, "humble", False)
+    base_selection = deployment.base.select(context.base, "humble", False)
+    baseline = cli_compose.baseline_injections(deployment, selection, context, base_selection)
+    # The kit's artifact replaces the base's api image: the baseline keeps the base's.
+    assert selection.injections["API_IMAGE"] == OTHER_PIN != baseline["API_IMAGE"]
+    assert baseline["API_IMAGE"] == base_selection.injections["API_IMAGE"]
+    # The host's override reaches both models, so it is no replacement.
+    assert (baseline["VEHICLE_SYSTEM_IMAGE"] == selection.injections["VEHICLE_SYSTEM_IMAGE"] == host_image) is site
 
 
 def test_overlay_contract_distinguishes_base_changes_from_added_services():

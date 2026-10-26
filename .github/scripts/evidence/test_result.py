@@ -110,6 +110,10 @@ def main():
     parser.add_argument("--cells-dir", required=True)
     parser.add_argument("--build-metadata", required=True)
     parser.add_argument("--source-root", required=True)
+    parser.add_argument(
+        "--source-sha",
+        help="commit the cells tested, when it is not the build's own (not release evidence)",
+    )
     parser.add_argument("--quarantine")
     parser.add_argument(
         "--expected-cells",
@@ -162,10 +166,14 @@ def main():
         json.dumps(predicate, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
+    build_sha = metadata.get("openadkit_sha")
+    source_sha = args.source_sha or build_sha
     summary = {
         "schemaVersion": 2,
         "build_tag": metadata.get("build_tag", "unknown"),
-        "source_sha": metadata.get("openadkit_sha"),
+        "build_sha": build_sha,
+        "source_sha": source_sha,
+        "release_evidence": source_sha == build_sha,
         "result": result,
         "quarantine": quarantine_notes,
         "missing": missing,

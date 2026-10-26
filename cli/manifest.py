@@ -178,44 +178,87 @@ def ensure_safe_existing(
     return current
 
 
-def _dotenv_value(raw: str, where: str) -> str:
-    """Read a value the way Compose does: quotes group, ` #` starts a comment."""
-    value = raw.strip()
-    quote = value[:1]
-    if quote in ("'", '"'):
-        end = value.find(quote, 1)
-        while end != -1 and value[end - 1] == "\\":
-            end = value.find(quote, end + 1)
-        if end == -1:
-            raise OpenADKitError(f"unterminated quoted value at {where}")
-        rest = value[end + 1 :].strip()
-        if rest and not rest.startswith("#"):
-            raise OpenADKitError(f"unexpected text after quoted value at {where}")
-        return value[1:end].replace("\\" + quote, quote)
-    comment = value.find(" #")
-    return (value if comment == -1 else value[:comment]).strip()
+# The escapes Compose applies inside a double-quoted value.
+DOTENV_ESCAPES = {"n": "\n", "r": "\r", "t": "\t", "\\": "\\", '"': '"', "$": "$"}
+
+
+def _dotenv_unescape(value: str) -> str:
+    result, index = [], 0
+    while index < len(value):
+        char = value[index]
+        if char == "\\" and index + 1 < len(value):
+            following = value[index + 1]
+            if following in DOTENV_ESCAPES:
+                result.append(DOTENV_ESCAPES[following])
+                index += 2
+                continue
+        result.append(char)
+        index += 1
+    return "".join(result)
 
 
 def parse_dotenv(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
+    """Read a Compose env file the way Compose does.
+
+    Quoted values may span lines and keep comments; a double-quoted value
+    unescapes \\n, \\r, \\t, \\", \\\\ and \\$; an unquoted one ends at " #".
+    """
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        text = path.read_text(encoding="utf-8")
     except OSError as error:
         raise OpenADKitError(f"could not read environment file {path}: {error}") from error
-    for number, raw in enumerate(lines, 1):
-        line = raw.strip()
-        if not line or line.startswith("#"):
+    values: dict[str, str] = {}
+    index, line = 0, 1
+    length = len(text)
+    while index < length:
+        start_of_line = index
+        line_end = text.find("\n", index)
+        line_end = length if line_end == -1 else line_end
+        raw = text[start_of_line:line_end]
+        index = line_end + 1
+        where = f"{path}:{line}"
+        stripped = raw.strip()
+        line += 1
+        if not stripped or stripped.startswith("#"):
             continue
-        if "=" not in line:
-            raise OpenADKitError(f"invalid dotenv assignment at {path}:{number}")
-        name, value = line.split("=", 1)
+        if "=" not in raw:
+            raise OpenADKitError(f"invalid dotenv assignment at {where}")
+        name, value_start = raw.split("=", 1)
         name = name.strip()
         words = name.split(None, 1)
         if len(words) == 2 and words[0] == "export":
             name = words[1]
         if not ENV_NAME_RE.fullmatch(name):
-            raise OpenADKitError(f"invalid environment name at {path}:{number}: {name}")
-        values[name] = _dotenv_value(value, f"{path}:{number}")
+            raise OpenADKitError(f"invalid environment name at {where}: {name}")
+        # Position of the value in the whole text, for multi-line values.
+        offset = start_of_line + raw.index("=") + 1
+        while offset < length and text[offset] in " \t":
+            offset += 1
+        if offset < length and text[offset] in ("'", '"'):
+            quote = text[offset]
+            cursor = offset + 1
+            while cursor < length:
+                if quote == '"' and text[cursor] == "\\":
+                    cursor += 2
+                    continue
+                if text[cursor] == quote:
+                    break
+                cursor += 1
+            if cursor >= length:
+                raise OpenADKitError(f"unterminated quoted value at {where}")
+            content = text[offset + 1 : cursor]
+            line += content.count("\n")
+            rest_end = text.find("\n", cursor + 1)
+            rest_end = length if rest_end == -1 else rest_end
+            rest = text[cursor + 1 : rest_end].strip()
+            if rest and not rest.startswith("#"):
+                raise OpenADKitError(f"unexpected text after quoted value at {where}")
+            values[name] = _dotenv_unescape(content) if quote == '"' else content
+            index = rest_end + 1
+            continue
+        value = value_start
+        comment = value.find(" #")
+        values[name] = (value if comment == -1 else value[:comment]).strip()
     return values
 
 
@@ -397,7 +440,6 @@ class Deployment:
         # Runtime layers below are resolved once; they never delegate to base.
         self.base = base
         self.directory = directory
-        self.manifest_path = directory / "deployment.json"
         self.manifest = manifest
         self.name: str = manifest["name"]
         self.compose: dict[str, Any] = manifest["compose"]
@@ -526,6 +568,9 @@ class Deployment:
         # runtime.env reads this, so each node joins its own DDS domain and
         # two nodes on one host stay isolated until the Zenoh bridge links them.
         injections["OPENADKIT_ROS_DOMAIN_ID"] = str(self.nodes[node]["rosDomainId"])
+        # Only the Zenoh bridge and its allowlist link nodes: DDS stays on
+        # loopback even when the host settings name a LAN interface.
+        injections["CYCLONEDDS_NETWORK_INTERFACE"] = "lo"
         return injections
 
     def select(
@@ -653,6 +698,9 @@ def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
             raise OpenADKitError(f"{where} must be an object")
         reject_unknown(resource, ALLOWED_DATA_KEYS, where)
         resource_name = require_string(resource.get("name"), f"{where}.name")
+        # The name also names the staging directory of its download.
+        if not NAME_RE.fullmatch(resource_name):
+            raise OpenADKitError(f"invalid {where}.name: {resource_name}")
         if resource_name in names:
             raise OpenADKitError(f"duplicate data resource: {resource_name}")
         names.add(resource_name)
@@ -1013,13 +1061,14 @@ def _parse_artifacts(value: Any, component_images: dict[str, str]) -> dict[str, 
             raise OpenADKitError(f"invalid {where}.workload: {workload}")
         if ("ref" in artifact) == ("distros" in artifact):
             raise OpenADKitError(f"{where} needs exactly one of ref or distros")
+        # `ref` serves every distro; `distros` names each one.
         references = (
             {"*": artifact["ref"]} if "ref" in artifact else artifact["distros"]
         )
         if not isinstance(references, dict) or not references:
             raise OpenADKitError(f"{where}.distros must be a nonempty object")
         for distro, reference in references.items():
-            if distro != "*" and not NAME_RE.fullmatch(distro):
+            if "ref" not in artifact and not NAME_RE.fullmatch(distro):
                 raise OpenADKitError(f"invalid ROS distro in {where}: {distro}")
             if not isinstance(reference, str) or not IMAGE_REFERENCE_RE.fullmatch(reference):
                 raise OpenADKitError(f"{where} must use digest-pinned image references")

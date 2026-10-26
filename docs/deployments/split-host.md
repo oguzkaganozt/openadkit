@@ -26,7 +26,8 @@ nodes can also run on **one machine** for testing, as long as each listens on
 its own port (see below).
 
 DDS stays local (`CYCLONEDDS_NETWORK_INTERFACE=lo`, applied by both the
-workload containers and the bridge). Only ROS traffic selected by the
+workload containers and the bridge; a node ignores another interface in the
+host settings file). Only ROS traffic selected by the
 workload allowlist crosses Zenoh: simulation time, vehicle status and
 commands, transforms, ADAPI calls, and the enabled sensors. Map blobs, camera
 images, and the visualization/teleop traffic are not routed.

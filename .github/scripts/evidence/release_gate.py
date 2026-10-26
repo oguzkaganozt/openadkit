@@ -18,7 +18,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import validation_matrix  # noqa: E402
-from evidence.cells import legacy_release_cells, predicate_cells  # noqa: E402
+from evidence.cells import predicate_cells  # noqa: E402
 from evidence.subjects import build_subjects  # noqa: E402
 
 PREDICATE_TYPE = "https://in-toto.io/attestation/test-result/v0.1"
@@ -145,9 +145,6 @@ def validate_report(report: dict[str, Any], metadata: dict[str, Any], source_roo
     source_ref = report.get("sourceRef", "")
     require(isinstance(source_ref, str) and RELEASE_REF_RE.fullmatch(source_ref) is not None, "invalid evidence source ref")
     expected = statement_report(report.get("statement", {}), metadata, source_root, default_distro, repository, source_ref)
-    if report.get("schemaVersion") == 1:
-        expected["schemaVersion"] = 1
-        expected["cells"] = legacy_release_cells(predicate_cells(expected["statement"]["predicate"]))
     require(report == expected, "evidence report differs from its validated statement/source")
 
 
