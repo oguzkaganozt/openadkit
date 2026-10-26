@@ -2349,19 +2349,63 @@ override that changed nothing: a package no service has, a file or a parameter
 its package does not have. After a base version change these usually are
 renamed packages, files or parameters. Every service gets the same layers, so a
 package installed in only some images is not reported.</p>
+<h4 id="a-new-vehicle">A New Vehicle<a class="headerlink" href="#a-new-vehicle" title="Permanent link">#</a></h4>
+<p>Autoware's defaults describe a passenger car. Review these for your vehicle;
+their package and path depend on the base's Autoware version, so look them up
+in its images and check <code>run</code>'s override warnings.</p>
+<table>
+<thead>
+<tr>
+<th>Parameters</th>
+<th>File</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dimensions, <code>wheel_base</code>, <code>max_steer_angle</code></td>
+<td><code>vehicle_info.param.yaml</code> of your vehicle description</td>
+<td>Planning and control use them as limits; a steering limit above the vehicle's makes control ask for angles it cannot reach.</td>
+</tr>
+<tr>
+<td>Sensor poses</td>
+<td>your sensor kit's <code>sensor_kit_calibration.yaml</code> and <code>sensors_calibration.yaml</code></td>
+<td>A wrong sign or offset shows up as a localization error of the same size.</td>
+</tr>
+<tr>
+<td><code>nominal_latency</code>, <code>assumed_limit_acc</code></td>
+<td><code>control_validator.param.yaml</code></td>
+<td>Your actuation latency and achievable braking. With car values a slower or weaker vehicle fails validation and triggers an MRM.</td>
+</tr>
+<tr>
+<td><code>pose_measurement.pose_gate_dist</code></td>
+<td><code>ekf_localizer.param.yaml</code></td>
+<td>The Mahalanobis gate for pose updates. A start pose far from the truth can be rejected for good.</td>
+</tr>
+<tr>
+<td>Velocity, acceleration, jerk and steering-rate limits</td>
+<td><code>vehicle_cmd_gate.param.yaml</code></td>
+<td>The last limits before the vehicle interface.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="3-overlay-workspace">3. Overlay Workspace<a class="headerlink" href="#3-overlay-workspace" title="Permanent link">#</a></h3>
 <p>Put ROS packages in <code>overlay_ws/src</code> and build them in the
 <code>universe-common-devel</code> image from the <strong>same build</strong> as your runtime images.
-The example's build script accepts a digest-pinned <code>DEVEL_IMAGE</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>deployments/custom-kit
-<span class="nv">DEVEL_IMAGE</span><span class="o">=</span>ghcr.io/autowarefoundation/openadkit-common@sha256:&lt;digest&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>bash<span class="w"> </span>overlay_ws/build.sh<span class="w"> </span>humble
+A release pins that image next to its runtime images, so the CLI builds with
+the right one:</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build-overlay<span class="w"> </span><span class="o">[</span>--ros-distro<span class="w"> </span>humble<span class="o">]</span><span class="w">               </span><span class="c1"># the kit's workspace</span>
+openadkit<span class="w"> </span>build-overlay<span class="w"> </span>&lt;deployment&gt;<span class="w"> </span><span class="o">[</span>--ros-distro<span class="w"> </span>humble<span class="o">]</span><span class="w">  </span><span class="c1"># and the deployment's own</span>
 </code></pre></div>
-<p>Obtain the matching digest from the build metadata or release BOM. Without an
-override, the example script uses a moving source-development tag; do not use
-that default as a production pin. Keep separate workspace outputs for different
-ROS distros. The CLI mounts the workspace and the hook sources
-<code>overlay_ws/install/local_setup.bash</code> on top of Autoware.</p>
+<p>Without a deployment it builds the kit's workspace, which all its deployments
+share. With one, it builds each workspace that deployment mounts, the kit's
+first. Each builds at the path the services mount it, and the CLI records the image and distro in
+<code>install/.openadkit-overlay.json</code>. After a base upgrade or a distro change,
+<code>validate</code> and <code>run</code> warn until you rebuild. Releases before this pin, and
+source checkouts, pin no devel image: set <code>DEVEL_IMAGE</code> to the matching
+<code>universe-common-devel</code> digest from the build metadata or release BOM. The
+CLI mounts the workspace and the hook sources <code>overlay_ws/install/local_setup.bash</code>
+on top of Autoware.</p>
 <p>The workspace belongs to the kit: <code>overlay_ws</code> at the kit root serves every
 deployment of the kit, since they all extend one base and its images. A
 deployment may add its own <code>overlay_ws</code> in its directory; the hook sources it
