@@ -17,6 +17,8 @@ ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_REFERENCE_RE = re.compile(r"^\S+@sha256:[0-9a-f]{64}$")
 GPU_COMPONENT_IMAGE = "SENSING_PERCEPTION_GPU_IMAGE"
+# The image a release builds integrator overlays in, pinned with its runtime images.
+DEVEL_IMAGE_TARGET = "universe-common-devel"
 # Manifests from before v2.0.0 never shipped in a stable release; they are
 # rejected rather than translated.
 SCHEMA_VERSION = 2
@@ -341,6 +343,10 @@ class RuntimeContext:
     def pinned(self) -> bool:
         """Release images cannot be overridden from env files; source images can."""
         return self.image_prefix_component is None
+
+    def devel_image(self, ros_distro: str) -> str | None:
+        """The devel image of the build the runtime images come from, if pinned."""
+        return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
 
     def bom(self) -> dict[str, Any]:
         """What this kit runs: Autoware, component images and artifacts."""
