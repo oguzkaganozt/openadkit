@@ -212,7 +212,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="start without the visualizer, for hosts nobody watches",
     )
-    for catalog in (validate, fetch, run):
+    build_overlay = subparsers.add_parser(
+        "build-overlay",
+        help="build the deployment's overlay workspaces in the pinned devel image",
+    )
+    add_run_arguments(build_overlay, gpu=False)
+    for catalog in (validate, fetch, run, build_overlay):
         catalog.help_inventory = "catalog"
 
     clean = subparsers.add_parser(
@@ -499,6 +504,22 @@ def main() -> int:
         data.remove_installed_data(deployment, selection, include_gpu=True)
         return 0
 
+    if args.command == "build-overlay":
+        if not args.deployment:
+            require_deployment_name(args.command)
+            list_deployments(root, kit)
+            return 2
+        deployment = get_deployment(root, kit, args.deployment)
+        selection = deployment.select(kit, args.ros_distro, False, require_gpu=False)
+        image = os.environ.get("DEVEL_IMAGE") or kit.devel_image(selection.ros_distro)
+        if not image:
+            raise OpenADKitError(
+                "this Open AD Kit pins no devel image; set DEVEL_IMAGE to the "
+                "universe-common-devel image of the build your runtime images come from"
+            )
+        compose.build_overlay(deployment, selection, image)
+        return 0
+
     if args.command in ("fetch", "validate", "run"):
         if not args.deployment:
             require_deployment_name(args.command)
@@ -531,6 +552,7 @@ def main() -> int:
         data.validate_destinations(deployment, selection)
         configured_services = compose.render(deployment, selection)
         overlay_warnings = compose.check_overlay(deployment, selection, kit)
+        compose.check_overlay_builds(deployment, selection, kit.devel_image(selection.ros_distro))
         if args.command == "validate":
             mode = "gpu" if selection.gpu else "cpu"
             results: list[dict[str, Any]] | None = (
