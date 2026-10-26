@@ -183,6 +183,14 @@ Releases promote an existing CI build; nothing is rebuilt.
 
 ### Workflow
 
+To run the whole chain at once, dispatch
+[`release-pipeline.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release-pipeline.yaml)
+on the `release/X.Y` branch with the version. It waits for the branch head's
+build (starting one if none exists, or using `build_tag` when given), then
+dispatches `scan-images` and `evidence` for it and, when both pass,
+`release.yaml`. Each step is still its own run, checked by the same gates; if
+one fails, rerun that workflow and then the chain's failed jobs.
+
 Run [`release.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml)
 on the same `release/X.Y` branch with the version and `build_tag`. A release
 line releases with its own workflows and scripts, so a later `main` cannot
