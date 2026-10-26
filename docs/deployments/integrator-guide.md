@@ -75,9 +75,11 @@ override and restarting returns to the remaining layers.
 
 Unknown packages, files or YAML keys are warnings, not startup failures. The
 hook logs them and writes `/tmp/openadkit/overlay-report.json` in each container.
-After changing the base version, inspect those reports for renamed parameters.
-Every service gets the same layers, so a package is reported as unknown in the
-images that do not install it; it is a mistake only when no service has it.
+Once the services are up, `run` collects those reports and warns about every
+override that changed nothing: a package no service has, a file or a parameter
+its package does not have. After a base version change these usually are
+renamed packages, files or parameters. Every service gets the same layers, so a
+package installed in only some images is not reported.
 
 ### 3. Overlay Workspace
 

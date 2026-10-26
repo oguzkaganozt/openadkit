@@ -111,7 +111,9 @@ Simulation's Kashiwanoha map is removed, restore it with
 
 `run` downloads missing data, but never replaces an existing data directory.
 Replace incomplete or outdated managed data explicitly with `fetch --force`;
-`run --force` is not supported.
+`run --force` is not supported. Managed data is outdated when the deployment
+now declares other content for it, for example a fixed map with a new checksum:
+`run`, `fetch` and `validate --data` then stop and ask for `fetch --force`.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file.
 `clean --data` and `--force` only delete or replace marked data. Data that was
