@@ -766,12 +766,10 @@ def overlay_workspaces(deployment: Deployment) -> list[tuple[Path, str]]:
     ]
 
 
-def build_overlay(deployment: Deployment, selection: Selection, image: str) -> None:
+def build_overlay(workspaces: list[tuple[Path, str]], image: str, ros_distro: str) -> None:
     """Build each overlay layer in the devel image, on top of the ones before it."""
-    workspaces = overlay_workspaces(deployment)
-    if not workspaces:
-        raise OpenADKitError(f"{deployment.name} has no overlay_ws/src to build")
     require_docker()
+    environment = _compose_ls_environment()
     below: list[tuple[Path, str]] = []
     for host, target in workspaces:
         mounts = [arg for path, mount in below for arg in ("--volume", f"{path}:{mount}:ro")]
@@ -789,10 +787,10 @@ def build_overlay(deployment: Deployment, selection: Selection, image: str) -> N
                 "--entrypoint", "bash",
                 image, "-c", OVERLAY_BUILD, "bash", *(mount for _, mount in below),
             ],
-            env=process_environment(selection),
+            env=environment,
         )
         (host / "install" / OVERLAY_STAMP).write_text(
-            json.dumps({"image": image, "rosDistro": selection.ros_distro}) + "\n",
+            json.dumps({"image": image, "rosDistro": ros_distro}) + "\n",
             encoding="utf-8",
         )
         print(f"built overlay: {host}")

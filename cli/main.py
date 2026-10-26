@@ -214,7 +214,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     build_overlay = subparsers.add_parser(
         "build-overlay",
-        help="build the deployment's overlay workspaces in the pinned devel image",
+        help="build overlay workspaces in the pinned devel image (in a kit, its own without a deployment)",
     )
     add_run_arguments(build_overlay, gpu=False)
     for catalog in (validate, fetch, run, build_overlay):
@@ -505,19 +505,33 @@ def main() -> int:
         return 0
 
     if args.command == "build-overlay":
-        if not args.deployment:
+        if args.deployment:
+            deployment = get_deployment(root, kit, args.deployment)
+            ros_distro = deployment.select(kit, args.ros_distro, False, require_gpu=False).ros_distro
+            workspaces = compose.overlay_workspaces(deployment)
+            owner = deployment.name
+        elif kit.kind == "kit":
+            # The kit's workspace serves all of its deployments: no name needed.
+            ros_distro = args.ros_distro or kit.default_ros_distro
+            workspaces = [
+                (path, compose.OVERLAY_TARGETS["OPENADKIT_OVERLAY_WS"])
+                for path in [root / "overlay_ws"]
+                if (path / "src").is_dir()
+            ]
+            owner = "this kit"
+        else:
             require_deployment_name(args.command)
             list_deployments(root, kit)
             return 2
-        deployment = get_deployment(root, kit, args.deployment)
-        selection = deployment.select(kit, args.ros_distro, False, require_gpu=False)
-        image = os.environ.get("DEVEL_IMAGE") or kit.devel_image(selection.ros_distro)
+        if not workspaces:
+            raise OpenADKitError(f"{owner} has no overlay_ws/src to build")
+        image = os.environ.get("DEVEL_IMAGE") or kit.devel_image(ros_distro)
         if not image:
             raise OpenADKitError(
-                "this Open AD Kit pins no devel image; set DEVEL_IMAGE to the "
+                f"this Open AD Kit pins no {ros_distro} devel image; set DEVEL_IMAGE to the "
                 "universe-common-devel image of the build your runtime images come from"
             )
-        compose.build_overlay(deployment, selection, image)
+        compose.build_overlay(workspaces, image, ros_distro)
         return 0
 
     if args.command in ("fetch", "validate", "run"):
