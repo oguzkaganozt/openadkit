@@ -1015,6 +1015,15 @@ def test_build_overlay_builds_each_layer_in_the_pinned_devel_image(tmp_path):
     result = run_cli(root, "build-overlay", "custom", directory=kit, DEVEL_IMAGE="local/devel:test")
     assert result.returncode == 0 and "local/devel:test" in recorded(calls)[-1]["args"]
 
+    # Without a deployment a kit builds its own workspace, which all its deployments share.
+    before = len(recorded(calls))
+    result = run_cli(root, "build-overlay", directory=kit)
+    assert result.returncode == 0, result.stderr
+    builds = [row["args"] for row in recorded(calls)[before:] if row["args"][:1] == ["run"]]
+    assert len(builds) == 1 and f"{kit / 'overlay_ws'}:/openadkit/overlay_ws" in builds[0]
+    # Outside a kit there is no such workspace: a deployment is required.
+    assert run_cli(root, "build-overlay").returncode == 2
+
 
 OVERLAY_LAYERS = ("OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT")
 

@@ -103,11 +103,13 @@ A release pins that image next to its runtime images, so the CLI builds with
 the right one:
 
 ```bash
-openadkit build-overlay <deployment> [--ros-distro humble]
+openadkit build-overlay [--ros-distro humble]               # the kit's workspace
+openadkit build-overlay <deployment> [--ros-distro humble]  # and the deployment's own
 ```
 
-It builds each workspace the deployment mounts, the kit's first, at the path
-the services mount it, and records the image and distro in
+Without a deployment it builds the kit's workspace, which all its deployments
+share. With one, it builds each workspace that deployment mounts, the kit's
+first. Each builds at the path the services mount it, and the CLI records the image and distro in
 `install/.openadkit-overlay.json`. After a base upgrade or a distro change,
 `validate` and `run` warn until you rebuild. Releases before this pin, and
 source checkouts, pin no devel image: set `DEVEL_IMAGE` to the matching
