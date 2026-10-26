@@ -10,10 +10,29 @@ configuration, upgrades, and cleanup.
 ```bash
 openadkit status planning-simulation
 openadkit logs planning-simulation --follow
+openadkit logs planning-simulation map planning   # only these services
+openadkit record planning-simulation /tf /localization/kinematic_state
 openadkit stop planning-simulation
 ```
 
 Pass the deployment name. Without it, these commands only list what is running.
+Below its services, `status` shows Autoware's state from the AD API:
+
+```text
+localization initialized
+routing      set
+mode         stop (autonomous available)
+mrm          normal
+```
+
+A line reads `no data` while nothing publishes that state yet, for example
+before localization starts.
+
+`record` writes a rosbag of the named topics (or `--all`) to
+`~/openadkit-recordings/<deployment>-<time>/` (`--output` to change) until
+Ctrl+C. It runs as a copy of the running api container, so it joins the
+deployment's ROS domain and knows the overlay's message types, and the bag stays
+on the host when the deployment stops.
 One deployment runs at a time, including deployments from other kits. `run`
 refuses conflicting projects; stop them from their owning kit first. Declared
 split nodes of the same deployment can still run together.

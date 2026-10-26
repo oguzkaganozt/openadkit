@@ -241,14 +241,31 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="curated deployment name; required when one is running",
     )
+    logs.add_argument("services", nargs="*", metavar="SERVICE", help="only these services")
     logs.add_argument("--follow", action="store_true", help="stream logs")
+    record = subparsers.add_parser(
+        "record", help="record topics of a running deployment into a bag on the host"
+    )
+    record.add_argument(
+        "deployment",
+        nargs="?",
+        help="curated deployment name; required when one is running",
+    )
+    record.add_argument("topics", nargs="*", metavar="TOPIC", help="topics to record")
+    record.add_argument("--all", action="store_true", dest="all_topics", help="record every topic")
+    record.add_argument(
+        "--output",
+        metavar="DIRECTORY",
+        default="~/openadkit-recordings",
+        help="where bags go (default: ~/openadkit-recordings)",
+    )
     stop = subparsers.add_parser("stop", help="stop and remove a deployment")
     stop.add_argument(
         "deployment",
         nargs="?",
         help="curated deployment name; required when one is running",
     )
-    for operational in (status, logs, stop):
+    for operational in (status, logs, stop, record):
         add_node_argument(operational, LIVE_NODE_HELP)
     return parser
 
@@ -624,7 +641,16 @@ def main() -> int:
     if args.command == "status":
         compose.status(deployment, selection)
     elif args.command == "logs":
-        compose.logs(deployment, selection, args.follow)
+        compose.logs(deployment, selection, args.follow, args.services)
+    elif args.command == "record":
+        if bool(args.topics) == args.all_topics:
+            raise OpenADKitError("name the topics to record, or pass --all")
+        if not compose.live_nodes(deployment):
+            raise OpenADKitError(f"{deployment.name} is not running")
+        bag = compose.record(
+            deployment, selection, args.topics, Path(args.output).expanduser().resolve()
+        )
+        print(f"recorded: {bag}")
     elif args.command == "stop":
         compose.stop(deployment, selection)
     return 0
