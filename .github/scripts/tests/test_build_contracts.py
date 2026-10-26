@@ -94,6 +94,9 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
             build = recipe["target"]["universe-common-build"]
             assert build["tags"] == [common_build] and not build["labels"]
             assert build["attest"] == ["type=provenance,disabled=true"]
+            # Nor may the build time: the config records it.
+            assert build["args"]["SOURCE_DATE_EPOCH"] == matrices.COMPILE_BASE_EPOCH
+            assert "SOURCE_DATE_EPOCH" not in row["args"]
             # The build and runtime stages keep separate caches; neither
             # export may overwrite the other.
             cache = "type=registry,ref=ghcr.io/example/openadkit-buildcache:{}-amd64-humble-main"
