@@ -2486,7 +2486,7 @@ branch, and the bump shares <code>main</code>'s.</p>
 </ul>
 <h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
 <p>To run the whole chain at once, dispatch
-<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release-candidate.yaml"><code>release-candidate.yaml</code></a>
+<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release-pipeline.yaml"><code>release-pipeline.yaml</code></a>
 on the <code>release/X.Y</code> branch with the version. It waits for the branch head's
 build (starting one if none exists, or using <code>build_tag</code> when given), then
 dispatches <code>scan-images</code> and <code>evidence</code> for it and, when both pass,
