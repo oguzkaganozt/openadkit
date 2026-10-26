@@ -675,6 +675,66 @@ def start(
         ],
     )
     check_services_stay_up(deployment, selection, baseline)
+    report_overrides(deployment, selection)
+
+
+OVERLAY_MOUNTS = ("/openadkit/overlay_ws", "/openadkit/overlay_ws_deployment")
+
+
+def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
+    """Warn about config overrides that changed nothing in the started services.
+
+    Each hooked service writes /tmp/openadkit/overlay-report.json on start.
+    Every service gets the same layers, so an overridden package is missing
+    from most images; it is a mistake only when no service has it. After a
+    base version change these usually are renamed packages, files or keys.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    if not ids:
+        return []
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", *ids], env=environment, check=False, trace=False
+    )
+    try:
+        containers = json.loads(inspected.stdout) if inspected.returncode == 0 else []
+    except json.JSONDecodeError:
+        containers = []
+    reports: list[dict[str, Any]] = []
+    for container in containers:
+        mounts = [mount.get("Destination", "") for mount in container.get("Mounts") or []]
+        if not any(path.startswith("/openadkit/config/") or path in OVERLAY_MOUNTS for path in mounts):
+            continue
+        result = capture_process(
+            ["docker", "exec", container["Id"], "cat", "/tmp/openadkit/overlay-report.json"],
+            env=environment,
+            check=False,
+            trace=False,
+        )
+        try:
+            report = json.loads(result.stdout) if result.returncode == 0 else None
+        except json.JSONDecodeError:
+            report = None
+        if isinstance(report, dict):
+            reports.append(report)
+    if not reports:
+        return []
+    warnings = [
+        f"package {package} is in no service"
+        for package in sorted(set.intersection(*(set(item.get("unknownPackages", [])) for item in reports)))
+    ]
+    for kind, label in (("unknownFiles", "file"), ("unknownKeys", "parameter")):
+        found = {entry for item in reports for entry in item.get(kind, [])}
+        warnings += [f"{label} {entry} is not in its package" for entry in sorted(found)]
+    for warning in warnings:
+        print(f"warning: override changed nothing: {warning}", file=sys.stderr)
+    if warnings:
+        print(
+            "warning: after a base version change, look for renamed packages, "
+            "files or parameters (config/autoware/<package>/...)",
+            file=sys.stderr,
+        )
+    return warnings
 
 
 def status(deployment: Deployment, selection: Selection) -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
 import http.client
 import json
 import os
@@ -53,6 +54,48 @@ def resource_stage(parent: Path, name: str) -> Iterator[Path]:
 def is_managed(target: Path) -> bool:
     marker = target / MARKER
     return target.is_dir() and not marker.is_symlink() and marker.is_file()
+
+
+def source_digest(resource: dict[str, Any]) -> str:
+    """Identify the content a resource declares, so a changed declaration shows.
+
+    Only checksums and generated content count: a mirror URL for the same bytes
+    is the same data.
+    """
+    source = {
+        "kind": resource["kind"],
+        "sha256": resource.get("sha256"),
+        "expectedRoot": resource.get("expectedRoot"),
+        "files": sorted((item["path"], item["sha256"]) for item in resource.get("files", [])),
+        "generatedFiles": resource.get("generatedFiles", {}),
+    }
+    return hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
+
+
+def is_outdated(target: Path, resource: dict[str, Any]) -> bool:
+    """Managed data installed from a different declaration than the current one."""
+    if not is_managed(target):
+        return False
+    try:
+        marker = json.loads((target / MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    recorded = marker.get("source") if isinstance(marker, dict) else None
+    if isinstance(recorded, str):
+        return recorded != source_digest(resource)
+    # Markers written before the source was recorded: plain files can still be
+    # compared with their checksums; an extracted archive cannot.
+    if resource["kind"] != "files":
+        return False
+    for item in resource["files"]:
+        installed = target / safe_relative(item["path"], "data file path")
+        if not installed.is_file() or sha256_file(installed) != item["sha256"]:
+            return True
+    return any(
+        (target / relative).read_text(encoding="utf-8") != content
+        for relative, content in resource.get("generatedFiles", {}).items()
+        if (target / relative).is_file()
+    )
 
 
 def refuse_unmanaged(target: Path, action: str) -> None:
@@ -291,8 +334,12 @@ def check_installed_data(
     ):
         target = resolve_destination(resource, selection)
         if validate_dataset(target, resource["requiredFiles"]):
-            status = "ok"
-            recovery = None
+            if is_outdated(target, resource):
+                status = "outdated"
+                recovery = "fetch-force"
+            else:
+                status = "ok"
+                recovery = None
         elif target.is_symlink() or (target.exists() and not is_managed(target)):
             # fetch --force refuses these; the operator has to remove them first.
             status = "incomplete"
@@ -366,6 +413,11 @@ def validate_install_targets(
             if target.is_symlink() or not target.is_dir():
                 raise OpenADKitError(f"unsafe data target: {target}")
             refuse_unmanaged(target, "replace")
+        elif is_outdated(target, resource):
+            raise OpenADKitError(
+                f"data at {target} is from an older {resource['name']}; "
+                f"run: openadkit fetch {deployment.name} --force"
+            )
         elif not validate_dataset(target, resource["requiredFiles"]):
             if target.is_symlink() or not is_managed(target):
                 # fetch --force refuses these; the operator has to remove them first.
@@ -421,7 +473,7 @@ def install_resource(
                 )
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 download(item["url"], destination, item["sha256"])
-        for relative, content in resource["generatedFiles"].items():
+        for relative, content in resource.get("generatedFiles", {}).items():
             generated = candidate / safe_relative(relative, "generated data file")
             generated.parent.mkdir(parents=True, exist_ok=True)
             generated.write_text(content, encoding="utf-8")
@@ -431,7 +483,8 @@ def install_resource(
             )
         # Written before publication, so the data and its marker appear together.
         (candidate / MARKER).write_text(
-            json.dumps({"resource": resource["name"]}) + "\n", encoding="utf-8"
+            json.dumps({"resource": resource["name"], "source": source_digest(resource)}) + "\n",
+            encoding="utf-8",
         )
         atomic_publish(candidate, target, expected)
         print(f"installed data: {target}")

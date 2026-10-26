@@ -417,8 +417,9 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
             file=sys.stderr,
         )
     if any(item["recovery"] == "fetch-force" for item in gaps):
+        state = "outdated" if all(item["status"] == "outdated" for item in gaps) else "incomplete"
         print(
-            "error: installed data is incomplete; run: "
+            f"error: installed data is {state}; run: "
             f"openadkit fetch {deployment_name} --force",
             file=sys.stderr,
         )
