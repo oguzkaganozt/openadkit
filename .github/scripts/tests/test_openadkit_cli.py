@@ -519,11 +519,56 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     result = run_cli(root, "fetch", "example", "--force")
     assert result.returncode == 0, result.stderr
     assert (target / "required.txt").read_text() == "replacement"
-    assert json.loads((target / cli_data.MARKER).read_text()) == {"resource": "dataset"}
+    marker = json.loads((target / cli_data.MARKER).read_text())
+    assert marker == {"resource": "dataset", "source": cli_data.source_digest(files_resource(tmp_path))}
     (target / "required.txt").write_text("keep existing")
     assert run_cli(root, "fetch", "example").returncode == 0
     assert (target / "required.txt").read_text() == "keep existing"
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+
+def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
+    resource = files_resource(tmp_path)
+    root, directory = runtime_tree(tmp_path, document=manifest(data=[resource]))
+    target = tmp_path / "home/data/map"
+    fake_docker(tmp_path)
+    assert run_cli(root, "fetch", "example").returncode == 0
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    # A mirror of the same bytes is the same data.
+    moved = tmp_path / "mirror.txt"
+    moved.write_bytes((tmp_path / "dataset.txt").read_bytes())
+    resource["files"][0]["url"] = moved.as_uri()
+    (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+    fixed = tmp_path / "fixed.txt"
+    fixed.write_text("fixed upstream")
+    resource["files"][0] |= {"url": fixed.as_uri(), "sha256": hashlib.sha256(fixed.read_bytes()).hexdigest()}
+    (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
+    result = run_cli(root, "validate", "example", "--data")
+    assert result.returncode == 1 and "data: dataset outdated" in result.stdout
+    assert "openadkit fetch example --force" in result.stderr
+    for command in (("run", "example", "--pull", "never"), ("fetch", "example")):
+        result = run_cli(root, *command)
+        assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
+    assert (target / "required.txt").read_text() == "replacement"
+    fake_docker(tmp_path)  # stopped
+    assert run_cli(root, "fetch", "example", "--force").returncode == 0
+    assert (target / "required.txt").read_text() == "fixed upstream"
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+
+@pytest.mark.parametrize("content, outdated", [("replacement", False), ("older", True)])
+def test_data_marked_before_sources_were_recorded_is_checked_by_checksum(tmp_path, content, outdated):
+    resource = files_resource(tmp_path)
+    target = tmp_path / "installed"
+    target.mkdir()
+    (target / cli_data.MARKER).write_text(json.dumps({"resource": "dataset"}))
+    (target / "required.txt").write_text(content)
+    assert cli_data.is_outdated(target, resource) is outdated
+    # Unmarked data is the operator's own: never reported as outdated.
+    (target / cli_data.MARKER).unlink()
+    assert cli_data.is_outdated(target, resource) is False
 
 
 @pytest.mark.parametrize("live", ["project", "container"])
@@ -572,6 +617,39 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
     deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_manifest.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning", "rosbag"]
+
+
+def test_run_reports_overrides_that_changed_nothing(monkeypatch, capsys):
+    hooked = [{"Destination": "/openadkit/config/deployment"}]
+    containers = [{"Id": "map", "Mounts": hooked}, {"Id": "control", "Mounts": hooked},
+                  {"Id": "carla", "Mounts": [{"Destination": "/data"}]}]
+    reports = {
+        "map": {"unknownPackages": ["autoware_control_config", "autoware_localization_config", "typo_pkg"],
+                "unknownFiles": [], "unknownKeys": []},
+        "control": {"unknownPackages": ["autoware_localization_config", "typo_pkg"], "unknownFiles": [],
+                    "unknownKeys": ["control_validator.param.yaml: nominal_latency"]},
+    }
+    commands = []
+
+    def capture(command, **_):
+        commands.append(command)
+        if command[:2] == ["docker", "inspect"]:
+            return subprocess.CompletedProcess(command, 0, stdout=json.dumps(containers))
+        return subprocess.CompletedProcess(command, 0, stdout=json.dumps(reports[command[2]]))
+
+    monkeypatch.setattr(cli_compose, "compose_capture",
+                        lambda *_, **__: subprocess.CompletedProcess([], 0, stdout="map\ncontrol\ncarla\n"))
+    monkeypatch.setattr(cli_compose, "capture_process", capture)
+    selection = cli_manifest.Selection("humble", False, None, {}, {})
+    warnings = cli_compose.report_overrides(None, selection)
+    # autoware_control_config is installed in the control image, so it is no mistake.
+    assert warnings == ["package autoware_localization_config is in no service", "package typo_pkg is in no service",
+                        "parameter control_validator.param.yaml: nominal_latency is not in its package"]
+    assert "renamed packages" in capsys.readouterr().err
+    assert not any(command[:3] == ["docker", "exec", "carla"] for command in commands)
+    reports["map"] = reports["control"] = {"unknownPackages": [], "unknownFiles": [], "unknownKeys": []}
+    assert cli_compose.report_overrides(None, selection) == []
+    assert capsys.readouterr().err == ""
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
