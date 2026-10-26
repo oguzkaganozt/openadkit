@@ -652,6 +652,35 @@ def test_run_reports_overrides_that_changed_nothing(monkeypatch, capsys):
     assert capsys.readouterr().err == ""
 
 
+def test_status_shows_the_ad_api_state_in_one_line_each():
+    state = {
+        "localization": {"state": "initialized"},
+        "routing": {"state": "set"},
+        "mode": {"state": "stop", "autowareControl": False, "autonomousAvailable": True},
+        "mrm": {"state": "operating", "behavior": "emergency stop"},
+    }
+    assert cli_compose.format_autoware_state(state) == [
+        "localization initialized",
+        "routing      set",
+        "mode         stop (manual control, autonomous available)",
+        "mrm          operating: emergency stop",
+    ]
+    assert cli_compose.format_autoware_state(dict.fromkeys(state))[1] == "routing      no data"
+
+
+def test_logs_and_record_take_services_and_topics(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    calls = fake_docker(tmp_path, projects=["openadkit-example"])
+    assert run_cli(root, "logs", "example", "map", "planning").returncode == 0
+    assert recorded(calls)[-1]["args"][-3:] == ["logs", "map", "planning"]
+    for arguments in ((), ("/tf", "--all")):
+        result = run_cli(root, "record", "example", *arguments)
+        assert result.returncode != 0 and "or pass --all" in result.stderr
+    fake_docker(tmp_path)
+    result = run_cli(root, "record", "example", "/tf")
+    assert result.returncode != 0 and "example is not running" in result.stderr
+
+
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
     payload = b"dataset"
     bodies = []
