@@ -380,8 +380,10 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
     )
     # The Compose project is the deployment: every configured service is meant
     # to run. Only the oneshot services are cross-checked, so a typo in a
-    # resetServices entry still fails fast.
-    unknown = sorted(set(deployment.reset_services(selection.node)) - configured)
+    # resetServices entry still fails fast. A kit inherits its base's oneshots
+    # but may leave their side of the base out (one service layer of it).
+    inherited = set(deployment.base.reset_services()) if deployment.base else set()
+    unknown = sorted(set(deployment.reset_services(selection.node)) - configured - inherited)
     if unknown:
         raise OpenADKitError(
             "manifest references unknown Compose service(s): " + ", ".join(unknown)
@@ -652,6 +654,8 @@ def start(
         compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
 
     for service in deployment.reset_services(selection.node):
+        if service not in services:
+            continue
         compose_run(
             deployment,
             selection,

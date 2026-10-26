@@ -123,6 +123,13 @@ mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; add
 if it also needs the deployment's own packages. The example's `acme-probe`
 service mounts the first: its kit has one workspace.
 
+To replace one side of a base that runs as split-host nodes, include only the
+other side's service layer instead of the base's Compose file. For example, a
+kit that brings its own simulator to `carla-simulation` includes
+`${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml`: no service in it depends
+on a CARLA service. The base's `resetServices` that the kit's services leave
+out are skipped; the kit's own must exist.
+
 ### 5. Image Replacement
 
 Declare consumed images in your kit's `artifacts`, with a `workload` and either

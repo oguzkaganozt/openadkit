@@ -960,6 +960,27 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     assert (bom["images"] is not None) is release
 
 
+def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_path):
+    document = manifest()
+    document["compose"]["resetServices"] = ["loader"]
+    root, _ = runtime_tree(tmp_path, document=document)
+    kit = integrator_kit(tmp_path, root)
+    calls = fake_docker(tmp_path, services=("app", "acme"))
+    # The base itself must still define its oneshots.
+    result = run_cli(root, "validate", "example")
+    assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
+    assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
+    assert run_cli(root, "run", "custom", "--pull", "never", directory=kit).returncode == 0
+    assert not any("rm" in row["args"] for row in recorded(calls))
+    # A kit's own oneshot is checked like a base's.
+    path = kit / "deployments/custom/deployment.json"
+    document = json.loads(path.read_text())
+    document["compose"]["resetServices"] = ["probe"]
+    path.write_text(json.dumps(document))
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
+
+
 OVERLAY_LAYERS = ("OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT")
 
 
