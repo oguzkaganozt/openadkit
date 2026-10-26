@@ -519,11 +519,56 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     result = run_cli(root, "fetch", "example", "--force")
     assert result.returncode == 0, result.stderr
     assert (target / "required.txt").read_text() == "replacement"
-    assert json.loads((target / cli_data.MARKER).read_text()) == {"resource": "dataset"}
+    marker = json.loads((target / cli_data.MARKER).read_text())
+    assert marker == {"resource": "dataset", "source": cli_data.source_digest(files_resource(tmp_path))}
     (target / "required.txt").write_text("keep existing")
     assert run_cli(root, "fetch", "example").returncode == 0
     assert (target / "required.txt").read_text() == "keep existing"
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+
+def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
+    resource = files_resource(tmp_path)
+    root, directory = runtime_tree(tmp_path, document=manifest(data=[resource]))
+    target = tmp_path / "home/data/map"
+    fake_docker(tmp_path)
+    assert run_cli(root, "fetch", "example").returncode == 0
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    # A mirror of the same bytes is the same data.
+    moved = tmp_path / "mirror.txt"
+    moved.write_bytes((tmp_path / "dataset.txt").read_bytes())
+    resource["files"][0]["url"] = moved.as_uri()
+    (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+    fixed = tmp_path / "fixed.txt"
+    fixed.write_text("fixed upstream")
+    resource["files"][0] |= {"url": fixed.as_uri(), "sha256": hashlib.sha256(fixed.read_bytes()).hexdigest()}
+    (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
+    result = run_cli(root, "validate", "example", "--data")
+    assert result.returncode == 1 and "data: dataset outdated" in result.stdout
+    assert "openadkit fetch example --force" in result.stderr
+    for command in (("run", "example", "--pull", "never"), ("fetch", "example")):
+        result = run_cli(root, *command)
+        assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
+    assert (target / "required.txt").read_text() == "replacement"
+    fake_docker(tmp_path)  # stopped
+    assert run_cli(root, "fetch", "example", "--force").returncode == 0
+    assert (target / "required.txt").read_text() == "fixed upstream"
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+
+
+@pytest.mark.parametrize("content, outdated", [("replacement", False), ("older", True)])
+def test_data_marked_before_sources_were_recorded_is_checked_by_checksum(tmp_path, content, outdated):
+    resource = files_resource(tmp_path)
+    target = tmp_path / "installed"
+    target.mkdir()
+    (target / cli_data.MARKER).write_text(json.dumps({"resource": "dataset"}))
+    (target / "required.txt").write_text(content)
+    assert cli_data.is_outdated(target, resource) is outdated
+    # Unmarked data is the operator's own: never reported as outdated.
+    (target / cli_data.MARKER).unlink()
+    assert cli_data.is_outdated(target, resource) is False
 
 
 @pytest.mark.parametrize("live", ["project", "container"])
@@ -572,6 +617,68 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
     deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_manifest.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning", "rosbag"]
+
+
+def test_run_reports_overrides_that_changed_nothing(monkeypatch, capsys):
+    hooked = [{"Destination": "/openadkit/config/deployment"}]
+    containers = [{"Id": "map", "Mounts": hooked}, {"Id": "control", "Mounts": hooked},
+                  {"Id": "carla", "Mounts": [{"Destination": "/data"}]}]
+    reports = {
+        "map": {"unknownPackages": ["autoware_control_config", "autoware_localization_config", "typo_pkg"],
+                "unknownFiles": [], "unknownKeys": []},
+        "control": {"unknownPackages": ["autoware_localization_config", "typo_pkg"], "unknownFiles": [],
+                    "unknownKeys": ["control_validator.param.yaml: nominal_latency"]},
+    }
+    commands = []
+
+    def capture(command, **_):
+        commands.append(command)
+        if command[:2] == ["docker", "inspect"]:
+            return subprocess.CompletedProcess(command, 0, stdout=json.dumps(containers))
+        return subprocess.CompletedProcess(command, 0, stdout=json.dumps(reports[command[2]]))
+
+    monkeypatch.setattr(cli_compose, "compose_capture",
+                        lambda *_, **__: subprocess.CompletedProcess([], 0, stdout="map\ncontrol\ncarla\n"))
+    monkeypatch.setattr(cli_compose, "capture_process", capture)
+    selection = cli_manifest.Selection("humble", False, None, {}, {})
+    warnings = cli_compose.report_overrides(None, selection)
+    # autoware_control_config is installed in the control image, so it is no mistake.
+    assert warnings == ["package autoware_localization_config is in no service", "package typo_pkg is in no service",
+                        "parameter control_validator.param.yaml: nominal_latency is not in its package"]
+    assert "renamed packages" in capsys.readouterr().err
+    assert not any(command[:3] == ["docker", "exec", "carla"] for command in commands)
+    reports["map"] = reports["control"] = {"unknownPackages": [], "unknownFiles": [], "unknownKeys": []}
+    assert cli_compose.report_overrides(None, selection) == []
+    assert capsys.readouterr().err == ""
+
+
+def test_status_shows_the_ad_api_state_in_one_line_each():
+    state = {
+        "localization": {"state": "initialized"},
+        "routing": {"state": "set"},
+        "mode": {"state": "stop", "autowareControl": False, "autonomousAvailable": True},
+        "mrm": {"state": "operating", "behavior": "emergency stop"},
+    }
+    assert cli_compose.format_autoware_state(state) == [
+        "localization initialized",
+        "routing      set",
+        "mode         stop (manual control, autonomous available)",
+        "mrm          operating: emergency stop",
+    ]
+    assert cli_compose.format_autoware_state(dict.fromkeys(state))[1] == "routing      no data"
+
+
+def test_logs_and_record_take_services_and_topics(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    calls = fake_docker(tmp_path, projects=["openadkit-example"])
+    assert run_cli(root, "logs", "example", "map", "planning").returncode == 0
+    assert recorded(calls)[-1]["args"][-3:] == ["logs", "map", "planning"]
+    for arguments in ((), ("/tf", "--all")):
+        result = run_cli(root, "record", "example", *arguments)
+        assert result.returncode != 0 and "or pass --all" in result.stderr
+    fake_docker(tmp_path)
+    result = run_cli(root, "record", "example", "/tf")
+    assert result.returncode != 0 and "example is not running" in result.stderr
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
@@ -880,6 +987,71 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     bom = json.loads(run_cli(root, "version", "--json", directory=kit).stdout)["bom"]
     assert bom["artifacts"]["INHERITED_IMAGE"]["ref"] == PIN
     assert (bom["images"] is not None) is release
+
+
+def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_path):
+    document = manifest()
+    document["compose"]["resetServices"] = ["loader"]
+    root, _ = runtime_tree(tmp_path, document=document)
+    kit = integrator_kit(tmp_path, root)
+    calls = fake_docker(tmp_path, services=("app", "acme"))
+    # The base itself must still define its oneshots.
+    result = run_cli(root, "validate", "example")
+    assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
+    assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
+    assert run_cli(root, "run", "custom", "--pull", "never", directory=kit).returncode == 0
+    assert not any("rm" in row["args"] for row in recorded(calls))
+    # A kit's own oneshot is checked like a base's.
+    path = kit / "deployments/custom/deployment.json"
+    document = json.loads(path.read_text())
+    document["compose"]["resetServices"] = ["probe"]
+    path.write_text(json.dumps(document))
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
+
+
+def test_build_overlay_builds_each_layer_in_the_pinned_devel_image(tmp_path):
+    root, _ = runtime_tree(tmp_path, release=True)
+    kit = integrator_kit(tmp_path, root)
+    directory = kit / "deployments/custom"
+    for workspace in (kit / "overlay_ws", directory / "overlay_ws"):
+        (workspace / "src").mkdir(parents=True)
+        (workspace / "install").mkdir()
+    calls = fake_docker(tmp_path)
+    # A release from before the devel pin: only an explicit image will do.
+    result = run_cli(root, "build-overlay", "custom", directory=kit)
+    assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
+
+    devel = "ghcr.io/example/openadkit-common:universe-common-devel-humble@sha256:" + "d" * 64
+    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    result = run_cli(root, "build-overlay", "custom", directory=kit)
+    assert result.returncode == 0, result.stderr
+    builds = [row["args"] for row in recorded(calls) if row["args"][:1] == ["run"]]
+    assert len(builds) == 2 and all(devel in args for args in builds)
+    # Each layer builds where the services mount it, on top of the layers below.
+    assert f"{kit / 'overlay_ws'}:/openadkit/overlay_ws" in builds[0]
+    assert f"{kit / 'overlay_ws'}:/openadkit/overlay_ws:ro" in builds[1]
+    assert f"{directory / 'overlay_ws'}:/openadkit/overlay_ws_deployment" in builds[1]
+    assert builds[1][-1] == "/openadkit/overlay_ws"
+    stamp = json.loads((directory / "overlay_ws/install/.openadkit-overlay.json").read_text())
+    assert stamp == {"image": devel, "rosDistro": "humble"}
+    assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
+
+    # After a base upgrade the installs are stale until rebuilt.
+    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 0 and "openadkit build-overlay custom" in result.stderr
+    result = run_cli(root, "build-overlay", "custom", directory=kit, DEVEL_IMAGE="local/devel:test")
+    assert result.returncode == 0 and "local/devel:test" in recorded(calls)[-1]["args"]
+
+    # Without a deployment a kit builds its own workspace, which all its deployments share.
+    before = len(recorded(calls))
+    result = run_cli(root, "build-overlay", directory=kit)
+    assert result.returncode == 0, result.stderr
+    builds = [row["args"] for row in recorded(calls)[before:] if row["args"][:1] == ["run"]]
+    assert len(builds) == 1 and f"{kit / 'overlay_ws'}:/openadkit/overlay_ws" in builds[0]
+    # Outside a kit there is no such workspace: a deployment is required.
+    assert run_cli(root, "build-overlay").returncode == 2
 
 
 OVERLAY_LAYERS = ("OPENADKIT_OVERLAY_WS", "OPENADKIT_OVERLAY_WS_DEPLOYMENT")

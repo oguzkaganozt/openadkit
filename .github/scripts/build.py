@@ -189,6 +189,14 @@ def format_outputs(matrices):
     return "\n".join(lines) + "\n"
 
 
+# Image creation time of the compile base (universe-common-build). Images
+# built on a base are cached against its config digest, and that digest
+# records when each layer was built: with identical layers, a rebuild at
+# another time still recompiled every jazzy component. The image is internal,
+# so a fixed time costs nothing.
+COMPILE_BASE_EPOCH = "0"
+
+
 def bake_recipe(inventory, prepared, target, distro, platform, *, publish, shared_common, common_cached, owner, source_sha, run_id):
     """Overlay the local HCL graph, preserving local dependency builds in PRs."""
     images = {image["target"]: image for image in inventory["images"]}
@@ -267,6 +275,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
     if publish and target == "universe-common":
         overrides["universe-common-build"].update(
             tags=[common_build], labels={}, attest=["type=provenance,disabled=true"],
+            args={**args, "SOURCE_DATE_EPOCH": COMPILE_BASE_EPOCH},
             **{"cache-to": [f"type=registry,ref={cache_ref('universe-common-build')},mode=max"]})
         overrides["autoware-core-devel"]["cache-to"] = [f"type=registry,ref={cache_ref('autoware-core-devel')},mode=max"]
         del overrides["universe-common-devel"]["cache-to"]

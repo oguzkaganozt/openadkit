@@ -380,8 +380,10 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
     )
     # The Compose project is the deployment: every configured service is meant
     # to run. Only the oneshot services are cross-checked, so a typo in a
-    # resetServices entry still fails fast.
-    unknown = sorted(set(deployment.reset_services(selection.node)) - configured)
+    # resetServices entry still fails fast. A kit inherits its base's oneshots
+    # but may leave their side of the base out (one service layer of it).
+    inherited = set(deployment.base.reset_services()) if deployment.base else set()
+    unknown = sorted(set(deployment.reset_services(selection.node)) - configured - inherited)
     if unknown:
         raise OpenADKitError(
             "manifest references unknown Compose service(s): " + ", ".join(unknown)
@@ -652,6 +654,8 @@ def start(
         compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
 
     for service in deployment.reset_services(selection.node):
+        if service not in services:
+            continue
         compose_run(
             deployment,
             selection,
@@ -675,18 +679,260 @@ def start(
         ],
     )
     check_services_stay_up(deployment, selection, baseline)
+    report_overrides(deployment, selection)
+
+
+OVERLAY_MOUNTS = ("/openadkit/overlay_ws", "/openadkit/overlay_ws_deployment")
+
+
+def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
+    """Warn about config overrides that changed nothing in the started services.
+
+    Each hooked service writes /tmp/openadkit/overlay-report.json on start.
+    Every service gets the same layers, so an overridden package is missing
+    from most images; it is a mistake only when no service has it. After a
+    base version change these usually are renamed packages, files or keys.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    if not ids:
+        return []
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", *ids], env=environment, check=False, trace=False
+    )
+    try:
+        containers = json.loads(inspected.stdout) if inspected.returncode == 0 else []
+    except json.JSONDecodeError:
+        containers = []
+    reports: list[dict[str, Any]] = []
+    for container in containers:
+        mounts = [mount.get("Destination", "") for mount in container.get("Mounts") or []]
+        if not any(path.startswith("/openadkit/config/") or path in OVERLAY_MOUNTS for path in mounts):
+            continue
+        result = capture_process(
+            ["docker", "exec", container["Id"], "cat", "/tmp/openadkit/overlay-report.json"],
+            env=environment,
+            check=False,
+            trace=False,
+        )
+        try:
+            report = json.loads(result.stdout) if result.returncode == 0 else None
+        except json.JSONDecodeError:
+            report = None
+        if isinstance(report, dict):
+            reports.append(report)
+    if not reports:
+        return []
+    warnings = [
+        f"package {package} is in no service"
+        for package in sorted(set.intersection(*(set(item.get("unknownPackages", [])) for item in reports)))
+    ]
+    for kind, label in (("unknownFiles", "file"), ("unknownKeys", "parameter")):
+        found = {entry for item in reports for entry in item.get(kind, [])}
+        warnings += [f"{label} {entry} is not in its package" for entry in sorted(found)]
+    for warning in warnings:
+        print(f"warning: override changed nothing: {warning}", file=sys.stderr)
+    if warnings:
+        print(
+            "warning: after a base version change, look for renamed packages, "
+            "files or parameters (config/autoware/<package>/...)",
+            file=sys.stderr,
+        )
+    return warnings
+
+
+# Overlay workspaces build where the services mount them, so CMake paths
+# recorded against the kit's layer resolve in the deployment's layer too.
+OVERLAY_TARGETS = {
+    "OPENADKIT_OVERLAY_WS": "/openadkit/overlay_ws",
+    "OPENADKIT_OVERLAY_WS_DEPLOYMENT": "/openadkit/overlay_ws_deployment",
+}
+# Written into install/ by build-overlay: the image and distro it built with.
+OVERLAY_STAMP = ".openadkit-overlay.json"
+OVERLAY_BUILD = """set -eo pipefail
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+source /opt/autoware/setup.bash
+for layer in "$@"; do source "${layer}/install/local_setup.bash"; done
+colcon build --install-base install --cmake-args -DCMAKE_BUILD_TYPE=Release
+"""
+
+
+def overlay_workspaces(deployment: Deployment) -> list[tuple[Path, str]]:
+    """The deployment's overlay workspaces with sources, the kit's first."""
+    return [
+        (path, OVERLAY_TARGETS[name])
+        for name, path in deployment.overlay_paths.items()
+        if name in OVERLAY_TARGETS and path is not None and (path / "src").is_dir()
+    ]
+
+
+def build_overlay(workspaces: list[tuple[Path, str]], image: str, ros_distro: str) -> None:
+    """Build each overlay layer in the devel image, on top of the ones before it."""
+    require_docker()
+    environment = _compose_ls_environment()
+    below: list[tuple[Path, str]] = []
+    for host, target in workspaces:
+        mounts = [arg for path, mount in below for arg in ("--volume", f"{path}:{mount}:ro")]
+        # The image compiles through ccache in the aw home, which only uid
+        # 1000 can write; keep HOME and the cache in the container's /tmp.
+        run_process(
+            [
+                "docker", "run", "--rm",
+                "--user", f"{os.getuid()}:{os.getgid()}",
+                "--env", "HOME=/tmp",
+                "--env", "CCACHE_DIR=/tmp/ccache",
+                *mounts,
+                "--volume", f"{host}:{target}",
+                "--workdir", target,
+                "--entrypoint", "bash",
+                image, "-c", OVERLAY_BUILD, "bash", *(mount for _, mount in below),
+            ],
+            env=environment,
+        )
+        (host / "install" / OVERLAY_STAMP).write_text(
+            json.dumps({"image": image, "rosDistro": ros_distro}) + "\n",
+            encoding="utf-8",
+        )
+        print(f"built overlay: {host}")
+        below.append((host, target))
+
+
+def check_overlay_builds(deployment: Deployment, selection: Selection, image: str | None) -> list[str]:
+    """Warn about overlay installs that build-overlay made for another image."""
+    warnings: list[str] = []
+    for host, _ in overlay_workspaces(deployment):
+        try:
+            stamp = json.loads((host / "install" / OVERLAY_STAMP).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(stamp, dict):
+            continue
+        if stamp.get("rosDistro") != selection.ros_distro or (image and stamp.get("image") != image):
+            warnings.append(
+                f"{host} was built for {stamp.get('rosDistro')} in {stamp.get('image')}; "
+                f"rebuild it: openadkit build-overlay {deployment.name}"
+            )
+    for warning in warnings:
+        print(f"warning: overlay workspace: {warning}", file=sys.stderr)
+    return warnings
+
+
+# Sourced before a ROS command runs in a service container: docker exec skips
+# the entrypoint that sources them for the service itself.
+ROS_SHELL = 'source "/opt/ros/${ROS_DISTRO}/setup.bash"; source /opt/autoware/setup.bash; '
+
+
+def autoware_state(deployment: Deployment, selection: Selection) -> dict[str, Any] | None:
+    """The AD API state from the running api service, or None without one."""
+    command = compose_command(deployment, selection)
+    environment = compose_process_environment(deployment, selection)
+    running = capture_process(
+        command + ["ps", "--services", "--status", "running"],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    if "api" not in running.stdout.split():
+        return None
+    script = (Path(__file__).parent / "autoware_state.py").read_text(encoding="utf-8")
+    result = capture_process(
+        command + ["exec", "-T", "api", "bash", "-c", ROS_SHELL + 'exec python3 -c "$0"', script],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    try:
+        state = json.loads(result.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return None
+    return state if isinstance(state, dict) else None
+
+
+def format_autoware_state(state: dict[str, Any]) -> list[str]:
+    lines = []
+    for name in ("localization", "routing", "mode", "mrm"):
+        item = state.get(name)
+        if not isinstance(item, dict):
+            lines.append(f"{name:<13}no data")
+            continue
+        text = item["state"]
+        if name == "mode":
+            notes = [] if item.get("autowareControl", True) else ["manual control"]
+            if item.get("autonomousAvailable"):
+                notes.append("autonomous available")
+            text += f" ({', '.join(notes)})" if notes else ""
+        elif name == "mrm" and item.get("behavior"):
+            text += f": {item['behavior']}"
+        lines.append(f"{name:<13}{text}")
+    return lines
 
 
 def status(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["ps"])
+    state = autoware_state(deployment, selection)
+    if state is not None:
+        print()
+        print("\n".join(format_autoware_state(state)))
 
 
-def logs(deployment: Deployment, selection: Selection, follow: bool) -> None:
+def logs(
+    deployment: Deployment, selection: Selection, follow: bool, services: list[str] | None = None
+) -> None:
     arguments = ["logs"]
     if follow:
         arguments.append("--follow")
-    compose_run(deployment, selection, arguments)
+    compose_run(deployment, selection, arguments + list(services or []))
 
+
+def record(
+    deployment: Deployment, selection: Selection, topics: list[str], output: Path
+) -> Path:
+    """Record topics into a bag on the host until interrupted.
+
+    The recorder runs as a copy of the running api container: its image,
+    environment, user and mounts, so it joins the same ROS domain and
+    middleware, and its entrypoint sources the overlay workspaces for
+    integrator message types. The bag is written to a host directory, so it
+    survives the deployment's containers.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet", "api"], check=False).stdout.split()
+    if not ids:
+        raise OpenADKitError(f"{deployment.name} has no running api service to record from")
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", ids[0]], env=environment, check=False, trace=False
+    )
+    try:
+        config = json.loads(inspected.stdout)[0]["Config"]
+    except (ValueError, LookupError, TypeError) as error:
+        raise OpenADKitError("could not inspect the api container") from error
+    label = deployment.name if selection.node is None else f"{deployment.name}-{selection.node}"
+    bag = output / f"{label}-{time.strftime('%Y%m%d-%H%M%S')}"
+    output.mkdir(parents=True, exist_ok=True)
+    # The container's own entrypoint, which a service may have overridden.
+    entrypoint = config.get("Entrypoint") or []
+    command = [
+        "docker", "run", "--rm", "--init",
+        *(["--entrypoint", entrypoint[0]] if entrypoint else []),
+        "--network", "host", "--ipc", "host",
+        "--volumes-from", f"{ids[0]}:ro",
+        "--volume", f"{output}:/openadkit/recordings",
+        *(["--user", config["User"]] if config.get("User") else []),
+        *(argument for variable in config.get("Env") or [] for argument in ("--env", variable)),
+        config["Image"], *entrypoint[1:],
+        "bash", "-c", 'exec ros2 bag record --output "$0" "$@"',
+        f"/openadkit/recordings/{bag.name}", *(topics or ["--all"]),
+    ]
+    print_command(command)
+    process = subprocess.Popen(command, env=environment)
+    while True:
+        try:
+            returncode = process.wait()
+            break
+        except KeyboardInterrupt:
+            # Ctrl+C reached the recorder too; killing the client would leave
+            # it recording, so wait while it closes the bag.
+            continue
+    # Ctrl+C ends ros2 bag record with a nonzero status; a bag is a result.
+    if returncode != 0 and not bag.is_dir():
+        raise OpenADKitError(f"recording failed with exit status {returncode}")
+    return bag
 
 def stop(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["down", "--remove-orphans"])

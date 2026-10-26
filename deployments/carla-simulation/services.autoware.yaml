@@ -4,7 +4,8 @@
 # the carla-interface edges) and the `--node autoware` view (this file plus
 # deployments/shared/compose.zenoh.yaml, attached by the CLI). No service here
 # depends on a CARLA service: the sim-local edges are added back only by the
-# default entry file.
+# default entry file. A kit that brings its own simulator includes this file
+# alone.
 include:
   - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
