@@ -129,7 +129,11 @@ def compose_process_environment(
 
 
 def compose_command(
-    deployment: Deployment, selection: Selection, *, environment_from: Deployment | None = None
+    deployment: Deployment,
+    selection: Selection,
+    *,
+    environment_from: Deployment | None = None,
+    files: list[Path] | None = None,
 ) -> list[str]:
     command = [
         "docker",
@@ -139,7 +143,7 @@ def compose_command(
     ]
     for env_file in (environment_from or deployment).env_files(selection.gpu):
         command.extend(("--env-file", str(env_file)))
-    for compose_file in deployment.compose_files(selection.gpu, selection.node):
+    for compose_file in files or deployment.compose_files(selection.gpu, selection.node):
         command.extend(("--file", str(compose_file)))
     for profile in deployment.compose["profiles"]:
         command.extend(("--profile", profile))
@@ -392,10 +396,14 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
 
 
 def compose_model(
-    deployment: Deployment, selection: Selection, *, environment_from: Deployment | None = None
+    deployment: Deployment,
+    selection: Selection,
+    *,
+    environment_from: Deployment | None = None,
+    files: list[Path] | None = None,
 ) -> dict[str, Any]:
     result = capture_process(
-        compose_command(deployment, selection, environment_from=environment_from)
+        compose_command(deployment, selection, environment_from=environment_from, files=files)
         + ["config", "--format", "json"],
         cwd=deployment.directory,
         env=compose_process_environment(environment_from or deployment, selection),
@@ -474,17 +482,53 @@ def baseline_injections(
 
 
 def kit_variables(deployment: Deployment, gpu: bool) -> set[str]:
-    """Variables the kit sets in its env files or reads in its Compose files.
+    """Variables the kit sets or reads that only one side of the kit knows.
 
-    The host's site file is not part of the kit: what it sets, such as the
-    documented *_IMAGE overrides, belongs to this host, not to the contract.
+    A variable the kit sets in its env files and reads in its own Compose
+    files is the kit's own setting, such as one of its services' options.
+    One that is only set or only read, and that the base does not declare,
+    is a likely typo. The host's site file is not part of the kit: what it
+    sets, such as the documented *_IMAGE overrides, belongs to this host.
     """
-    used: set[str] = set()
+    set_by_kit: set[str] = set()
     for path in deployment.env_layers[-1].files(gpu):
-        used.update(parse_dotenv(path))
+        set_by_kit.update(parse_dotenv(path))
+    read_by_kit: set[str] = set()
     for path in deployment.compose_files(gpu):
-        used.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
-    return used
+        read_by_kit.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
+    return set_by_kit ^ read_by_kit
+
+
+BASE_REFERENCE_RE = re.compile(r"\$\{(OPENADKIT_BASE_DEPLOYMENT|KIT_openadkit)\}/([^\s'\"]+\.ya?ml)")
+COMPOSE_DOCUMENT_RE = re.compile(r"^(services|include):", re.MULTILINE)
+
+
+def included_base_files(deployment: Deployment, gpu: bool) -> list[Path] | None:
+    """The base Compose files a kit's entry files include; None means all of them.
+
+    A kit that includes the base's entry file inherits every base service.
+    One that includes only a service layer (services.autoware.yaml) inherits
+    that layer's services; a service of the same name elsewhere in the kit is
+    its own, not a replacement of the base's.
+    """
+    base = deployment.base
+    assert base is not None
+    roots = {"OPENADKIT_BASE_DEPLOYMENT": base.directory, "KIT_openadkit": base.root}
+    entry = {path.resolve() for path in base.compose_files(gpu)}
+    found: list[Path] = []
+    for path in deployment.compose_files(gpu):
+        for variable, relative in BASE_REFERENCE_RE.findall(path.read_text(encoding="utf-8")):
+            candidate = (roots[variable] / relative).resolve()
+            if candidate in entry:
+                return None
+            if (
+                candidate not in found
+                and candidate.is_file()
+                and COMPOSE_DOCUMENT_RE.search(candidate.read_text(encoding="utf-8"))
+            ):
+                found.append(candidate)
+    # Nothing recognizable: compare with the whole base rather than skip it.
+    return found or None
 
 
 def check_overlay(
@@ -497,7 +541,10 @@ def check_overlay(
     base_selection = base.select(kit.base, selection.ros_distro, selection.gpu)
     injections = baseline_injections(deployment, selection, kit, base_selection)
     baseline = Selection(selection.ros_distro, selection.gpu, None, injections, selection.environment)
-    original = compose_model(base, baseline, environment_from=deployment)
+    original = compose_model(
+        base, baseline, environment_from=deployment,
+        files=included_base_files(deployment, selection.gpu),
+    )
     current = compose_model(deployment, selection)
     declared = set(selection.injections)
     for layer in base.env_layers:
@@ -766,12 +813,33 @@ def overlay_workspaces(deployment: Deployment) -> list[tuple[Path, str]]:
     ]
 
 
+def read_overlay_stamp(workspace: Path) -> dict[str, Any] | None:
+    try:
+        stamp = json.loads((workspace / "install" / OVERLAY_STAMP).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return stamp if isinstance(stamp, dict) else None
+
+
 def build_overlay(workspaces: list[tuple[Path, str]], image: str, ros_distro: str) -> None:
-    """Build each overlay layer in the devel image, on top of the ones before it."""
+    """Build each overlay layer in the devel image, on top of the ones before it.
+
+    A layer builds incrementally only on its own last build in this image and
+    distro. Anything else (another image or distro, a build by hand at another
+    path, a layer below that was rebuilt) starts from a clean build and
+    install: CMake caches record the image's paths and the path they were
+    configured at, and links record the layers below.
+    """
     require_docker()
     environment = _compose_ls_environment()
     below: list[tuple[Path, str]] = []
+    clean = False
     for host, target in workspaces:
+        clean = clean or read_overlay_stamp(host) != {"image": image, "rosDistro": ros_distro}
+        if clean:
+            for products in (host / "build", host / "install"):
+                if products.is_dir() and not products.is_symlink():
+                    shutil.rmtree(products)
         mounts = [arg for path, mount in below for arg in ("--volume", f"{path}:{mount}:ro")]
         # The image compiles through ccache in the aw home, which only uid
         # 1000 can write; keep HOME and the cache in the container's /tmp.
@@ -789,6 +857,7 @@ def build_overlay(workspaces: list[tuple[Path, str]], image: str, ros_distro: st
             ],
             env=environment,
         )
+        (host / "install").mkdir(exist_ok=True)
         (host / "install" / OVERLAY_STAMP).write_text(
             json.dumps({"image": image, "rosDistro": ros_distro}) + "\n",
             encoding="utf-8",
@@ -801,11 +870,8 @@ def check_overlay_builds(deployment: Deployment, selection: Selection, image: st
     """Warn about overlay installs that build-overlay made for another image."""
     warnings: list[str] = []
     for host, _ in overlay_workspaces(deployment):
-        try:
-            stamp = json.loads((host / "install" / OVERLAY_STAMP).read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        if not isinstance(stamp, dict):
+        stamp = read_overlay_stamp(host)
+        if stamp is None:
             continue
         if stamp.get("rosDistro") != selection.ros_distro or (image and stamp.get("image") != image):
             warnings.append(
@@ -933,6 +999,7 @@ def record(
     if returncode != 0 and not bag.is_dir():
         raise OpenADKitError(f"recording failed with exit status {returncode}")
     return bag
+
 
 def stop(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["down", "--remove-orphans"])

@@ -111,7 +111,11 @@ Without a deployment it builds the kit's workspace, which all its deployments
 share. With one, it builds each workspace that deployment mounts, the kit's
 first. Each builds at the path the services mount it, and the CLI records the image and distro in
 `install/.openadkit-overlay.json`. After a base upgrade or a distro change,
-`validate` and `run` warn until you rebuild. Releases before this pin, and
+`validate` and `run` warn until you rebuild. A workspace builds
+incrementally only on its own last build in the same image and distro;
+otherwise (an upgrade, a build by hand, a rebuilt layer below) its `build/`
+and `install/` are removed first, since CMake caches record the paths they
+were configured with. Releases before this pin, and
 source checkouts, pin no devel image: set `DEVEL_IMAGE` to the matching
 `universe-common-devel` digest from the build metadata or release BOM. The
 CLI mounts the workspace and the hook sources `overlay_ws/install/local_setup.bash`
@@ -146,7 +150,11 @@ other side's service layer instead of the base's Compose file. For example, a
 kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml`: no service in it depends
 on a CARLA service. The base's `resetServices` that the kit's services leave
-out are skipped; the kit's own must exist.
+out are skipped; the kit's own must exist. `validate` then checks the kit
+against that layer only: a service of the same name the kit defines itself,
+such as its own `carla`, is the kit's, and a variable the kit both sets in its
+env file and reads in its Compose file is its own setting. A variable only set
+or only read, and unknown to the base, is still reported as a likely typo.
 
 ### 5. Image Replacement
 
