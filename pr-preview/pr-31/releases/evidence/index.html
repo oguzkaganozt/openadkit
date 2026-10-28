@@ -2017,6 +2017,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Autoware and ROS distro decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backporting-an-autoware-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backporting an Autoware fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2154,6 +2171,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Autoware and ROS distro decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backporting-an-autoware-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backporting an Autoware fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2295,6 +2329,26 @@ Autoware minor release: the release gate compares each release with the line's
 latest published one and refuses another Autoware minor (v2.0.x is 1.9.x). Builds of <code>main</code> use a
 weekly snapshot of upstream development and are never released. The build's
 <code>autoware-lock.repos</code>, resolved SHA and upstream image digests record the input.</p>
+<h3 id="backporting-an-autoware-fix">Backporting an Autoware fix<a class="headerlink" href="#backporting-an-autoware-fix" title="Permanent link">#</a></h3>
+<p>Autoware releases come months apart. A fix that blocks a release line and is
+upstream, merged on Autoware's <code>main</code> or in an open pull request, can ride on
+the line as a patch instead of waiting for the next Autoware release:</p>
+<ol>
+<li>In the upstream repository, <code>git format-patch -1 &lt;commit&gt;</code>, and add a line
+   <code>Upstream: &lt;URL of the commit or pull request&gt;</code> to its message.</li>
+<li>Open a pull request into <code>release/X.Y</code> that adds it as
+   <code>.github/autoware-patches/&lt;repository&gt;/&lt;NNNN&gt;-&lt;subject&gt;.patch</code>, where
+   <code>&lt;repository&gt;</code> is its path under <code>autoware/src</code> (a key of
+   <code>autoware-lock.repos</code>, such as <code>universe/autoware_universe</code>). The review is
+   the fix's own diff.</li>
+<li>Every build of the line applies the patches in order right after
+   <code>vcs import</code>; one that does not apply, or has no <code>Upstream:</code> line, fails the
+   build. The release lists them under <strong>Backported Autoware fixes</strong>, its
+   bundle carries them as <code>autoware.backports</code>, and <code>openadkit version</code> counts
+   them. The Autoware version and the release line stay those of the tag.</li>
+<li>When the line moves to an Autoware release that contains the fix, delete
+   the patch. <code>main</code>, which builds upstream development, needs none.</li>
+</ol>
 <p><code>defaultRosDistro</code> in the promoted <code>openadkit.json</code> explicitly selects the ROS
 distro. The release input must agree, and its required runtime cells must pass.
 The gate does not automatically switch from Humble to Jazzy or remove a failing
