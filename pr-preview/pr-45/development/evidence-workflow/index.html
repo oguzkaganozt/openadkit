@@ -2154,8 +2154,7 @@ tree a release of that build ships, plus the example kit.</p>
 and <code>log</code> products. Hosted runners execute L0-L2 cells, retry a failed cell once,
 and aggregate all expected cells, including missing-cell failures.</p>
 <p>The workflow uploads per-cell diagnostics and the
-<code>evidence-summary-&lt;build_tag&gt;</code> artifact with the summary and a JUnit view. The
-release gate reads that summary; see the <a href="../../releases/evidence/">release policy</a>.</p>
+<code>evidence-summary-&lt;build_tag&gt;</code> artifact. The release gate reads that summary; see the <a href="../../releases/evidence/">release policy</a>.</p>
 <p>Runner cells use <code>schemaVersion: 1</code>, and the summary (<code>schemaVersion: 3</code>)
 carries them as written. Readers accept only these versioned payloads: a cell
 without <code>schemaVersion: 1</code> and <code>metrics</code> is rejected. Summary readers should use

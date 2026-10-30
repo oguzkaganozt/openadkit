@@ -2586,8 +2586,7 @@ Autoware tag and record the resolved source/lock and upstream image digests.</p>
 derive current metrics from it. Bundle, installer, plan and metadata receive
 release-workflow provenance. The verification report shows current passing-cell
 count, readiness/arrival time and memory. Release never looks up historical
-runs; an optional local comparison takes explicitly selected input files.
-Historical metrics are not an upgrade acceptance test or a safety/performance SLA.</p>
+runs. These metrics are not an upgrade acceptance test or a safety/performance SLA.</p>
 <p><code>workflow_call</code> currently reuses the reference-build verifier in the repository
 owning the build, including its example kits. Arbitrary external kit intake is
 not implemented. That extension must keep runner code in a pinned trusted

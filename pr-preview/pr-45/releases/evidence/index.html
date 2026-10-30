@@ -2354,15 +2354,8 @@ evidence, the BOM and the CI exemptions. Bundle, installer, plan and metadata
 receive release-workflow build provenance.</p>
 <p>The verification table shows passing-cell count, readiness time, arrival time
 and peak memory for the current build. Release never searches older runs or
-releases; its notes depend only on the sealed plan. Missing metrics are shown
+releases; its notes depend only on the release plan. Missing metrics are shown
 as <code>-</code>, never replaced with zeroes.</p>
-<p>Historical comparison is optional, outside release. With two explicitly chosen
-local summaries, run:</p>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>.github/scripts/evidence/report.py<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--current<span class="w"> </span>current.json<span class="w"> </span>--previous<span class="w"> </span>previous.json<span class="w"> </span>--output<span class="w"> </span>comparison.md
-</code></pre></div>
-<p>This is a timing/memory comparison, not an <code>openadkit upgrade</code> acceptance test,
-performance SLA or safety gate.</p>
 <p>See <a href="../verification/">Verify a Release</a> and
 <a href="../../development/evidence-workflow/">Run the Evidence Workflow</a>.</p>
 
