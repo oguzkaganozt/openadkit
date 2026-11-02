@@ -212,7 +212,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="start without the visualizer, for hosts nobody watches",
     )
-    for catalog in (validate, fetch, run):
+    build_overlay = subparsers.add_parser(
+        "build-overlay",
+        help="build overlay workspaces in the pinned devel image (in a kit, its own without a deployment)",
+    )
+    add_run_arguments(build_overlay, gpu=False)
+    for catalog in (validate, fetch, run, build_overlay):
         catalog.help_inventory = "catalog"
 
     clean = subparsers.add_parser(
@@ -241,14 +246,31 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="curated deployment name; required when one is running",
     )
+    logs.add_argument("services", nargs="*", metavar="SERVICE", help="only these services")
     logs.add_argument("--follow", action="store_true", help="stream logs")
+    record = subparsers.add_parser(
+        "record", help="record topics of a running deployment into a bag on the host"
+    )
+    record.add_argument(
+        "deployment",
+        nargs="?",
+        help="curated deployment name; required when one is running",
+    )
+    record.add_argument("topics", nargs="*", metavar="TOPIC", help="topics to record")
+    record.add_argument("--all", action="store_true", dest="all_topics", help="record every topic")
+    record.add_argument(
+        "--output",
+        metavar="DIRECTORY",
+        default="~/openadkit-recordings",
+        help="where bags go (default: ~/openadkit-recordings)",
+    )
     stop = subparsers.add_parser("stop", help="stop and remove a deployment")
     stop.add_argument(
         "deployment",
         nargs="?",
         help="curated deployment name; required when one is running",
     )
-    for operational in (status, logs, stop):
+    for operational in (status, logs, stop, record):
         add_node_argument(operational, LIVE_NODE_HELP)
     return parser
 
@@ -335,6 +357,12 @@ def show_running(root, kit, command: str, running: list[str], *, extra: str = ""
     return 2
 
 
+def autoware_line(autoware: dict[str, Any]) -> str:
+    backports = len(autoware.get("backports", []))
+    fixes = f", {backports} backported fix{'es' if backports > 1 else ''}" if backports else ""
+    return f"autoware: {autoware['version']} ({autoware['ref']}{fixes})"
+
+
 def show_version(root, kit, *, json_output: bool = False) -> int:
     if kit.kind == "release":
         version = kit.version
@@ -365,11 +393,14 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
     if kit.extends is not None:
         print(f"kit: {root}")
         print(f"extends: Open AD Kit {kit.extends} ({kit.base_root})")
+        if kit.autoware:
+            print(autoware_line(kit.autoware))
     elif kit.kind == "release":
-        print(f"Open AD Kit {kit.version or 'unknown'}")
+        autoware = f" · Autoware {kit.autoware['version']}" if kit.autoware else ""
+        print(f"Open AD Kit {kit.version or 'unknown'}{autoware}")
         print("bundle: release")
         if kit.autoware:
-            print(f"autoware: {kit.autoware['version']} ({kit.autoware['ref']})")
+            print(autoware_line(kit.autoware))
     else:
         print("Open AD Kit development")
         print(f"commit: {commit or 'unknown'}")
@@ -417,8 +448,9 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
             file=sys.stderr,
         )
     if any(item["recovery"] == "fetch-force" for item in gaps):
+        state = "outdated" if all(item["status"] == "outdated" for item in gaps) else "incomplete"
         print(
-            "error: installed data is incomplete; run: "
+            f"error: installed data is {state}; run: "
             f"openadkit fetch {deployment_name} --force",
             file=sys.stderr,
         )
@@ -431,12 +463,13 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
 
 
 def print_run_next_steps(
-    deployment, services: set[str], node: str | None, output: str | None
+    deployment, services: set[str], node: str | None, output: str | None, *, tls: bool = False
 ) -> None:
     target = deployment.name if node is None else f"{deployment.name} --node {node}"
     print(f"running: {target}")
     if "visualizer" in services:
-        print("visualizer: https://localhost:6080/vnc.html")
+        # Plain HTTP unless the site gives noVNC its own certificate.
+        print(f"visualizer: {'https' if tls else 'http'}://localhost:6080/vnc.html")
         print(
             "password: REMOTE_PASSWORD (default openadkit; override in "
             f"{deployment.site_config})"
@@ -498,6 +531,41 @@ def main() -> int:
         data.remove_installed_data(deployment, selection, include_gpu=True)
         return 0
 
+    if args.command == "build-overlay":
+        if os.geteuid() == 0 and os.environ.get("SUDO_USER"):
+            raise OpenADKitError(
+                "run build-overlay without sudo: the build would leave root-owned files"
+                " that your next build cannot replace"
+            )
+        if args.deployment:
+            deployment = get_deployment(root, kit, args.deployment)
+            ros_distro = deployment.select(kit, args.ros_distro, False, require_gpu=False).ros_distro
+            workspaces = compose.overlay_workspaces(deployment)
+            owner = deployment.name
+        elif kit.kind == "kit":
+            # The kit's workspace serves all of its deployments: no name needed.
+            ros_distro = args.ros_distro or kit.default_ros_distro
+            workspaces = [
+                (path, compose.OVERLAY_TARGETS["OPENADKIT_OVERLAY_WS"])
+                for path in [root / "overlay_ws"]
+                if (path / "src").is_dir()
+            ]
+            owner = "this kit"
+        else:
+            require_deployment_name(args.command)
+            list_deployments(root, kit)
+            return 2
+        if not workspaces:
+            raise OpenADKitError(f"{owner} has no overlay_ws/src to build")
+        image = os.environ.get("DEVEL_IMAGE") or kit.devel_image(ros_distro)
+        if not image:
+            raise OpenADKitError(
+                f"this Open AD Kit pins no {ros_distro} devel image; set DEVEL_IMAGE to the "
+                "universe-common-devel image of the build your runtime images come from"
+            )
+        compose.build_overlay(workspaces, image, ros_distro)
+        return 0
+
     if args.command in ("fetch", "validate", "run"):
         if not args.deployment:
             require_deployment_name(args.command)
@@ -530,6 +598,7 @@ def main() -> int:
         data.validate_destinations(deployment, selection)
         configured_services = compose.render(deployment, selection)
         overlay_warnings = compose.check_overlay(deployment, selection, kit)
+        compose.check_overlay_builds(deployment, selection, kit.devel_image(selection.ros_distro))
         if args.command == "validate":
             mode = "gpu" if selection.gpu else "cpu"
             results: list[dict[str, Any]] | None = (
@@ -594,7 +663,8 @@ def main() -> int:
         skipped = configured_services & ({"visualizer"} if args.no_visualizer else set())
         compose.start(deployment, selection, args.pull, configured_services, skipped)
         print_run_next_steps(
-            deployment, configured_services - skipped, selection.node, output_path(selection)
+            deployment, configured_services - skipped, selection.node, output_path(selection),
+            tls=bool(selection.environment.get("NOVNC_CERT")),
         )
         return 0
 
@@ -623,7 +693,16 @@ def main() -> int:
     if args.command == "status":
         compose.status(deployment, selection)
     elif args.command == "logs":
-        compose.logs(deployment, selection, args.follow)
+        compose.logs(deployment, selection, args.follow, args.services)
+    elif args.command == "record":
+        if bool(args.topics) == args.all_topics:
+            raise OpenADKitError("name the topics to record, or pass --all")
+        if not compose.live_nodes(deployment):
+            raise OpenADKitError(f"{deployment.name} is not running")
+        bag = compose.record(
+            deployment, selection, args.topics, Path(args.output).expanduser().resolve()
+        )
+        print(f"recorded: {bag}")
     elif args.command == "stop":
         compose.stop(deployment, selection)
     return 0

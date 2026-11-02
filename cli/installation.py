@@ -20,14 +20,8 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import compose
-from manifest import OpenADKitError, expand_home, root_path
+from manifest import VERSION_RE, OpenADKitError, expand_home, root_path
 
-_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
-# Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
-VERSION_RE = re.compile(
-    r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
-    rf"(?:-({_IDENTIFIER}(?:\.{_IDENTIFIER})*))?$"
-)
 KEPT_RELEASE_RE = re.compile(r"^openadkit-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$")
 
 UPGRADE_USAGE = """\
@@ -44,7 +38,8 @@ replaced. Source checkouts update with git pull or git checkout instead.
 UNINSTALL_USAGE = """\
 Usage: openadkit uninstall [--all]
 
-Removes the active Open AD Kit release installation and its launcher.
+Removes the active Open AD Kit release installation, its launcher, the adkit
+short name and Tab completion.
 Downloaded data is not touched. Refuses while an openadkit-* Compose project
 is still running, because uninstall removes the launcher `openadkit stop` needs.
 
@@ -104,6 +99,14 @@ def compare_versions(current: str, latest: str) -> str:
 
 def launcher_path() -> Path:
     return Path(expand_home("$HOME")) / ".local/bin/openadkit"
+
+
+def shortcut_paths() -> list[Path]:
+    """The short name and the completion links the installer puts beside the launcher."""
+    home = Path(expand_home("$HOME"))
+    data = Path(os.environ.get("XDG_DATA_HOME") or home / ".local/share")
+    completions = data / "bash-completion/completions"
+    return [home / ".local/bin/adkit", completions / "openadkit", completions / "adkit"]
 
 
 def active_release(root: Path, command: str) -> str:
@@ -232,6 +235,23 @@ def require_no_running_deployments() -> None:
         )
 
 
+def is_installed_release(directory: Path) -> bool:
+    """A directory the installer made: a release manifest naming this version.
+
+    A name like openadkit-v1.2.3-backup also matches KEPT_RELEASE_RE, so the
+    name alone must never decide what --all deletes.
+    """
+    metadata = directory / "openadkit.json"
+    if metadata.is_symlink() or not metadata.is_file():
+        return False
+    try:
+        kit = json.loads(metadata.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return (isinstance(kit, dict) and kit.get("kind") == "release"
+            and directory.name == f"openadkit-{kit.get('version')}")
+
+
 def uninstall(root: Path, arguments: Sequence[str]) -> int:
     remove_kept = False
     for argument in arguments:
@@ -248,12 +268,22 @@ def uninstall(root: Path, arguments: Sequence[str]) -> int:
     require_no_running_deployments()
 
     log(f"removing {root}")
+    # Only links into this release; a file of the user's at those paths stays.
+    # Compare where the links lead, not their text: the installer writes the
+    # destination as given, which may end in "/" or pass through a linked HOME.
+    shortcuts = [
+        path for path in shortcut_paths()
+        if path.is_symlink() and path.resolve().is_relative_to(root.resolve())
+    ]
     shutil.rmtree(root)
     launcher_path().unlink()
+    for path in shortcuts:
+        path.unlink()
 
     if remove_kept:
         for candidate in sorted(destination.glob("openadkit-v*")):
-            if candidate.is_dir() and not candidate.is_symlink() and KEPT_RELEASE_RE.fullmatch(candidate.name):
+            if (candidate.is_dir() and not candidate.is_symlink() and KEPT_RELEASE_RE.fullmatch(candidate.name)
+                    and is_installed_release(candidate)):
                 log(f"removing {candidate}")
                 shutil.rmtree(candidate)
         for pattern in (".openadkit-old.*", ".openadkit-stage.*"):

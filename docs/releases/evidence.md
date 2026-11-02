@@ -1,29 +1,24 @@
 # Evidence and Release Policy
 
 A release promotes an existing build. It does not rebuild images or silently
-relax its tests. Both stable releases and release candidates require **one
-complete, cryptographically verified Test Result with `result: PASSED`**.
+relax its tests. Both stable releases and release candidates require **a
+successful evidence run that passed every cell for the promoted build**.
 
 ## What the gate checks
 
-The release validation job checks these independently before creating a tag:
+Before creating a tag, the release validation job looks for an
+`evidence-summary-<build_tag>` artifact and accepts it only when:
 
-1. **Identity:** GitHub verifies the signature, the repository, the
-   `.github/workflows/evidence.yaml` signer, the `release/X.Y` source ref,
-   and that the attestation was signed on a hosted runner.
-2. **Subject:** all build image digests and the deployment, shared asset and
-   example-kit source/config checksums match the exact promoted source tree.
-   The dispatch-time scripts and the promoted source are checked out separately.
-3. **Coverage:** every required manifest-derived cell appears exactly once in
-   the signed configuration and in `passedTests`. Cell build/source identity,
-   distro, node, kit and platform must match; L0, L1 and L2 must all be true.
-   The example-kit cells must also have `overlayConformant: true`.
-4. **Result:** only the exact value `PASSED` is accepted. `WARNED`, `FAILED`,
-   unknown/malformed results, failed/warned test lists, and missing evidence block
-   publication. Several incomplete statements cannot be combined into a pass.
+1. **The run succeeded:** it is a completed, successful run of
+   `.github/workflows/evidence.yaml` on the same `release/X.Y` branch.
+2. **It tested this build:** the summary names the promoted build tag, and it
+   tested the build's own commit, not another commit against its images.
+3. **Every cell passed:** the summary result is `PASSED`. A cell passes only
+   when L0, L1 and L2 all pass, and a missing expected cell fails the run.
 
-A complete passing retry may supersede a failed attempt; a failed attempt is
-never itself treated as passed. There is no release bypass input.
+A passing rerun may supersede a failed run; a failed run never counts. There is
+no release bypass input. The release also requires the latest full scan of the
+build to pass.
 
 ## Cells and levels
 
@@ -44,18 +39,17 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.
 - **L2:** the planning golden path arrives, or the scenario and split-node
   checks pass. Each run starts a fresh stack.
 
-The workflow retries a failed runtime cell once. A short, reasoned, dated CI
-quarantine can label a failure `WARNED` for investigation; **it still blocks a
-release**. The release gate does not consult quarantine to waive a failed test.
-The cells start deployments with `openadkit run --no-visualizer`.
+The workflow retries a failed runtime cell once. A cell that still fails fails
+the run and blocks a release. The cells start deployments with
+`openadkit run --no-visualizer`.
 
-On the 4-vCPU GitHub-hosted runners a scenario-simulation cell occasionally
-fails although the change is sound, about one run in five: Autoware main
-takes minutes to load its components there, and Scenario Simulator V2
-sometimes checks a reused Autoware's state before it has left the previous
-scenario. Hosts with 16 vCPUs pass these cells consistently. Rerun the failed
-jobs once, and investigate only a failure that repeats or a new error. Such a
-failure can turn a run red; it cannot pass a broken change.
+A 4-vCPU GitHub-hosted runner cannot run Autoware main in real time: the ego
+drives late and the bundled samples take about three times as long as on a
+16-vCPU host. The scenario-simulation cells therefore run the simulation at
+half speed (`GLOBAL_REAL_TIME_FACTOR=0.5`, with `GLOBAL_TIMEOUT=400` wall-clock
+seconds) through the cell's host settings file, so they test the scenarios
+rather than the runner's size. Investigate a cell that still fails after the
+workflow's retry.
 
 ## Testing a change without a build
 
@@ -69,9 +63,8 @@ check, runs the cells against an existing build:
   `build_tag` defaults to the dispatched branch's latest successful build.
 
 The cells take the deployments, CLI and checks from the tested commit and the
-images from the build. Such a run is not release evidence: it is not attested,
-its summary names both commits, and its cells carry the tested commit, which
-the gate rejects.
+images from the build. Such a run is not release evidence: its summary names
+both commits, which the gate rejects.
 
 ## Explicit CI exemptions
 
@@ -90,9 +83,32 @@ issue, keep the previous verified stable pin and explain the exception, date
 and follow-up in the release notes. v2.0 pins **Autoware 1.9.0**.
 
 Every release, stable or candidate, is built on its `release/X.Y` branch from
-the Autoware release tag in `.github/autoware.ref`. Builds of `main` use a
+the Autoware release tag in `.github/autoware.ref`. A release line keeps one
+Autoware minor release: the release gate compares each release with the line's
+latest published one and refuses another Autoware minor (v2.0.x is 1.9.x). Builds of `main` use a
 weekly snapshot of upstream development and are never released. The build's
 `autoware-lock.repos`, resolved SHA and upstream image digests record the input.
+
+### Backporting an Autoware fix
+
+Autoware releases come months apart. A fix that blocks a release line and is
+upstream, merged on Autoware's `main` or in an open pull request, can ride on
+the line as a patch instead of waiting for the next Autoware release:
+
+1. In the upstream repository, `git format-patch -1 <commit>`, and add a line
+   `Upstream: <URL of the commit or pull request>` to its message.
+2. Open a pull request into `release/X.Y` that adds it as
+   `.github/autoware-patches/<repository>/<NNNN>-<subject>.patch`, where
+   `<repository>` is its path under `autoware/src` (a key of
+   `autoware-lock.repos`, such as `universe/autoware_universe`). The review is
+   the fix's own diff.
+3. Every build of the line applies the patches in order right after
+   `vcs import`; one that does not apply, or has no `Upstream:` line, fails the
+   build. The release lists them under **Backported Autoware fixes**, its
+   bundle carries them as `autoware.backports`, and `openadkit version` counts
+   them. The Autoware version and the release line stay those of the tag.
+4. When the line moves to an Autoware release that contains the fix, delete
+   the patch. `main`, which builds upstream development, needs none.
 
 `defaultRosDistro` in the promoted `openadkit.json` explicitly selects the ROS
 distro. The release input must agree, and its required runtime cells must pass.
@@ -102,27 +118,15 @@ change and build/test that revision. Humble remains the initial default.
 
 ## Metadata and verification report
 
-`release-plan.json` seals the validated `evidence` report before packaging.
-`release-metadata.json` includes that same report, the BOM, CI exemptions and
-`default_ros_distro_decision`. The current release-note metrics come from the
-selected signed statement, not an independently downloaded, unsigned summary.
-Bundle, installer, plan and metadata receive release-workflow build provenance.
+`release-plan.json` seals the selected evidence summary (result, build, commit,
+run URL and cells) before packaging. `release-metadata.json` includes that same
+evidence, the BOM and the CI exemptions. Bundle, installer, plan and metadata
+receive release-workflow build provenance.
 
 The verification table shows passing-cell count, readiness time, arrival time
 and peak memory for the current build. Release never searches older runs or
-releases; its notes depend only on the sealed plan. Missing metrics are shown
+releases; its notes depend only on the release plan. Missing metrics are shown
 as `-`, never replaced with zeroes.
-
-Historical comparison is optional, outside release. With two explicitly chosen
-local summaries, run:
-
-```bash
-python3 .github/scripts/evidence/report.py \
-  --current current.json --previous previous.json --output comparison.md
-```
-
-This is a timing/memory comparison, not an `openadkit upgrade` acceptance test,
-performance SLA or safety gate.
 
 See [Verify a Release](verification.md) and
 [Run the Evidence Workflow](../development/evidence-workflow.md).

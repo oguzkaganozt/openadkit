@@ -5,17 +5,47 @@ configuration, upgrades, and cleanup.
 
 --8<-- "includes/cli-command-context.md"
 
+## Short Name and Tab Completion
+
+`openadkit install` also links `adkit`, a short name for the same launcher:
+`adkit run planning-simulation` is `openadkit run planning-simulation`. Tab
+completes commands, options and the deployment names of the kit or release in
+the current directory, for both names; bash-completion (installed on Ubuntu by
+default) loads it from `~/.local/share/bash-completion/completions` in a new
+shell. The installer leaves an `adkit` or a completion file that it did not
+install alone, and `openadkit uninstall` removes only its own links.
+
 ## Runtime Controls
 
 ```bash
 openadkit status planning-simulation
 openadkit logs planning-simulation --follow
+openadkit logs planning-simulation map planning   # only these services
+openadkit record planning-simulation /tf /localization/kinematic_state
 openadkit stop planning-simulation
 ```
 
 Pass the deployment name. Without it, these commands only list what is running.
-One deployment runs at a time, including deployments from other kits. `run`
-refuses conflicting projects; stop them from their owning kit first. Declared
+Below its services, `status` shows Autoware's state from the AD API:
+
+```text
+localization initialized
+routing      set
+mode         stop (autonomous available)
+mrm          normal
+```
+
+A line reads `no data` while nothing publishes that state yet, for example
+before localization starts.
+
+`record` writes a rosbag of the named topics (or `--all`) to
+`~/openadkit-recordings/<deployment>-<time>/` (`--output` to change) until
+Ctrl+C. It runs as a copy of the running api container, so it joins the
+deployment's ROS domain and knows the overlay's message types, and the bag stays
+on the host when the deployment stops.
+One deployment runs at a time, including deployments from other kits, even one
+with the same name. `run` refuses conflicting projects; stop them from their
+owning kit first. Declared
 split nodes of the same deployment can still run together.
 After starting, `run` watches the services for 10 seconds and fails if one
 crashes.
@@ -32,8 +62,8 @@ openadkit validate planning-simulation --data
 ```
 
 `validate` checks the manifest and the Compose configuration without starting
-anything. `--data` also reports each data resource as `ok`, `missing`, or
-`incomplete` and fails on any gap. It follows the same GPU selection as `run`:
+anything. `--data` also reports each data resource as `ok`, `missing`, `incomplete`,
+or `outdated` and fails on any gap. It follows the same GPU selection as `run`:
 use `openadkit validate logging-simulation --gpu --data` to include the
 CenterPoint models.
 
@@ -111,7 +141,9 @@ Simulation's Kashiwanoha map is removed, restore it with
 
 `run` downloads missing data, but never replaces an existing data directory.
 Replace incomplete or outdated managed data explicitly with `fetch --force`;
-`run --force` is not supported.
+`run --force` is not supported. Managed data is outdated when the deployment
+now declares other content for it, for example a fixed map with a new checksum:
+`run`, `fetch` and `validate --data` then stop and ask for `fetch --force`.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file.
 `clean --data` and `--force` only delete or replace marked data. Data that was

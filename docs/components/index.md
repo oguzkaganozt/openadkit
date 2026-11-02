@@ -105,17 +105,22 @@ translation.
 ### Visualizer {: #visualizer }
 
 Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
-TigerVNC, and a TLS-enabled noVNC server. The VNC backend stays loopback-only,
-and each container creates its own self-signed certificate at startup.
+TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
+loopback-only, and so does noVNC by default; reach it remotely through an SSH
+tunnel. To serve HTTPS, mount your own certificate into the visualizer from an
+[integrator kit](../deployments/integrator-guide.md) or a Compose override (the
+release mounts none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it
+stays the same across starts, so a browser exception for it holds.
 
 | Variable | Default | Values | Description |
 |----------|---------|--------|-------------|
 | `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz2 configuration inside the container; the default is the copy with config overrides applied |
-| `REMOTE_DISPLAY` | `true` | `true`, `false` | Use browser-based RViz2; `false` launches a local display |
+| `REMOTE_DISPLAY` | `true` | `true`, `false` | Use browser-based RViz2; `false` opens RViz2 on the desktop, using the session's `DISPLAY` and `XAUTHORITY` |
 | `REMOTE_PASSWORD` | — | String | Required when `REMOTE_DISPLAY=true` |
 | `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address; bridge networking uses `0.0.0.0` with a host loopback port mapping |
 | `USE_SIM_TIME` | `false` | `true`, `false` | Use the ROS simulation clock |
 | `RVIZ_GPU` | `auto` | `auto`, `on`, `off` | Automatic, forced, or disabled VirtualGL acceleration |
+| `NOVNC_CERT`, `NOVNC_KEY` | unset | Paths | Certificate and key inside the container; set both to serve HTTPS only |
 
 For access and remote use, see the
 [Quickstart](../getting-started/index.md#open-the-visualizer).

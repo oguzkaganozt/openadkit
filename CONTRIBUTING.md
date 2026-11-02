@@ -51,11 +51,11 @@ by hand to move sooner.
 
 ### Local CI Commands
 
-Run the full lint suite before pushing. These commands mirror (and extend) what CI runs in `.github/workflows/lint.yaml`:
+Run these before pushing. They cover most of what `.github/workflows/lint.yaml` runs; CI also validates every deployment cell from `validation_matrix.py` and checks the Bake file.
 
 ```bash
-# Shell scripts
-git ls-files '*.sh' | xargs shellcheck --severity=error
+# Shell scripts (and the extensionless launcher)
+{ git ls-files '*.sh'; echo openadkit; } | xargs shellcheck --severity=error
 
 # GitHub Actions workflows (no glob — picks up .github/actions/ composites too)
 ./actionlint
@@ -76,6 +76,7 @@ npx --yes markdownlint-cli --config .markdownlint.yaml '**/*.md' '!site/**' '!.g
 pytest .github/scripts/
 bash .github/actions/combine-multi-arch-images/test-create-manifest.sh
 bash .github/scripts/tests/test_report_manifests.sh
+bash .github/scripts/tests/test_setup_helpers.sh
 
 # Deployment validation for both supported ROS distros
 ./openadkit validate planning-simulation --ros-distro humble
@@ -91,7 +92,7 @@ mkdocs build
 The `.github/scripts/tests/` suite is risk-focused, not exhaustive. Keep regression
 coverage for managed-data deletion/replacement, checksums and unsafe archives,
 failed install/upgrade recovery, immutable image pins, split-node isolation, and
-the complete signed `PASSED` release gate. Share release inputs through
+the `PASSED` evidence release gate. Share release inputs through
 `release_fixtures.py`; do not import one test module from another.
 
 Help wording, exhaustive schema-error and option combinations, terminal signals,
@@ -127,14 +128,16 @@ For split-host (`--node`) topology testing, follow the [documentation](https://a
 
 ### Releasing
 
-Run the `scan-images`, `evidence` and `release.yaml` workflows (GitHub Actions) on a `release/X.Y` branch to promote its build to a `vX.Y.Z` release or pre-release. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
+Run the `scan-images`, `evidence` and `release.yaml` workflows (GitHub Actions) on a `release/X.Y` branch to promote its build to a `vX.Y.Z` release or pre-release. `release-pipeline.yaml` runs the build and these three in order. See the workflow input descriptions for details. The `default_ros_distro` input must match `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
 
-Both release candidates and stable releases require complete signed `PASSED`
-runtime evidence for the promoted build. CI quarantine does not bypass the gate;
-reviewed manifest exemptions remain explicitly unverified. Read the
-[evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/),
-[verification guide](https://autowarefoundation.github.io/openadkit/releases/verification/)
-and [toolchain RFC](https://autowarefoundation.github.io/openadkit/development/rfc-0001-toolchain-model/).
+Both release candidates and stable releases require a successful evidence run
+that passed every cell for the promoted build; reviewed manifest exemptions
+remain explicitly unverified. Read the
+[evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
+and [verification guide](https://autowarefoundation.github.io/openadkit/releases/verification/).
+
+Manifest contract changes bump `schemaVersion` and come with migration notes.
+Removing a public variable or extension point is a breaking change under SemVer.
 
 ## DCO Requirement
 

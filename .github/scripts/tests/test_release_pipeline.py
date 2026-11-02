@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import tarfile
+import zipfile
 
 import pytest
 from release_fixtures import (
@@ -15,8 +16,10 @@ from release_fixtures import (
     VERSION,
     WRITE_NOTES,
     build_images,
+    build_metadata,
     executable,
     packager_env,
+    passing_summary,
     run_packager,
     run_validator,
     write_plan,
@@ -45,6 +48,42 @@ def test_release_ref_policy(tmp_path, version, branch, ref_type, input_ref, acce
     assert (result.returncode == 0) is accepted, result.stderr
 
 
+@pytest.mark.parametrize(("previous", "current", "accepted"), [
+    (None, "1.9.0", True),                 # the line's first release sets it
+    (("v2.0.0", "1.9.0"), "1.9.0", True),
+    (("v2.0.0", "1.9.0"), "1.9.1", True),  # an Autoware patch release stays on the line
+    (("v2.0.0", "1.9.0"), "1.10.0", False),
+    (("v2.1.0", "1.10.0"), "1.9.0", True), # another line's release does not count
+])
+def test_a_release_line_keeps_one_autoware_minor_release(tmp_path, previous, current, accepted):
+    build = tmp_path / "release-input/build"
+    build.mkdir(parents=True)
+    (build / "build-metadata.json").write_text(json.dumps({"autoware_base_version": current}))
+    releases = [{"tag_name": "v2.0.1", "draft": True, "published_at": None}]  # this release's own draft
+    metadata = {}
+    if previous:
+        releases.append({"tag_name": previous[0], "draft": False, "published_at": "2026-10-01T00:00:00Z"})
+        metadata[previous[0]] = {"autoware_base_version": previous[1]}
+    (tmp_path / "metadata.json").write_text(json.dumps(metadata))
+    (tmp_path / "releases.json").write_text(json.dumps([releases]))
+    (tmp_path / "bin").mkdir()
+    gh = tmp_path / "bin/gh"
+    gh.write_text(f"""#!/usr/bin/env python3
+import json, sys
+args = sys.argv[1:]
+if args[0] == "api":
+    print(open({str(tmp_path / "releases.json")!r}).read())
+elif args[:2] == ["release", "download"]:
+    print(json.dumps(json.load(open({str(tmp_path / "metadata.json")!r}))[args[2]]))
+""")
+    gh.chmod(0o755)
+    result = run_validator(tmp_path, "validate_autoware_line", VERSION="v2.0.1",
+                           PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}")
+    assert (result.returncode == 0) is accepted, result.stderr
+    if not accepted:
+        assert "Release line 2.0 builds on Autoware 1.9.x (v2.0.0)" in result.stderr
+
+
 @pytest.mark.parametrize("problem", [None, "missing", "duplicate"])
 def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     images = build_images()
@@ -59,7 +98,9 @@ def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     assert result.returncode == 0, result.stderr
     plan = json.loads(output.read_text())
     context = plan["releaseContext"]
+    # The runtime images, and the devel image integrators build overlays in.
     expected = set(json.loads((ROOT / "openadkit.json").read_text())["componentImages"].values())
+    expected.add("universe-common-devel")
     assert set(context["images"]) == {"humble", "jazzy"}
     for distro, refs in context["images"].items():
         assert set(refs) == expected
@@ -69,6 +110,103 @@ def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     # The BOM names the ROS apt snapshot every distro's images were built from.
     assert set(plan["rosSnapshots"]) == {"humble", "jazzy"}
     assert all(f'default = "{date}"' in (ROOT / "components/docker-bake.hcl").read_text() for date in plan["rosSnapshots"].values())
+
+
+@pytest.mark.parametrize("problem", [None, "failed", "not-release", "other-build", "other-commit"])
+def test_plan_takes_only_this_release_passing_evidence(tmp_path, problem):
+    summary = passing_summary(build_metadata())
+    if problem == "failed":
+        summary["result"] = "FAILED"
+    elif problem == "not-release":
+        summary["release_evidence"] = False
+    elif problem == "other-build":
+        summary["build_tag"] = "999-1"
+    elif problem == "other-commit":
+        summary["source_sha"] = "f" * 40
+    result, output = write_plan(tmp_path, summary=summary)
+    assert (result.returncode == 0) is (problem is None), result.stderr
+    if problem is None:
+        evidence = json.loads(output.read_text())["evidence"]
+        assert evidence["result"] == "PASSED" and evidence["build_tag"] == BUILD_TAG
+        assert evidence["cells"] == summary["cells"] and "exempt" in evidence
+
+
+def select_latest(tmp_path, name, workflow, file, runs, eligible, passed, directory):
+    """Run the gate's artifact selection against stubbed runs, newest first:
+    (run conclusion, branch, artifact content)."""
+    artifacts, run_json = [], {}
+    for index, (conclusion, branch, content) in enumerate(runs):
+        artifact, run = 100 + index, 200 + index
+        with zipfile.ZipFile(tmp_path / f"{artifact}.zip", "w") as archive:
+            archive.writestr(file, json.dumps(content))
+        artifacts.append(f"{artifact}\t2026-10-{30 - index:02d}T00:00:00Z")
+        run_json[str(artifact)] = run
+        run_json[str(run)] = {"path": workflow, "head_branch": branch,
+                              "status": "completed", "conclusion": conclusion}
+    (tmp_path / "runs.json").write_text(json.dumps(run_json))
+    executable(tmp_path / "bin/gh", f'''#!/usr/bin/env python3
+import json, sys
+path = [arg for arg in sys.argv[1:] if arg.startswith("repos/")][0]
+runs = json.load(open({str(tmp_path / "runs.json")!r}))
+if "artifacts?name={name}" in path:
+    print("\\n".join({artifacts!r}))
+elif path.endswith("/zip"):
+    sys.stdout.buffer.write(open({str(tmp_path)!r} + "/" + path.split("/")[-2] + ".zip", "rb").read())
+elif "/artifacts/" in path:
+    print(runs[path.split("/")[-1]])
+else:
+    print(json.dumps(runs[path.split("/")[-1]]))
+''')
+    result = run_validator(
+        tmp_path,
+        f"source_branch=release/9.8; select_latest_artifact {name} {workflow} {file} {eligible} {passed} {directory}",
+        PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}")
+    return result, tmp_path / directory / file
+
+
+# (run conclusion, branch, summary result, tested the build's own commit), newest first.
+@pytest.mark.parametrize(("runs", "accepted"), [
+    ([("success", "release/9.8", "PASSED", True)], True),
+    ([("failure", "release/9.8", "FAILED", True)], False),
+    ([("success", "main", "PASSED", True)], False),
+    ([("success", "release/9.8", "PASSED", False)], False),
+    # The newest run of this release decides: a passing rerun supersedes a
+    # failed run, and a newer failure blocks an older pass.
+    ([("success", "release/9.8", "PASSED", True), ("failure", "release/9.8", "FAILED", True)], True),
+    ([("failure", "release/9.8", "FAILED", True), ("success", "release/9.8", "PASSED", True)], False),
+    # A run that tested another commit against the build is not about this release.
+    ([("failure", "release/9.8", "FAILED", False), ("success", "release/9.8", "PASSED", True)], True),
+])
+def test_evidence_gate_takes_the_newest_run_of_this_release(tmp_path, runs, accepted):
+    summaries = [(conclusion, branch, passing_summary(build_metadata()) | {"result": result, "release_evidence": release})
+                 for conclusion, branch, result, release in runs]
+    result, selected = select_latest(
+        tmp_path, f"evidence-summary-{BUILD_TAG}", ".github/workflows/evidence.yaml", "evidence-summary.json",
+        summaries, "evidence_is_release", "evidence_passed", "release-input/evidence")
+    assert (result.returncode == 0) is accepted, result.stderr
+    assert selected.exists() is accepted
+
+
+# (run conclusion, scan status), newest first; a partial scan is not about the release.
+@pytest.mark.parametrize(("runs", "accepted"), [
+    ([("success", "passed")], True),
+    ([("failure", "failed")], False),
+    ([("failure", "failed"), ("success", "passed")], False),
+    ([("success", "partial"), ("success", "passed")], True),
+])
+def test_scan_gate_takes_the_newest_full_scan(tmp_path, runs, accepted):
+    def scan(status):
+        return {"build_tag": BUILD_TAG, "policy_sha": "c" * 40, "run_id": "300", "run_attempt": "1",
+                "scan_scope": "all" if status != "partial" else "changed", "scan_status": "passed" if status == "partial" else status,
+                "scanned_images": [{"repo": "ghcr.io/example/openadkit", "target": "api", "ros_distro": "humble",
+                                    "digest": DIGEST, "platform": "linux/amd64",
+                                    "image_ref": f"ghcr.io/example/openadkit@{DIGEST}"}]}
+    result, selected = select_latest(
+        tmp_path, f"scan-metadata-{BUILD_TAG}", ".github/workflows/scan.yaml", "scan-metadata.json",
+        [(conclusion, "release/9.8", scan(status)) for conclusion, status in runs],
+        "scan_is_full", "scan_passed", "release-input/scan")
+    assert (result.returncode == 0) is accepted, result.stderr
+    assert selected.exists() is accepted
 
 
 @pytest.mark.parametrize(("problem", "messages"), [
@@ -106,7 +244,9 @@ def manager_env(tmp_path, problem):
     """One asset is sufficient to exercise ownership, race and content guards."""
     asset = tmp_path / "bundle.tar.gz"
     asset.write_bytes(b"validated bundle")
-    state = {"id": 42, "tag_name": VERSION, "target_commitish": RELEASE_SHA, "name": VERSION,
+    # GitHub returns the title the release was created with, not the tag.
+    state = {"id": 42, "tag_name": VERSION, "target_commitish": RELEASE_SHA,
+             "name": f"Open AD Kit {VERSION} · Autoware 1.9.0",
              "draft": True, "prerelease": False, "body": MARKER, "assets": [{"id": 101, "name": asset.name}]}
     (tmp_path / "release-notes.md").write_text(MARKER)
     (tmp_path / "release-assets.sha256").write_text(f"{hashlib.sha256(asset.read_bytes()).hexdigest()}  {asset.name}\n")
@@ -114,6 +254,7 @@ def manager_env(tmp_path, problem):
         "schemaVersion": 1, "release": {"version": VERSION, "releaseSha": RELEASE_SHA,
                                        "stable": True, "publishLatestAliases": True},
         "githubAssets": [{"name": asset.name, "path": asset.name}],
+        "releaseContext": {"autoware": {"version": "1.9.0"}},
     }))
     refreshed = dict(state)
     if problem == "unowned":
@@ -269,3 +410,5 @@ def test_release_manager_waits_for_a_created_draft_to_be_listed(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "created=true" in (tmp_path / "output").read_text()
     assert "release_id=42" in (tmp_path / "output").read_text()
+    # The title pairs the version with the Autoware it builds on.
+    assert f"--title Open AD Kit {VERSION} · Autoware 1.9.0 " in log.read_text()

@@ -129,7 +129,11 @@ def compose_process_environment(
 
 
 def compose_command(
-    deployment: Deployment, selection: Selection, *, environment_from: Deployment | None = None
+    deployment: Deployment,
+    selection: Selection,
+    *,
+    environment_from: Deployment | None = None,
+    files: list[Path] | None = None,
 ) -> list[str]:
     command = [
         "docker",
@@ -139,7 +143,7 @@ def compose_command(
     ]
     for env_file in (environment_from or deployment).env_files(selection.gpu):
         command.extend(("--env-file", str(env_file)))
-    for compose_file in deployment.compose_files(selection.gpu, selection.node):
+    for compose_file in files or deployment.compose_files(selection.gpu, selection.node):
         command.extend(("--file", str(compose_file)))
     for profile in deployment.compose["profiles"]:
         command.extend(("--profile", profile))
@@ -238,6 +242,11 @@ def _compose_ls_environment() -> dict[str, str]:
 
 def live_projects() -> set[str]:
     """Names of the Open AD Kit Compose projects that are live on this host."""
+    return set(live_project_files())
+
+
+def live_project_files() -> dict[str, list[str]]:
+    """Live Open AD Kit Compose projects, with the Compose files each started from."""
     require_docker()
     result = capture_process(
         ["docker", "compose", "ls", "--format", "json"],
@@ -255,7 +264,7 @@ def live_projects() -> set[str]:
         raise OpenADKitError("could not parse Compose project list") from error
     if not isinstance(projects, list):
         raise OpenADKitError("could not parse Compose project list")
-    live: set[str] = set()
+    live: dict[str, list[str]] = {}
     for project in projects:
         if not isinstance(project, dict):
             continue
@@ -265,7 +274,8 @@ def live_projects() -> set[str]:
             continue
         state = status.lower().split("(", 1)[0].strip()
         if name.startswith(PROJECT_PREFIX) and state in LIVE_PROJECT_STATES:
-            live.add(name)
+            files = project.get("ConfigFiles")
+            live[name] = [item for item in files.split(",") if item] if isinstance(files, str) else []
     return live
 
 
@@ -291,9 +301,26 @@ def running_names(deployment_names: Iterable[str]) -> list[str]:
 
 
 def other_projects(deployment: Deployment) -> list[str]:
-    """Include foreign kits; only this deployment's exact views may coexist."""
-    own = {deployment.project_name(), *(deployment.project_name(node) for node in deployment.nodes)}
-    return sorted(live_projects() - own)
+    """Include foreign kits; only this deployment's exact views may coexist.
+
+    A project is named after its deployment only, so another kit's deployment
+    of the same name, or a deployment named like this one plus a node, has the
+    same project name as one of these views. A view is this deployment's only
+    when it started from the view's own entry Compose file; otherwise `run`
+    would replace another stack in place. Compose that reports no files keeps
+    the name as the only evidence. stop, status and logs still go by name, so
+    a stack started from an older release stays reachable after an upgrade.
+    """
+    live = live_project_files()
+    own = set()
+    for node in (None, *deployment.nodes):
+        name = deployment.project_name(node)
+        if name not in live:
+            continue
+        entry = deployment.compose_files(False, node)[0].resolve()
+        if not live[name] or Path(live[name][0]).resolve() == entry:
+            own.add(name)
+    return sorted(set(live) - own)
 
 
 def live_nodes(deployment: Deployment) -> list[str | None]:
@@ -380,8 +407,10 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
     )
     # The Compose project is the deployment: every configured service is meant
     # to run. Only the oneshot services are cross-checked, so a typo in a
-    # resetServices entry still fails fast.
-    unknown = sorted(set(deployment.reset_services(selection.node)) - configured)
+    # resetServices entry still fails fast. A kit inherits its base's oneshots
+    # but may leave their side of the base out (one service layer of it).
+    inherited = set(deployment.base.reset_services()) if deployment.base else set()
+    unknown = sorted(set(deployment.reset_services(selection.node)) - configured - inherited)
     if unknown:
         raise OpenADKitError(
             "manifest references unknown Compose service(s): " + ", ".join(unknown)
@@ -390,10 +419,14 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
 
 
 def compose_model(
-    deployment: Deployment, selection: Selection, *, environment_from: Deployment | None = None
+    deployment: Deployment,
+    selection: Selection,
+    *,
+    environment_from: Deployment | None = None,
+    files: list[Path] | None = None,
 ) -> dict[str, Any]:
     result = capture_process(
-        compose_command(deployment, selection, environment_from=environment_from)
+        compose_command(deployment, selection, environment_from=environment_from, files=files)
         + ["config", "--format", "json"],
         cwd=deployment.directory,
         env=compose_process_environment(environment_from or deployment, selection),
@@ -471,18 +504,83 @@ def baseline_injections(
     return injections
 
 
-def kit_variables(deployment: Deployment, gpu: bool) -> set[str]:
-    """Variables the kit sets in its env files or reads in its Compose files.
+# A list item naming a relative Compose file, as in a kit's include: list.
+LOCAL_INCLUDE_RE = re.compile(r"^\s*-\s*(?:path:\s*)?['\"]?([^\s'\"$][^\s'\"]*\.ya?ml)['\"]?\s*$", re.MULTILINE)
+BASE_REFERENCE_RE = re.compile(r"\$\{(OPENADKIT_BASE_DEPLOYMENT|KIT_openadkit)\}/([^\s'\"]+\.ya?ml)")
+COMPOSE_DOCUMENT_RE = re.compile(r"^(services|include):", re.MULTILINE)
+# ${NAME:-default}, ${NAME:?message} and their unset-only forms: a value the
+# file means to take from the host or the site file, not a typo.
+DELIBERATE_READ_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*):?[-?]")
 
-    The host's site file is not part of the kit: what it sets, such as the
-    documented *_IMAGE overrides, belongs to this host, not to the contract.
+
+def is_compose_document(path: Path) -> bool:
+    return path.is_file() and COMPOSE_DOCUMENT_RE.search(path.read_text(encoding="utf-8")) is not None
+
+
+def kit_compose_files(deployment: Deployment, gpu: bool) -> list[Path]:
+    """The kit's own Compose files: its entry files and the kit files they include."""
+    root = deployment.root.resolve()
+    pending = [path.resolve() for path in deployment.compose_files(gpu)]
+    found: list[Path] = []
+    while pending:
+        path = pending.pop(0)
+        if path in found:
+            continue
+        found.append(path)
+        for relative in LOCAL_INCLUDE_RE.findall(path.read_text(encoding="utf-8")):
+            candidate = (path.parent / relative).resolve()
+            if candidate.is_relative_to(root) and is_compose_document(candidate):
+                pending.append(candidate)
+    return found
+
+
+def kit_variables(deployment: Deployment, gpu: bool) -> set[str]:
+    """Variables the kit sets or reads that only one side of the kit knows.
+
+    A variable the kit sets in its env files and reads in its own Compose
+    files is the kit's own setting, such as one of its services' options, and
+    one read with a default or a required message (${NAME:-x}, ${NAME:?x})
+    is meant to come from the host or the site file. One only set, or only
+    read plainly, and that the base does not declare, is a likely typo. The
+    host's site file is not part of the kit: what it sets, such as the
+    documented *_IMAGE overrides, belongs to this host.
     """
-    used: set[str] = set()
+    set_by_kit: set[str] = set()
     for path in deployment.env_layers[-1].files(gpu):
-        used.update(parse_dotenv(path))
-    for path in deployment.compose_files(gpu):
-        used.update(INTERPOLATION_RE.findall(path.read_text(encoding="utf-8")))
-    return used
+        set_by_kit.update(parse_dotenv(path))
+    read_by_kit: set[str] = set()
+    deliberate: set[str] = set()
+    for path in kit_compose_files(deployment, gpu):
+        text = path.read_text(encoding="utf-8")
+        read_by_kit.update(INTERPOLATION_RE.findall(text))
+        deliberate.update(DELIBERATE_READ_RE.findall(text))
+    return (set_by_kit - read_by_kit) | (read_by_kit - deliberate - set_by_kit)
+
+
+def included_base_files(deployment: Deployment, gpu: bool) -> list[Path] | None:
+    """The base Compose files the kit includes; None means all of them.
+
+    A kit that includes the base's entry file inherits every base service.
+    One that includes only a service layer (services.autoware.yaml) inherits
+    that layer's services, and one that includes no base file inherits none;
+    a service of the same name elsewhere in the kit is its own, not a
+    replacement of the base's. A kit reaches the base only through
+    OPENADKIT_BASE_DEPLOYMENT or KIT_openadkit, since it cannot know where
+    the base is installed.
+    """
+    base = deployment.base
+    assert base is not None
+    roots = {"OPENADKIT_BASE_DEPLOYMENT": base.directory, "KIT_openadkit": base.root}
+    entry = {path.resolve() for path in base.compose_files(gpu)}
+    found: list[Path] = []
+    for path in kit_compose_files(deployment, gpu):
+        for variable, relative in BASE_REFERENCE_RE.findall(path.read_text(encoding="utf-8")):
+            candidate = (roots[variable] / relative).resolve()
+            if candidate in entry:
+                return None
+            if candidate not in found and is_compose_document(candidate):
+                found.append(candidate)
+    return found
 
 
 def check_overlay(
@@ -495,7 +593,12 @@ def check_overlay(
     base_selection = base.select(kit.base, selection.ros_distro, selection.gpu)
     injections = baseline_injections(deployment, selection, kit, base_selection)
     baseline = Selection(selection.ros_distro, selection.gpu, None, injections, selection.environment)
-    original = compose_model(base, baseline, environment_from=deployment)
+    layers = included_base_files(deployment, selection.gpu)
+    original = (
+        compose_model(base, baseline, environment_from=deployment, files=layers)
+        if layers != []
+        else {}
+    )
     current = compose_model(deployment, selection)
     declared = set(selection.injections)
     for layer in base.env_layers:
@@ -584,7 +687,7 @@ def failed_services(
     ids: list[str],
     baseline: dict[str, int],
 ) -> list[str]:
-    """Long-running services that restarted since `up` or exited with an error."""
+    """Long-running services that restarted since `up` or exited."""
     result = capture_process(
         [
             "docker",
@@ -606,8 +709,9 @@ def failed_services(
                 failed.add(service)
             continue
         # `up` keeps unchanged containers, and with them earlier restarts.
+        # on-failure does not restart a clean exit, which leaves the service gone.
         restarted = int(restarts) > baseline.get(container, 0)
-        if restarted or state == "restarting" or exit_code != "0":
+        if restarted or state in ("restarting", "exited") or exit_code != "0":
             failed.add(service)
     return sorted(failed)
 
@@ -652,6 +756,8 @@ def start(
         compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
 
     for service in deployment.reset_services(selection.node):
+        if service not in services:
+            continue
         compose_run(
             deployment,
             selection,
@@ -675,17 +781,284 @@ def start(
         ],
     )
     check_services_stay_up(deployment, selection, baseline)
+    report_overrides(deployment, selection)
+
+
+OVERLAY_MOUNTS = ("/openadkit/overlay_ws", "/openadkit/overlay_ws_deployment")
+
+
+def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
+    """Warn about config overrides that changed nothing in the started services.
+
+    Each hooked service writes /tmp/openadkit/overlay-report.json on start.
+    Every service gets the same layers, so an overridden package is missing
+    from most images; it is a mistake only when no service has it. After a
+    base version change these usually are renamed packages, files or keys.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    if not ids:
+        return []
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", *ids], env=environment, check=False, trace=False
+    )
+    try:
+        containers = json.loads(inspected.stdout) if inspected.returncode == 0 else []
+    except json.JSONDecodeError:
+        containers = []
+    reports: list[dict[str, Any]] = []
+    for container in containers:
+        mounts = [mount.get("Destination", "") for mount in container.get("Mounts") or []]
+        if not any(path.startswith("/openadkit/config/") or path in OVERLAY_MOUNTS for path in mounts):
+            continue
+        result = capture_process(
+            ["docker", "exec", container["Id"], "cat", "/tmp/openadkit/overlay-report.json"],
+            env=environment,
+            check=False,
+            trace=False,
+        )
+        try:
+            report = json.loads(result.stdout) if result.returncode == 0 else None
+        except json.JSONDecodeError:
+            report = None
+        if isinstance(report, dict):
+            reports.append(report)
+    if not reports:
+        return []
+    warnings = [
+        f"package {package} is in no service"
+        for package in sorted(set.intersection(*(set(item.get("unknownPackages", [])) for item in reports)))
+    ]
+    for kind, label in (("unknownFiles", "file"), ("unknownKeys", "parameter")):
+        found = {entry for item in reports for entry in item.get(kind, [])}
+        warnings += [f"{label} {entry} is not in its package" for entry in sorted(found)]
+    for warning in warnings:
+        print(f"warning: override changed nothing: {warning}", file=sys.stderr)
+    if warnings:
+        print(
+            "warning: after a base version change, look for renamed packages, "
+            "files or parameters (config/autoware/<package>/...)",
+            file=sys.stderr,
+        )
+    return warnings
+
+
+# Overlay workspaces build where the services mount them, so CMake paths
+# recorded against the kit's layer resolve in the deployment's layer too.
+OVERLAY_TARGETS = {
+    "OPENADKIT_OVERLAY_WS": "/openadkit/overlay_ws",
+    "OPENADKIT_OVERLAY_WS_DEPLOYMENT": "/openadkit/overlay_ws_deployment",
+}
+# Written into install/ by build-overlay: the image and distro it built with.
+OVERLAY_STAMP = ".openadkit-overlay.json"
+OVERLAY_BUILD = """set -eo pipefail
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+source /opt/autoware/setup.bash
+for layer in "$@"; do source "${layer}/install/local_setup.bash"; done
+colcon build --install-base install --cmake-args -DCMAKE_BUILD_TYPE=Release
+"""
+
+
+def overlay_workspaces(deployment: Deployment) -> list[tuple[Path, str]]:
+    """The deployment's overlay workspaces with sources, the kit's first."""
+    return [
+        (path, OVERLAY_TARGETS[name])
+        for name, path in deployment.overlay_paths.items()
+        if name in OVERLAY_TARGETS and path is not None and (path / "src").is_dir()
+    ]
+
+
+def read_overlay_stamp(workspace: Path) -> dict[str, Any] | None:
+    try:
+        stamp = json.loads((workspace / "install" / OVERLAY_STAMP).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return stamp if isinstance(stamp, dict) else None
+
+
+def build_overlay(workspaces: list[tuple[Path, str]], image: str, ros_distro: str) -> None:
+    """Build each overlay layer in the devel image, on top of the ones before it.
+
+    A layer builds incrementally only on its own last build in this image and
+    distro. Anything else (another image or distro, a build by hand at another
+    path, a layer below that was rebuilt) starts from a clean build and
+    install: CMake caches record the image's paths and the path they were
+    configured at, and links record the layers below.
+    """
+    require_docker()
+    environment = _compose_ls_environment()
+    below: list[tuple[Path, str]] = []
+    clean = False
+    for host, target in workspaces:
+        clean = clean or read_overlay_stamp(host) != {"image": image, "rosDistro": ros_distro}
+        if clean:
+            for products in (host / "build", host / "install"):
+                if products.is_dir() and not products.is_symlink():
+                    shutil.rmtree(products)
+        mounts = [arg for path, mount in below for arg in ("--volume", f"{path}:{mount}:ro")]
+        # The image compiles through ccache in the aw home, which only uid
+        # 1000 can write; keep HOME and the cache in the container's /tmp.
+        run_process(
+            [
+                "docker", "run", "--rm",
+                "--user", f"{os.getuid()}:{os.getgid()}",
+                "--env", "HOME=/tmp",
+                "--env", "CCACHE_DIR=/tmp/ccache",
+                *mounts,
+                "--volume", f"{host}:{target}",
+                "--workdir", target,
+                "--entrypoint", "bash",
+                image, "-c", OVERLAY_BUILD, "bash", *(mount for _, mount in below),
+            ],
+            env=environment,
+        )
+        (host / "install").mkdir(exist_ok=True)
+        (host / "install" / OVERLAY_STAMP).write_text(
+            json.dumps({"image": image, "rosDistro": ros_distro}) + "\n",
+            encoding="utf-8",
+        )
+        print(f"built overlay: {host}")
+        below.append((host, target))
+
+
+def check_overlay_builds(deployment: Deployment, selection: Selection, image: str | None) -> list[str]:
+    """Warn about overlay installs that build-overlay made for another image."""
+    warnings: list[str] = []
+    for host, _ in overlay_workspaces(deployment):
+        stamp = read_overlay_stamp(host)
+        if stamp is None:
+            continue
+        if stamp.get("rosDistro") != selection.ros_distro or (image and stamp.get("image") != image):
+            warnings.append(
+                f"{host} was built for {stamp.get('rosDistro')} in {stamp.get('image')}; "
+                f"rebuild it: openadkit build-overlay {deployment.name}"
+            )
+    for warning in warnings:
+        print(f"warning: overlay workspace: {warning}", file=sys.stderr)
+    return warnings
+
+
+# Sourced before a ROS command runs in a service container: docker exec skips
+# the entrypoint that sources them for the service itself.
+ROS_SHELL = 'source "/opt/ros/${ROS_DISTRO}/setup.bash"; source /opt/autoware/setup.bash; '
+
+
+def autoware_state(deployment: Deployment, selection: Selection) -> dict[str, Any] | None:
+    """The AD API state from the running api service, or None without one."""
+    command = compose_command(deployment, selection)
+    environment = compose_process_environment(deployment, selection)
+    running = capture_process(
+        command + ["ps", "--services", "--status", "running"],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    if "api" not in running.stdout.split():
+        return None
+    script = (Path(__file__).parent / "autoware_state.py").read_text(encoding="utf-8")
+    result = capture_process(
+        command + ["exec", "-T", "api", "bash", "-c", ROS_SHELL + 'exec python3 -c "$0"', script],
+        cwd=deployment.directory, env=environment, check=False, trace=False,
+    )
+    try:
+        state = json.loads(result.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return None
+    return state if isinstance(state, dict) else None
+
+
+def format_autoware_state(state: dict[str, Any]) -> list[str]:
+    lines = []
+    for name in ("localization", "routing", "mode", "mrm"):
+        item = state.get(name)
+        if not isinstance(item, dict):
+            lines.append(f"{name:<13}no data")
+            continue
+        text = item["state"]
+        if name == "mode":
+            notes = [] if item.get("autowareControl", True) else ["manual control"]
+            if item.get("autonomousAvailable"):
+                notes.append("autonomous available")
+            text += f" ({', '.join(notes)})" if notes else ""
+        elif name == "mrm" and item.get("behavior"):
+            text += f": {item['behavior']}"
+        lines.append(f"{name:<13}{text}")
+    return lines
 
 
 def status(deployment: Deployment, selection: Selection) -> None:
     compose_run(deployment, selection, ["ps"])
+    state = autoware_state(deployment, selection)
+    if state is not None:
+        print()
+        print("\n".join(format_autoware_state(state)))
 
 
-def logs(deployment: Deployment, selection: Selection, follow: bool) -> None:
+def logs(
+    deployment: Deployment, selection: Selection, follow: bool, services: list[str] | None = None
+) -> None:
     arguments = ["logs"]
     if follow:
         arguments.append("--follow")
-    compose_run(deployment, selection, arguments)
+    compose_run(deployment, selection, arguments + list(services or []))
+
+
+def record(
+    deployment: Deployment, selection: Selection, topics: list[str], output: Path
+) -> Path:
+    """Record topics into a bag on the host until interrupted.
+
+    The recorder runs as a copy of the running api container: its image,
+    environment, user and mounts, so it joins the same ROS domain and
+    middleware, and its entrypoint sources the overlay workspaces for
+    integrator message types. The bag is written to a host directory, so it
+    survives the deployment's containers.
+    """
+    ids = compose_capture(deployment, selection, ["ps", "--quiet", "api"], check=False).stdout.split()
+    if not ids:
+        raise OpenADKitError(f"{deployment.name} has no running api service to record from")
+    environment = process_environment(selection)
+    inspected = capture_process(
+        ["docker", "inspect", ids[0]], env=environment, check=False, trace=False
+    )
+    try:
+        config = json.loads(inspected.stdout)[0]["Config"]
+    except (ValueError, LookupError, TypeError) as error:
+        raise OpenADKitError("could not inspect the api container") from error
+    label = deployment.name if selection.node is None else f"{deployment.name}-{selection.node}"
+    bag = output / f"{label}-{time.strftime('%Y%m%d-%H%M%S')}"
+    output.mkdir(parents=True, exist_ok=True)
+    # The container's own entrypoint, which a service may have overridden.
+    entrypoint = config.get("Entrypoint") or []
+    command = [
+        "docker", "run", "--rm", "--init",
+        *(["--entrypoint", entrypoint[0]] if entrypoint else []),
+        "--network", "host", "--ipc", "host",
+        "--volumes-from", f"{ids[0]}:ro",
+        "--volume", f"{output}:/openadkit/recordings",
+        *(["--user", config["User"]] if config.get("User") else []),
+        *(argument for variable in config.get("Env") or [] for argument in ("--env", variable)),
+        config["Image"], *entrypoint[1:],
+        "bash", "-c", 'exec ros2 bag record --output "$0" "$@"',
+        f"/openadkit/recordings/{bag.name}", *(topics or ["--all"]),
+    ]
+    print_command(command)
+    process = subprocess.Popen(command, env=environment)
+    interrupted = False
+    while True:
+        try:
+            returncode = process.wait()
+            break
+        except KeyboardInterrupt:
+            # Ctrl+C reached the recorder too; killing the client would leave
+            # it recording, so wait while it closes the bag.
+            interrupted = True
+    # Ctrl+C ends ros2 bag record with a nonzero status; a bag is a result.
+    # Without it the recorder stopped on its own, and the bag may be partial.
+    if returncode != 0 and not (interrupted and bag.is_dir()):
+        raise OpenADKitError(
+            f"recording failed with exit status {returncode}"
+            + (f"; partial bag: {bag}" if bag.is_dir() else "")
+        )
+    return bag
 
 
 def stop(deployment: Deployment, selection: Selection) -> None:

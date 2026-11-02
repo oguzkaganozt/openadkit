@@ -50,6 +50,14 @@ def test_inventory_bake_and_runtime_catalog_agree():
     ("components/sensing-perception/scripts/build.sh", {"sensing-perception", "sensing-perception-cuda"}, {}),
     ("components/simulator/Dockerfile", {"carla-interface"}, {"use_local_simulator": True}),
     ("docs/index.md", set(), {}),
+    (".github/autoware-patches/universe/autoware_universe/0001-fix.patch",
+     {image["target"] for image in INVENTORY["images"]} - {"simulator"},
+     {"use_local_common": True, "use_local_simulator": True}),
+    (".github/scripts/autoware_patches.py", {image["target"] for image in INVENTORY["images"]} - {"simulator"},
+     {"use_local_common": True, "use_local_simulator": True}),
+    ("components/visualizer/README.md", set(), {}),
+    # Copied into the image, unlike the component's own README.
+    ("components/visualizer/novnc/README.md", {"visualizer"}, {}),
 ])
 def test_changed_inputs_select_required_builds(path, expected, flags):
     plan = matrices.build_single_image_plan(INVENTORY, [path])
@@ -247,6 +255,73 @@ def test_real_integrator_contract_checks_compiled_models(tmp_path, compose_conte
     assert report["overlayConformant"] is (rule is None)
     assert {warning["rule"] for warning in report["overlayWarnings"]} == ({rule} if rule else set())
     assert all(warning.get("service") != "acme-probe" for warning in report["overlayWarnings"])
+
+
+@pytest.mark.parametrize("change", [None, "command", "typo"])
+def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compose_context, change):
+    # Verve's M2 kit: carla-simulation's Autoware side, with its own CARLA.
+    kit = tmp_path / "kit"
+    directory = kit / "deployments/world"
+    directory.mkdir(parents=True)
+    (kit / "openadkit.json").write_text(json.dumps({
+        "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
+        "deployments": {"world": {"path": "deployments/world"}}, "artifacts": {},
+    }))
+    (directory / "deployment.json").write_text(json.dumps({
+        "schemaVersion": 2, "name": "world", "description": "Own simulator",
+        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+    }))
+    (directory / "config.env").write_text("TOWN=Town01\n" + ("VEHICLE_MODLE=typo\n" if change == "typo" else ""))
+    override = '  control:\n    command: ["true"]\n' if change == "command" else ""
+    (directory / "docker-compose.yaml").write_text(
+        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml\n"
+        "services:\n" + override +
+        "  carla:\n    image: busybox:1.36.1\n    command: [\"sleep\", \"${TOWN}\"]\n"
+    )
+    result = subprocess.run([str(ROOT / "openadkit"), "validate", "world", "--gpu", "--json"],
+                            cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    rules = {warning["rule"] for warning in json.loads(result.stdout)["overlayWarnings"]}
+    # Its own carla service replaces nothing, and TOWN is set and read by the kit;
+    # changing an inherited service or setting a variable nothing reads still warns.
+    assert rules == {None: set(), "command": {"command"}, "typo": {"variable"}}[change]
+
+
+@pytest.mark.parametrize("change", [None, "plain-read", "set-only"])
+def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, compose_context, change):
+    # Verve's M2 kit: a world file two deployments include, one of which
+    # takes nothing from the base and reads the desktop's DISPLAY.
+    kit = tmp_path / "kit"
+    (kit / "deployments/shared").mkdir(parents=True)
+    (kit / "openadkit.json").write_text(json.dumps({
+        "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
+        "deployments": {"manual": {"path": "deployments/manual"}}, "artifacts": {},
+    }))
+    world = '  carla:\n    image: busybox:1.36.1\n    command: ["sleep", "${TOWN}"]\n'
+    if change == "plain-read":
+        world += '    environment:\n      SPAWN: ${SPAWNN}\n'
+    (kit / "deployments/shared/world.yaml").write_text("services:\n" + world)
+    directory = kit / "deployments/manual"
+    directory.mkdir()
+    (directory / "deployment.json").write_text(json.dumps({
+        "schemaVersion": 2, "name": "manual", "description": "Drive by hand",
+        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+    }))
+    (directory / "config.env").write_text("TOWN=Town01\n" + ("CARLA_CPU=3\n" if change == "set-only" else ""))
+    (directory / "docker-compose.yaml").write_text(
+        "include:\n  - ../shared/world.yaml\n"
+        "services:\n  manual:\n    image: busybox:1.36.1\n"
+        "    environment:\n      DISPLAY: ${DISPLAY:?run from a desktop session}\n"
+    )
+    environment = dict(os.environ, DISPLAY=":1")
+    result = subprocess.run([str(ROOT / "openadkit"), "validate", "manual", "--gpu", "--json"],
+                            cwd=kit, env=environment, text=True, capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    warnings = json.loads(result.stdout)["overlayWarnings"]
+    # Its carla is its own (it includes no base file), TOWN is set and read by
+    # the kit across its files, and DISPLAY is read from the host on purpose.
+    assert [warning.get("variable") for warning in warnings] == {
+        None: [], "plain-read": ["SPAWNN"], "set-only": ["CARLA_CPU"]}[change]
 
 
 def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, tmp_path):

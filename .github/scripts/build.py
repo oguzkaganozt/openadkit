@@ -98,6 +98,7 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
         ".github/actions/build-image/*",
         ".github/actions/setup-build-env/*",
         ".github/workflows/build-single-image.yaml",
+        ".github/workflows/build-single-image-distro.yaml",
         ".trivyignore",
     )
     targets = set(target_input.split())
@@ -109,13 +110,19 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
             if not changed_file:
                 continue
             # These shape every image's sources, context and dependency graph.
+            # Autoware patches change the sources every image compiles, as a new
+            # Autoware revision does.
             if changed_file in ("components/docker-bake.hcl", ".dockerignore", ".github/autoware.ref", ".github/autoware-lock.repos",
-                                ".github/autoware-base-images.json"):
+                                ".github/autoware-base-images.json", ".github/scripts/autoware_patches.py") or fnmatch.fnmatchcase(
+                changed_file, ".github/autoware-patches/*"
+            ):
                 targets.update(all_targets)
                 use_local_common = True
                 use_local_simulator = True
-            elif changed_file == "components/README.md" or fnmatch.fnmatchcase(
-                changed_file, "components/*/README.md"
+            # A component's own README documents it; a README deeper down may be
+            # copied into the image (fnmatch's "*" would also match "/").
+            elif changed_file == "components/README.md" or (
+                changed_file.endswith("/README.md") and changed_file.count("/") == 2
             ):
                 continue
             elif any(
@@ -265,7 +272,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
             if prepared.get("use_local_common") == "true":
                 cache_from.extend(common_cache_from)
             if common_cached:
-                cache_from.extend(f"type=gha,scope=pr-common-{stage}-{run_id}" for stage in ("devel", "runtime"))
+                cache_from.extend(f"type=gha,scope=pr-common-{stage}-{distro}-{run_id}" for stage in ("devel", "runtime"))
             if prepared.get("use_local_simulator") == "true":
                 cache_from.append(f"type=registry,ref={cache_ref('simulator')}")
 
@@ -292,7 +299,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, share
         overrides["sensing-perception-cuda"]["args"]["SECURITY_REFRESH"] = build_tag
     if shared_common:
         for name, stage in (("universe-common-build", "devel"), ("universe-common", "runtime")):
-            overrides[name]["cache-to"] = [f"type=gha,scope=pr-common-{stage}-{run_id},mode=min"]
+            overrides[name]["cache-to"] = [f"type=gha,scope=pr-common-{stage}-{distro}-{run_id},mode=min"]
     targets = (["universe-common-build", "universe-common-devel", "universe-common"]
                if publish and target == "universe-common" else [target])
     return {"target": overrides}, targets

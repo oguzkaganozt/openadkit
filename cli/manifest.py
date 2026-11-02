@@ -8,15 +8,21 @@ import os
 import platform
 import re
 import stat
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# Compose also reads env file keys with dots and dashes; only interpolation
+# names are limited to ENV_NAME_RE.
+ENV_FILE_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.\-]*$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_REFERENCE_RE = re.compile(r"^\S+@sha256:[0-9a-f]{64}$")
 GPU_COMPONENT_IMAGE = "SENSING_PERCEPTION_GPU_IMAGE"
+# The image a release builds integrator overlays in, pinned with its runtime images.
+DEVEL_IMAGE_TARGET = "universe-common-devel"
 # Manifests from before v2.0.0 never shipped in a stable release; they are
 # rejected rather than translated.
 SCHEMA_VERSION = 2
@@ -44,7 +50,12 @@ ALLOWED_INTEGRATOR_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
 # The include variable for the pinned kit, named per kit so a later layer
 # (a Tier-1 kit extended by an OEM kit) can add its own.
 BASE_KIT_ENV = "KIT_openadkit"
-RELEASE_TAG_RE = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$")
+_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+# Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
+VERSION_RE = re.compile(
+    r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+    rf"(?:-({_IDENTIFIER}(?:\.{_IDENTIFIER})*))?$"
+)
 ALLOWED_DEPLOYMENT_REF_KEYS = {"path", "checksum"}
 ALLOWED_DEPLOYMENT_KEYS = {
     "schemaVersion",
@@ -94,7 +105,7 @@ ALLOWED_DATA_KEYS = {
     "gpu",
     "nodes",
 }
-ALLOWED_DATA_FILE_KEYS = {"path", "url", "sha256"}
+ALLOWED_DATA_FILE_KEYS = {"path", "url", "source", "sha256"}
 
 
 class OpenADKitError(Exception):
@@ -132,6 +143,15 @@ def require_string(value: Any, where: str, *, nonempty: bool = True) -> str:
         qualifier = " nonempty" if nonempty else ""
         raise OpenADKitError(f"{where} must be a{qualifier} string")
     return value
+
+
+def require_url(value: Any, where: str) -> str:
+    url = require_string(value, where)
+    parsed = urllib.parse.urlsplit(url)
+    # file: serves a local mirror; anything else would fail only at fetch.
+    if parsed.scheme not in ("http", "https", "file") or (parsed.scheme != "file" and not parsed.netloc):
+        raise OpenADKitError(f"{where} must be an http, https or file URL: {url}")
+    return url
 
 
 def require_string_list(
@@ -200,12 +220,14 @@ def _dotenv_unescape(value: str) -> str:
 def parse_dotenv(path: Path) -> dict[str, str]:
     """Read a Compose env file the way Compose does.
 
-    Quoted values may span lines and keep comments; a double-quoted value
-    unescapes \\n, \\r, \\t, \\", \\\\ and \\$; an unquoted one ends at " #".
+    A name is followed by "=" or ":". A name alone takes its value from the
+    shell, so the file does not set it. Quoted values may span lines and keep
+    comments; a double-quoted value unescapes \\n, \\r, \\t, \\", \\\\ and
+    \\$; an unquoted one ends at " #".
     """
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as error:
+    except (OSError, UnicodeError) as error:
         raise OpenADKitError(f"could not read environment file {path}: {error}") from error
     values: dict[str, str] = {}
     index, line = 0, 1
@@ -221,17 +243,18 @@ def parse_dotenv(path: Path) -> dict[str, str]:
         line += 1
         if not stripped or stripped.startswith("#"):
             continue
-        if "=" not in raw:
-            raise OpenADKitError(f"invalid dotenv assignment at {where}")
-        name, value_start = raw.split("=", 1)
-        name = name.strip()
+        separators = [position for position in (raw.find("="), raw.find(":")) if position != -1]
+        separator = min(separators, default=len(raw))
+        name, value_start = raw[:separator].strip(), raw[separator + 1 :]
         words = name.split(None, 1)
         if len(words) == 2 and words[0] == "export":
             name = words[1]
-        if not ENV_NAME_RE.fullmatch(name):
+        if not ENV_FILE_NAME_RE.fullmatch(name):
             raise OpenADKitError(f"invalid environment name at {where}: {name}")
+        if not separators:
+            continue
         # Position of the value in the whole text, for multi-line values.
-        offset = start_of_line + raw.index("=") + 1
+        offset = start_of_line + separator + 1
         while offset < length and text[offset] in " \t":
             offset += 1
         if offset < length and text[offset] in ("'", '"'):
@@ -341,6 +364,10 @@ class RuntimeContext:
     def pinned(self) -> bool:
         """Release images cannot be overridden from env files; source images can."""
         return self.image_prefix_component is None
+
+    def devel_image(self, ros_distro: str) -> str | None:
+        """The devel image of the build the runtime images come from, if pinned."""
+        return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
 
     def bom(self) -> dict[str, Any]:
         """What this kit runs: Autoware, component images and artifacts."""
@@ -687,7 +714,7 @@ class Deployment:
         )
 
 
-def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
+def _validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dict[str, Any]]:
     if not isinstance(data, list):
         raise OpenADKitError("data must be an array")
     names: set[str] = set()
@@ -740,14 +767,17 @@ def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
             safe_relative(relative, f"{where}.generatedFiles")
         resource["generatedFiles"] = generated
         if resource["kind"] == "zip":
-            require_string(resource.get("url"), f"{where}.url")
+            require_url(resource.get("url"), f"{where}.url")
             checksum = require_string(resource.get("sha256"), f"{where}.sha256")
             if not SHA256_RE.fullmatch(checksum):
                 raise OpenADKitError(f"{where}.sha256 is invalid")
-            safe_relative(
+            # The archive's single top-level directory, which data.py extracts.
+            expected_root = safe_relative(
                 require_string(resource.get("expectedRoot"), f"{where}.expectedRoot"),
                 f"{where}.expectedRoot",
             )
+            if len(expected_root.parts) != 1:
+                raise OpenADKitError(f"{where}.expectedRoot must be one directory name")
             if resource.get("files") not in (None, []):
                 raise OpenADKitError(f"{where}.files is invalid for zip data")
             resource["files"] = []
@@ -766,10 +796,26 @@ def _validate_data(data: Any, nodes: dict[str, Any]) -> list[dict[str, Any]]:
                 if relative in seen_paths:
                     raise OpenADKitError(f"duplicate data file path: {relative}")
                 seen_paths.add(relative)
-                require_string(item.get("url"), f"{file_where}.url")
+                # A file the deployment ships (source, relative to its directory)
+                # or one to download (url); the checksum is checked either way.
+                if ("url" in item) == ("source" in item):
+                    raise OpenADKitError(f"{file_where} needs exactly one of url and source")
+                if "url" in item:
+                    require_url(item["url"], f"{file_where}.url")
+                else:
+                    item["sourcePath"] = ensure_safe_existing(
+                        directory, item["source"], f"{file_where}.source"
+                    )
                 checksum = require_string(item.get("sha256"), f"{file_where}.sha256")
                 if not SHA256_RE.fullmatch(checksum):
                     raise OpenADKitError(f"{file_where}.sha256 is invalid")
+                # A shipped file is part of the deployment: check it with the
+                # manifest, so validate and release packaging catch a mismatch
+                # before any user fetches it.
+                if "sourcePath" in item and sha256_file(item["sourcePath"]) != checksum:
+                    raise OpenADKitError(
+                        f"{file_where}.source {item['source']} does not match its sha256"
+                    )
     return data
 
 
@@ -923,7 +969,7 @@ def validate_manifest(root: Path, directory: Path) -> Deployment:
         require_string(evidence["exempt"], "evidence.exempt")
     manifest["evidence"] = evidence
 
-    data = _validate_data(manifest.get("data", []), nodes)
+    data = _validate_data(manifest.get("data", []), nodes, directory)
     manifest["data"] = data
 
     deployment = Deployment(root, directory, manifest)
@@ -963,7 +1009,7 @@ def validate_kit_deployment(
     extra_resets = require_string_list(compose.get("resetServices", []), "compose.resetServices")
     wait_timeout = _wait_timeout(compose.get("waitTimeout", base.compose["waitTimeout"]))
 
-    own_data = _validate_data(manifest.get("data", []), {})
+    own_data = _validate_data(manifest.get("data", []), {}, directory)
     destinations = {item["destinationEnv"] for item in base.data}
     clashing = sorted(destinations & {item["destinationEnv"] for item in own_data})
     if clashing:
@@ -1084,9 +1130,14 @@ def _parse_autoware(value: Any, kind: str) -> dict[str, str] | None:
         raise OpenADKitError("repository bundles must not declare autoware")
     if not isinstance(value, dict):
         raise OpenADKitError("autoware must be an object")
-    reject_unknown(value, {"version", "ref", "lockSha256"}, "autoware")
+    reject_unknown(value, {"version", "ref", "lockSha256", "backports"}, "autoware")
     for field in ("version", "ref", "lockSha256"):
         require_string(value.get(field), f"autoware.{field}")
+    backports = value.get("backports", [])
+    if not isinstance(backports, list) or any(
+        not isinstance(item, dict) or not isinstance(item.get("upstream"), str) for item in backports
+    ):
+        raise OpenADKitError("autoware.backports must list fixes with their upstream URL")
     return value
 
 
@@ -1112,7 +1163,7 @@ def install_root() -> Path:
 def resolve_extends(kit_root: Path, extends: str) -> Path:
     """The Open AD Kit a kit pins: an installed release tag or, while
     developing, a path to a source checkout."""
-    if RELEASE_TAG_RE.fullmatch(extends):
+    if VERSION_RE.fullmatch(extends):
         candidate = install_root() / f"openadkit-{extends}"
         if not (candidate / "openadkit.json").is_file():
             raise OpenADKitError(

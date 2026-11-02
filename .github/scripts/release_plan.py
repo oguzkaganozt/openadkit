@@ -12,8 +12,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, NoReturn
 
+import autoware_patches
 import validation_matrix
-from evidence.release_gate import validate_report
 from images import build_images, image_ref
 
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
@@ -162,6 +162,17 @@ def ros_snapshots(source_root: Path, distros: list[str]) -> dict[str, str]:
     return {distro: snapshots[distro] for distro in sorted(distros)}
 
 
+def passing_evidence(summary: dict[str, Any], build_tag: str, release_sha: str) -> dict[str, Any]:
+    """The release's evidence summary, which the release gate selected."""
+    if summary.get("result") != "PASSED" or summary.get("release_evidence") is not True:
+        fail("evidence summary did not pass this release")
+    if summary.get("build_tag") != build_tag:
+        fail("evidence summary is for another build")
+    if summary.get("build_sha") != release_sha or summary.get("source_sha") != release_sha:
+        fail("evidence summary tested another commit")
+    return {key: summary.get(key) for key in ("result", "build_tag", "source_sha", "url", "cells")}
+
+
 def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     source_root = args.source_root.resolve()
     metadata = load_json(args.build_metadata)
@@ -212,7 +223,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
 
     kit = product["kit"]
     component_images = dict(kit.component_images)
-    runtime_targets = sorted(set(component_images.values()))
+    # The devel image ships pinned too, so integrators build overlays in it.
+    runtime_targets = sorted(set(component_images.values()) | {runtime.DEVEL_IMAGE_TARGET})
     context_images: dict[str, dict[str, str]] = {}
     for distro in product["distros"]:
         distro_images: dict[str, str] = {}
@@ -225,11 +237,18 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
 
     root_name = f"openadkit-{args.version}"
     asset_name = f"{root_name}.tar.gz"
-    autoware = {
+    autoware: dict[str, Any] = {
         "version": require_string(metadata.get("autoware_base_version"), "autoware_base_version"),
         "ref": require_string(metadata.get("autoware_ref"), "autoware_ref"),
         "lockSha256": require_string(metadata.get("autoware_lock_sha256"), "autoware_lock_sha256"),
     }
+    # The fixes the build applied on top of the tag; the release commit is the
+    # build commit, so its patch directory is what the images carry.
+    backports = autoware_patches.list_patches(source_root)
+    if backports:
+        autoware["backports"] = [
+            {key: item[key] for key in ("repository", "subject", "upstream")} for item in backports
+        ]
     release_context = {
         "artifacts": kit.artifacts,
         "autoware": autoware,
@@ -242,10 +261,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "shared": product["shared"],
         "version": args.version,
     }
-    evidence = {"exempt": product["evidenceExempt"]}
-    if args.evidence_report is not None:
-        evidence = load_json(args.evidence_report)
-        validate_report(evidence, metadata, source_root, args.default_ros_distro)
+    evidence: dict[str, Any] = {"exempt": product["evidenceExempt"]}
+    if args.evidence_summary is not None:
+        evidence.update(passing_evidence(load_json(args.evidence_summary), build_tag, args.release_sha))
     return {
         "bundle": {
             "asset": asset_name,
@@ -284,7 +302,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         },
         "releaseContext": release_context,
         "rosSnapshots": ros_snapshots(source_root, product["distros"]),
-        # Deployments that ship without CI evidence, with the reason.
+        # The passing evidence summary, and the deployments that ship without
+        # CI evidence, with the reason.
         "evidence": evidence,
         "schemaVersion": 1,
     }
@@ -316,7 +335,7 @@ def main() -> int:
     )
     parser.add_argument("--include-example-kits", action="store_true")
     parser.add_argument("--build-metadata", type=Path)
-    parser.add_argument("--evidence-report", type=Path)
+    parser.add_argument("--evidence-summary", type=Path)
     parser.add_argument("--version")
     parser.add_argument("--release-sha")
     parser.add_argument("--packager-sha")

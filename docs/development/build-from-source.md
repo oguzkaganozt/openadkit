@@ -176,12 +176,18 @@ Releases promote an existing CI build; nothing is rebuilt.
   release run warns when the branch has such changes.
 - **A passing scan** of `scan-images` exists for that `build_tag`, dispatched on
   the same `release/X.Y` branch.
-- **Complete signed `PASSED` evidence** exists for that same build, from
-  `evidence` dispatched on the same branch. Required
-  cells, source checksums and image digests must match; quarantine does not waive
-  the gate. See [Evidence Policy](../releases/evidence.md).
+- **A successful `evidence` run** dispatched on the same branch passed every
+  cell for that same build. See [Evidence Policy](../releases/evidence.md).
 
 ### Workflow
+
+To run the whole chain at once, dispatch
+[`release-pipeline.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release-pipeline.yaml)
+on the `release/X.Y` branch with the version. It waits for the branch head's
+build (starting one if none exists, or using `build_tag` when given), then
+dispatches `scan-images` and `evidence` for it and, when both pass,
+`release.yaml`. Each step is still its own run, checked by the same gates; if
+one fails, rerun that workflow and then the chain's failed jobs.
 
 Run [`release.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml)
 on the same `release/X.Y` branch with the version and `build_tag`. A release
@@ -196,7 +202,7 @@ flowchart LR
 1. **validate**: runs the release gates in
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
    (version format, build provenance and age, scan results, metadata and file
-   integrity, image coverage, signed L0-L2 evidence, registry digests, Git tag). Nothing is tagged if a
+   integrity, image coverage, passing L0-L2 evidence, registry digests, Git tag). Nothing is tagged if a
    gate fails.
 2. **package-bundles**: writes the immutable release plan and the runtime bundle
    for both distros.

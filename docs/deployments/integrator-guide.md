@@ -75,27 +75,51 @@ override and restarting returns to the remaining layers.
 
 Unknown packages, files or YAML keys are warnings, not startup failures. The
 hook logs them and writes `/tmp/openadkit/overlay-report.json` in each container.
-After changing the base version, inspect those reports for renamed parameters.
-Every service gets the same layers, so a package is reported as unknown in the
-images that do not install it; it is a mistake only when no service has it.
+Once the services are up, `run` collects those reports and warns about every
+override that changed nothing: a package no service has, a file or a parameter
+its package does not have. After a base version change these usually are
+renamed packages, files or parameters. Every service gets the same layers, so a
+package installed in only some images is not reported.
+
+#### A New Vehicle
+
+Autoware's defaults describe a passenger car. Review these for your vehicle;
+their package and path depend on the base's Autoware version, so look them up
+in its images and check `run`'s override warnings.
+
+| Parameters | File | Why |
+| --- | --- | --- |
+| Dimensions, `wheel_base`, `max_steer_angle` | `vehicle_info.param.yaml` of your vehicle description | Planning and control use them as limits; a steering limit above the vehicle's makes control ask for angles it cannot reach. |
+| Sensor poses | your sensor kit's `sensor_kit_calibration.yaml` and `sensors_calibration.yaml` | A wrong sign or offset shows up as a localization error of the same size. |
+| `nominal_latency`, `assumed_limit_acc` | `control_validator.param.yaml` | Your actuation latency and achievable braking. With car values a slower or weaker vehicle fails validation and triggers an MRM. |
+| `pose_measurement.pose_gate_dist` | `ekf_localizer.param.yaml` | The Mahalanobis gate for pose updates. A start pose far from the truth can be rejected for good. |
+| Velocity, acceleration, jerk and steering-rate limits | `vehicle_cmd_gate.param.yaml` | The last limits before the vehicle interface. |
 
 ### 3. Overlay Workspace
 
 Put ROS packages in `overlay_ws/src` and build them in the
 `universe-common-devel` image from the **same build** as your runtime images.
-The example's build script accepts a digest-pinned `DEVEL_IMAGE`:
+A release pins that image next to its runtime images, so the CLI builds with
+the right one:
 
 ```bash
-cd deployments/custom-kit
-DEVEL_IMAGE=ghcr.io/autowarefoundation/openadkit-common@sha256:<digest> \
-  bash overlay_ws/build.sh humble
+openadkit build-overlay [--ros-distro humble]               # the kit's workspace
+openadkit build-overlay <deployment> [--ros-distro humble]  # and the deployment's own
 ```
 
-Obtain the matching digest from the build metadata or release BOM. Without an
-override, the example script uses a moving source-development tag; do not use
-that default as a production pin. Keep separate workspace outputs for different
-ROS distros. The CLI mounts the workspace and the hook sources
-`overlay_ws/install/local_setup.bash` on top of Autoware.
+Without a deployment it builds the kit's workspace, which all its deployments
+share. With one, it builds each workspace that deployment mounts, the kit's
+first. Each builds at the path the services mount it, and the CLI records the image and distro in
+`install/.openadkit-overlay.json`. After a base upgrade or a distro change,
+`validate` and `run` warn until you rebuild. A workspace builds
+incrementally only on its own last build in the same image and distro;
+otherwise (an upgrade, a build by hand, a rebuilt layer below) its `build/`
+and `install/` are removed first, since CMake caches record the paths they
+were configured with. Releases before this pin, and
+source checkouts, pin no devel image: set `DEVEL_IMAGE` to the matching
+`universe-common-devel` digest from the build metadata or release BOM. The
+CLI mounts the workspace and the hook sources `overlay_ws/install/local_setup.bash`
+on top of Autoware.
 
 The workspace belongs to the kit: `overlay_ws` at the kit root serves every
 deployment of the kit, since they all extend one base and its images. A
@@ -120,6 +144,22 @@ mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`; add
 `${OPENADKIT_OVERLAY_WS_DEPLOYMENT}` at `/openadkit/overlay_ws_deployment:ro`
 if it also needs the deployment's own packages. The example's `acme-probe`
 service mounts the first: its kit has one workspace.
+
+To replace one side of a base that runs as split-host nodes, include only the
+other side's service layer instead of the base's Compose file. For example, a
+kit that brings its own simulator to `carla-simulation` includes
+`${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml`: no service in it depends
+on a CARLA service. The base's `resetServices` that the kit's services leave
+out are skipped; the kit's own must exist. `validate` then checks the kit
+against that layer only, and a deployment that includes no base file inherits
+no base service: a service of the same name the kit defines itself, such as
+its own `carla`, is the kit's. The kit's Compose files are its entry files and
+the kit files they include (a world file several deployments share). A
+variable the kit both sets in its env file and reads in those files is its own
+setting, and one read with a default or a message (`${DISPLAY:?...}`,
+`${TOWN:-Town01}`) is meant to come from the host or the site file. A variable
+only set, or only read plainly, and unknown to the base, is still reported as
+a likely typo.
 
 ### 5. Image Replacement
 
@@ -148,13 +188,12 @@ mounts and commands/images of new services are not reported as replacements.
 Validation does not pull images or inspect their parameter files.
 
 The evidence runner combines the static result with every mounted service's
-hook report and records `overlayConformant` in the signed Test Result. Missing
+hook report and records `overlayConformant` in the evidence summary. Missing
 or invalid hook reports are nonconformant, not silently clean. The example
 acceptance cell additionally requires conformance, checks shared/kit/inherited
 parameters and fresh C++ publication, and runs Planning Simulation's golden
 path. Humble and Jazzy each build the workspace against their matching devel
-digest. The attestation binds the kit's source/config checksum, excluding
-host-specific `build`, `install` and `log` products.
+digest, without host-specific `build`, `install` and `log` products.
 
 Base deployments with a reasoned CI evidence exemption retain that exemption
 in the kit. An exemption is not evidence of runtime compatibility.
