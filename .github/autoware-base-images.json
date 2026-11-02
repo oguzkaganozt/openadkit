@@ -1,8 +1,8 @@
 {
-  "base-cuda-devel-humble": "sha256:3935b319aa49bce3ff526fd9c39eb47587f0eb923b46b6d56183c1ebc807a0ac",
-  "base-cuda-devel-jazzy": "sha256:d0a7e88f53c65c96b0e8bd85ab4220944bbc1e90e090121f67e8daf5b6c59dfc",
-  "base-cuda-runtime-humble": "sha256:2139a9147e781429e08d7de9e666146f90f19e25b640954a1e8c5cd57ed44c4b",
-  "base-cuda-runtime-jazzy": "sha256:b045a852bcb95fe0401ed34aa413fde9d59a6480d7b947c9777903cb80de472b",
-  "base-humble": "sha256:da0b06ce5d437e9157c861c141ec1f8d7308601e8fd75436001952ab1a3f4361",
-  "base-jazzy": "sha256:7c5b9b5e5d00921130091b8340a71b767b34d15c284d6099b453e9e9b16f3078"
+  "base-cuda-devel-humble": "sha256:2f98d209af511d6fb6152d25d898a79de264db2c3df36f97071dd1268569e250",
+  "base-cuda-devel-jazzy": "sha256:5141b6afa33ec79a8c85730c09104213f41bdcb396de7cc185116c96113668d3",
+  "base-cuda-runtime-humble": "sha256:0e4bb2199c1d9e0af19904cca9b8aedd876ecc967724cea20f6b7fa77cf0b56a",
+  "base-cuda-runtime-jazzy": "sha256:2ff9c75b0744dca41d6e3980106e9e09dbb5fa3a9f0460a01c35ebeb884e0858",
+  "base-humble": "sha256:df41a0110014219c1309060424154fb23da907b77559e55512e521a5d6e511bc",
+  "base-jazzy": "sha256:06fc39bc039a8e5709e7750a0991e9b509d428de4280ae0b6e24eb8bf130637a"
 }

@@ -30,7 +30,7 @@ repositories:
   "core/autoware_core":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_core.git"
-    version: "0ed769bb8aa56edb4e1b573140868aba01bfc984"
+    version: "9662c30e951f91c51239772ba7c589c1f14b85c7"
   "core/autoware_rviz_plugins":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_rviz_plugins.git"
@@ -38,15 +38,27 @@ repositories:
   "core/autoware_simple_planning_simulator":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_simple_planning_simulator.git"
-    version: "fced0c53b3a049c7b300f2ae87b394d1e4c8aaef"
+    version: "4e302b2a235ec85fe9dc91b6257ff16ccc80ca82"
   "core/autoware_system_designer":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_system_designer.git"
-    version: "d8a78ff4f81dd6de4dd3ddfac4189c122be7b839"
+    version: "b27fb793112ca401c03c47ffeac3525e1b8d31a0"
+  "core/cuda/autoware_cuda":
+    type: "git"
+    url: "https://github.com/autowarefoundation/autoware_cuda.git"
+    version: "ee709ac98b4e5d6105288d7ace9062281d52dfb7"
+  "core/cuda/cuda_blackboard":
+    type: "git"
+    url: "https://github.com/autowarefoundation/cuda_blackboard.git"
+    version: "a4f330e5c228d713774450b0331b83b94c55a466"
+  "core/cuda/negotiated":
+    type: "git"
+    url: "https://github.com/osrf/negotiated.git"
+    version: "eac198b55dcd052af5988f0f174902913c5f20e7"
   "universe/autoware_universe":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_universe.git"
-    version: "ef57fd4f6fbd8878f75a1ddf39712e0fa956dce7"
+    version: "94b8fbd3a8e4df661568270494369b06eb913d66"
   "universe/external/tier4_autoware_msgs":
     type: "git"
     url: "https://github.com/tier4/tier4_autoware_msgs.git"
@@ -83,18 +95,10 @@ repositories:
     type: "git"
     url: "https://github.com/autowarefoundation/bevdet_vendor.git"
     version: "dd65290a01a6b330b2e596a1d2dd95a22f400ea9"
-  "universe/external/cuda_blackboard":
-    type: "git"
-    url: "https://github.com/autowarefoundation/cuda_blackboard.git"
-    version: "d40f8d45f1a2e9c0fb271d13e3e178d7682fa682"
-  "universe/external/negotiated":
-    type: "git"
-    url: "https://github.com/osrf/negotiated.git"
-    version: "eac198b55dcd052af5988f0f174902913c5f20e7"
   "universe/external/managed_transform_buffer":
     type: "git"
     url: "https://github.com/autowarefoundation/managed_transform_buffer.git"
-    version: "ae33f5b01ac84eec79cb2ec2185d12e687259a10"
+    version: "1699bcd0f6809bbff474588fd8585ae5723e3639"
   "launcher/autoware_launch":
     type: "git"
     url: "https://github.com/autowarefoundation/autoware_launch.git"
