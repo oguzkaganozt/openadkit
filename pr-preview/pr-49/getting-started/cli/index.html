@@ -2225,6 +2225,7 @@ install alone, and <code>openadkit uninstall</code> removes only its own links.<
 openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
 openadkit<span class="w"> </span>logs<span class="w"> </span>map<span class="w"> </span>planning<span class="w">        </span><span class="c1"># only these services</span>
 openadkit<span class="w"> </span>restart<span class="w">                  </span><span class="c1"># services reread config and overlay workspaces</span>
+openadkit<span class="w"> </span>restart<span class="w"> </span>--all<span class="w">            </span><span class="c1"># the whole deployment, with the same settings</span>
 openadkit<span class="w"> </span>shell<span class="w">                    </span><span class="c1"># a shell in the api service with ROS sourced</span>
 openadkit<span class="w"> </span>shell<span class="w"> </span>planning<span class="w"> </span>ros2<span class="w"> </span>node<span class="w"> </span>list
 openadkit<span class="w"> </span>record<span class="w"> </span>/tf<span class="w"> </span>/localization/kinematic_state
@@ -2235,8 +2236,10 @@ take no deployment name. When several nodes of a split deployment run on one
 host, pick one with <code>--node</code>; <code>status</code> and <code>stop</code> act on all of them.</p>
 <p><code>restart</code> with no service restarts every service that takes Open AD Kit config
 or an overlay workspace, so a changed parameter file or a rebuilt workspace
-applies without restarting a simulator such as CARLA. Changes to Compose files
-or <code>.env</code> values need <code>run</code> again. <code>shell</code> sources ROS, Autoware and the overlay
+applies without restarting a simulator such as CARLA; it names the services it
+left running. <code>restart --all</code> restarts the whole deployment in place, one-shot
+services included, as a fresh start with the same settings. Changes to Compose
+files or <code>.env</code> values need <code>stop</code> and <code>run</code> again. <code>shell</code> sources ROS, Autoware and the overlay
 workspaces like the services' entrypoint; give it a service and a command to run
 one command instead.</p>
 <p>Below its services, <code>status</code> shows Autoware's state from the AD API:</p>
