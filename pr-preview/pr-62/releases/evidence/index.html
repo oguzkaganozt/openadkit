@@ -2181,7 +2181,7 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 <p>The workflow retries a failed runtime cell once. A cell that still fails fails
 the run and blocks a release. The cells start deployments with
 <code>openadkit run --no-visualizer</code>.</p>
-<p>A 4-vCPU GitHub-hosted runner cannot run Autoware main in real time: the ego
+<p>A 4-vCPU GitHub-hosted runner cannot run Autoware in real time: the ego
 drives late and the bundled samples take about three times as long as on a
 16-vCPU host. The scenario-simulation cells therefore run the simulation at
 half speed (<code>GLOBAL_REAL_TIME_FACTOR=0.5</code>, with <code>GLOBAL_TIMEOUT=400</code> wall-clock
