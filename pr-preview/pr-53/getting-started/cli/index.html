@@ -1475,8 +1475,6 @@
           
         
       
-        
-      
     
     
     
@@ -1513,11 +1511,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1531,78 +1524,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -2274,8 +2195,10 @@ anything. <code>--data</code> also reports each data resource as <code>ok</code>
 or <code>outdated</code> and fails on any gap. It follows the same GPU selection as <code>run</code>:
 use <code>openadkit validate logging-simulation --gpu --data</code> to include the
 CenterPoint models.</p>
-<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting.</p>
-<p><code>validate</code>, <code>fetch</code>, <code>run</code> and <code>clean</code> also take a deployment's directory
+<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting. <code>config</code> prints
+the resolved Compose model of a deployment as JSON, with the same options as
+<code>validate</code>; <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
+<p><code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code> and <code>clean</code> also take a deployment's directory
 instead of its name, such as <code>openadkit run ./my-kit</code>: an argument with a <code>/</code> or
 a leading <code>.</code> is a directory, and the kit around it is used wherever you run the
 command.</p>
