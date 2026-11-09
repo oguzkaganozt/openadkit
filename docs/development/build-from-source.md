@@ -162,8 +162,10 @@ Releases promote an existing CI build; nothing is rebuilt.
 - **Highlights** for a minor or major release are in
   `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.
-- **The [roadmap](../roadmap.md) is reviewed:** finished items are gone, the
-  next release's items are under Now, and its review date is current.
+- **The [roadmap](../roadmap.md) is reviewed** for a minor or major release:
+  finished items are gone, the release's items are under Now, and its
+  `Last reviewed` line names the release. Validation checks that line for the
+  release and its candidates.
 
 ### Workflow
 

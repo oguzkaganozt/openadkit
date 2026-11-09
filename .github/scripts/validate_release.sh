@@ -222,6 +222,16 @@ validate_release_rules() {
     || fail "Autoware base version ${autoware_base_version} does not match release tag ${autoware_input_ref}"
 }
 
+# A minor or major release, and each of its candidates, follows a review of
+# the roadmap, whose "Last reviewed" line names the release. Patch releases
+# leave the roadmap alone. The roadmap is read as it is at dispatch.
+validate_roadmap_review() {
+  local core=${VERSION%%-*} roadmap=${ROADMAP_FILE:-docs/roadmap.md}
+  [[ ${core} == *.0 ]] || return 0
+  grep -Eq "^Last reviewed: .*\\b${core//./\\.}\\b" "${roadmap}" \
+    || fail "Review ${roadmap} before releasing ${VERSION}: remove finished items, plan ${core} under Now and name it in the 'Last reviewed' line"
+}
+
 # Publishing creates the tag; one that already exists must be on this commit.
 validate_git_tag() {
   local existing tag_sha
@@ -250,6 +260,7 @@ write_outputs() {
 
 main() {
   validate_inputs
+  validate_roadmap_review
   resolve_latest_alias_policy
   validate_build_run
   warn_unreleased_kit_changes

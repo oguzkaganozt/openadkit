@@ -57,6 +57,21 @@ def test_a_version_is_open_ad_kits_own(tmp_path, version):
     assert result.returncode == 0, result.stderr
 
 
+@pytest.mark.parametrize(("version", "accepted"), [
+    ("v2.0.0", True), ("v2.0.0-rc.9", True), ("v2.0.1", True), ("v2.1.0-rc.1", False), ("v12.0.0", False),
+])
+def test_minor_and_major_releases_follow_a_roadmap_review(tmp_path, version, accepted):
+    roadmap = tmp_path / "roadmap.md"
+    roadmap.write_text("# Roadmap\n\nLast reviewed: 2026-11-09, before v2.0.0.\n")
+    result = run_validator(tmp_path, "validate_roadmap_review", VERSION=version, ROADMAP_FILE=str(roadmap))
+    assert (result.returncode == 0) is accepted, result.stderr
+    assert accepted or "Review" in result.stderr
+
+
+def test_the_roadmap_names_a_release_it_was_reviewed_for():
+    assert (ROOT / "docs/roadmap.md").read_text().count("\nLast reviewed: ") == 1
+
+
 @pytest.mark.parametrize(("ref", "accepted"), [
     ("refs/heads/main", True), ("refs/heads/release/2.0", True), ("refs/heads/feature", False), ("refs/tags/v2.0.0", False),
 ])

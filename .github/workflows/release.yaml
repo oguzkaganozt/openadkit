@@ -47,6 +47,7 @@ jobs:
             .github/scripts/validate_release.sh
             .github/scripts/images.py
             openadkit.json
+            docs/roadmap.md
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

@@ -62,8 +62,9 @@ integrates it.
 ## Keeping This Page Current
 
 - The pull request that finishes an item removes it.
-- Each release reviews the page: items move from Next to Now, Later is pruned,
-  and the review date above changes.
+- Each minor or major release reviews the page: items move from Next to Now,
+  Later is pruned, and the review line above names the release. Release
+  validation stops a minor or major release, and its candidates, until it does.
 - An item stays one or two lines; one that needs more links to its issue.
 - The order reflects engineering priority, not dates or certification
   commitments.
