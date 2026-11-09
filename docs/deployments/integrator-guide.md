@@ -1,7 +1,7 @@
 # Integrator Guide
 
 An integrator kit owns its differences, while Open AD Kit owns the base CLI,
-images and deployments. Start one with `openadkit new` ([Custom Deployment](custom-deployment.md));
+images and deployments. Start one with `openadkit new` ([Create a Kit](create-a-kit.md));
 the kit CI exercises is that output with the [example fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit) on top.
 This interface requires manifest schema version 2; older manifests are rejected.
 

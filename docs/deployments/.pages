@@ -5,5 +5,5 @@ nav:
   - Logging Simulation: logging-simulation
   - CARLA Simulation: carla-simulation
   - Split-host simulation: split-host.md
-  - Custom Deployment: custom-deployment.md
+  - Create a Kit: create-a-kit.md
   - Integrator Guide: integrator-guide.md

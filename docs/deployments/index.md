@@ -43,6 +43,6 @@ CARLA is explicitly exempt from hosted runtime CI. Neither is a claim of
 arbitrary two-machine or vehicle compatibility; see the
 [evidence policy](../releases/evidence.md).
 
-To build your own stack, start a kit with `openadkit new` ([Custom
-Deployment](custom-deployment.md)). It keeps its own kit manifest and
+To build your own stack, start a kit with `openadkit new` ([Create a
+Kit](create-a-kit.md)). It keeps its own kit manifest and
 deployment in one directory, extending a deployment without copying it.
