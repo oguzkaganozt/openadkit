@@ -2119,7 +2119,7 @@ kit with the same step that assembles release bundles, so the cells run the
 tree a release of that build ships, plus the example kit.</p>
 <p>The example workspace builds against that build's matching distro-specific
 <code>universe-common-devel</code> digest. Source/config checksums omit <code>build</code>, <code>install</code>
-and <code>log</code> products. Hosted runners execute L0-L2 cells, retry a failed cell once,
+and <code>log</code> products. Hosted runners execute L0-L3 cells, retry a failed cell once,
 and aggregate all expected cells, including missing-cell failures.</p>
 <p>The workflow uploads per-cell diagnostics and the
 <code>evidence-summary-&lt;build_tag&gt;</code> artifact. The release gate reads that summary; see the <a href="../../releases/evidence/">release policy</a>.</p>

@@ -2207,7 +2207,7 @@ successful evidence run that passed every cell for the promoted build</strong>.<
 <li><strong>It tested this build:</strong> the summary names the promoted build tag, and it
    tested the build's own commit, not another commit against its images.</li>
 <li><strong>Every cell passed:</strong> the summary result is <code>PASSED</code>. A cell passes only
-   when L0, L1 and L2 all pass, and a missing expected cell fails the run.</li>
+   when every level it runs passes, and a missing expected cell fails the run.</li>
 </ol>
 <p>A passing rerun may supersede a failed run; a failed run never counts. There is
 no release bypass input. The release also requires the latest full scan of the
@@ -2257,6 +2257,9 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
   Planning Simulation ego arrives at its goal, or the scenarios pass, plus the split-node
   checks. Each run starts a fresh stack.</li>
+<li><strong>L3:</strong> the example kit only: the development loop on the running stack. Its
+  C++ package changes, <code>openadkit build</code> builds it, <code>openadkit restart</code> from
+  another directory recreates the services, and the stack publishes the change.</li>
 </ul>
 <p>The workflow retries a failed evidence cell once. A cell that still fails fails
 the run and blocks a release. The cells start deployments with
