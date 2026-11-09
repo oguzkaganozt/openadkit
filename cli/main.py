@@ -507,7 +507,7 @@ def warn_if_modified(root, deployment, kit) -> None:
 
 
 def output_path(selection) -> str | None:
-    """Where the deployment writes results (resolved by settings.resolve_settings)."""
+    """Where the deployment writes results (resolved by settings.resolve)."""
     return selection.environment.get("OUTPUT_HOST_PATH") or None
 
 
@@ -673,14 +673,14 @@ def main() -> int:
         if not deployment.data:
             print("no data resources declared")
             return 0
-        selection = settings.resolve_settings(deployment, settings.select(deployment, kit, None, False, operational=True))
-        installed = data.check_installed_data(deployment, selection, include_gpu=True)
+        selection = settings.resolve(deployment, kit, data_only=True)
+        installed = data.check_installed_data(deployment, selection)
         if not installed:
             print("no data resources declared")
             return 0
         compose.require_stopped(deployment.name)
         compose.require_data_unused(item["destination"] for item in installed)
-        data.remove_installed_data(deployment, selection, include_gpu=True)
+        data.remove_installed_data(deployment, selection)
         return 0
 
     if args.command in ("fetch", "validate", "config", "run"):
@@ -688,24 +688,23 @@ def main() -> int:
         if getattr(args, "ws", None):
             deployment.use_workspace(Path(args.ws).expanduser().resolve())
         compose.ensure_runtime_user()
-        selection = settings.select(
+        selection = settings.resolve(
             deployment,
             kit,
             args.ros_distro,
             getattr(args, "gpu", False),
             node=getattr(args, "node", None),
-            require_gpu=args.command != "fetch",
+            data_only=args.command == "fetch",
         )
-        selection = settings.resolve_settings(deployment, selection)
         if args.command == "fetch":
             if args.force:
                 # Replacing data a live container mounts deletes it under that container.
                 compose.require_stopped(deployment.name)
                 compose.require_data_unused(
                     item["destination"]
-                    for item in data.check_installed_data(deployment, selection, include_gpu=True)
+                    for item in data.check_installed_data(deployment, selection)
                 )
-            data.install_data(deployment, selection, args.force, include_gpu=True)
+            data.install_data(deployment, selection, args.force)
             return 0
 
         if args.command == "config":

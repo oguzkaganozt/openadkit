@@ -476,7 +476,8 @@ def test_image_and_env_priority_reaches_compose(tmp_path, release):
     assert result.returncode == 0, result.stderr
     first = recorded(calls)[0]
     assert first["env"].get("VALUE") is None  # Compose, not the shell, loads file-defined values.
-    assert first["env"].get("API_IMAGE") == (PIN if release else OTHER_PIN)
+    # A release pins its images; a source checkout's env files may set their own.
+    assert first["env"].get("API_IMAGE") == (PIN if release else None)
     env_files = [first["args"][index + 1] for index, arg in enumerate(first["args"]) if arg == "--env-file"]
     assert env_files == [str(directory / "config.env"), str(directory / "config.gpu.env"),
                          str(tmp_path / "home/.config/openadkit/example.env")]
@@ -1197,22 +1198,23 @@ def test_forced_fetch_replaces_managed_data_and_removes_the_old(tmp_path):
 class SettingsDeployment:
     """The parts of a Deployment that settings resolution reads."""
 
-    def __init__(self, directory, files, gpu_files):
-        self.name, self.directory, self.has_gpu_files = "example", directory, True
+    def __init__(self, directory, files, gpu_files, data):
+        self.name, self.directory, self.data, self.nodes = "example", directory, data, {}
         self.files, self.gpu_files = files, gpu_files
+        self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
 
     def env_files(self, gpu=False):
         return self.files + (self.gpu_files if gpu else [])
 
-    def configuration_environment(self, gpu=False):
-        return dict(cli_settings._env_file_settings(tuple(self.env_files(gpu))))
 
-
-@pytest.mark.skipif(
+NEEDS_COMPOSE = pytest.mark.skipif(
     shutil.which("docker") is None
     or subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
     reason="needs Docker Compose",
 )
+
+
+@NEEDS_COMPOSE
 def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("MAP_ROOT", "/srv/maps")
@@ -1220,9 +1222,10 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
         "DATA_PATH=$HOME/data\nMODEL_PATH=${DATA_PATH}/models\n"
         "MAP_PATH=${MAP_ROOT:-/tmp/openadkit-map}\nROSBAG_PATH=${ROSBAG_ROOT:-/tmp/rosbag}\n")
     (tmp_path / "config.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
-    deployment = SettingsDeployment(tmp_path, [tmp_path / "config.env"], [tmp_path / "config.gpu.env"])
-    selection = cli_settings.Selection("humble", False, None, {}, deployment.configuration_environment())
-    resolved = cli_settings.resolve_settings(deployment, selection)
+    data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
+    deployment = SettingsDeployment(tmp_path, [tmp_path / "config.env"], [tmp_path / "config.gpu.env"], data)
+    kit = cli_catalog.RuntimeContext("repository", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
     assert destination("MODEL_PATH") == tmp_path / "data/models"
@@ -1230,6 +1233,42 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     assert destination("ROSBAG_PATH") == Path("/tmp/rosbag")
     # GPU-only data goes where a GPU run mounts it.
     assert destination("ROSBAG_PATH", gpu=True) == Path("/srv/gpu-rosbag")
+    # Without GPU-only data there is no GPU variant to resolve.
+    deployment.data = []
+    assert cli_settings.resolve(deployment, kit, data_only=True).gpu_environment is None
+
+
+@NEEDS_COMPOSE
+def test_a_source_checkout_image_setting_resolves_as_compose_resolves_it(tmp_path, monkeypatch):
+    for variable in ISOLATED_ENV:
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("REGISTRY", "registry.example/mine")
+    root, directory = runtime_tree(tmp_path, config="API_IMAGE=${REGISTRY}/api:dev\n")
+    kit = cli_catalog.load_kit(root)
+    deployment = cli_catalog.get_deployment(root, kit, "example")
+    selection = cli_settings.resolve(deployment, kit, "humble")
+    assert "API_IMAGE" not in selection.injections
+    assert selection.environment["API_IMAGE"] == "registry.example/mine/api:dev"
+    # Images the env files leave out still come from the source checkout's prefix.
+    assert selection.injections["PLANNING_IMAGE"].startswith("registry.example/openadkit:")
+
+
+@NEEDS_COMPOSE
+def test_a_run_without_gpu_resolves_its_settings_once(tmp_path, monkeypatch):
+    for variable in ISOLATED_ENV:
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    root, _ = runtime_tree(tmp_path, document=manifest(gpu=True))
+    kit = cli_catalog.load_kit(root)
+    deployment = cli_catalog.get_deployment(root, kit, "example")
+    passes = []
+    real = cli_settings.compose_environment
+    monkeypatch.setattr(cli_settings, "compose_environment", lambda *args: passes.append(args) or real(*args))
+    cli_settings._env_file_settings.cache_clear()
+    selection = cli_settings.resolve(deployment, kit, "humble")
+    # One clean pass for what the files set, one with the real environment.
+    assert len(passes) == 2 and selection.gpu_environment is None
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="every link a root test creates is root-owned")
@@ -1395,7 +1434,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     context = cli_catalog.load_kit(kit)
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"
-    selection = cli_settings.select(deployment, context, "humble", True)
+    selection = cli_settings.resolve(deployment, context, "humble", True)
     assert deployment.compose_files(True) == [directory / "docker-compose.yaml", base / "gpu.yaml"]
     assert selection.environment["VALUE"] == "site" and selection.environment["BASE_GPU"] == "1"
     assert selection.injections["API_IMAGE"] == OTHER_PIN
@@ -1568,7 +1607,7 @@ def overlay_workspace(root, name, monkeypatch, tmp_path, workspace=None):
     deployment = cli_catalog.get_deployment(root, context, name)
     if workspace is not None:
         deployment.use_workspace(workspace)
-    return cli_settings.select(deployment, context, "humble", False).injections["OPENADKIT_OVERLAY_WS"]
+    return cli_settings.resolve(deployment, context, "humble", False).injections["OPENADKIT_OVERLAY_WS"]
 
 
 def test_a_kit_has_one_workspace_at_its_root(tmp_path, monkeypatch):

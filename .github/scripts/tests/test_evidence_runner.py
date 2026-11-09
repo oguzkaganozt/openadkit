@@ -173,7 +173,7 @@ import catalog, settings
 args = sys.argv[1:]
 if args[0] == 'validate':
     root = Path({str(ROOT)!r}); kit = catalog.load_kit(root)
-    settings.select(catalog.get_deployment(root, kit, args[1]), kit, 'humble', False, node=args[args.index('--node') + 1])
+    settings.resolve(catalog.get_deployment(root, kit, args[1]), kit, 'humble', False, node=args[args.index('--node') + 1])
     print(json.dumps({{'deployment': args[1]}}))
 sys.exit(1 if args[0] == 'run' else 0)
 ''')
