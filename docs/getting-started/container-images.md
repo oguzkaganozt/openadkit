@@ -72,8 +72,8 @@ on every architecture.
 Every image installs its ROS packages from one dated
 [ROS snapshot](http://snapshots.ros.org/): the one the upstream Autoware images
 of that release were built from. Compiled code and runtime therefore use the
-same ROS versions, and the build fails if they would differ. Release notes and
-the release BOM name the snapshot per distro; an image carries it as a label:
+same ROS versions, and the build fails if they would differ. The release BOM
+names the snapshot per distro; an image carries it as a label:
 
 ```bash
 docker inspect --format '{{ "{{" }} index .Config.Labels "org.opencontainers.image.ros-snapshot" {{ "}}" }}' \
