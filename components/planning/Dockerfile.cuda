@@ -61,6 +61,20 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     rm -rf build log
 
+# autoware_tensorrt_plugins needs spconv, which Autoware does not install on
+# Ubuntu 24.04 (Jazzy) until it has a CUDA 13 build, so there the package
+# installs nothing. The Diffusion Planner's parameters still resolve its share
+# path, and its models use no plugin: register the package without the library.
+# Drop this once the pinned Autoware release fixes it
+# (https://github.com/autowarefoundation/autoware_universe/issues/13604).
+RUN pkg=autoware_tensorrt_plugins && pkg_prefix="/opt/autoware/${pkg}" && \
+    if [ ! -e "${pkg_prefix}/share/ament_index/resource_index/packages/${pkg}" ]; then \
+      install -d "${pkg_prefix}/share/ament_index/resource_index/packages" "${pkg_prefix}/share/${pkg}" && \
+      touch "${pkg_prefix}/share/ament_index/resource_index/packages/${pkg}" && \
+      printf '%s\n' "source;share/${pkg}/local_setup.dsv" > "${pkg_prefix}/share/${pkg}/package.dsv" && \
+      printf '%s\n' 'prepend-non-duplicate;AMENT_PREFIX_PATH;' > "${pkg_prefix}/share/${pkg}/local_setup.dsv"; \
+    fi
+
 # This image's launch and config packages, in their own layer after the
 # compile (components/shared/launch-packages.sh).
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
