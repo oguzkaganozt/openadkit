@@ -7,13 +7,11 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
 
 ## Now: v2.0.0
 
-1. **Consistent readiness.** One readiness and failure policy for `run` and
-   `restart`, covering healthchecks, crashes and one-shot services.
-2. **Development loop in CI.** The example kit's check edits a ROS package,
+1. **Development loop in CI.** The example kit's check edits a ROS package,
    builds it, restarts the affected services and verifies the change.
-3. **Image contents.** Each image carries only the build inputs and runtime
+2. **Image contents.** Each image carries only the build inputs and runtime
    packages it needs, before v2.0.0 makes its contents part of the contract.
-4. **Release.** A full build and evidence run, then a clean-host install, kit,
+3. **Release.** A full build and evidence run, then a clean-host install, kit,
    restart and upgrade check on a release candidate.
 
 ## Next: v2.x, in priority order

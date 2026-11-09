@@ -21,8 +21,8 @@ install alone, and `openadkit uninstall` removes only its own links.
 openadkit status
 openadkit logs --follow
 openadkit logs map planning        # only these services
-openadkit restart                  # services reread config and overlay workspaces
-openadkit restart --all            # the whole deployment, with the same settings
+openadkit restart                  # apply changed settings, config and overlay workspaces
+openadkit restart --all            # recreate the whole deployment
 openadkit shell                    # a shell in the api service with ROS sourced
 openadkit shell planning ros2 node list
 openadkit record /tf /localization/kinematic_state
@@ -33,14 +33,14 @@ These act on the deployment running on this host, from any directory, so they
 take no deployment name. When several nodes of a split deployment run on one
 host, pick one with `--node`; `status` and `stop` act on all of them.
 
-`restart` with no service restarts every service that takes Open AD Kit config
-or an overlay workspace, so a changed parameter file or a rebuilt workspace
-applies without restarting a simulator such as CARLA; it names the services it
-left running. `restart --all` restarts the whole deployment in place, one-shot
-services included, as a fresh start with the same settings. Like `run`, it
-returns once the restarted services are ready, fails if one crashes, and warns
-about overrides that changed nothing. Changes to Compose
-files or `.env` values need `stop` and `run` again. `shell` sources ROS, Autoware and the overlay
+`restart` recreates services as `run` started them, with the current
+settings, config and overlay workspace, from any directory. With no service it
+recreates every service that takes Open AD Kit config or an overlay workspace,
+and every service whose settings changed, so a changed parameter file, a rebuilt
+workspace or a new `settings.env` value applies without restarting a simulator
+such as CARLA; it names the services it left running. `restart --all` recreates
+the whole deployment, one-shot services included. `restart` keeps to the same
+readiness checks as `run`. `shell` sources ROS, Autoware and the overlay
 workspaces like the services' entrypoint; give it a service and a command to run
 one command instead.
 
@@ -67,8 +67,9 @@ with the same name. `run` refuses conflicting projects; stop them first with
 split nodes of the same deployment can still run together.
 `run` returns once the deployment is ready: its services' healthchecks pass,
 for example once the AD API is up (`READINESS_CHECKS` in the deployment's
-`config.env`). It then watches the services for 10 seconds and fails if one
-crashes. `openadkit run <deployment> --verify` then runs the deployment's
+`settings.env`). It then watches the services for 10 seconds and fails if one
+crashes, restarts, exits or turns unhealthy; a one-shot service may finish but
+not fail. `openadkit run <deployment> --verify` then runs the deployment's
 verify step, the check CI runs on it: Planning Simulation drives the ego from
 its start to its goal, Scenario Simulation waits for the scenarios' result.
 `run --verify` exits with the step's result; the deployment keeps running.
@@ -118,8 +119,8 @@ only your differences. See [Create a Kit](../deployments/create-a-kit.md).
 Each deployment reads its settings from environment files, in this order
 (later files win):
 
-1. `deployments/<name>/config.env`: the deployment defaults
-2. `deployments/<name>/config.gpu.env`: GPU settings, loaded only with `--gpu`
+1. `deployments/<name>/settings.env`: the deployment defaults
+2. `deployments/<name>/settings.gpu.env`: GPU settings, loaded only with `--gpu`
 3. `~/.config/openadkit/<name>.env`: your host settings
 
 Shell exports do not override variables defined in these files. Put host

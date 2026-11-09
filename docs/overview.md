@@ -69,12 +69,13 @@ A [deployment](deployments/index.md) runs the subset of these stages a task need
 | Term | Meaning |
 |------|---------|
 | **Component image** | A published container image holding one or more Autoware functions, for example `planning`. |
-| **Deployment** | A named, ready-to-run stack: a manifest, environment files, and Compose configuration for a task such as planning simulation. |
+| **Deployment** | A named, ready-to-run stack: a manifest, settings, and Compose configuration for a task such as planning simulation. |
 | **Deployment manifest** | The `deployment.json` file that tells the CLI how to run a deployment: Compose files, requirements, data downloads, one-shot services and the verify step. Its name is its key in the kit manifest. |
 | **Kit manifest** | The `openadkit.json` file of a kit: what it extends, its deployments and the images it pins. |
 | **Kit** | An `openadkit.json` and its deployments: the reference kit or an integrator's differences over a pinned base release. |
 | **`extends` / `base`** | The kit's pinned Open AD Kit release and the reference deployment it includes. |
-| **Config override** | Parameter/file differences layered over package configuration; not a copy of the full base file. |
+| **Settings** | `KEY=value` variables a deployment runs with, such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings file. `restart` or `run` applies them. |
+| **Config override** | Parameter/file differences under `config/autoware/`, layered over package configuration; not a copy of the full base file. `restart` applies them. |
 | **Overlay workspace** | Custom ROS packages built against the matching pinned devel image and sourced over the base. |
 | **Node** | A deployment's host-local view, with its own services, Compose project, ROS domain and Zenoh endpoint. |
 | **Evidence** | The evidence cells run against one build; the release gate requires a successful run that passed every cell. |

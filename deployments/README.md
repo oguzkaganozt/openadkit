@@ -24,9 +24,9 @@ Split-host (`--node` over Zenoh) is experimental. See the
 ```text
 deployments/
 ├── shared/                   # services/*.yaml + runtime.env + compose.zenoh.yaml
-├── planning-simulation/      # complete deployment config.env
-├── scenario-simulation/      # complete deployment config.env
-├── logging-simulation/       # complete deployment config.env
+├── planning-simulation/      # complete deployment settings.env
+├── scenario-simulation/      # complete deployment settings.env
+├── logging-simulation/       # complete deployment settings.env
 ├── carla-simulation/         # CLI deployment (Humble, amd64, GPU)
 └── safety-island-simulation/     # planning-simulation plus the Safety Island
 ```

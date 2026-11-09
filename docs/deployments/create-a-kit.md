@@ -16,7 +16,7 @@ my-kit/
 ├── openadkit.json
 ├── deployment.json
 ├── docker-compose.yaml
-├── config.env
+├── settings.env
 ├── config/autoware/
 └── overlay_ws/src/
 ```
@@ -29,7 +29,7 @@ my-kit/
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
   add your services below it. `OPENADKIT_BASE_ROOT` names the base root for
   shared assets.
-- `config.env` holds only the values you change, such as `VEHICLE_ID`.
+- `settings.env` holds only the values you change, such as `VEHICLE_ID`.
 - `config/autoware/` holds parameter overrides for Autoware packages.
 - `overlay_ws/src/` holds your ROS packages.
 

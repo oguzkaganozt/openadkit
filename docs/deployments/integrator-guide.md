@@ -32,13 +32,13 @@ directory is needed. Run commands from that directory, not the base repository.
 
 ### 1. Values
 
-Put only differences in your deployment's `config.env`. Compose interpolation
+Put only differences in your deployment's `settings.env`. Compose interpolation
 reads these files in order (later wins):
 
-1. Base `config.env`
-2. Base `config.gpu.env`, when GPU mode is selected
-3. Kit `config.env`, if present
-4. Kit `config.gpu.env`, if present and GPU mode is selected
+1. Base `settings.env`
+2. Base `settings.gpu.env`, when GPU mode is selected
+3. Kit `settings.env`, if present
+4. Kit `settings.gpu.env`, if present and GPU mode is selected
 5. `~/.config/openadkit/<kit-deployment>.env`, if present
 
 Container ROS/DDS defaults come from the included services' `runtime.env`.

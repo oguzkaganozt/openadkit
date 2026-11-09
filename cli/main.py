@@ -111,16 +111,20 @@ def hand_over(start: Path) -> Path | None:
     extends = read_extends(kit_root)
     if VERSION_RE.fullmatch(extends):
         install_pinned_release(extends)
-    base_root = resolve_extends(kit_root, extends)
-    if base_root != root_path():
-        if os.environ.get("OPENADKIT_DELEGATED"):
-            raise OpenADKitError(f"{base_root}/openadkit did not run this kit as its own CLI")
-        launcher = base_root / "openadkit"
-        if not launcher.is_file():
-            raise OpenADKitError(f"{base_root} has no openadkit launcher")
-        environment = os.environ | {"OPENADKIT_KIT": str(kit_root), "OPENADKIT_DELEGATED": "1"}
-        os.execve(launcher, [str(launcher), *sys.argv[1:]], environment)
+    run_with(resolve_extends(kit_root, extends), {"OPENADKIT_KIT": str(kit_root)})
     return kit_root
+
+
+def run_with(cli_root: Path, environment: dict[str, str] | None = None) -> None:
+    """Hand this command to the CLI at cli_root, unless this is that CLI."""
+    if cli_root == root_path():
+        return
+    if os.environ.get("OPENADKIT_DELEGATED"):
+        raise OpenADKitError(f"{cli_root}/openadkit did not run this command as its own CLI")
+    launcher = cli_root / "openadkit"
+    if not launcher.is_file():
+        raise OpenADKitError(f"{cli_root} has no openadkit launcher")
+    os.execve(launcher, [str(launcher), *sys.argv[1:]], os.environ | (environment or {}) | {"OPENADKIT_DELEGATED": "1"})
 
 
 def install_pinned_release(version: str) -> None:
@@ -462,11 +466,11 @@ def logs_arguments(parser: argparse.ArgumentParser) -> None:
 def restart_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "services", nargs="*", metavar="SERVICE",
-        help="services to restart (default: every service with Open AD Kit config)",
+        help="services to recreate (default: those with Open AD Kit config, and those whose settings changed)",
     )
     parser.add_argument(
         "--all", action="store_true", dest="all_services",
-        help="restart the whole deployment, one-shot services included",
+        help="recreate the whole deployment, one-shot services included",
     )
 
 
@@ -615,6 +619,17 @@ def run_command(root: Path, kit: RuntimeContext, deployment: Deployment, args: a
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
     skipped = services & ({"visualizer"} if args.no_visualizer else set())
+    compose.write_run_state(deployment.project_name(selection.node), {
+        "schemaVersion": 1,
+        "cli": str(root_path()),
+        "kit": str(root) if kit.kind == "kit" else None,
+        "deployment": deployment.name,
+        "node": selection.node,
+        "rosDistro": selection.ros_distro,
+        "gpu": selection.gpu,
+        "workspace": str(Path(args.ws).expanduser().resolve()) if args.ws else None,
+        "skipped": sorted(skipped),
+    })
     started = time.monotonic()
     compose.start(deployment, selection, args.pull, services, skipped)
     record = compose.run_record(deployment, selection, kit, model, started)
@@ -679,12 +694,37 @@ def logs_command(args: argparse.Namespace) -> int:
 
 
 def restart_command(args: argparse.Namespace) -> int:
+    """Recreate services of the running deployment, as run started them but
+    with the current settings, config and overlay workspace; from any directory."""
     if args.services and args.all_services:
         raise OpenADKitError("name the services to restart, or pass --all")
     project = live.live_view(args.node)
-    restarted, kept = live.restart(project, args.services, args.all_services)
-    live.wait_after_restart(project, restarted)
-    print(f"restarted: {', '.join(restarted)}")
+    state = compose.read_run_state(project)
+    if state is None:
+        raise OpenADKitError(
+            f"{live.view_name(project)} has no record of how it was started; start it again with openadkit run"
+        )
+    # The CLI that ran the deployment recreates it: it resolves the kit the same way.
+    run_with(Path(state["cli"]))
+    root, kit = load_context(Path(state["kit"]) if state["kit"] else root_path())
+    deployment = get_deployment(root, kit, state["deployment"])
+    if state["workspace"]:
+        deployment.use_workspace(Path(state["workspace"]))
+    selection = settings.resolve(deployment, kit, state["rosDistro"], state["gpu"], node=state["node"])
+    skipped = set(state["skipped"])
+    running = set(live.running_services(project))
+    if args.all_services:
+        services = compose.render(deployment, selection) - skipped
+    elif args.services:
+        services = set(args.services)
+    else:
+        # What a restart is for: changed config or workspaces, and changed settings.
+        services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
+    if not services:
+        raise OpenADKitError(f"{live.view_name(project)} has no service with Open AD Kit config to restart")
+    compose.recreate(deployment, selection, services, skipped)
+    print(f"restarted: {', '.join(sorted(services))}")
+    kept = sorted(running - services)
     if kept:
         print(f"kept running: {', '.join(kept)} (restart --all includes them)")
     return 0
@@ -737,7 +777,8 @@ COMMANDS = {
     "status": Command("live", "show the running deployment", status_command),
     "logs": Command("live", "show the running deployment's logs", logs_command, logs_arguments),
     "restart": Command(
-        "live", "restart services so they reread config and overlay workspaces", restart_command, restart_arguments
+        "live", "recreate services to apply changed settings, config and overlay workspaces", restart_command,
+        restart_arguments,
     ),
     "shell": Command(
         "live", "open a shell, or run a command, in a running service with ROS sourced", shell_command,

@@ -190,9 +190,9 @@ class EnvironmentLayer:
 
     def files(self, gpu: bool) -> list[Path]:
         result = []
-        names = [("config.env", self.required)]
+        names = [("settings.env", self.required)]
         if gpu:
-            names.append(("config.gpu.env", self.gpu_required))
+            names.append(("settings.gpu.env", self.gpu_required))
         for name, required in names:
             candidate = self.directory / name
             if required or candidate.exists() or candidate.is_symlink():
@@ -320,7 +320,7 @@ def _load_deployment(root: Path, directory: Path, name: str) -> Deployment:
     if compose["gpuFiles"]:
         deployment.compose_files(True)
         ensure_safe_existing(
-            directory, "config.gpu.env", "GPU environment file"
+            directory, "settings.gpu.env", "GPU settings file"
         )
     for node_name in nodes:
         deployment.compose_files(False, node_name)

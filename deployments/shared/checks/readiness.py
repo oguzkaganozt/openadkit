@@ -1,6 +1,6 @@
 """Readiness of the Autoware graph, checked once: the api service's healthcheck.
 
-The deployment's config.env names what to check (READINESS_CHECKS): AD API
+The deployment's settings.env names what to check (READINESS_CHECKS): AD API
 services and topics that must be listed, and topics that must deliver a
 message. Docker reruns the check until it passes, so `openadkit run` returns
 only once Autoware is ready. Nothing to check passes at once.

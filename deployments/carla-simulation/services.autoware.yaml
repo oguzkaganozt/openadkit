@@ -24,7 +24,7 @@ services:
       map-check:
         condition: service_completed_successfully
 
-  # SYSTEM_DIAGNOSTICS_GRAPH=autoware-carla.yaml (config.env) selects the
+  # SYSTEM_DIAGNOSTICS_GRAPH=autoware-carla.yaml (settings.env) selects the
   # CARLA diagnostics graph; the shared system definition is unchanged.
   system:
     depends_on:

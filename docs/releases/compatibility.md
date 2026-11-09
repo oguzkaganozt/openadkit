@@ -46,7 +46,7 @@ What a kit made with `openadkit new` builds on:
 - The Compose variables `OPENADKIT_BASE_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
   `OPENADKIT_OVERLAY_WS`.
 - Each base deployment's Compose entrypoints, service names, settings in
-  `config.env`, data destination variables (such as `MAP_PATH`) and verify step.
+  `settings.env`, data destination variables (such as `MAP_PATH`) and verify step.
 - Config overrides under `config/` and the overlay workspace in `overlay_ws/`,
   which the images' entrypoint applies and sources on every start.
 - `externalImages` that replace a component image or add new ones.

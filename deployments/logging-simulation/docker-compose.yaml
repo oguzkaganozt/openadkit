@@ -29,7 +29,7 @@ services:
   # Publishes the vehicle and sensor-kit TF (robot_state_publisher), which the
   # rosbag does not carry: without it sensing cannot transform any lidar or IMU
   # frame. The bag supplies the vehicle status, so the interface stays off
-  # (LAUNCH_VEHICLE_INTERFACE=false in config.env).
+  # (LAUNCH_VEHICLE_INTERFACE=false in settings.env).
   vehicle:
     depends_on:
       - map
