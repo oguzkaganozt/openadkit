@@ -5,7 +5,7 @@ start with Planning Simulation.
 
 | Deployment | Purpose | GPU |
 |------------|---------|-----|
-| [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a demo map | No |
+| [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a demo map | Optional |
 | [Scenario Simulation](scenario-simulation/index.md) | Run predefined traffic scenarios | No |
 | [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception, and localization | Recommended |
 | [CARLA Simulation](carla-simulation/index.md) | Drive a CARLA vehicle in closed loop | Required |
@@ -28,7 +28,8 @@ openadkit stop
 
 - Add `--ros-distro jazzy` to `validate`, `fetch`, or `run` to select Jazzy;
   Humble is the default.
-- Add `--gpu` for the optional GPU mode of Logging Simulation. CARLA needs a GPU,
+- Add `--gpu` for the optional GPU mode of Planning Simulation (the Diffusion
+  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU,
   so its GPU mode turns on by itself; it is Humble-only.
 - Add `--node` to `validate` or `run` to start one node of a
   [split-host](split-host.md) run. `status`, `logs`, and `stop` find the
