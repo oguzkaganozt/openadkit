@@ -13,17 +13,22 @@ def fmt(value):
     return "-" if value is None else str(value)
 
 
-def render(current):
+def render(current, summary=True):
+    """The cells table, after the result and passing count unless the caller
+    states those itself. A cell's name already holds its deployment, distro,
+    node and platform."""
     cells = report_cells(current)
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
     lines = [
         f"Evidence result: **{current.get('result', 'UNKNOWN')}**", "",
         f"Passing cells: **{passed}/{len(cells)}**", "",
-        "| Cell | Deployment | Distro | Node | Result | Ready (s) | Arrival (s) | Peak MiB |",
-        "|---|---|---|---|---|---|---|---|",
+    ] if summary else []
+    lines += [
+        "| Cell | Result | Ready (s) | Arrival (s) | Peak MiB |",
+        "|---|---|---|---|---|",
     ]
     for cell in cells:
-        values = [cell["name"], cell.get("deployment"), cell.get("distro"), cell.get("node"), cell.get("result")]
+        values = [cell["name"], cell.get("result")]
         values.extend(cell["metrics"].get(name) for name in METRICS)
         lines.append("| " + " | ".join(fmt(value) for value in values) + " |")
     for name in current.get("missing", []):
