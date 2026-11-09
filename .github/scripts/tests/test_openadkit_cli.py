@@ -37,6 +37,13 @@ ISOLATED_ENV = (
 )
 
 
+NEEDS_COMPOSE = pytest.mark.skipif(
+    shutil.which("docker") is None
+    or subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
+    reason="needs Docker Compose",
+)
+
+
 def executable(path, content):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
@@ -49,7 +56,7 @@ def command(program, *args, home, bin_dir, cwd=None, **extra_env):
     env.update(HOME=str(home), PATH=f"{bin_dir}:{os.environ['PATH']}")
     return subprocess.run(
         [str(program), *map(str, args)], cwd=cwd, env=env | extra_env,
-        text=True, capture_output=True, timeout=30,
+        text=True, capture_output=True, timeout=30, stdin=subprocess.DEVNULL,
     )
 
 
@@ -169,6 +176,8 @@ elif "config --quiet" in text:
     sys.exit({config})
 elif args[0] == "compose" and "exec" in args:
     sys.exit(int(os.environ.get("FAKE_EXEC_EXIT", "0")))
+elif args[0] == "run":
+    sys.exit(int(os.environ.get("FAKE_RUN_EXIT", "0")))
 elif "up --detach" in text:
     project = args[args.index("--project-name") + 1]
     files = ",".join(args[index + 1] for index, arg in enumerate(args) if arg == "--file")
@@ -371,6 +380,20 @@ def test_docker_commands_show_only_when_verbose(tmp_path, verbose):
     assert ("+ docker compose" in result.stderr) is bool(verbose)
 
 
+@pytest.mark.parametrize("name", [[], ["missing"]])
+def test_validate_json_reports_an_invalid_deployment_as_json(tmp_path, name):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", *name, "--json")
+    assert result.returncode == 1
+    document = json.loads(result.stdout)
+    assert document["valid"] is False and document["error"]
+    valid = json.loads(run_cli(root, "validate", "example", "--json").stdout)
+    assert valid["valid"] is True and valid["deployment"] == "example"
+    listed = json.loads(run_cli(root, "list", "--json").stdout)["deployments"]
+    assert [entry["integrity"] for entry in listed] == ["source"]
+
+
 def test_list_shows_name_gpu_and_description(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(gpu=True))
     lines = run_cli(root, "list").stdout.splitlines()
@@ -394,7 +417,7 @@ def test_completion_lists_every_command_and_option():
         if name in ("install", "upgrade", "setup", "uninstall"):
             continue
         flags = {flag for action in parser._actions for flag in action.option_strings if flag.startswith("--")}
-        assert flags - {"--help"} <= options[name], name
+        assert flags | {"--help"} == options[name], name
     # Deployment names are offered to exactly the commands that take one.
     named = re.search(r"case \$\{command\} in\n\s+([a-z| ]+)\) ;;\n\s+\*\) return ;;", text).group(1)
     assert {name.strip() for name in named.split("|")} == {
@@ -548,12 +571,13 @@ def test_split_node_run_discovery_and_safe_stop(tmp_path):
     calls = fake_docker(tmp_path)
     blocked = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never")
     assert blocked.returncode != 0 and "NODE_TOKEN" in blocked.stderr
-    assert recorded(calls) == []
+    # Only the settings were read; nothing started.
+    assert all("--environment" in row["args"] for row in recorded(calls))
     result = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never", NODE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     rows = recorded(calls)
     up = next(row for row in rows if "up" in row["args"])
-    assert "openadkit-example-secondary" in up["args"]
+    assert "openadkit-example_secondary" in up["args"]
     assert up["env"]["OPENADKIT_ROS_DOMAIN_ID"] == "2"
     assert str(root / "deployments/example/compose.secondary.yaml") in up["args"]
     assert not any("zenoh" in arg or arg.endswith("docker-compose.yaml") for arg in up["args"])
@@ -562,7 +586,7 @@ def test_split_node_run_discovery_and_safe_stop(tmp_path):
     result = run_cli(root, "stop", directory=tmp_path)
     assert result.returncode == 0, result.stderr
     down = next(row["args"] for row in recorded(calls) if "down" in row["args"])
-    assert "openadkit-example-secondary" in down and "--volumes" not in down
+    assert "openadkit-example_secondary" in down and "--volumes" not in down
 
 
 @pytest.mark.parametrize("exit_code", [0, 7])
@@ -686,7 +710,7 @@ def test_run_prints_https_only_for_a_site_certificate(tmp_path):
 
 
 @pytest.mark.parametrize(("projects", "args", "message"), [
-    (["openadkit-example-primary"], [], "already running as node primary"),
+    (["openadkit-example_primary"], [], "already running as node primary"),
     (["openadkit-example"], ["--node", "primary"], "already running as single-host"),
     (["openadkit-other"], [], "already running"),
 ])
@@ -711,9 +735,9 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
     assert not any("up" in row["args"] or "pull" in row["args"] for row in recorded(calls))
 
 
-@pytest.mark.parametrize(("project", "allowed"), [("openadkit-example-primary", True),
-                                                ("openadkit-example-secondary", True),
-                                                ("openadkit-example-foreign", False)])
+@pytest.mark.parametrize(("project", "allowed"), [("openadkit-example_primary", True),
+                                                ("openadkit-example_secondary", True),
+                                                ("openadkit-example_foreign", False)])
 def test_exclusivity_only_allows_declared_nodes_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
     root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
     kit = cli_catalog.load_kit(root)
@@ -727,11 +751,11 @@ def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_p
     root, directory = runtime_tree(tmp_path, document=manifest(nodes=True))
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
-    # Another kit's "example", or a deployment named "example-primary", has the
-    # same project name as this one's single-host or primary view.
+    # Another kit's "example" has the same project name as this one's
+    # single-host or primary view.
     entry = {"own": directory / "docker-compose.yaml", "elsewhere": tmp_path / "other-kit/docker-compose.yaml",
              "other-node": directory / "compose.secondary.yaml"}[started_from]
-    live = {"openadkit-example": [str(entry)], "openadkit-example-primary": [str(entry).replace(
+    live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
         "docker-compose.yaml", "compose.primary.yaml")]}
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: live)
     # run must not replace another stack in place; stop still reaches it by name.
@@ -739,18 +763,39 @@ def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_p
     assert cli_compose.live_nodes(deployment) == [None, "primary"]
 
 
+@NEEDS_COMPOSE
+def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypatch):
+    for variable in ISOLATED_ENV:
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("MY_TOKEN", "secret")
+    monkeypatch.delenv("NODE_TOKEN", raising=False)
+    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+    site_config(root, "NODE_TOKEN=${MY_TOKEN}\n")
+    kit = cli_catalog.load_kit(root)
+    deployment = cli_catalog.get_deployment(root, kit, "example")
+    selection = cli_settings.resolve(deployment, kit, "humble", node="secondary")
+    assert selection.environment["NODE_TOKEN"] == "secret"
+
+
+def test_a_node_is_never_read_from_a_deployment_name(monkeypatch):
+    # planning-simulation running single-host is not node "simulation" of anything.
+    monkeypatch.setattr(cli_live, "live_projects", lambda: {"openadkit-planning-simulation", "openadkit-split_simulation"})
+    assert cli_live.live_views("simulation") == ["openadkit-split_simulation"]
+
+
 def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
-    calls = fake_docker(tmp_path, projects=["openadkit-example-primary", "openadkit-example-secondary"])
+    calls = fake_docker(tmp_path, projects=["openadkit-example_primary", "openadkit-example_secondary"])
     result = run_cli(root, "logs")
     assert result.returncode != 0 and "choose one with --node" in result.stderr
     assert run_cli(root, "logs", "--node", "primary").returncode == 0
-    assert recorded(calls)[-1]["args"][:4] == ["compose", "--project-name", "openadkit-example-primary", "logs"]
+    assert recorded(calls)[-1]["args"][:4] == ["compose", "--project-name", "openadkit-example_primary", "logs"]
     assert run_cli(root, "stop", "--node", "secondary").returncode == 0
-    assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]] == ["openadkit-example-secondary"]
+    assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]] == ["openadkit-example_secondary"]
     assert run_cli(root, "stop").returncode == 0
     assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]][1:] == [
-        "openadkit-example-primary", "openadkit-example-secondary"]
+        "openadkit-example_primary", "openadkit-example_secondary"]
 
 
 @pytest.mark.parametrize("unsafe", ["missing", "symlink", "escape"])
@@ -975,9 +1020,12 @@ def test_record_keeps_an_interrupted_bag_but_reports_a_recorder_failure(monkeypa
         [], 0, stdout=json.dumps([{"Config": {"Image": "api-image", "Env": ["ROS_DOMAIN_ID=7"], "User": "1000"}}])))
     runs = []
 
+    environments = []
+
     class Recorder:
         def __init__(self, command, **_):
             runs.append(command)
+            environments.append(Path(command[command.index("--env-file") + 1]).read_text())
             (tmp_path / "bags" / Path(command[-2]).name).mkdir(parents=True)
             self.interrupt = interrupt
 
@@ -997,7 +1045,9 @@ def test_record_keeps_an_interrupted_bag_but_reports_a_recorder_failure(monkeypa
     command = runs[0]
     assert command[:4] == ["docker", "run", "--rm", "--init"]
     assert ["--volumes-from", "api:ro"] == command[command.index("--volumes-from"):][:2]
-    assert ["--env", "ROS_DOMAIN_ID=7"] == command[command.index("--env"):][:2]
+    # The container's settings go through a file, never the command line.
+    assert environments == ["ROS_DOMAIN_ID=7\n"] and "--env" not in command
+    assert not Path(command[command.index("--env-file") + 1]).exists()
     assert command[-1] == "/clock" and command[-2].startswith("/openadkit/recordings/example-")
 
 
@@ -1212,13 +1262,6 @@ class SettingsDeployment:
         return self.files + (self.gpu_files if gpu else [])
 
 
-NEEDS_COMPOSE = pytest.mark.skipif(
-    shutil.which("docker") is None
-    or subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
-    reason="needs Docker Compose",
-)
-
-
 @NEEDS_COMPOSE
 def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -1276,12 +1319,10 @@ def test_a_run_without_gpu_resolves_its_settings_once(tmp_path, monkeypatch):
     assert len(passes) == 2 and selection.gpu_environment is None
 
 
-@pytest.mark.skipif(os.geteuid() == 0, reason="every link a root test creates is root-owned")
-def test_data_paths_reject_user_symlinks_but_trust_host_layout(tmp_path):
+def test_data_paths_trust_the_users_own_symlinks_and_host_layout(tmp_path):
     (tmp_path / "real").mkdir()
     (tmp_path / "link").symlink_to(tmp_path / "real")
-    with pytest.raises(cli_manifest.OpenADKitError, match="symlinked data path"):
-        cli_data.ensure_no_symlink_components(tmp_path / "link/map")
+    cli_data.ensure_no_symlink_components(tmp_path / "link/map")
     # A merged-/usr host's /bin -> usr/bin stands in for a relocated /home.
     system = Path("/bin")
     if not system.is_symlink() or system.lstat().st_uid != 0:
@@ -1318,9 +1359,25 @@ def test_zip_fetch_publishes_validated_data(tmp_path):
     assert result.returncode == 0, result.stderr
     assert (tmp_path / "home/data/map/required.txt").read_text() == "map"
     fake_docker(tmp_path)
-    result = run_cli(root, "clean", "example")
+    result = run_cli(root, "clean", "example", "--yes")
     assert result.returncode == 0, result.stderr
     assert not (tmp_path / "home/data/map").exists()
+
+
+def test_clean_lists_what_it_deletes_and_needs_yes_without_a_terminal(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    kit = integrator_kit(tmp_path, root)
+    target = tmp_path / "home/data/map"
+    target.mkdir(parents=True)
+    (target / cli_data.MARKER).write_text("{}")
+    fake_docker(tmp_path)
+    result = run_cli(root, "clean", "custom", directory=kit)
+    assert result.returncode != 0 and "--yes" in result.stderr and target.exists()
+    assert f"{target} (also used by example)" in result.stdout
+    result = run_cli(root, "clean", "custom", "--yes", directory=kit)
+    assert result.returncode == 0, result.stderr
+    assert not target.exists()
+    assert "no data of custom is installed" in run_cli(root, "clean", "custom", directory=kit).stdout
 
 
 @pytest.mark.parametrize("unsafe", ["unmanaged", "file", "symlink", "marker-symlink", "running"])
@@ -1345,7 +1402,7 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
         (second / cli_data.MARKER).unlink()
         (second / cli_data.MARKER).symlink_to(first / cli_data.MARKER)
     fake_docker(tmp_path, projects=["openadkit-example"] if unsafe == "running" else [])
-    result = run_cli(root, "clean", "example")
+    result = run_cli(root, "clean", "example", "--yes")
     assert result.returncode != 0
     message = "example is running" if unsafe == "running" else (
         "refusing to remove symlinked data" if unsafe == "symlink" else "not installed by openadkit"
@@ -1369,7 +1426,7 @@ def test_clean_protects_shared_data_across_kit_catalogs(tmp_path, name, status, 
     container = {"Id": "abc", "Name": f"/{other}", "State": {"Status": status},
                  "Mounts": [{"Type": "bind", "Source": str(target if shared else tmp_path / "unrelated")}]}
     fake_docker(tmp_path, projects=[f"openadkit-{other}"], containers=[container])
-    result = run_cli(root, "clean", name, directory=kit if name == "custom" else root)
+    result = run_cli(root, "clean", name, "--yes", directory=kit if name == "custom" else root)
     blocked = shared and status != "exited"
     assert (result.returncode != 0) is blocked, result.stderr
     if blocked:
@@ -1568,6 +1625,14 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     (workspace / "build/CMakeCache.txt").write_text("current")
     assert run_cli(root, "build", directory=kit).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "current"
+    # A failed first build in an image: its retry continues from what it built.
+    other = {"DEVEL_IMAGE": "local/devel:other"}
+    assert run_cli(root, "build", directory=kit, FAKE_RUN_EXIT="1", **other).returncode != 0
+    assert not (workspace / "build/CMakeCache.txt").exists()
+    (workspace / "build").mkdir()
+    (workspace / "build/CMakeCache.txt").write_text("partial")
+    assert run_cli(root, "build", directory=kit, **other).returncode == 0
+    assert (workspace / "build/CMakeCache.txt").read_text() == "partial"
 
     # A path builds that workspace, with the pins of the kit around it.
     elsewhere = tmp_path / "elsewhere"
@@ -1743,9 +1808,17 @@ def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
     pinned.mkdir(parents=True)
     (pinned / "openadkit.json").write_text('{"schemaVersion":2,"kind":"release"}')
     executable(pinned / "openadkit", f'#!/usr/bin/env bash\nprintf "%s\\n" "$*" > "{record}"\n')
-    result = run_cli(root, "run", "custom", "--option-from-a-newer-release", directory=kit)
-    assert result.returncode == 0, result.stderr
-    assert record.read_text().strip() == "run custom --option-from-a-newer-release"
+    workspace = tmp_path / "ws"
+    for args, directory in (
+        (["run", "custom", "--option-from-a-newer-release"], kit),
+        # An option's value that looks like a path is not the deployment.
+        (["run", "--ws", str(workspace), "custom", "--option-from-a-newer-release"], kit),
+        # A kit named by its directory, from anywhere.
+        (["validate", str(kit / "deployments/custom"), "--option-from-a-newer-release"], tmp_path),
+    ):
+        result = run_cli(root, *args, directory=directory)
+        assert result.returncode == 0, result.stderr
+        assert record.read_text().strip() == " ".join(args)
 
 
 @pytest.mark.parametrize("gpu", [False, True])

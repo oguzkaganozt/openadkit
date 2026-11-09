@@ -354,7 +354,7 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     context = json.loads((root / "openadkit.json").read_text())
     assert context["kind"] == "release" and set(context["images"]) == {"humble", "jazzy"}
     listed = subprocess.run([str(root / "openadkit"), "list", "--json"], env=env, text=True, capture_output=True, check=True)
-    assert [entry["kind"] for entry in json.loads(listed.stdout)["deployments"]] == ["intact"] * len(context["deployments"])
+    assert [entry["integrity"] for entry in json.loads(listed.stdout)["deployments"]] == ["intact"] * len(context["deployments"])
     assert "humble|" in calls.read_text() and "jazzy|" in calls.read_text()
     (tmp_path / "dist/stale.tar.gz").write_bytes(b"stale")
     run_packager(tmp_path, env, umask="077")

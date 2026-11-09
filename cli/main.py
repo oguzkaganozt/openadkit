@@ -128,6 +128,8 @@ def load_context(start: Path) -> tuple[Path, RuntimeContext]:
 
 class OpenADKitParser(argparse.ArgumentParser):
     help_inventory: str | None = None
+    # The top-level parser's command parsers, by name.
+    commands: dict[str, OpenADKitParser]
 
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
@@ -181,7 +183,7 @@ def list_deployments(
             entries.append(
                 {
                     "name": name,
-                    "kind": deployment_integrity(root, deployment, kit),
+                    "integrity": deployment_integrity(root, deployment, kit),
                     "gpu": deployment.requirements["gpu"],
                     "description": deployment.manifest["description"],
                 }
@@ -190,7 +192,7 @@ def list_deployments(
             entries.append(
                 {
                     "name": name,
-                    "kind": "invalid",
+                    "integrity": "invalid",
                     "gpu": None,
                     "description": None,
                     "error": str(error).replace("\n", " "),
@@ -211,7 +213,7 @@ def list_deployments(
     _print_table(("NAME", "GPU", "DESCRIPTION"), rows)
     # A release's deployments are checked against it; a source checkout's are what is there.
     for entry in entries:
-        if entry["kind"] == "modified":
+        if entry["integrity"] == "modified":
             print(f"note: {entry['name']} differs from the release it came with")
     return 0
 
@@ -356,7 +358,7 @@ def json_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def deployment_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("deployment", nargs="?", help="deployment name or directory; omit to print the catalog")
+    parser.add_argument("deployment", nargs="?", help="deployment name or directory (omitted: list them)")
 
 
 def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) -> None:
@@ -366,7 +368,8 @@ def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) ->
     if not run:
         return
     parser.add_argument(
-        "--gpu", action="store_true", help="use the GPU compose overlay when the deployment provides one"
+        "--gpu", action="store_true",
+        help="run in GPU mode, for a deployment with an optional one (one that requires a GPU always uses it)",
     )
     parser.add_argument("--node", metavar="NODE", help=NODE_HELP)
     parser.add_argument(
@@ -424,6 +427,11 @@ def new_arguments(parser: argparse.ArgumentParser) -> None:
         "--base", default="planning-simulation", metavar="DEPLOYMENT",
         help="the deployment the kit builds on (default: planning-simulation)",
     )
+
+
+def clean_arguments(parser: argparse.ArgumentParser) -> None:
+    deployment_argument(parser)
+    parser.add_argument("--yes", action="store_true", help="delete without asking")
 
 
 def logs_arguments(parser: argparse.ArgumentParser) -> None:
@@ -530,7 +538,7 @@ def validate_command(root: Path, kit: RuntimeContext, deployment: Deployment, ar
         print(json.dumps({
             "schemaVersion": 1,
             "deployment": deployment.name,
-            "manifestValid": True,
+            "valid": True,
             "base": deployment.base.name if deployment.base else None,
             "rosDistro": selection.ros_distro,
             "gpu": selection.gpu,
@@ -606,11 +614,23 @@ def clean_command(root: Path, kit: RuntimeContext, deployment: Deployment, args:
         return 0
     selection = settings.resolve(deployment, kit, data_only=True)
     installed = data.check_installed_data(deployment, selection)
-    if not installed:
-        print("no data resources declared")
-        return 0
     compose.require_stopped(deployment)
     compose.require_data_unused(item["destination"] for item in installed)
+    present = {item["destination"]: item["name"] for item in installed if item["destination"].is_dir()}
+    if not present:
+        print(f"no data of {deployment.name} is installed")
+        return 0
+    inherited = {resource["name"] for resource in deployment.base.data} if deployment.base else set()
+    print("delete:")
+    for destination, name in present.items():
+        shared = f" (also used by {deployment.base.name})" if deployment.base and name in inherited else ""
+        print(f"  {destination}{shared}")
+    if not args.yes:
+        if not sys.stdin.isatty():
+            raise OpenADKitError("clean deletes data; pass --yes to confirm without a terminal")
+        if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
+            print("nothing deleted")
+            return 1
     data.remove_installed_data(deployment, selection)
     return 0
 
@@ -693,7 +713,7 @@ COMMANDS = {
         "catalog", "build an overlay workspace in the pinned devel image", build_command, build_arguments
     ),
     "new": Command("catalog", "create a kit on top of one of these deployments", new_command, new_arguments),
-    "clean": Command("deployment", "delete a deployment's downloaded data", clean_command, deployment_argument),
+    "clean": Command("deployment", "delete a deployment's downloaded data", clean_command, clean_arguments),
     "status": Command("live", "show the running deployment", status_command),
     "logs": Command("live", "show the running deployment's logs", logs_command, logs_arguments),
     "restart": Command(
@@ -718,7 +738,7 @@ INSTALL_USAGE = {
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser() -> OpenADKitParser:
     parser = OpenADKitParser(
         prog="openadkit",
         description="Run Open AD Kit deployments.",
@@ -735,8 +755,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     subparsers = parser.add_subparsers(dest="command", parser_class=OpenADKitParser)
+    parser.commands = subparsers.choices
     for name, command in COMMANDS.items():
-        subparser = subparsers.add_parser(name, help=command.help)
+        subparser = subparsers.add_parser(name, help=command.help, description=command.help.capitalize() + ".")
         if command.arguments:
             command.arguments(subparser)
         if command.group == "deployment":
@@ -748,19 +769,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def hand_over_before_parsing(arguments: list[str]) -> None:
+def hand_over_before_parsing(parser: OpenADKitParser, arguments: list[str]) -> None:
     """Run a kit's command with the CLI of the release it pins before reading
     its options: this CLI may be older and not know them.
 
-    A deployment or workspace named by its directory picks its kit once the
-    arguments are read, so that one is handed over by load_context.
+    The kit is the one around the deployment or workspace the command names by
+    its directory, or else around the working directory.
     """
-    words = [argument for argument in arguments if not argument.startswith("-")]
-    command = COMMANDS.get(words[0]) if words else None
-    if command is None or command.group not in ("catalog", "deployment"):
+    words = iter(arguments)
+    name = next((word for word in words if not word.startswith("-")), None)
+    if name not in COMMANDS or COMMANDS[name].group not in ("catalog", "deployment"):
         return
-    if not any(is_path(word) for word in words[1:]):
-        hand_over(Path.cwd())
+    takes_value = {
+        flag for action in parser.commands[name]._actions if action.nargs != 0 for flag in action.option_strings
+    }
+    target = None
+    for word in words:
+        if word in takes_value:
+            next(words, None)
+        elif not word.startswith("-"):
+            target = word
+            break
+    hand_over(Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd())
 
 
 def main() -> int:
@@ -770,8 +800,8 @@ def main() -> int:
     if arguments[:1] == ["build"] and "--" in arguments:
         split = arguments.index("--")
         arguments, colcon = arguments[:split], arguments[split + 1:]
-    hand_over_before_parsing(arguments)
     parser = build_parser()
+    hand_over_before_parsing(parser, arguments)
     args = parser.parse_args(arguments)
     args.colcon = colcon
     if getattr(args, "verbose", False):
@@ -795,12 +825,27 @@ def main() -> int:
     root, kit = load_context(start)
     if command.group == "catalog":
         return handler(root, kit, args)
+    if getattr(args, "json_output", False):
+        return validate_json(root, kit, args, handler)
     if not args.deployment:
         require_deployment_name(args.command)
-        list_deployments(root, kit, json_output=getattr(args, "json_output", False))
+        list_deployments(root, kit)
         return 2
     deployment = get_deployment(root, kit, deployment_name(root, kit, args.deployment))
     return handler(root, kit, deployment, args)
+
+
+def validate_json(root: Path, kit: RuntimeContext, args: argparse.Namespace, handler: Callable[..., int]) -> int:
+    """validate --json: one JSON document on stdout, also when the deployment is invalid."""
+    try:
+        if not args.deployment:
+            raise OpenADKitError("deployment name required")
+        deployment = get_deployment(root, kit, deployment_name(root, kit, args.deployment))
+        return handler(root, kit, deployment, args)
+    except OpenADKitError as error:
+        print(json.dumps({"schemaVersion": 1, "deployment": args.deployment, "valid": False, "error": str(error)}))
+        print(f"error: {error}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

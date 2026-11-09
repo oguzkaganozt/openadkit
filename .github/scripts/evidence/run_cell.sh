@@ -77,7 +77,7 @@ split=false
 projects=()
 validation_files=()
 for target_node in "${nodes[@]}"; do
-    projects+=("openadkit-${deployment}${target_node:+-${target_node}}")
+    projects+=("openadkit-${deployment}${target_node:+_${target_node}}")
     suffix=""
     [ "${split}" = true ] && suffix="-${target_node}"
     validation_files+=("${out}/validate${suffix}.json")
@@ -287,7 +287,7 @@ if [ "${l1_ok}" = true ] && [ "${scenario}" = true ]; then
         # not see the autoware node's /api topics.
         bridge=$(
             docker ps -q \
-                --filter "label=com.docker.compose.project=openadkit-${deployment}-scenario" |
+                --filter "label=com.docker.compose.project=openadkit-${deployment}_scenario" |
                 while read -r id; do
                     docker inspect -f '{{.Name}}' "${id}"
                 done | grep zenoh-bridge || true

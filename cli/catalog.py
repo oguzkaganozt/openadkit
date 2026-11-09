@@ -248,8 +248,11 @@ class Deployment:
         } if base else {}
 
     def project_name(self, node: str | None = None) -> str:
-        """Each node is its own Compose project, so nodes never share state."""
-        return self.project if node is None else f"{self.project}-{node}"
+        """Each node is its own Compose project, so nodes never share state.
+
+        Names never contain "_", so it separates the node unambiguously.
+        """
+        return self.project if node is None else f"{self.project}_{node}"
 
     @property
     def site_config(self) -> Path:

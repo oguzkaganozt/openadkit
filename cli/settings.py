@@ -253,12 +253,16 @@ def resolve(
         images = {name: image for name, image in images.items() if name not in file_settings}
     injections.update(images)
 
+    environment = _resolved(deployment, gpu, injections)
     # Env files and injections stay authoritative for data paths and
     # Compose interpolation. Shell values only fill requiredEnv gaps such
     # as CI dummy ZENOH_LISTEN exports; they cannot hide MAP_PATH.
-    present = {**os.environ, **file_settings, **injections}
+    present = {**os.environ, **environment}
     required = deployment.nodes[node]["requiredEnv"] if node is not None else []
     missing = [name for name in required if not present.get(name)]
     if missing:
-        raise OpenADKitError("required environment variable(s) are missing: " + ", ".join(missing))
-    return Selection(distro, gpu, node, injections, _resolved(deployment, gpu, injections))
+        raise OpenADKitError(
+            f"required environment variable(s) are missing: {', '.join(missing)}\n"
+            f"set them in {deployment.site_config}"
+        )
+    return Selection(distro, gpu, node, injections, environment)

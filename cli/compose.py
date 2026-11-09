@@ -186,8 +186,7 @@ def other_projects(deployment: Deployment) -> list[str]:
     """Include foreign kits; only this deployment's exact views may coexist.
 
     A project is named after its deployment only, so another kit's deployment
-    of the same name, or a deployment named like this one plus a node, has the
-    same project name as one of these views. A view is this deployment's only
+    of the same name has the same project name as one of these views. A view is this deployment's only
     when it started from the view's own entry Compose file; otherwise `run`
     would replace another stack in place. Compose that reports no files keeps
     the name as the only evidence. stop, status and logs still go by name, so
@@ -641,10 +640,15 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
     if fixed:
         raise OpenADKitError(f"{', '.join(fixed)} cannot change: the services use {OVERLAY_TARGET}/install")
     require_docker()
-    if read_overlay_stamp(workspace) != {"image": image, "rosDistro": ros_distro}:
+    stamp = {"image": image, "rosDistro": ros_distro}
+    if read_overlay_stamp(workspace) != stamp:
         for products in (workspace / "build", workspace / "install"):
             if products.is_dir() and not products.is_symlink():
                 shutil.rmtree(products)
+        # The stamp names the image the products belong to, so a failed
+        # build's retry continues from what it built.
+        (workspace / "install").mkdir()
+        (workspace / "install" / OVERLAY_STAMP).write_text(json.dumps(stamp) + "\n", encoding="utf-8")
     # The image compiles through ccache in the aw home, which only uid
     # 1000 can write; keep HOME and the cache in the container's /tmp.
     run_process(
@@ -660,11 +664,6 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
             image, "-c", OVERLAY_BUILD, "build", *colcon,
         ],
         env=docker_environment(),
-    )
-    (workspace / "install").mkdir(exist_ok=True)
-    (workspace / "install" / OVERLAY_STAMP).write_text(
-        json.dumps({"image": image, "rosDistro": ros_distro}) + "\n",
-        encoding="utf-8",
     )
     print(f"built: {workspace}")
 

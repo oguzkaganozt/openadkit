@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -66,7 +68,7 @@ def format_autoware_state(state: dict[str, Any]) -> list[str]:
 def live_views(node: str | None = None) -> list[str]:
     projects = sorted(live_projects())
     if node is not None:
-        projects = [name for name in projects if name.endswith(f"-{node}")]
+        projects = [name for name in projects if name.endswith(f"_{node}")]
     return projects
 
 
@@ -228,6 +230,12 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     output.mkdir(parents=True, exist_ok=True)
     # The container's own entrypoint, which a service may have overridden.
     entrypoint = config.get("Entrypoint") or []
+    # Its environment holds settings such as REMOTE_PASSWORD; an env file
+    # only the user can read keeps them off the command line.
+    variables = config.get("Env") or []
+    descriptor, env_file = tempfile.mkstemp(prefix="openadkit-record-", suffix=".env")
+    with os.fdopen(descriptor, "w", encoding="utf-8") as output_file:
+        output_file.writelines(f"{variable}\n" for variable in variables if "\n" not in variable)
     command = [
         "docker", "run", "--rm", "--init",
         *(["--entrypoint", entrypoint[0]] if entrypoint else []),
@@ -235,22 +243,26 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
         "--volumes-from", f"{ids[0]}:ro",
         "--volume", f"{output}:/openadkit/recordings",
         *(["--user", config["User"]] if config.get("User") else []),
-        *(argument for variable in config.get("Env") or [] for argument in ("--env", variable)),
+        "--env-file", env_file,
+        *(argument for variable in variables if "\n" in variable for argument in ("--env", variable)),
         config["Image"], *entrypoint[1:],
         "bash", "-c", 'exec ros2 bag record --output "$0" "$@"',
         f"/openadkit/recordings/{bag.name}", *(topics or ["--all"]),
     ]
     print_command(command)
-    process = subprocess.Popen(command, env=environment)
-    interrupted = False
-    while True:
-        try:
-            returncode = process.wait()
-            break
-        except KeyboardInterrupt:
-            # Ctrl+C reached the recorder too; killing the client would leave
-            # it recording, so wait while it closes the bag.
-            interrupted = True
+    try:
+        process = subprocess.Popen(command, env=environment)
+        interrupted = False
+        while True:
+            try:
+                returncode = process.wait()
+                break
+            except KeyboardInterrupt:
+                # Ctrl+C reached the recorder too; killing the client would leave
+                # it recording, so wait while it closes the bag.
+                interrupted = True
+    finally:
+        os.unlink(env_file)
     # Ctrl+C ends ros2 bag record with a nonzero status; a bag is a result.
     # Without it the recorder stopped on its own, and the bag may be partial.
     if returncode != 0 and not (interrupted and bag.is_dir()):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import http.client
 import json
+import os
 import shutil
 import stat
 import tempfile
@@ -137,10 +138,14 @@ def ensure_no_symlink_components(path: Path) -> None:
     current = Path(path.anchor)
     for part in path.parts[1:]:
         current = current / part
-        # Root-owned links are host layout (a relocated /home); a link anyone
+        # Root-owned links are host layout (a relocated /home) and the user's
+        # own (~/autoware_data -> /mnt/ssd) are theirs to make; a link anyone
         # else made could redirect data writes and removals.
-        if current.is_symlink() and current.lstat().st_uid != 0:
-            raise OpenADKitError(f"symlinked data path is not allowed: {current}")
+        if current.is_symlink() and current.lstat().st_uid not in (0, os.getuid()):
+            raise OpenADKitError(
+                f"data path goes through another user's symlink: {current}; "
+                "set the real path in the deployment's site configuration"
+            )
         if current.exists() and not current.is_dir():
             raise OpenADKitError(f"data path component is not a directory: {current}")
 
