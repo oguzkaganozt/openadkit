@@ -2096,8 +2096,8 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <li><code>openadkit.json</code> selects the base (<code>extends</code>), lists extra images you pin
   (<code>externalImages</code>), and points the <code>my-kit</code> deployment at <code>"."</code>, this same
   directory.</li>
-<li><code>deployment.json</code> names the base deployment and the Compose entrypoint.
-  Architecture, ROS distro, GPU, downloads and the verify step are inherited.</li>
+<li><code>deployment.json</code> names the base deployment. Compose reads
+  <code>docker-compose.yaml</code> unless <code>compose.files</code> names others. Architecture, ROS distro, GPU, downloads and the verify step are inherited.</li>
 <li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
   add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the base root for
   shared assets.</li>
@@ -2105,8 +2105,8 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <li><code>config/autoware/</code> holds parameter overrides for Autoware packages.</li>
 <li><code>overlay_ws/src/</code> holds your ROS packages.</li>
 </ul>
-<p>The directory name, the deployment key in <code>openadkit.json</code> and <code>name</code> in
-<code>deployment.json</code> agree; rename them together. The CLI checks that they agree.</p>
+<p>The deployment's name is its key in <code>openadkit.json</code>, here <code>my-kit</code>;
+<code>deployment.json</code> does not repeat it. Renaming the directory changes nothing.</p>
 <h2 id="pin-your-base">Pin Your Base<a class="headerlink" href="#pin-your-base" title="Permanent link">#</a></h2>
 <p><code>openadkit new</code> from an installed release writes its version, such as
 <code>"extends": "v2.0.0"</code>; the kit then runs with that release's own launcher.
