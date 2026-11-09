@@ -2177,7 +2177,7 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 <li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
   ROS interfaces are present and its topics publish.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
-  planning golden path arrives, or the scenarios pass, plus the split-node
+  Planning Simulation ego arrives at its goal, or the scenarios pass, plus the split-node
   checks. Each run starts a fresh stack.</li>
 </ul>
 <p>The workflow retries a failed runtime cell once. A cell that still fails fails

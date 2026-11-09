@@ -2039,6 +2039,14 @@ vehicle certification.</p>
 <td>Dev loop: <code>build -- &lt;colcon args&gt;</code>, a <code>run.json</code> record of every run, <code>openadkit new</code> for kits</td>
 <td>Done</td>
 </tr>
+<tr>
+<td>Images: planning and control as separate images (<code>PLANNING_IMAGE</code>, <code>CONTROL_IMAGE</code>), so a planner can change while control stays the same</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>Planner choice: a <code>planning-cuda</code> image and a Diffusion Planner deployment (<code>planning_setting:=diffusion_planner</code>) with its model and diagnostics graph; control unchanged</td>
+<td>Planned</td>
+</tr>
 </tbody>
 </table>
 <h3 id="after-v20">After v2.0<a class="headerlink" href="#after-v20" title="Permanent link">#</a></h3>
@@ -2053,7 +2061,10 @@ vehicle certification.</p>
 <li><strong>Dev loop in CI:</strong> an edit, build, restart and changed-behaviour check, and a
   devcontainer and debugging guide.</li>
 <li><strong>Settings resolution:</strong> resolve deployment settings in one place in the CLI.</li>
-<li><strong>Visualizer:</strong> Foxglove as an alternative to the noVNC desktop.</li>
+<li><strong>Visualizer:</strong> RViz stays the first-class view, with Autoware's own panels
+  and tools. Evaluate KasmVNC in place of TigerVNC, noVNC and Openbox for the
+  browser view, and add Lichtblick with <code>foxglove_bridge</code> as an extra view for
+  analysis, plots and bag playback.</li>
 <li><strong>Validation ladder:</strong> SIL, virtual vehicle network, bench HIL, small-scale and
   then full-scale vehicle, replacing the vehicle node rather than the application.</li>
 <li><strong>Vehicle delivery:</strong> an OCI package of the digest-pinned system and its BOM that

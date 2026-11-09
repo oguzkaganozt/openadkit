@@ -2115,25 +2115,25 @@ image digest.</p>
 <tbody>
 <tr>
 <td><strong>Release</strong></td>
-<td><code>planning-control-humble-v2.0.0</code></td>
+<td><code>planning-humble-v2.0.0</code></td>
 <td>Every release</td>
 <td>No</td>
 </tr>
 <tr>
 <td><strong>Latest per distro</strong></td>
-<td><code>planning-control-humble</code></td>
+<td><code>planning-humble</code></td>
 <td>Stable releases</td>
 <td>Yes</td>
 </tr>
 <tr>
 <td><strong>Pre-release</strong></td>
-<td><code>planning-control-humble-v2.0.0-rc.1</code></td>
+<td><code>planning-humble-v2.0.0-rc.1</code></td>
 <td>Pre-releases</td>
 <td>No</td>
 </tr>
 <tr>
 <td><strong>CI build</strong></td>
-<td><code>planning-control-humble-123456789-1</code></td>
+<td><code>planning-humble-123456789-1</code></td>
 <td>Every CI build (<code>&lt;run_id&gt;-&lt;run_attempt&gt;</code>)</td>
 <td>No</td>
 </tr>
@@ -2143,7 +2143,7 @@ image digest.</p>
 <p>Pre-releases never move the latest-per-distro aliases. No alias leaves out the
 distro, so an image never switches ROS distro under the same tag.</p>
 <p>Examples use <strong>Humble</strong>, the default distro. Jazzy images use
-the same patterns with <code>-jazzy</code> (for example <code>planning-control-jazzy</code>).
+the same patterns with <code>-jazzy</code> (for example <code>planning-jazzy</code>).
 <code>sensing-perception-cuda</code> is amd64-only, and only the amd64 <code>simulator</code> carries
 the CARLA client.</p>
 <h2 id="choosing-a-tag">Choosing a Tag<a class="headerlink" href="#choosing-a-tag" title="Permanent link">#</a></h2>
@@ -2202,7 +2202,7 @@ of that release were built from. Compiled code and runtime therefore use the
 same ROS versions, and the build fails if they would differ. Release notes and
 the release BOM name the snapshot per distro; an image carries it as a label:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>inspect<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{ index .Config.Labels "org.opencontainers.image.ros-snapshot" }}'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>ghcr.io/autowarefoundation/openadkit:planning-control-humble
+<span class="w">  </span>ghcr.io/autowarefoundation/openadkit:planning-humble
 </code></pre></div>
 <p>The snapshot changes only with the upstream Autoware release. Ubuntu packages
 are not pinned, so security updates keep flowing into new builds.</p>

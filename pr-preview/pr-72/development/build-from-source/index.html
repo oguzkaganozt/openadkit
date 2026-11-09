@@ -2175,7 +2175,8 @@ the same file CI uses.</p>
 
     UC --&gt; SP["sensing-perception"]
     UC --&gt; LM["localization-mapping"]
-    UC --&gt; PC["planning-control"]
+    UC --&gt; PLN["planning"]
+    UC --&gt; CTL["control"]
     UC --&gt; VS["vehicle-system"]
     UC --&gt; API["api"]
     UC --&gt; VIZ["visualizer"]
@@ -2211,7 +2212,7 @@ compiles and only refreshes and reassembles the runtime images.</p>
 <td><code>ghcr.io/autowarefoundation/openadkit</code></td>
 </tr>
 <tr>
-<td><code>planning</code></td>
+<td><code>planning-simulation</code></td>
 <td><code>universe-common</code> plus the images Planning Simulation needs</td>
 <td>— (local builds)</td>
 </tr>
@@ -2256,7 +2257,7 @@ touch<span class="w"> </span>autoware/src/middleware/external/.keep
 docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>universe-common
 
 <span class="c1"># 6. Build the Planning Simulation images (~2 hours)</span>
-docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>--load<span class="w"> </span>planning
+docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>--load<span class="w"> </span>planning-simulation
 
 <span class="c1"># 7. Run with the local images</span>
 ./openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
@@ -2265,7 +2266,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 <li><code>--load</code> puts the images in the local Docker store; without it, Bake only
   fills the build cache.</li>
 <li>Local builds are tagged <code>&lt;target&gt;-&lt;arch&gt;-&lt;ros-distro&gt;</code> (for example
-  <code>planning-control-amd64-humble</code>), which is the tag <code>./openadkit</code> looks up in a
+  <code>planning-amd64-humble</code>), which is the tag <code>./openadkit</code> looks up in a
   source checkout. The arch follows the build host; when cross-building, set tags
   with <code>--set &lt;target&gt;.tags=...</code>. To use other images, set the <code>*_IMAGE</code>
   variables in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
