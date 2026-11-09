@@ -11,7 +11,7 @@ data and behavior contracts; local actions own repeated execution recipes.
 | Source lock import, Buildx and registry login | `actions/setup-build-env/` |
 | Image metadata capture, inventory coverage, scan rows and artifact validation | `scripts/images.py` |
 | Validation and evidence cell plans (nodes, checks) and the kit inventory | `scripts/validation_matrix.py` |
-| Executing one evidence cell: validate/start/cleanup and the L0–L2 checks it names | `scripts/evidence/run_cell.sh` |
+| Executing one evidence cell: validate/start/cleanup and the L0–L3 checks it names | `scripts/evidence/run_cell.sh` |
 | Cell payloads, the run summary and its report | `scripts/evidence/` |
 | External release checks and sequencing | `scripts/validate_release.sh` |
 | Immutable release plan, runtime pins, and bundle staging and integrity | `scripts/release_plan.py` |
@@ -42,7 +42,8 @@ evidence subjects all read one kit inventory.
 
 Each evidence matrix row is the complete cell plan: identity, the node list in
 manifest order and the deployment's verify step. L1 is `openadkit run`, which
-waits for the deployment's healthchecks; L2 is `run --verify`. `run_cell.sh`
+waits for the deployment's healthchecks; L2 is `run --verify`; L3 is the example
+kit's `checks/dev_loop.sh`. `run_cell.sh`
 executes the row with a common validate/start/cleanup lifecycle; it does not
 derive policy from deployment names. Scenario isolation and drive-to-goal checks
 stay distinct.

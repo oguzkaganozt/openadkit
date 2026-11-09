@@ -14,7 +14,7 @@ Before creating a tag, the release validation job looks for an
 2. **It tested this build:** the summary names the promoted build tag, and it
    tested the build's own commit, not another commit against its images.
 3. **Every cell passed:** the summary result is `PASSED`. A cell passes only
-   when L0, L1 and L2 all pass, and a missing expected cell fails the run.
+   when every level it runs passes, and a missing expected cell fails the run.
 
 A passing rerun may supersede a failed run; a failed run never counts. There is
 no release bypass input. The release also requires the latest full scan of the
@@ -44,6 +44,9 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.
 - **L2:** the deployment's verify step passes (`openadkit run --verify`): the
   Planning Simulation ego arrives at its goal, or the scenarios pass, plus the split-node
   checks. Each run starts a fresh stack.
+- **L3:** the example kit only: the development loop on the running stack. Its
+  C++ package changes, `openadkit build` builds it, `openadkit restart` from
+  another directory recreates the services, and the stack publishes the change.
 
 The workflow retries a failed evidence cell once. A cell that still fails fails
 the run and blocks a release. The cells start deployments with

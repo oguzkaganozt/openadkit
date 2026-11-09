@@ -384,3 +384,33 @@ def test_allowlists_name_their_topics_and_a_rename_is_caught():
     # Entries are full-name matches: a prefix or a renamed topic is missing.
     assert allowlist.missing(["/clock_old", "/api", "/planning/trajectory"], graph) == [
         "/clock_old", "/api", "/planning/trajectory"]
+
+
+@pytest.mark.parametrize(("verify", "loop", "l3"), [
+    ("PASSED", 0, True), ("PASSED", 1, False), ("FAILED", 0, None),
+])
+def test_a_kit_cell_runs_its_development_loop_after_its_verify_step(tmp_path, verify, loop, l3):
+    cli = tmp_path / "bin/openadkit"
+    executable(cli, '''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+args = sys.argv[1:]
+if args[0] == 'validate': print(json.dumps({'deployment': args[1]}))
+if args[0] == 'run':
+    report = Path(os.environ['OPENADKIT_OUTPUT_DIR'], args[1], 'results/run.json')
+    report.parent.mkdir(parents=True)
+    report.write_text(json.dumps({'readySeconds': 1, 'verify': {'seconds': 2, 'result': os.environ['VERIFY']}}))
+''')
+    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    # The kit's loop gets the CLI and the distro, and runs in the kit.
+    executable(tmp_path / "checks/dev_loop.sh", f'#!/usr/bin/env bash\necho "$@" > called\nexit {loop}\n')
+    env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli), "VERIFY": verify}
+    cell = matrix_cell("example-kit")
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(tmp_path / "out")],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
+    report = json.loads((tmp_path / "out/cell.json").read_text())
+    assert report["levels"]["L3"]["ok"] is l3
+    assert (result.returncode == 0) is (report["result"] == "PASSED") is (l3 is True), result.stderr
+    assert (tmp_path / "called").exists() is (l3 is not None)
+    if l3 is not None:
+        assert (tmp_path / "called").read_text().split() == [str(cli), "humble"]
