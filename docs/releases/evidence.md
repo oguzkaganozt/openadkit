@@ -28,8 +28,11 @@ Runtime cells are enumerated from the source deployment manifests:
 |------------|---------|------------|
 | Planning Simulation | Humble, Jazzy | Single host; also under Podman and systemd with the [AutoSD](../platforms/autosd/index.md) units |
 | Scenario Simulation | Humble, Jazzy | Single host; two isolated nodes on one host |
-| `custom-kit` (`openadkit new` and the example fixture) | Humble, Jazzy | Planning Simulation extended with the fixture's C++ overlay |
+| `example-kit`: a kit made with `openadkit new`, plus a fixture that uses every extension point | Humble, Jazzy | Planning Simulation extended with the fixture's C++ overlay |
 | Safety Island Simulation | Humble, Jazzy | Planning Simulation driven by the pinned Safety Island release over `domain_bridge` |
+
+The example kit gates a release like every other cell: it shows that each kit
+extension point works on the build. It does not verify integrators' own kits.
 
 All currently run on GitHub-hosted `linux/amd64` runners. Image build and scan
 coverage includes the inventory's other architectures; this must not be

@@ -213,7 +213,7 @@ def test_real_integrator_kit_validates_against_its_source_base(tmp_path, compose
     (directory / "config.env").write_text(
         "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
     )
-    result = subprocess.run([str(ROOT / "openadkit"), "validate", "custom-kit", "--json"],
+    result = subprocess.run([str(ROOT / "openadkit"), "validate", "example-kit", "--json"],
                             cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["base"] == "planning-simulation"

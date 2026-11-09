@@ -1,4 +1,4 @@
-# The CI fixture's services on top of what `openadkit new custom-kit` made:
+# The CI fixture's services on top of what `openadkit new example-kit` made:
 # Planning Simulation and the kit's own services (extension point 4).
 include:
   - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
@@ -25,9 +25,9 @@ services:
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
       - ./checks:/openadkit/checks:ro
     command: ros2 run acme_probe probe
-    # This kit's readiness, which `openadkit run` waits for (checks/custom_kit.py).
+    # This kit's readiness, which `openadkit run` waits for (checks/example_kit.py).
     healthcheck:
-      test: ["CMD-SHELL", ". /opt/ros/${ROS_DISTRO}/setup.sh && . /opt/autoware/setup.sh && exec python3 /openadkit/checks/custom_kit.py"]
+      test: ["CMD-SHELL", ". /opt/ros/${ROS_DISTRO}/setup.sh && . /opt/autoware/setup.sh && exec python3 /openadkit/checks/example_kit.py"]
       start_period: 10m
       start_interval: 5s
       interval: 1m

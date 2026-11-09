@@ -22,7 +22,7 @@ def test_example_evidence_cells_follow_the_base_distros():
     runtime = validation_matrix.load_runtime(ROOT)
     assert identities(validation_matrix.example_kit_cells(runtime, ROOT)) == [
         {"deployment": kit, "distro": distro, "kit": f"kits/{kit}"}
-        for kit in ("custom-kit",) for distro in ("humble", "jazzy")
+        for kit in ("example-kit",) for distro in ("humble", "jazzy")
     ]
 
 
@@ -44,13 +44,13 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
     runtime = validation_matrix.load_runtime(staged)
-    example = staged / "kits/custom-kit"
+    example = staged / "kits/example-kit"
     kit = runtime.load_kit(example)
-    assert set(kit.deployments) == {"custom-kit"} and kit.deployments["custom-kit"].path == "."
+    assert set(kit.deployments) == {"example-kit"} and kit.deployments["example-kit"].path == "."
     # The staged release is not installed, so the kit extends it by its path.
     manifest = json.loads((example / "openadkit.json").read_text())
     assert manifest["extends"] == "../.." and "HEARTBEAT_IMAGE" in manifest["artifacts"]
     assert all("@sha256:" in ref for refs in kit.images.values() for ref in refs.values())
     assert (example / "overlay_ws/src/acme_probe/src/probe.cpp").is_file()
-    assert (example / "README.md").read_text().startswith("# custom-kit\n") and not (example / "artifacts.json").exists()
+    assert (example / "README.md").read_text().startswith("# example-kit\n") and not (example / "artifacts.json").exists()
     assert not any((example / "overlay_ws" / product).exists() for product in ("build", "install", "log"))

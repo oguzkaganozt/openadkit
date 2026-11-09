@@ -190,7 +190,7 @@ Your kit's acceptance checks run where CI runs them:
 
 - **Readiness:** give a service of your own a Compose `healthcheck`. `run`
   waits until it passes. The example fixture's `acme-probe` service runs
-  `checks/custom_kit.py`, which checks the fresh `/acme/probe` publication of
+  `checks/example_kit.py`, which checks the fresh `/acme/probe` publication of
   its C++ package and its parameters.
 - **End to end:** the base's `verify` step runs on top of your layer with
   `openadkit run --verify`. To check something else, name your own in
