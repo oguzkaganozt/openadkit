@@ -151,7 +151,9 @@ sample_memory() {
                 echo "${peak}" >"${out}/.peak_mib"
             fi
         fi
-        sleep 2
+        # In the background, so cleanup stops the sampler at once; away from
+        # the cell's output, which a reader waits on until it closes.
+        sleep 2 >/dev/null 2>&1 & wait $!
     done
 }
 

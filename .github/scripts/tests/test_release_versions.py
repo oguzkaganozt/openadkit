@@ -6,6 +6,7 @@ release_plan.py and validate_release.sh. Each is run against the same vectors
 here.
 """
 
+import itertools
 import re
 import subprocess
 import sys
@@ -85,3 +86,19 @@ def test_release_version_checks_agree(check):
     accepts = CHECKS[check]
     assert [v for v in VALID if not accepts(v)] == []
     assert [v for v in INVALID if accepts(v)] == []
+
+
+# SemVer precedence, lowest first: the example chain of semver.org, then the
+# release candidates upgrade moves through.
+PRECEDENCE = [
+    "v1.0.0-alpha", "v1.0.0-alpha.1", "v1.0.0-alpha.beta", "v1.0.0-beta", "v1.0.0-beta.2",
+    "v1.0.0-beta.11", "v1.0.0-rc.1", "v1.0.0",
+    "v2.0.0-rc.7", "v2.0.0-rc.8", "v2.0.0-rc.10", "v2.0.0", "v2.0.1", "v2.1.0", "v10.0.0",
+]
+
+
+@pytest.mark.parametrize(("lower", "higher"), list(itertools.pairwise(PRECEDENCE)))
+def test_upgrade_orders_versions_by_semver_precedence(lower, higher):
+    assert installation.compare_versions(lower, higher) == "newer"
+    assert installation.compare_versions(higher, lower) == "older"
+    assert installation.compare_versions(higher, higher) == "same"
