@@ -20,7 +20,8 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_REFERENCE_RE = re.compile(r"^\S+@sha256:[0-9a-f]{64}$")
-GPU_COMPONENT_IMAGE = "SENSING_PERCEPTION_GPU_IMAGE"
+# Component images only a GPU run uses (amd64-only CUDA builds), by name.
+GPU_COMPONENT_IMAGE_SUFFIX = "_GPU_IMAGE"
 # The image a release builds integrator overlays in, pinned with its runtime images.
 DEVEL_IMAGE_TARGET = "universe-common-devel"
 # Manifests from before v2.0.0 never shipped in a stable release; they are
@@ -355,7 +356,7 @@ class RuntimeContext:
         applicable = {
             name: target
             for name, target in self.component_images.items()
-            if gpu or name != GPU_COMPONENT_IMAGE
+            if gpu or not name.endswith(GPU_COMPONENT_IMAGE_SUFFIX)
         }
         if self.image_prefix_component is not None:
             return {

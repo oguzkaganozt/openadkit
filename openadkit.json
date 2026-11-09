@@ -6,6 +6,7 @@
   "componentImages": {
     "LOCALIZATION_MAPPING_IMAGE": "localization-mapping",
     "PLANNING_IMAGE": "planning",
+    "PLANNING_GPU_IMAGE": "planning-cuda",
     "CONTROL_IMAGE": "control",
     "VEHICLE_SYSTEM_IMAGE": "vehicle-system",
     "API_IMAGE": "api",

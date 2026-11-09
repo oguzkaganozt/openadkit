@@ -23,8 +23,8 @@ distro, so an image never switches ROS distro under the same tag.
 
 Examples use **{{ default_distro_title }}**, the default distro. Jazzy images use
 the same patterns with `-jazzy` (for example `planning-jazzy`).
-`sensing-perception-cuda` is amd64-only, and only the amd64 `simulator` carries
-the CARLA client.
+`sensing-perception-cuda` and `planning-cuda` are amd64-only, and only the amd64
+`simulator` carries the CARLA client.
 
 ## Choosing a Tag
 
