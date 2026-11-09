@@ -68,22 +68,9 @@ def is_outdated(target: Path, resource: dict[str, Any]) -> bool:
         # The CLI writes valid JSON: an unreadable marker says nothing about
         # what was installed, so the data cannot count as current.
         return True
+    # A marker without the source it was installed from cannot vouch for it.
     recorded = marker.get("source") if isinstance(marker, dict) else None
-    if isinstance(recorded, str):
-        return recorded != source_digest(resource)
-    # Markers written before the source was recorded: plain files can still be
-    # compared with their checksums; an extracted archive cannot.
-    if resource["kind"] != "files":
-        return False
-    for item in resource["files"]:
-        installed = target / safe_relative(item["path"], "data file path")
-        if not installed.is_file() or sha256_file(installed) != item["sha256"]:
-            return True
-    return any(
-        (target / relative).read_text(encoding="utf-8") != content
-        for relative, content in resource.get("generatedFiles", {}).items()
-        if (target / relative).is_file()
-    )
+    return recorded != source_digest(resource)
 
 
 def refuse_unmanaged(target: Path, action: str) -> None:

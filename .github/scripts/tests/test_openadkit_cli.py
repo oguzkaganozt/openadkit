@@ -947,17 +947,14 @@ def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
 
 
-@pytest.mark.parametrize("content, outdated", [("replacement", False), ("older", True)])
-def test_data_marked_before_sources_were_recorded_is_checked_by_checksum(tmp_path, content, outdated):
+def test_only_a_marker_naming_the_current_source_is_current(tmp_path):
     resource = files_resource(tmp_path)
     target = tmp_path / "installed"
     target.mkdir()
-    (target / cli_data.MARKER).write_text(json.dumps({"resource": "dataset"}))
-    (target / "required.txt").write_text(content)
-    assert cli_data.is_outdated(target, resource) is outdated
-    # A marker that is not JSON says nothing about what was installed.
-    (target / cli_data.MARKER).write_text("{truncated")
-    assert cli_data.is_outdated(target, resource) is True
+    for marker, outdated in (({"resource": "dataset", "source": cli_data.source_digest(resource)}, False),
+                             ({"resource": "dataset"}, True), ("{truncated", True)):
+        (target / cli_data.MARKER).write_text(marker if isinstance(marker, str) else json.dumps(marker))
+        assert cli_data.is_outdated(target, resource) is outdated
     # Unmarked data is the operator's own: never reported as outdated.
     (target / cli_data.MARKER).unlink()
     assert cli_data.is_outdated(target, resource) is False
