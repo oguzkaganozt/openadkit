@@ -172,7 +172,7 @@ elif args[0] == "inspect" and "--format" in args:
         labels = row.get("Config", {{}}).get("Labels", {{}})
         fields = {{
             "{{{{.Id}}}}": row["Id"], "{{{{.RestartCount}}}}": "0", "{{{{.State.Status}}}}": "running",
-            "{{{{.State.ExitCode}}}}": "0", "{{{{if .State.Health}}}}{{{{.State.Health.Status}}}}{{{{else}}}}none{{{{end}}}}": "none",
+            "{{{{.State.ExitCode}}}}": "0", '{{{{with index .State "Health"}}}}{{{{.Status}}}}{{{{else}}}}none{{{{end}}}}': "none",
             '{{{{index .Config.Labels "com.docker.compose.service"}}}}': labels.get("com.docker.compose.service", row["Id"]),
             '{{{{index .Config.Labels "com.docker.compose.config-hash"}}}}': labels.get("com.docker.compose.config-hash", "same"),
         }}

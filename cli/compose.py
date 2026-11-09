@@ -371,7 +371,9 @@ def failed_services(
             "--format",
             '{{.Id}} {{index .Config.Labels "com.docker.compose.service"}} '
             "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} "
-            "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+            # Docker fails on .State.Health for a container without a
+            # healthcheck; index reads a missing key as empty.
+            '{{with index .State "Health"}}{{.Status}}{{else}}none{{end}}',
             *ids,
         ],
         trace=False,
@@ -441,10 +443,11 @@ def start(
     up(deployment, selection, ["--remove-orphans", *scale_to_zero(skipped)])
 
 
-def recreate(deployment: Deployment, selection: Selection, services: set[str], skipped: set[str]) -> None:
+def recreate(deployment: Deployment, selection: Selection, services: set[str]) -> None:
     """Recreate `services` with the deployment's current settings, config and
-    workspace, leaving the others running; `skipped` ones stay without a container."""
-    up(deployment, selection, ["--no-deps", "--force-recreate", *scale_to_zero(skipped), *sorted(services)])
+    workspace, leaving the others as they are. Compose refuses a scale for a
+    service it does not start, so services run skipped are left out instead."""
+    up(deployment, selection, ["--no-deps", "--force-recreate", *sorted(services)])
 
 
 def scale_to_zero(services: set[str]) -> list[str]:
