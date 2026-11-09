@@ -2073,6 +2073,9 @@ vehicle certification.</p>
   replace the zenoh-bridge-ros2dds bridge.</li>
 <li><strong>Safety Island on CARLA:</strong> a kit on CARLA Simulation with the Safety Island's closed loop over CAN.
   Hosted CI cannot run CARLA, so it needs its own evidence.</li>
+<li><strong>Autoware version moves on standard runners:</strong> measure how long the common
+  images take to compile from scratch on a 4-vCPU runner, which a new Autoware
+  version needs, and size the job limits or the runner for it before the next one.</li>
 <li><strong>Autoware main canary:</strong> a weekly, non-blocking build against Autoware <code>main</code> that warns of upstream breaks before the next Autoware release; its images must not be released or reused by pull request checks.</li>
 <li><strong>Image SBOMs.</strong></li>
 <li><strong>CES 2027 demo:</strong> hardware integration and partner evidence; not a general
