@@ -1913,10 +1913,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#planning-control" class="md-nav__link">
+  <a href="#planning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planning &amp; Control
+        Planning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control
       
     </span>
   </a>
@@ -2057,19 +2068,24 @@ build graph. The <a href="#image-reference">image reference</a> lists tags and p
 <p>Planning and Scenario Simulation run only the <code>map</code> service; the simulator
 supplies map-to-odometry transforms. Logging and CARLA Simulation also run
 localization.</p>
-<h3 id="planning-control">Planning &amp; Control<a class="headerlink" href="#planning-control" title="Permanent link">#</a></h3>
-<p>Trajectory generation and vehicle control. Deployments run them as separate
-containers from the same image.</p>
+<h3 id="planning">Planning<a class="headerlink" href="#planning" title="Permanent link">#</a></h3>
+<p>Trajectory generation: route planning on Lanelet2 road networks; behavior
+planning for lanes, intersections, and obstacles; kinematically feasible motion
+planning; goal and parking maneuvers; the planning validator that publishes
+<code>/planning/trajectory</code>. Launch: <code>component_planning.launch.xml</code></p>
 <ul>
-<li><strong>Planning</strong> — route planning on Lanelet2 road networks; behavior planning for
-  lanes, intersections, and obstacles; kinematically feasible motion planning;
-  goal and parking maneuvers; emergency fallback trajectories. Launch:
-  <code>component_planning.launch.xml</code></li>
-<li><strong>Control</strong> — lateral steering and longitudinal velocity control; PID and
-  Model Predictive Control modes; vehicle-specific command conversion;
-  emergency stop and heartbeat monitoring. Launch:
-  <code>component_control.launch.xml</code></li>
+<li><strong>CUDA variant</strong> — <code>planning-cuda</code> builds the same packages with CUDA and
+  TensorRT, so <code>planning_setting:=diffusion_planner</code> runs Autoware 2.0's
+  Diffusion Planner. It is amd64-only and requires the NVIDIA Container
+  Toolkit. Used by <a href="../deployments/planning-simulation/">Planning Simulation</a>
+  (<code>--gpu</code>).</li>
 </ul>
+<h3 id="control">Control<a class="headerlink" href="#control" title="Permanent link">#</a></h3>
+<p>Vehicle control from <code>/planning/trajectory</code>: lateral steering and longitudinal
+velocity control; PID and Model Predictive Control modes; vehicle-specific
+command conversion; emergency stop and heartbeat monitoring. Control reads only
+that trajectory, so it stays the same whichever planner produces it. Launch:
+<code>component_control.launch.xml</code></p>
 <h3 id="vehicle-and-system">Vehicle and System<a class="headerlink" href="#vehicle-and-system" title="Permanent link">#</a></h3>
 <p>Vehicle actuation and system diagnostics, run as separate containers from one
 image.</p>
@@ -2108,8 +2124,9 @@ hardware:</p>
 <p>Launch: <code>tier4_simulator_component.launch.xml</code>, with the perception simulation
 (dummy objects, tracking, prediction and the occupancy grid map) in its own
 <code>perception-simulation</code> service from <code>planning_simulator/perception_simulation.launch.xml</code>.
-<code>carla-interface</code> builds on this image for CARLA-specific sensor and control
-translation.</p>
+On amd64 it also carries the CARLA bridge and the CARLA Python client that the
+<a href="../deployments/carla-simulation/">CARLA Simulation</a> deployment runs in
+its <code>carla-interface</code> service.</p>
 <h3 id="visualizer">Visualizer<a class="headerlink" href="#visualizer" title="Permanent link">#</a></h3>
 <p>Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
@@ -2175,8 +2192,8 @@ stays the same across starts, so a browser exception for it holds.</p>
 <p>For access and remote use, see the
 <a href="../getting-started/#open-the-visualizer">Quickstart</a>.</p>
 <h3 id="carla-interface">CARLA Interface<a class="headerlink" href="#carla-interface" title="Permanent link">#</a></h3>
-<p>Packages <code>autoware_carla_interface</code>, translating Autoware control commands to
-CARLA and CARLA sensor data to ROS 2 messages:</p>
+<p>The simulator image's <code>autoware_carla_interface</code> translates Autoware control
+commands to CARLA and CARLA sensor data to ROS 2 messages:</p>
 <ul>
 <li>CARLA world initialization and synchronous simulation</li>
 <li>ego vehicle spawning and sensor-kit configuration</li>
@@ -2184,8 +2201,9 @@ CARLA and CARLA sensor data to ROS 2 messages:</p>
 <li>vehicle command calibration and traffic light state publication</li>
 <li>lightweight sensor mappings for constrained hosts</li>
 </ul>
-<p>Launch: <code>autoware_carla_interface.launch.xml</code>. The image is amd64-only (Humble
-and Jazzy); the <a href="../deployments/carla-simulation/">CARLA Simulation</a>
+<p>Launch: <code>autoware_carla_interface.launch.xml</code>. CARLA publishes its Python
+client for x86_64 only, so only the amd64 simulator image has it (Humble and
+Jazzy); the <a href="../deployments/carla-simulation/">CARLA Simulation</a>
 deployment is Humble-only and needs an NVIDIA GPU.</p>
 <h2 id="image-reference">Image Reference<a class="headerlink" href="#image-reference" title="Permanent link">#</a></h2>
 <p>Generated from the image catalog (<code>.github/image-inventory.json</code>), so it always
@@ -2220,8 +2238,20 @@ matches what CI builds. Tag names are explained in
 <td>amd64, arm64</td>
 </tr>
 <tr>
-<td><code>planning-control</code></td>
-<td><code>ghcr.io/autowarefoundation/openadkit:planning-control</code></td>
+<td><code>planning</code></td>
+<td><code>ghcr.io/autowarefoundation/openadkit:planning</code></td>
+<td>humble, jazzy</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>planning-cuda</code></td>
+<td><code>ghcr.io/autowarefoundation/openadkit:planning-cuda</code></td>
+<td>humble, jazzy</td>
+<td>amd64</td>
+</tr>
+<tr>
+<td><code>control</code></td>
+<td><code>ghcr.io/autowarefoundation/openadkit:control</code></td>
 <td>humble, jazzy</td>
 <td>amd64, arm64</td>
 </tr>
@@ -2248,12 +2278,6 @@ matches what CI builds. Tag names are explained in
 <td><code>ghcr.io/autowarefoundation/openadkit:simulator</code></td>
 <td>humble, jazzy</td>
 <td>amd64, arm64</td>
-</tr>
-<tr>
-<td><code>carla-interface</code></td>
-<td><code>ghcr.io/autowarefoundation/openadkit:carla-interface</code></td>
-<td>humble, jazzy</td>
-<td>amd64</td>
 </tr>
 </tbody>
 </table>

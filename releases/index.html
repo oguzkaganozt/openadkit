@@ -1902,10 +1902,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#before-v20" class="md-nav__link">
+  <a href="#done" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Before v2.0
+        Done
       
     </span>
   </a>
@@ -1913,10 +1913,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#after-v20" class="md-nav__link">
+  <a href="#planned-in-priority-order" class="md-nav__link">
     <span class="md-ellipsis">
       
-        After v2.0
+        Planned — in priority order
       
     </span>
   </a>
@@ -1984,89 +1984,123 @@ Tag naming is documented in
 See <a href="evidence/">Evidence Policy</a> for the blocking gate and verification report, and
 <a href="verification/">Verify a Release</a> before executing downloaded artifacts.</p>
 <h2 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">#</a></h2>
-<p>These are plans, not claims of published releases, external team approval or
-vehicle certification.</p>
-<h3 id="before-v20">Before v2.0<a class="headerlink" href="#before-v20" title="Permanent link">#</a></h3>
-<table>
-<thead>
-<tr>
-<th>Work</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Release evidence: releases need a passing evidence run of their build; build provenance stays</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Kit: drop the static overlay-contract check and shorten the integrator guide</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>R-Car X5H board support moves to its own repository; AutoSD planning simulation stays</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>CLI: <code>build</code>, <code>run --ws</code>, <code>restart</code>, <code>shell</code>, deployment paths, and commands that find the running stack from any directory</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Split-host: visualizer on the simulator node, Autoware outputs and the vector map bridged, allowlist checked in CI</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Safety Island: <code>safety-island-simulation</code>, Planning Simulation driven by the pinned Safety Island release over <code>domain_bridge</code>, with its own evidence cell</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>AutoSD: Quadlet units for the component images, with Compose as the single source</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Releases from <code>main</code>, pinned to Autoware 2.0.0; Open AD Kit's own SemVer from v2.0.0</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Images: one moving alias per image and distro; the default distro comes from <code>openadkit.json</code></td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Readiness: <code>run</code> and <code>restart</code> wait for the deployments' healthchecks; <code>run --verify</code> runs the end-to-end check CI runs</td>
-<td>Done</td>
-</tr>
-<tr>
-<td>Dev loop: <code>build -- &lt;colcon args&gt;</code>, a <code>run.json</code> record of every run, <code>openadkit new</code> for kits</td>
-<td>Done</td>
-</tr>
-</tbody>
-</table>
-<h3 id="after-v20">After v2.0<a class="headerlink" href="#after-v20" title="Permanent link">#</a></h3>
+<p>Completed work comes first, followed by planned work in priority order:
+make the existing workflow reliable, simplify its foundations, then expand
+platform and vehicle integrations.</p>
+<h3 id="done">Done<a class="headerlink" href="#done" title="Permanent link">#</a></h3>
+<p>Implemented in source; these items do not imply a published stable release.</p>
 <ul>
-<li><strong>Performance and regression:</strong> latency and resource use per component, and a
-  scenario set, recorded in <code>run.json</code> and compared with a baseline.</li>
-<li><strong>Vehicle integration:</strong> a supported path from simulation to a real vehicle
-  interface: a reference hardware deployment where real sensing and vehicle
-  services replace the simulator, and a vehicle-interface contract.</li>
-<li><strong>Platform evidence:</strong> native arm64 runtime cells on hosted arm64 runners, and
-  GPU logging simulation, so the supported platforms are backed by evidence.</li>
-<li><strong>Dev loop in CI:</strong> an edit, build, restart and changed-behaviour check, and a
-  devcontainer and debugging guide.</li>
-<li><strong>Settings resolution:</strong> resolve deployment settings in one place in the CLI.</li>
-<li><strong>Visualizer:</strong> Foxglove as an alternative to the noVNC desktop.</li>
-<li><strong>Validation ladder:</strong> SIL, virtual vehicle network, bench HIL, small-scale and
-  then full-scale vehicle, replacing the vehicle node rather than the application.</li>
-<li><strong>Vehicle delivery:</strong> an OCI package of the digest-pinned system and its BOM that
-  can be mirrored offline; fleet rollout stays with the integrator's OTA system.</li>
-<li><strong>rmw_zenoh:</strong> evaluate it for split-host on Jazzy (Humble needs a launch patch); if it holds up,
-  replace the zenoh-bridge-ros2dds bridge.</li>
-<li><strong>Safety Island on CARLA:</strong> a kit on CARLA Simulation with the Safety Island's closed loop over CAN.
-  Hosted CI cannot run CARLA, so it needs its own evidence.</li>
-<li><strong>Autoware main canary:</strong> a weekly, non-blocking build against Autoware <code>main</code> that warns of upstream breaks before the next Autoware release; its images must not be released or reused by pull request checks.</li>
-<li><strong>Image SBOMs.</strong></li>
-<li><strong>CES 2027 demo:</strong> hardware integration and partner evidence; not a general
-  vehicle-support claim.</li>
+<li><strong>Releases.</strong> Build releases from <code>main</code> pinned to an Autoware release tag,
+  with Open AD Kit's own SemVer from v2.0.0; require passing evidence for the
+  promoted build and retain provenance.</li>
+<li><strong>Image selection.</strong> Publish one moving alias per image and distro, and select
+  the default distro from <code>openadkit.json</code>.</li>
+<li><strong>Developer workflow.</strong> Provide <code>new</code>, <code>build -- &lt;colcon args&gt;</code>, <code>run --ws</code>,
+  <code>restart</code>, <code>shell</code>, deployment paths and <code>run.json</code>, and find the running
+  stack from any directory.</li>
+<li><strong>Kits.</strong> Remove the static overlay-contract check and shorten the integrator
+  guide.</li>
+<li><strong>Readiness.</strong> Wait for healthchecks on <code>run</code> and <code>restart</code>, and expose CI's
+  end-to-end check through <code>run --verify</code>.</li>
+<li><strong>Planner choice.</strong> Split planning and control images; experimental
+  <code>planning-simulation --gpu</code> uses Diffusion Planner, its model and diagnostics
+  graph through <code>planning-cuda</code>.</li>
+<li><strong>Split-host.</strong> Run the visualizer on the simulator node, bridge Autoware
+  outputs and the vector map, and check the bridge allowlist in CI.</li>
+<li><strong>Safety Island.</strong> Drive Planning Simulation from a pinned Safety Island
+  release over <code>domain_bridge</code>, with its own evidence cell.</li>
+<li><strong>AutoSD and boards.</strong> Generate Quadlet units from Compose for Planning
+  Simulation, and move R-Car X5H board support to its own repository.</li>
 </ul>
+<h3 id="planned-in-priority-order">Planned — in priority order<a class="headerlink" href="#planned-in-priority-order" title="Permanent link">#</a></h3>
+<p>The order reflects engineering priorities, not release dates or certification
+commitments.</p>
+<ol>
+<li>
+<p><strong>Consistent readiness.</strong> Replace today's separate <code>run</code> and <code>restart</code>
+    checks with one shared readiness and failure policy for healthchecks,
+    crashes and one-shot services. Keep restart usable from any directory
+    against the running stack.</p>
+</li>
+<li>
+<p><strong>Verified development loop.</strong> Extend the example kit's CI check to edit a
+    ROS package, build it, restart the affected services and verify the changed
+    behaviour. Add a devcontainer and a debugging guide for this workflow.</p>
+</li>
+<li>
+<p><strong>One resolved configuration.</strong> Prepare deployment settings and the Compose
+    model in one CLI flow. Data paths, images, mounts and validation should use
+    the same result, preserving Compose's interpolation and override rules.</p>
+</li>
+<li>
+<p><strong>Component build boundaries.</strong> Review cross-component source mounts and
+    package dependencies. Remove unnecessary dependencies, extract genuinely
+    shared helpers, and keep domain-specific packages with their owners and
+    explicit dependencies. Limit each image to the build inputs and runtime
+    packages it needs; propose upstream fixes where needed. Reuse alone should
+    not move a package into <code>common</code> or add it to every image's base.</p>
+</li>
+<li>
+<p><strong>Comparable regression results.</strong> Use a small, fixed scenario set and record
+    component latency, resource use and relevant driving metrics such as tracking
+    error and jerk. Extend <code>run.json</code> and evidence outputs to compare results with
+    a baseline under the same test conditions.</p>
+</li>
+<li>
+<p><strong>Platform evidence.</strong> Run native arm64 runtime cells on hosted arm64 runners
+    and add GPU logging simulation coverage.</p>
+</li>
+<li>
+<p><strong>Autoware upgrades.</strong> Measure clean builds of the common images on a 4-vCPU
+    runner and size job limits or runners before the next Autoware version change.</p>
+</li>
+<li>
+<p><strong>Image SBOMs.</strong> Publish a software bill of materials for the container images.</p>
+</li>
+<li>
+<p><strong>Autoware main canary.</strong> Run a weekly, non-blocking build against Autoware
+    <code>main</code> to detect upstream breaks early. Keep its images out of releases and
+    PR checks.</p>
+</li>
+<li>
+<p><strong>Autoware System Designer.</strong> Clarify deployment responsibilities with
+    <a href="https://github.com/autowarefoundation/autoware_system_designer">Autoware System Designer</a>:
+    it selects launch files and parameters, while Open AD Kit selects images
+    and Compose services.</p>
+</li>
+<li>
+<p><strong>Vehicle integration.</strong> Define a vehicle-interface contract and a reference
+    hardware deployment where real sensing and vehicle services replace the
+    simulator.</p>
+</li>
+<li>
+<p><strong>Validation ladder.</strong> Progress from SIL through a virtual vehicle network,
+    bench HIL and small-scale vehicles to full-scale vehicles, replacing the
+    vehicle node rather than the application.</p>
+</li>
+<li>
+<p><strong>Vehicle delivery.</strong> Package the digest-pinned system and its BOM as an OCI
+    artifact that can be mirrored offline. Fleet rollout stays with the
+    integrator's OTA system.</p>
+</li>
+<li>
+<p><strong>CES 2027 demo.</strong> Integrate hardware and collect partner evidence for the
+    demonstrated setup, rather than claiming general vehicle support.</p>
+</li>
+<li>
+<p><strong>Visualizer.</strong> Keep RViz and Autoware's panels as the first-class view.
+    Evaluate KasmVNC as a replacement for TigerVNC, noVNC and Openbox; add
+    Lichtblick with <code>foxglove_bridge</code> for analysis, plots and bag playback.</p>
+</li>
+<li>
+<p><strong>rmw_zenoh.</strong> Evaluate it for split-host on Jazzy; replace
+    <code>zenoh-bridge-ros2dds</code> if the evaluation succeeds. Humble needs a launch patch.</p>
+</li>
+<li>
+<p><strong>Safety Island on CARLA.</strong> Create a kit with the Safety Island's closed loop
+    over CAN, backed by its own runtime evidence because hosted CI cannot run CARLA.</p>
+</li>
+</ol>
 <h3 id="non-goals">Non-goals<a class="headerlink" href="#non-goals" title="Permanent link">#</a></h3>
 <p>No custom OTA service, Kubernetes stack, fork of upstream workloads, or ASIL or
 NCAP certification claim. Safety Island owns its safety boundary; Open AD Kit

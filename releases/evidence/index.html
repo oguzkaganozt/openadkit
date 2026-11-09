@@ -2177,7 +2177,7 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 <li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
   ROS interfaces are present and its topics publish.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
-  planning golden path arrives, or the scenarios pass, plus the split-node
+  Planning Simulation ego arrives at its goal, or the scenarios pass, plus the split-node
   checks. Each run starts a fresh stack.</li>
 </ul>
 <p>The workflow retries a failed runtime cell once. A cell that still fails fails
@@ -2208,6 +2208,9 @@ both commits, which the gate rejects.</p>
 cell. Their deployment manifests contain a reasoned <code>evidence.exempt</code> entry.
 They remain in the bundle, are listed in release metadata/notes, and the CLI
 warns when they run. <strong>An exemption is not runtime evidence.</strong></p>
+<p>Planning Simulation's cells run its CPU mode. Its GPU mode (<code>--gpu</code>, the
+Diffusion Planner on <code>planning-cuda</code>) has no hosted runtime cell; it is checked
+on a GPU host and validated (L0) in CI.</p>
 <p>Adding an exemption is a reviewed source change, not a release-time override.
 Do not use it to hide a known product failure in a normally tested cell.</p>
 <h2 id="autoware-and-ros-distro-decisions">Autoware and ROS distro decisions<a class="headerlink" href="#autoware-and-ros-distro-decisions" title="Permanent link">#</a></h2>

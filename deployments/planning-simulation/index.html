@@ -1950,16 +1950,37 @@
 
 <h1 id="planning-simulation">Planning Simulation<a class="headerlink" href="#planning-simulation" title="Permanent link">#</a></h1>
 <p>Run the Autoware planning and control stack on a demo map with the built-in
-simulator, then set a route in browser-based RViz2. No GPU is required.</p>
-<p>Complete the <a href="../../getting-started/">Quickstart</a> setup first.</p>
+simulator, then set a route in browser-based RViz2. No GPU is required; with an
+NVIDIA GPU, <code>--gpu</code> plans with Autoware 2.0's Diffusion Planner.</p>
+<p>Complete the <a href="../../getting-started/">Quickstart</a> setup first. For GPU
+mode, run <code>openadkit setup --gpu --verify</code>.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h2>
 <p>Commands on this page are shown as installed by the release installer. From a
 source checkout, prefix them with <code>./</code> and run them from the repository root.</p>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w">         </span><span class="c1"># CPU: the rule-based planner</span>
+openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--gpu<span class="w">   </span><span class="c1"># GPU: the Diffusion Planner (amd64 only)</span>
 </code></pre></div>
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <p><code>run</code> downloads the sample map, pulls the images, and starts the stack. The demo
 map is Copyright 2020 TIER IV, Inc. and is provided for demonstration only.</p>
+<p>With <code>--gpu</code>, the planning service runs the <code>planning-cuda</code> image with
+<code>planning_setting:=diffusion_planner</code>, and <code>run</code> also downloads the Diffusion
+Planner v5.0 model from Hugging Face to
+<code>~/autoware_data/ml_models/diffusion_planner/v5.0</code>. The first start builds a
+TensorRT engine from the model there, so it takes longer than later starts.
+Control and the rest of the stack are the same in both modes: control follows
+<code>/planning/trajectory</code>, whichever planner makes it. See
+<a href="https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v2/">Autoware Architecture 2.0</a>
+for the planner. Hosted CI runs the CPU mode; the GPU mode is checked on a GPU
+host.</p>
+<div class="admonition warning">
+<p class="admonition-title">Experimental</p>
+<p>The GPU mode is experimental. Autoware 2.0.0's Diffusion Planner can stop the
+ego up to about 2 m before the goal, so the route does not become <code>ARRIVED</code>
+and <code>run --gpu --verify</code> fails on the sample route. This is the planner's own
+output, reproduced with upstream's image
+(<a href="https://github.com/autowarefoundation/autoware_universe/issues/13603">autoware_universe#13603</a>).</p>
+</div>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
 <strong><code>openadkit</code></strong>. Set your own

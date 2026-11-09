@@ -2181,7 +2181,9 @@ host, pick one with <code>--node</code>; <code>status</code> and <code>stop</cod
 or an overlay workspace, so a changed parameter file or a rebuilt workspace
 applies without restarting a simulator such as CARLA; it names the services it
 left running. <code>restart --all</code> restarts the whole deployment in place, one-shot
-services included, as a fresh start with the same settings. Changes to Compose
+services included, as a fresh start with the same settings. Like <code>run</code>, it
+returns once the restarted services are ready, fails if one crashes, and warns
+about overrides that changed nothing. Changes to Compose
 files or <code>.env</code> values need <code>stop</code> and <code>run</code> again. <code>shell</code> sources ROS, Autoware and the overlay
 workspaces like the services' entrypoint; give it a service and a command to run
 one command instead.</p>
@@ -2211,7 +2213,8 @@ its start to its goal, Scenario Simulation waits for the scenarios' result.
 <code>run --verify</code> exits with the step's result; the deployment keeps running.
 Every run writes <code>results/run.json</code> in the deployment's output directory: the
 version, distro and images it started, the digest of the resolved Compose
-model, how long it took to be ready and, with <code>--verify</code>, the step's result.
+model, content digests of the config layers and overlay workspace it mounts,
+how long it took to be ready and, with <code>--verify</code>, the step's result.
 <code>openadkit run &lt;deployment&gt; --pull always</code> refreshes images before starting,
 and <code>openadkit version</code> prints the installed version. <code>--no-visualizer</code>
 starts everything except the visualizer, for a host nobody watches; its
@@ -2225,6 +2228,8 @@ anything. <code>--data</code> also reports each data resource as <code>ok</code>
 or <code>outdated</code> and fails on any gap. It follows the same GPU selection as <code>run</code>:
 use <code>openadkit validate logging-simulation --gpu --data</code> to include the
 CenterPoint models.</p>
+<p>Commands print what they do in plain terms; add <code>--verbose</code> (or set
+<code>OPENADKIT_VERBOSE=1</code>) to also see each <code>docker compose</code> command they run.</p>
 <p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting. <code>config</code> prints
 the resolved Compose model of a deployment as JSON, with the same options as
 <code>validate</code>; <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
@@ -2309,10 +2314,7 @@ now declares other content for it, for example a fixed map with a new checksum:
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file.
 <code>clean</code> and <code>--force</code> only delete or replace marked data. Data that was
 already there, such as a map you copied yourself, is still used when it is
-complete, but the CLI never deletes or replaces it; move or remove it yourself.
-If a target changes during <code>fetch --force</code>, publication fails instead of deleting
-the changed directory. A conflict during the atomic swap preserves staging;
-the error names its path for inspection rather than automatically removing it.</p>
+complete, but the CLI never deletes or replaces it; move or remove it yourself.</p>
 <h2 id="split-host-nodes">Split-host nodes<a class="headerlink" href="#split-host-nodes" title="Permanent link">#</a></h2>
 <p><code>validate</code> and <code>run</code> accept <code>--node</code> for
 <a href="../../deployments/split-host/">split-host simulation</a>. <code>status</code>, <code>logs</code>, and
