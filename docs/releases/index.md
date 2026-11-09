@@ -94,6 +94,12 @@ integrations.
 
 #### Build and release maintenance
 
+- **Component build boundaries:** review cross-component source mounts and
+  package dependencies. Remove unnecessary dependencies, extract genuinely
+  shared helpers, and keep domain-specific packages with their owners and
+  explicit dependencies. Limit each image's build inputs and runtime packages
+  to what it needs; propose upstream fixes where needed. Reuse alone should not
+  move a package into `common` or add it to every image's base.
 - **Autoware upgrades:** measure clean builds of the common images on a 4-vCPU
   runner and size job limits or runners before the next Autoware version change.
 - **Autoware main canary:** a weekly, non-blocking build against Autoware `main`
