@@ -2158,8 +2158,8 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <h2 id="short-name-and-tab-completion">Short Name and Tab Completion<a class="headerlink" href="#short-name-and-tab-completion" title="Permanent link">#</a></h2>
 <p><code>openadkit install</code> also links <code>adkit</code>, a short name for the same launcher:
 <code>adkit run planning-simulation</code> is <code>openadkit run planning-simulation</code>. Tab
-completes commands, options and the deployment names of the kit or release in
-the current directory, for both names; bash-completion (installed on Ubuntu by
+completes commands, options and deployment names, for both names: those of the
+kit around the current directory, or else of the active release; bash-completion (installed on Ubuntu by
 default) loads it from <code>~/.local/share/bash-completion/completions</code> in a new
 shell. The installer leaves an <code>adkit</code> or a completion file that it did not
 install alone, and <code>openadkit uninstall</code> removes only its own links.</p>
@@ -2230,9 +2230,10 @@ use <code>openadkit validate logging-simulation --gpu --data</code> to include t
 CenterPoint models.</p>
 <p>Commands print what they do in plain terms; add <code>--verbose</code> (or set
 <code>OPENADKIT_VERBOSE=1</code>) to also see the docker commands they run, status queries aside.</p>
-<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting. <code>config</code> prints
-the resolved Compose model of a deployment as JSON, with the same options as
-<code>validate</code>; <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
+<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting; <code>validate --json</code>
+prints one JSON document also when the deployment is invalid (<code>"valid": false</code>
+with the <code>"error"</code>). <code>config</code> prints the resolved Compose model of a deployment
+as JSON; it takes <code>validate</code>'s <code>--ros-distro</code>, <code>--gpu</code>, <code>--node</code> and <code>--ws</code>; <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
 <p><code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code> and <code>clean</code> also take a deployment's directory
 instead of its name, such as <code>openadkit run ./my-kit</code>: an argument with a <code>/</code> or
 a leading <code>.</code> is a directory, and the kit around it is used wherever you run the
@@ -2299,8 +2300,12 @@ settings in <code>~/.config/openadkit</code> and results and recordings in
 <code>~/autoware_map</code> and <code>~/autoware_data</code> and is kept by <code>uninstall</code>. Check and
 delete a deployment's data with:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>planning-simulation<span class="w"> </span>--data<span class="w">   </span><span class="c1"># report</span>
-openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">             </span><span class="c1"># delete</span>
+openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">             </span><span class="c1"># delete, after asking</span>
 </code></pre></div>
+<p><code>clean</code> lists what it deletes and asks first; <code>--yes</code> skips the question, as
+scripts need. It deletes all the data the deployment uses, so a kit or a
+deployment on a base also deletes the base's data (the list says so); the next
+<code>run</code> or <code>fetch</code> downloads it again.</p>
 <p><code>clean</code> and <code>fetch --force</code> refuse while that deployment is running, or
 when any live container mounts the data (including another kit or deployment).
 If data usage cannot be checked, deletion or replacement is refused. If Scenario
@@ -2322,8 +2327,9 @@ complete, but the CLI never deletes or replaces it; move or remove it yourself.<
 several nodes of one deployment run on the same machine.</p>
 <p>Each node's declared Compose entrypoint owns its full service graph, including
 any bridge. The CLI selects those files and the node's ROS domain; it never
-adds a networking service behind the scenes. The printed Compose command shows
-the selected files, env files and project name.</p>
+adds a networking service behind the scenes. With <code>--verbose</code>, the printed
+Compose command shows the selected files, env files and project name
+(<code>openadkit-&lt;deployment&gt;_&lt;node&gt;</code>).</p>
 <h2 id="verify-a-release-bundle-manually">Verify a Release Bundle Manually<a class="headerlink" href="#verify-a-release-bundle-manually" title="Permanent link">#</a></h2>
 <p>To inspect a release before running anything, download the bundle and check it
 against the release metadata:</p>

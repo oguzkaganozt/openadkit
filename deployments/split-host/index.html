@@ -2158,7 +2158,7 @@ The allowlist is an explicit node <code>requiredFiles</code> entry: missing or s
 files fail validation before starting containers, without Zenoh-specific CLI logic.
 It selects the declared files, image references and env files, and supplies the
 node's <code>rosDomainId</code> as <code>OPENADKIT_ROS_DOMAIN_ID</code>.</p>
-<p>Each node is isolated: its own Compose project (<code>openadkit-&lt;deployment&gt;-&lt;node&gt;</code>),
+<p>Each node is isolated: its own Compose project (<code>openadkit-&lt;deployment&gt;_&lt;node&gt;</code>),
 its own container names, and its own ROS domain (<code>rosDomainId</code> in the
 manifest). The nodes only see each other through the Zenoh bridge, so both
 nodes can also run on <strong>one machine</strong> for testing, as long as each listens on
