@@ -127,16 +127,14 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
                 component, separator, component_path = changed_file.removeprefix(
                     "components/"
                 ).partition("/")
-                if component == "sensing-perception" and separator:
+                # A component with a CUDA variant: Dockerfile.cuda builds <component>-cuda.
+                if separator and f"{component}-cuda" in images_by_target:
                     if component_path == "Dockerfile":
-                        mapped_targets = {"sensing-perception"}
+                        mapped_targets = {component}
                     elif component_path == "Dockerfile.cuda":
-                        mapped_targets = {"sensing-perception-cuda"}
+                        mapped_targets = {f"{component}-cuda"}
                     else:
-                        mapped_targets = {
-                            "sensing-perception",
-                            "sensing-perception-cuda",
-                        }
+                        mapped_targets = {component, f"{component}-cuda"}
                 elif component == "universe-common" and separator:
                     mapped_targets = all_targets
                 elif component in images_by_target and separator:
@@ -262,9 +260,10 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, commo
             args={**args, "SOURCE_DATE_EPOCH": COMPILE_BASE_EPOCH},
             **{"cache-to": [f"type=registry,ref={cache_ref('universe-common-build')},mode=max"]})
         del overrides["universe-common-devel"]["cache-to"]
-    overrides["sensing-perception-cuda"]["contexts"].update(cuda_contexts)
-    if publish and target != "universe-common":
-        overrides["sensing-perception-cuda"]["args"]["SECURITY_REFRESH"] = build_tag
+    for name in [image for image in images if image.endswith("-cuda")]:
+        overrides[name]["contexts"].update(cuda_contexts)
+        if publish and target != "universe-common":
+            overrides[name]["args"]["SECURITY_REFRESH"] = build_tag
     targets = (["universe-common-build", "universe-common-devel", "universe-common"]
                if publish and target == "universe-common" else [target])
     return {"target": overrides}, targets

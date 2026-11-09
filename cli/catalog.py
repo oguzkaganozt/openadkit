@@ -14,7 +14,7 @@ from manifest import (
     ALLOWED_INTEGRATOR_KIT_KEYS,
     ALLOWED_KIT_KEYS,
     DEVEL_IMAGE_TARGET,
-    GPU_COMPONENT_IMAGE,
+    GPU_COMPONENT_IMAGE_SUFFIX,
     IMAGE_REFERENCE_RE,
     NAME_RE,
     SCHEMA_VERSION,
@@ -155,7 +155,7 @@ class RuntimeContext:
         applicable = {
             name: target
             for name, target in self.component_images.items()
-            if gpu or name != GPU_COMPONENT_IMAGE
+            if gpu or not name.endswith(GPU_COMPONENT_IMAGE_SUFFIX)
         }
         if self.image_prefix_component is not None:
             return {

@@ -34,6 +34,7 @@ def test_inventory_bake_and_runtime_catalog_agree():
     assert index[("planning", "humble")] == "amd64 arm64"
     assert index[("control", "humble")] == "amd64 arm64"
     assert index[("sensing-perception-cuda", "jazzy")] == "amd64"
+    assert index[("planning-cuda", "jazzy")] == "amd64"
     assert "simulator" in {row["target"] for row in resolved["component_matrix"]["include"]}
     assert set(resolved) == {"common_matrix", "component_matrix", "manifest_matrix"}
 
@@ -43,6 +44,8 @@ def test_inventory_bake_and_runtime_catalog_agree():
     (".dockerignore", {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
     (".github/autoware.ref", {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
     ("components/sensing-perception/Dockerfile.cuda", {"sensing-perception-cuda"}, {}),
+    ("components/planning/Dockerfile.cuda", {"planning-cuda"}, {}),
+    ("components/planning/Dockerfile", {"planning"}, {}),
     ("components/sensing-perception/scripts/build.sh", {"sensing-perception", "sensing-perception-cuda"}, {}),
     ("components/simulator/Dockerfile", {"simulator"}, {}),
     ("docs/index.md", set(), {}),
@@ -80,7 +83,7 @@ def test_invalid_build_inputs_fail_closed(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(("target", "publish", "local"), [
-    ("universe-common", True, False), ("sensing-perception-cuda", True, False),
+    ("universe-common", True, False), ("sensing-perception-cuda", True, False), ("planning-cuda", True, False),
     ("simulator", True, False), ("api", False, False), ("simulator", False, True),
 ])
 def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publish, local):
@@ -101,7 +104,7 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
         assert row["labels"]['"org.opencontainers.image.autoware-lock-sha256"'] == "e" * 64
         assert row["labels"]['"org.opencontainers.image.openadkit-sha"'] == "b" * 40
         assert row["cache-to"][0].endswith(",mode=max")
-        assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is (target == "sensing-perception-cuda")
+        assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is target.endswith("-cuda")
         if target == "universe-common":
             # Per-build labels or provenance would change the compile base's
             # digest on every build and invalidate every component compile.

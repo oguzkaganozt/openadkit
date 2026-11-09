@@ -76,6 +76,10 @@ cell. Their deployment manifests contain a reasoned `evidence.exempt` entry.
 They remain in the bundle, are listed in release metadata/notes, and the CLI
 warns when they run. **An exemption is not runtime evidence.**
 
+Planning Simulation's cells run its CPU mode. Its GPU mode (`--gpu`, the
+Diffusion Planner on `planning-cuda`) has no hosted runtime cell; it is checked
+on a GPU host and validated (L0) in CI.
+
 Adding an exemption is a reviewed source change, not a release-time override.
 Do not use it to hide a known product failure in a normally tested cell.
 

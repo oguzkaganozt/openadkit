@@ -93,6 +93,20 @@ function "sensing_base_paths" {
   ])
 }
 
+// Single source of truth for the planning `--base-paths` package list, shared
+// by the CPU and CUDA planning Dockerfiles like sensing_base_paths above. The
+// CUDA and TensorRT helpers are what autoware_diffusion_planner depends on.
+function "planning_base_paths" {
+  params = []
+  result = join(" ", [
+    "/tmp/autoware/src/launcher/autoware_launch/vehicle/sample_vehicle_launch/sample_vehicle_description",
+    "/tmp/autoware/src/universe/autoware_universe/planning",
+    "/tmp/autoware/src/universe/autoware_universe/sensing/autoware_cuda_utils",
+    "/tmp/autoware/src/universe/autoware_universe/perception/autoware_tensorrt_common",
+    "/tmp/autoware/src/universe/autoware_universe/perception/autoware_tensorrt_plugins",
+  ])
+}
+
 group "default" {
   targets = ["universe-common", "component"]
 }
@@ -104,7 +118,8 @@ group "universe-common" {
 group "component" {
   targets = [
     "sensing-perception", "sensing-perception-cuda", "localization-mapping",
-    "planning", "control", "vehicle-system", "api", "visualizer", "simulator",
+    "planning", "planning-cuda", "control", "vehicle-system", "api",
+    "visualizer", "simulator",
   ]
 }
 
@@ -124,6 +139,7 @@ target "docker-metadata-action-sensing-perception" { tags = local_tags("sensing-
 target "docker-metadata-action-sensing-perception-cuda" { tags = local_tags("sensing-perception-cuda") }
 target "docker-metadata-action-localization-mapping" { tags = local_tags("localization-mapping") }
 target "docker-metadata-action-planning" { tags = local_tags("planning") }
+target "docker-metadata-action-planning-cuda" { tags = local_tags("planning-cuda") }
 target "docker-metadata-action-control" { tags = local_tags("control") }
 target "docker-metadata-action-vehicle-system" { tags = local_tags("vehicle-system") }
 target "docker-metadata-action-api" { tags = local_tags("api") }
@@ -207,6 +223,9 @@ target "planning" {
   inherits   = ["_component-base", "docker-metadata-action-planning"]
   dockerfile = "components/planning/Dockerfile"
   target     = "planning"
+  args = {
+    COLCON_BASE_PATHS = planning_base_paths()
+  }
 }
 
 target "control" {
@@ -251,6 +270,22 @@ target "sensing-perception-cuda" {
     BASE_CUDA_RUNTIME_IMAGE = "autoware-base-cuda-runtime"
     BASE_CUDA_DEVEL_IMAGE   = "autoware-base-cuda-devel"
     COLCON_BASE_PATHS       = sensing_base_paths()
+    ROS_SNAPSHOT            = ros_snapshot()
+  }
+}
+
+target "planning-cuda" {
+  inherits   = ["_component-base", "docker-metadata-action-planning-cuda"]
+  dockerfile = "components/planning/Dockerfile.cuda"
+  target     = "planning-cuda"
+  contexts = {
+    autoware-base-cuda-runtime = upstream("base-cuda-runtime")
+    autoware-base-cuda-devel   = upstream("base-cuda-devel")
+  }
+  args = {
+    BASE_CUDA_RUNTIME_IMAGE = "autoware-base-cuda-runtime"
+    BASE_CUDA_DEVEL_IMAGE   = "autoware-base-cuda-devel"
+    COLCON_BASE_PATHS       = planning_base_paths()
     ROS_SNAPSHOT            = ros_snapshot()
   }
 }
