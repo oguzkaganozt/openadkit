@@ -2245,8 +2245,8 @@ on every architecture.</p>
 <p>Every image installs its ROS packages from one dated
 <a href="http://snapshots.ros.org/">ROS snapshot</a>: the one the upstream Autoware images
 of that release were built from. Compiled code and runtime therefore use the
-same ROS versions, and the build fails if they would differ. Release notes and
-the release BOM name the snapshot per distro; an image carries it as a label:</p>
+same ROS versions, and the build fails if they would differ. The release BOM
+names the snapshot per distro; an image carries it as a label:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>inspect<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{ index .Config.Labels "org.opencontainers.image.ros-snapshot" }}'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>ghcr.io/autowarefoundation/openadkit:planning-humble
 </code></pre></div>
