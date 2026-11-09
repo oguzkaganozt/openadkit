@@ -19,7 +19,10 @@ Open AD Kit is licensed under **Apache License 2.0**. All contributions are acce
 1. **Fork** the repository and create a feature branch (`feat/`, `fix/`, `docs/`, etc.)
 2. **Sign off** your commits (`git commit -s`) to certify DCO compliance
 3. **Preview docs** locally with `make -C docs serve`
-4. **Open a PR** against `main` with a clear description
+4. **Open a PR** against `main` with a clear description. Its title follows
+   [Conventional Commits](https://www.conventionalcommits.org/) (`feat(cli): ...`,
+   with `!` for a breaking change): PRs are squash-merged, so the title becomes
+   the commit and its line in the release notes
 
 ## For Internal (Foundation) Contributors
 
