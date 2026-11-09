@@ -2243,8 +2243,8 @@ install alone, and <code>openadkit uninstall</code> removes only its own links.<
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>status
 openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
 openadkit<span class="w"> </span>logs<span class="w"> </span>map<span class="w"> </span>planning<span class="w">        </span><span class="c1"># only these services</span>
-openadkit<span class="w"> </span>restart<span class="w">                  </span><span class="c1"># services reread config and overlay workspaces</span>
-openadkit<span class="w"> </span>restart<span class="w"> </span>--all<span class="w">            </span><span class="c1"># the whole deployment, with the same settings</span>
+openadkit<span class="w"> </span>restart<span class="w">                  </span><span class="c1"># apply changed settings, config and overlay workspaces</span>
+openadkit<span class="w"> </span>restart<span class="w"> </span>--all<span class="w">            </span><span class="c1"># recreate the whole deployment</span>
 openadkit<span class="w"> </span>shell<span class="w">                    </span><span class="c1"># a shell in the api service with ROS sourced</span>
 openadkit<span class="w"> </span>shell<span class="w"> </span>planning<span class="w"> </span>ros2<span class="w"> </span>node<span class="w"> </span>list
 openadkit<span class="w"> </span>record<span class="w"> </span>/tf<span class="w"> </span>/localization/kinematic_state
@@ -2253,14 +2253,14 @@ openadkit<span class="w"> </span>stop
 <p>These act on the deployment running on this host, from any directory, so they
 take no deployment name. When several nodes of a split deployment run on one
 host, pick one with <code>--node</code>; <code>status</code> and <code>stop</code> act on all of them.</p>
-<p><code>restart</code> with no service restarts every service that takes Open AD Kit config
-or an overlay workspace, so a changed parameter file or a rebuilt workspace
-applies without restarting a simulator such as CARLA; it names the services it
-left running. <code>restart --all</code> restarts the whole deployment in place, one-shot
-services included, as a fresh start with the same settings. Like <code>run</code>, it
-returns once the restarted services are ready, fails if one crashes, and warns
-about overrides that changed nothing. Changes to Compose
-files or <code>.env</code> values need <code>stop</code> and <code>run</code> again. <code>shell</code> sources ROS, Autoware and the overlay
+<p><code>restart</code> recreates services as <code>run</code> started them, with the current
+settings, config and overlay workspace, from any directory. With no service it
+recreates every service that takes Open AD Kit config or an overlay workspace,
+and every service whose settings changed, so a changed parameter file, a rebuilt
+workspace or a new <code>settings.env</code> value applies without restarting a simulator
+such as CARLA; it names the services it left running. <code>restart --all</code> recreates
+the whole deployment, one-shot services included. <code>restart</code> keeps to the same
+readiness checks as <code>run</code>. <code>shell</code> sources ROS, Autoware and the overlay
 workspaces like the services' entrypoint; give it a service and a command to run
 one command instead.</p>
 <p>Below its services, <code>status</code> shows Autoware's state from the AD API:</p>
@@ -2283,7 +2283,8 @@ split nodes of the same deployment can still run together.
 <code>run</code> returns once the deployment is ready: its services' healthchecks pass,
 for example once the AD API is up (<code>READINESS_CHECKS</code> in the deployment's
 <code>settings.env</code>). It then watches the services for 10 seconds and fails if one
-crashes. <code>openadkit run &lt;deployment&gt; --verify</code> then runs the deployment's
+crashes, restarts, exits or turns unhealthy; a one-shot service may finish but
+not fail. <code>openadkit run &lt;deployment&gt; --verify</code> then runs the deployment's
 verify step, the check CI runs on it: Planning Simulation drives the ego from
 its start to its goal, Scenario Simulation waits for the scenarios' result.
 <code>run --verify</code> exits with the step's result; the deployment keeps running.
