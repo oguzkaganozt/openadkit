@@ -1,5 +1,5 @@
 # Perception — object, traffic light, and drivable space recognition.
-# Variant flags (GPU models, CARLA extras) come from config.env / config.gpu.env.
+# Variant flags (GPU models, CARLA extras) come from settings.env / settings.gpu.env.
 services:
   perception:
     image: ${SENSING_PERCEPTION_IMAGE:?set by the openadkit CLI}

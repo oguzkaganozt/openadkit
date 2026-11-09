@@ -92,13 +92,13 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     directory.mkdir(parents=True)
     document = document or manifest()
     (directory / "deployment.json").write_text(json.dumps(document))
-    (directory / "config.env").write_text(config)
+    (directory / "settings.env").write_text(config)
     files = document["compose"]["files"] + document["compose"]["gpuFiles"]
     files += [file for node in document.get("nodes", {}).values() for file in node["files"]]
     for file in files:
         (directory / file).write_text("services:\n  app:\n    image: busybox:1.36.1\n")
     if document["compose"]["gpuFiles"]:
-        (directory / "config.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
+        (directory / "settings.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
     context = {
         "schemaVersion": 2, "kind": "release" if release else "repository",
         "defaultRosDistro": "humble", "componentImages": COMPONENT_IMAGES,
@@ -210,7 +210,7 @@ def integrator_kit(tmp_path, root, *, extends=None, external_images=None):
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "Integrator deployment", "base": "example",
     }))
-    (directory / "config.env").write_text("VALUE=kit\n")
+    (directory / "settings.env").write_text("VALUE=kit\n")
     (directory / "docker-compose.yaml").write_text(
         "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml\n"
         "services:\n  acme:\n    image: busybox:1.36.1\n"
@@ -506,7 +506,7 @@ def test_image_and_env_priority_reaches_compose(tmp_path, release):
     # A release pins its images; a source checkout's env files may set their own.
     assert first["env"].get("API_IMAGE") == (PIN if release else None)
     env_files = [first["args"][index + 1] for index, arg in enumerate(first["args"]) if arg == "--env-file"]
-    assert env_files == [str(directory / "config.env"), str(directory / "config.gpu.env"),
+    assert env_files == [str(directory / "settings.env"), str(directory / "settings.gpu.env"),
                          str(tmp_path / "home/.config/openadkit/example.env")]
 
 
@@ -875,7 +875,7 @@ def test_zip_expected_root_is_one_directory(tmp_path):
 def test_env_file_settings_are_what_the_files_set_as_compose_reads_them(tmp_path, monkeypatch):
     monkeypatch.setenv("FROM_SHELL", "shell")
     monkeypatch.setenv("SET_IN_FILE", "shell")
-    path = tmp_path / "config.env"
+    path = tmp_path / "settings.env"
     path.write_text('SET_IN_FILE=file\nQUOTED="a b" # note\nHOME_PATH=$HOME/data\nFROM_SHELL\n')
     assert cli_settings._env_file_settings((path,)) == {
         "SET_IN_FILE": "file", "QUOTED": "a b", "HOME_PATH": f"{os.environ['HOME']}/data",
@@ -883,7 +883,7 @@ def test_env_file_settings_are_what_the_files_set_as_compose_reads_them(tmp_path
 
 
 def test_env_file_compose_refuses_is_a_cli_error(tmp_path):
-    path = tmp_path / "config.env"
+    path = tmp_path / "settings.env"
     path.write_text('NAME="unterminated\n')
     with pytest.raises(cli_manifest.OpenADKitError, match="could not read the settings"):
         cli_settings._env_file_settings((path,))
@@ -1262,12 +1262,12 @@ class SettingsDeployment:
 def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("MAP_ROOT", "/srv/maps")
-    (tmp_path / "config.env").write_text(
+    (tmp_path / "settings.env").write_text(
         "DATA_PATH=$HOME/data\nMODEL_PATH=${DATA_PATH}/models\n"
         "MAP_PATH=${MAP_ROOT:-/tmp/openadkit-map}\nROSBAG_PATH=${ROSBAG_ROOT:-/tmp/rosbag}\n")
-    (tmp_path / "config.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
+    (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
-    deployment = SettingsDeployment(tmp_path, [tmp_path / "config.env"], [tmp_path / "config.gpu.env"], data)
+    deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
     kit = cli_catalog.RuntimeContext("repository", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
@@ -1484,7 +1484,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     edit_kit(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
     kit = integrator_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
-    (directory / "config.gpu.env").write_text("VALUE=kit-gpu\n")
+    (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
         path.mkdir()
     site_config(root, "VALUE=site\n", name="custom")
@@ -1732,7 +1732,7 @@ def test_a_released_deployment_is_intact_only_with_its_base(tmp_path):
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "on-top")
     assert cli_catalog.deployment_integrity(root, deployment, kit) == "intact"
-    (base / "config.env").write_text("MAP_PATH=/elsewhere\n")
+    (base / "settings.env").write_text("MAP_PATH=/elsewhere\n")
     assert cli_catalog.deployment_integrity(root, deployment, kit) == "modified"
 
 

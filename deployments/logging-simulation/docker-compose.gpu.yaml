@@ -1,5 +1,5 @@
 # GPU overlay for logging simulation — swap sensing/perception onto the CUDA
-# images and reserve the GPU. Model flags come from config.gpu.env.
+# images and reserve the GPU. Model flags come from settings.gpu.env.
 services:
   sensing:
     image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}

@@ -210,7 +210,7 @@ def test_real_integrator_kit_validates_against_its_source_base(tmp_path, compose
     assert json.loads((kit / "openadkit.json").read_text())["extends"] == str(ROOT)
     directory = kit
     # Documented site settings, used by the shared services and runtime.env.
-    (directory / "config.env").write_text(
+    (directory / "settings.env").write_text(
         "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
     )
     result = subprocess.run([str(ROOT / "openadkit"), "validate", "example-kit", "--json"],
@@ -232,7 +232,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
         "schemaVersion": 2, "description": "Own simulator",
         "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
     }))
-    (directory / "config.env").write_text("TOWN=Town01\n")
+    (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "docker-compose.yaml").write_text(
         "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml\n"
         "services:\n"
@@ -260,7 +260,7 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
         "schemaVersion": 2, "description": "Drive by hand",
         "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
     }))
-    (directory / "config.env").write_text("TOWN=Town01\n")
+    (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "docker-compose.yaml").write_text(
         "include:\n  - ../shared/world.yaml\n"
         "services:\n  manual:\n    image: busybox:1.36.1\n"

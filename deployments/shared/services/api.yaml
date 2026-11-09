@@ -17,7 +17,7 @@ services:
       - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
       - ../checks:/openadkit/checks:ro
-    # Healthy once Autoware is ready (READINESS_CHECKS in config.env), which
+    # Healthy once Autoware is ready (READINESS_CHECKS in settings.env), which
     # `openadkit run` waits for. Without checks it is healthy once it runs.
     healthcheck:
       test: ["CMD-SHELL", ". /opt/ros/${ROS_DISTRO}/setup.sh && . /opt/autoware/setup.sh && exec python3 /openadkit/checks/readiness.py ${READINESS_CHECKS:-}"]

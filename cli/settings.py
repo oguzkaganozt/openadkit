@@ -117,7 +117,7 @@ def _compose_environment(deployment: Deployment, gpu: bool, injections: dict[str
     """Environment Compose uses to interpolate the deployment.
 
     Compose prefers the process environment over ``--env-file``, so a shell
-    export would otherwise hide ``config.gpu.env`` and the site configuration.
+    export would otherwise hide ``settings.gpu.env`` and the site configuration.
     Drop shell values for names the env files define and let Compose read
     the files itself, so quoting and ``$VAR`` expansion follow Compose rules.
     CLI injections (distro and component images) still win.
@@ -164,7 +164,7 @@ def _require_host_support(deployment: Deployment, distro: str, architecture: str
 
 def _injections(deployment: Deployment, distro: str, node: str | None) -> dict[str, str]:
     """What the CLI sets for every command, images aside."""
-    # config.env defaults OUTPUT_HOST_PATH to this directory.
+    # settings.env defaults OUTPUT_HOST_PATH to this directory.
     injections = {
         "ROS_DISTRO": distro,
         "OPENADKIT_RESULTS_DIR": str(deployment.output_directory / "results"),

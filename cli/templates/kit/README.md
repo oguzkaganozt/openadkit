@@ -6,7 +6,7 @@ An Open AD Kit kit on top of `{{base}}` from Open AD Kit {{version}}.
 | --- | --- |
 | `openadkit.json` | The Open AD Kit it extends and the extra images it pins (`externalImages`) |
 | `deployment.json` | Its base deployment and, optionally, its Compose files (default `docker-compose.yaml`) and own `verify` step |
-| `config.env` | Values that differ from the base |
+| `settings.env` | Values that differ from the base |
 | `docker-compose.yaml` | Includes the base; add your services here |
 | `config/autoware/` | Parameter overrides: `<package>/<path in its share directory>`, with only the keys you change |
 | `overlay_ws/src/` | Your ROS packages |

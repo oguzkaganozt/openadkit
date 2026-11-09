@@ -294,8 +294,8 @@ def resolve_tested_commit_step():
     # A build verified at its own commit is release evidence.
     ("workflow_dispatch", None, "true", "false"),
     # A deployment change runs against the build's images but is not attested.
-    ("workflow_dispatch", "deployments/planning-simulation/config.env", "false", "false"),
-    ("pull_request", "deployments/planning-simulation/config.env", "false", "false"),
+    ("workflow_dispatch", "deployments/planning-simulation/settings.env", "false", "false"),
+    ("pull_request", "deployments/planning-simulation/settings.env", "false", "false"),
     # A pull request whose images would differ waits for its build.
     ("pull_request", "components/api/Dockerfile", "false", "true"),
     ("workflow_dispatch", "components/api/Dockerfile", "false", "false"),

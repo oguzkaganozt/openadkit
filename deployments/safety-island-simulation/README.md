@@ -10,7 +10,7 @@ the Safety Island on domain 2, and
 | --- | --- |
 | `deployment.json` | Pins the Safety Island release by SHA-256: its FreeRTOS POSIX binary, its `bridge-config.yaml` topic contract and its `cyclonedds-domain2.xml` DDS setting |
 | `docker-compose.yaml` | Adds the `safety-island` and `safety-island-bridge` services to Planning Simulation |
-| `config.env` | Where the release is fetched, and the diagnostics graph below |
+| `settings.env` | Where the release is fetched, and the diagnostics graph below |
 | `config/autoware/autoware_control_config/.../default_preset.yaml` | The default control preset with `trajectory_follower_mode: none` |
 | `config/autoware/autoware_launch/.../autoware-safety-island.yaml` | Autoware's main diagnostics graph without the follower's `control_state`, which nothing publishes any more |
 

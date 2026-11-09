@@ -67,7 +67,7 @@ with the same name. `run` refuses conflicting projects; stop them first with
 split nodes of the same deployment can still run together.
 `run` returns once the deployment is ready: its services' healthchecks pass,
 for example once the AD API is up (`READINESS_CHECKS` in the deployment's
-`config.env`). It then watches the services for 10 seconds and fails if one
+`settings.env`). It then watches the services for 10 seconds and fails if one
 crashes. `openadkit run <deployment> --verify` then runs the deployment's
 verify step, the check CI runs on it: Planning Simulation drives the ego from
 its start to its goal, Scenario Simulation waits for the scenarios' result.
@@ -118,8 +118,8 @@ only your differences. See [Create a Kit](../deployments/create-a-kit.md).
 Each deployment reads its settings from environment files, in this order
 (later files win):
 
-1. `deployments/<name>/config.env`: the deployment defaults
-2. `deployments/<name>/config.gpu.env`: GPU settings, loaded only with `--gpu`
+1. `deployments/<name>/settings.env`: the deployment defaults
+2. `deployments/<name>/settings.gpu.env`: GPU settings, loaded only with `--gpu`
 3. `~/.config/openadkit/<name>.env`: your host settings
 
 Shell exports do not override variables defined in these files. Put host
