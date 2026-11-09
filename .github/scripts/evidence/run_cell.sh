@@ -8,6 +8,8 @@ set -uo pipefail
 #   L2: the deployment's verify step (./openadkit run --verify): the drive to
 #       the goal, or the scenario samples, plus a domain-isolation check when the
 #       cell runs several nodes on one host.
+#   L3: for a kit with checks/dev_loop.sh, the development loop on the running
+#       stack: change its package, build, restart, and see the change.
 #
 # The cell is one row of the evidence matrix (validation_matrix.py), which
 # derives what to run and check from the manifests; this runner only executes
@@ -127,6 +129,7 @@ result="PASSED"
 l0_ok=false
 l1_ok=false
 l2_ok="null"
+l3_ok="null"
 ready_s="null"
 arrival_s="null"
 isolation="null"
@@ -328,6 +331,16 @@ if [ "${l1_ok}" = true ] && [ "${scenario}" = true ]; then
 fi
 [ "${l2_ok}" = false ] && result="FAILED"
 
+# --- L3: the development loop of a kit, on the stack L2 checked --------------
+if [ "${l2_ok}" = true ] && [ -n "${kit}" ] && [ -f checks/dev_loop.sh ]; then
+    if bash checks/dev_loop.sh "${cli}" "${distro}" >"${out}/dev-loop.log" 2>&1; then
+        l3_ok=true
+    else
+        l3_ok=false
+        result="FAILED"
+    fi
+fi
+
 # --- artifacts ---------------------------------------------------------------
 # null, like ready_s and arrival_s, when no container was ever sampled.
 peak_mib=$(cat "${out}/.peak_mib" 2>/dev/null || echo null)
@@ -359,6 +372,7 @@ jq -n \
     --argjson l0 "${l0_ok}" \
     --argjson l1 "${l1_ok}" \
     --argjson l2 "${l2_ok}" \
+    --argjson l3 "${l3_ok}" \
     --argjson ready_s "${ready_s}" \
     --argjson arrival_s "${arrival_s}" \
     --argjson peak_mib "${peak_mib}" \
@@ -377,10 +391,11 @@ jq -n \
         levels: {
             L0: {ok: $l0},
             L1: {ok: $l1, ready_s: $ready_s},
-            L2: {ok: $l2, arrival_s: $arrival_s, scenario: $scenario}
+            L2: {ok: $l2, arrival_s: $arrival_s, scenario: $scenario},
+            L3: {ok: $l3}
         },
         metrics: {ready_s: $ready_s, arrival_s: $arrival_s, peak_mib: $peak_mib}
     }' >"${out}/cell.json"
 
-echo "cell ${cell_name}: ${result} (L0=${l0_ok} L1=${l1_ok} L2=${l2_ok} isolation=${isolation})"
+echo "cell ${cell_name}: ${result} (L0=${l0_ok} L1=${l1_ok} L2=${l2_ok} L3=${l3_ok} isolation=${isolation})"
 [ "${result}" = "PASSED" ]

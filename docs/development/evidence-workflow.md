@@ -59,7 +59,7 @@ tree a release of that build ships, plus the example kit.
 
 The example workspace builds against that build's matching distro-specific
 `universe-common-devel` digest. Source/config checksums omit `build`, `install`
-and `log` products. Hosted runners execute L0-L2 cells, retry a failed cell once,
+and `log` products. Hosted runners execute L0-L3 cells, retry a failed cell once,
 and aggregate all expected cells, including missing-cell failures.
 
 The workflow uploads per-cell diagnostics and the

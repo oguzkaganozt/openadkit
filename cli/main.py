@@ -722,7 +722,7 @@ def restart_command(args: argparse.Namespace) -> int:
         services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
     if not services:
         raise OpenADKitError(f"{live.view_name(project)} has no service with Open AD Kit config to restart")
-    compose.recreate(deployment, selection, services, skipped)
+    compose.recreate(deployment, selection, services)
     print(f"restarted: {', '.join(sorted(services))}")
     kept = sorted(running - services)
     if kept:

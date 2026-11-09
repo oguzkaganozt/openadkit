@@ -182,7 +182,7 @@ flowchart LR
 1. **validate**: runs the release gates in
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
    (version format, build provenance and age, scan results, metadata and file
-   integrity, image coverage, passing L0-L2 evidence, registry digests, Git tag). Nothing is tagged if a
+   integrity, image coverage, passing L0-L3 evidence, registry digests, Git tag). Nothing is tagged if a
    gate fails.
 2. **package-bundles**: writes the immutable release plan and the runtime bundle
    for both distros.
