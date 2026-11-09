@@ -78,7 +78,7 @@ _openadkit() {
     # option nor an option's value. The commands that act on the running
     # deployment take no name.
     case ${command} in
-        validate | fetch | run | clean) ;;
+        validate | config | fetch | run | clean) ;;
         *) return ;;
     esac
     local index word

@@ -95,7 +95,7 @@ use `openadkit validate logging-simulation --gpu --data` to include the
 CenterPoint models.
 
 Commands print what they do in plain terms; add `--verbose` (or set
-`OPENADKIT_VERBOSE=1`) to also see each `docker compose` command they run.
+`OPENADKIT_VERBOSE=1`) to also see the docker commands they run, status queries aside.
 
 `list`, `version`, and `validate` accept `--json` for scripting. `config` prints
 the resolved Compose model of a deployment as JSON, with the same options as

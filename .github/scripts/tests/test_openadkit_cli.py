@@ -343,6 +343,7 @@ def test_completion_offers_commands_options_and_deployments(tmp_path):
     assert complete(root, ["openadkit", "run", "--ros-distro", ""]) == {"humble", "jazzy"}
     assert complete(root, ["openadkit", "run", "ex"]) == {"example"}
     assert complete(root, ["openadkit", "run", "--ros-distro", "jazzy", ""]) == {"example"}
+    assert complete(root, ["openadkit", "config", ""]) == {"example"}
     # One deployment per command; list takes none.
     assert complete(root, ["openadkit", "run", "example", ""]) == set()
     assert complete(root, ["openadkit", "list", ""]) == set()
@@ -394,6 +395,10 @@ def test_completion_lists_every_command_and_option():
             continue
         flags = {flag for action in parser._actions for flag in action.option_strings if flag.startswith("--")}
         assert flags - {"--help"} <= options[name], name
+    # Deployment names are offered to exactly the commands that take one.
+    named = re.search(r"case \$\{command\} in\n\s+([a-z| ]+)\) ;;\n\s+\*\) return ;;", text).group(1)
+    assert {name.strip() for name in named.split("|")} == {
+        name for name, command in cli_main.COMMANDS.items() if command.group == "deployment"}
 
 
 def test_install_defaults_to_the_root_kits_resolve_extends_from(tmp_path):
@@ -1378,7 +1383,6 @@ def test_cleanup_refuses_incomplete_container_inspection(tmp_path, monkeypatch, 
     def capture(args, **kwargs):
         return subprocess.CompletedProcess(args, 0, "abc\n" if args[1] == "ps" else output, "")
     monkeypatch.setattr(cli_compose, "capture_process", capture)
-    monkeypatch.setattr(cli_compose.shutil, "which", lambda _: "/bin/docker")
     with pytest.raises(cli_manifest.OpenADKitError, match="refusing cleanup"):
         cli_compose.require_data_unused([tmp_path / "data"])
 
@@ -1729,6 +1733,19 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
         assert record.read_text().strip() == f"{kit}|1|run custom --pull never"
     else:
         assert "openadkit install --version v1.2.3" in result.stderr
+
+
+def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+    record = tmp_path / "delegated"
+    pinned = tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3"
+    pinned.mkdir(parents=True)
+    (pinned / "openadkit.json").write_text('{"schemaVersion":2,"kind":"release"}')
+    executable(pinned / "openadkit", f'#!/usr/bin/env bash\nprintf "%s\\n" "$*" > "{record}"\n')
+    result = run_cli(root, "run", "custom", "--option-from-a-newer-release", directory=kit)
+    assert result.returncode == 0, result.stderr
+    assert record.read_text().strip() == "run custom --option-from-a-newer-release"
 
 
 @pytest.mark.parametrize("gpu", [False, True])
