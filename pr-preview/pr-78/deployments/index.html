@@ -1941,7 +1941,7 @@ start with Planning Simulation.</p>
 <tr>
 <td><a href="planning-simulation/">Planning Simulation</a></td>
 <td>Plan and follow a route on a demo map</td>
-<td>No</td>
+<td>Optional</td>
 </tr>
 <tr>
 <td><a href="scenario-simulation/">Scenario Simulation</a></td>
@@ -1983,7 +1983,8 @@ openadkit<span class="w"> </span>stop
 <ul>
 <li>Add <code>--ros-distro jazzy</code> to <code>validate</code>, <code>fetch</code>, or <code>run</code> to select Jazzy;
   Humble is the default.</li>
-<li>Add <code>--gpu</code> for the optional GPU mode of Logging Simulation. CARLA needs a GPU,
+<li>Add <code>--gpu</code> for the optional GPU mode of Planning Simulation (the Diffusion
+  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU,
   so its GPU mode turns on by itself; it is Humble-only.</li>
 <li>Add <code>--node</code> to <code>validate</code> or <code>run</code> to start one node of a
   <a href="split-host/">split-host</a> run. <code>status</code>, <code>logs</code>, and <code>stop</code> find the
