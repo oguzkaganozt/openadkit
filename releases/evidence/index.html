@@ -1335,8 +1335,6 @@
           
         
       
-        
-      
     
     
     
@@ -1373,11 +1371,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1391,78 +1384,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1643,8 +1564,6 @@
       
         
       
-        
-      
     
     
     
@@ -1772,34 +1691,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2017,6 +1908,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Autoware and ROS distro decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backporting-an-autoware-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backporting an Autoware fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2155,6 +2063,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Autoware and ROS distro decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backporting-an-autoware-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backporting an Autoware fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2195,27 +2120,22 @@
 
 <h1 id="evidence-and-release-policy">Evidence and Release Policy<a class="headerlink" href="#evidence-and-release-policy" title="Permanent link">#</a></h1>
 <p>A release promotes an existing build. It does not rebuild images or silently
-relax its tests. Both stable releases and release candidates require <strong>one
-complete, cryptographically verified Test Result with <code>result: PASSED</code></strong>.</p>
+relax its tests. Both stable releases and release candidates require <strong>a
+successful evidence run that passed every cell for the promoted build</strong>.</p>
 <h2 id="what-the-gate-checks">What the gate checks<a class="headerlink" href="#what-the-gate-checks" title="Permanent link">#</a></h2>
-<p>The release validation job checks these independently before creating a tag:</p>
+<p>Before creating a tag, the release validation job looks for an
+<code>evidence-summary-&lt;build_tag&gt;</code> artifact and accepts it only when:</p>
 <ol>
-<li><strong>Identity:</strong> GitHub verifies the signature, the repository, the
-   <code>.github/workflows/evidence.yaml</code> signer, the <code>release/X.Y</code> source ref,
-   and that the attestation was signed on a hosted runner.</li>
-<li><strong>Subject:</strong> all build image digests and the deployment, shared asset and
-   example-kit source/config checksums match the exact promoted source tree.
-   The dispatch-time scripts and the promoted source are checked out separately.</li>
-<li><strong>Coverage:</strong> every required manifest-derived cell appears exactly once in
-   the signed configuration and in <code>passedTests</code>. Cell build/source identity,
-   distro, node, kit and platform must match; L0, L1 and L2 must all be true.
-   The example-kit cells must also have <code>overlayConformant: true</code>.</li>
-<li><strong>Result:</strong> only the exact value <code>PASSED</code> is accepted. <code>WARNED</code>, <code>FAILED</code>,
-   unknown/malformed results, failed/warned test lists, and missing evidence block
-   publication. Several incomplete statements cannot be combined into a pass.</li>
+<li><strong>The run succeeded:</strong> it is a completed, successful run of
+   <code>.github/workflows/evidence.yaml</code> on the branch that built the release.</li>
+<li><strong>It tested this build:</strong> the summary names the promoted build tag, and it
+   tested the build's own commit, not another commit against its images.</li>
+<li><strong>Every cell passed:</strong> the summary result is <code>PASSED</code>. A cell passes only
+   when L0, L1 and L2 all pass, and a missing expected cell fails the run.</li>
 </ol>
-<p>A complete passing retry may supersede a failed attempt; a failed attempt is
-never itself treated as passed. There is no release bypass input.</p>
+<p>A passing rerun may supersede a failed run; a failed run never counts. There is
+no release bypass input. The release also requires the latest full scan of the
+build to pass.</p>
 <h2 id="cells-and-levels">Cells and levels<a class="headerlink" href="#cells-and-levels" title="Permanent link">#</a></h2>
 <p>Runtime cells are enumerated from the source deployment manifests:</p>
 <table>
@@ -2230,7 +2150,7 @@ never itself treated as passed. There is no release bypass input.</p>
 <tr>
 <td>Planning Simulation</td>
 <td>Humble, Jazzy</td>
-<td>Single host</td>
+<td>Single host; also under Podman and systemd with the <a href="../../platforms/autosd/">AutoSD</a> units</td>
 </tr>
 <tr>
 <td>Scenario Simulation</td>
@@ -2238,9 +2158,14 @@ never itself treated as passed. There is no release bypass input.</p>
 <td>Single host; two isolated nodes on one host</td>
 </tr>
 <tr>
-<td><code>deployments/custom-kit</code></td>
+<td><code>custom-kit</code> (<code>openadkit new</code> and the example fixture)</td>
 <td>Humble, Jazzy</td>
-<td>Planning Simulation extended with the example's C++ overlay</td>
+<td>Planning Simulation extended with the fixture's C++ overlay</td>
+</tr>
+<tr>
+<td>Safety Island Simulation</td>
+<td>Humble, Jazzy</td>
+<td>Planning Simulation driven by the pinned Safety Island release over <code>domain_bridge</code></td>
 </tr>
 </tbody>
 </table>
@@ -2249,21 +2174,22 @@ coverage includes the inventory's other architectures; this must not be
 presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.</p>
 <ul>
 <li><strong>L0:</strong> manifests and Compose configuration validate.</li>
-<li><strong>L1:</strong> required processes and ROS interfaces are present; topics are fresh.</li>
-<li><strong>L2:</strong> the planning golden path arrives, or the scenario and split-node
-  checks pass. Each run starts a fresh stack.</li>
+<li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
+  ROS interfaces are present and its topics publish.</li>
+<li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
+  planning golden path arrives, or the scenarios pass, plus the split-node
+  checks. Each run starts a fresh stack.</li>
 </ul>
-<p>The workflow retries a failed runtime cell once. A short, reasoned, dated CI
-quarantine can label a failure <code>WARNED</code> for investigation; <strong>it still blocks a
-release</strong>. The release gate does not consult quarantine to waive a failed test.
-The cells start deployments with <code>openadkit run --no-visualizer</code>.</p>
-<p>On the 4-vCPU GitHub-hosted runners a scenario-simulation cell occasionally
-fails although the change is sound, about one run in five: Autoware main
-takes minutes to load its components there, and Scenario Simulator V2
-sometimes checks a reused Autoware's state before it has left the previous
-scenario. Hosts with 16 vCPUs pass these cells consistently. Rerun the failed
-jobs once, and investigate only a failure that repeats or a new error. Such a
-failure can turn a run red; it cannot pass a broken change.</p>
+<p>The workflow retries a failed runtime cell once. A cell that still fails fails
+the run and blocks a release. The cells start deployments with
+<code>openadkit run --no-visualizer</code>.</p>
+<p>A 4-vCPU GitHub-hosted runner cannot run Autoware in real time: the ego
+drives late and the bundled samples take about three times as long as on a
+16-vCPU host. The scenario-simulation cells therefore run the simulation at
+half speed (<code>GLOBAL_REAL_TIME_FACTOR=0.5</code>, with <code>GLOBAL_TIMEOUT=400</code> wall-clock
+seconds) through the cell's host settings file, so they test the scenarios
+rather than the runner's size. Investigate a cell that still fails after the
+workflow's retry.</p>
 <h2 id="testing-a-change-without-a-build">Testing a change without a build<a class="headerlink" href="#testing-a-change-without-a-build" title="Permanent link">#</a></h2>
 <p>A change that rebuilds no image, such as a deployment setting, the CLI or a
 check, runs the cells against an existing build:</p>
@@ -2275,9 +2201,8 @@ check, runs the cells against an existing build:</p>
   <code>build_tag</code> defaults to the dispatched branch's latest successful build.</li>
 </ul>
 <p>The cells take the deployments, CLI and checks from the tested commit and the
-images from the build. Such a run is not release evidence: it is not attested,
-its summary names both commits, and its cells carry the tested commit, which
-the gate rejects.</p>
+images from the build. Such a run is not release evidence: its summary names
+both commits, which the gate rejects.</p>
 <h2 id="explicit-ci-exemptions">Explicit CI exemptions<a class="headerlink" href="#explicit-ci-exemptions" title="Permanent link">#</a></h2>
 <p>CARLA Simulation requires a GPU; Logging Simulation has no hosted runtime
 cell. Their deployment manifests contain a reasoned <code>evidence.exempt</code> entry.
@@ -2288,33 +2213,45 @@ Do not use it to hide a known product failure in a normally tested cell.</p>
 <h2 id="autoware-and-ros-distro-decisions">Autoware and ROS distro decisions<a class="headerlink" href="#autoware-and-ros-distro-decisions" title="Permanent link">#</a></h2>
 <p>Pin the latest stable Autoware release at the release cut. If it has a blocking
 issue, keep the previous verified stable pin and explain the exception, date
-and follow-up in the release notes. v2.0 pins <strong>Autoware 1.9.0</strong>.</p>
-<p>Every release, stable or candidate, is built on its <code>release/X.Y</code> branch from
-the Autoware release tag in <code>.github/autoware.ref</code>. Builds of <code>main</code> use a
-weekly snapshot of upstream development and are never released. The build's
+and follow-up in the release notes.</p>
+<p>Every release, stable or candidate, is a build of <code>main</code> (or of a
+<code>release/X.Y</code> branch that fixes an older line) on the Autoware release tag in
+<code>.github/autoware.ref</code>. The release records that Autoware version; the build's
 <code>autoware-lock.repos</code>, resolved SHA and upstream image digests record the input.</p>
+<h3 id="backporting-an-autoware-fix">Backporting an Autoware fix<a class="headerlink" href="#backporting-an-autoware-fix" title="Permanent link">#</a></h3>
+<p>Autoware releases come months apart. A fix that blocks a release and is
+upstream, merged on Autoware's <code>main</code> or in an open pull request, can ride on
+the pinned release as a patch instead of waiting for the next Autoware release:</p>
+<ol>
+<li>In the upstream repository, <code>git format-patch -1 &lt;commit&gt;</code>, and add a line
+   <code>Upstream: &lt;URL of the commit or pull request&gt;</code> to its message.</li>
+<li>Open a pull request into <code>main</code> (or the <code>release/X.Y</code> branch) that adds it as
+   <code>.github/autoware-patches/&lt;repository&gt;/&lt;NNNN&gt;-&lt;subject&gt;.patch</code>, where
+   <code>&lt;repository&gt;</code> is its path under <code>autoware/src</code> (a key of
+   <code>autoware-lock.repos</code>, such as <code>universe/autoware_universe</code>). The review is
+   the fix's own diff.</li>
+<li>Every build applies the patches in order right after
+   <code>vcs import</code>; one that does not apply, or has no <code>Upstream:</code> line, fails the
+   build. The release lists them under <strong>Backported Autoware fixes</strong>, its
+   bundle carries them as <code>autoware.backports</code>, and <code>openadkit version</code> counts
+   them. The Autoware version stays that of the tag.</li>
+<li>When the branch moves to an Autoware release that contains the fix, delete
+   the patch.</li>
+</ol>
 <p><code>defaultRosDistro</code> in the promoted <code>openadkit.json</code> explicitly selects the ROS
-distro. The release input must agree, and its required runtime cells must pass.
+distro, and its required runtime cells must pass.
 The gate does not automatically switch from Humble to Jazzy or remove a failing
 distro. To change supported distros, update the manifests in a reviewed source
 change and build/test that revision. Humble remains the initial default.</p>
 <h2 id="metadata-and-verification-report">Metadata and verification report<a class="headerlink" href="#metadata-and-verification-report" title="Permanent link">#</a></h2>
-<p><code>release-plan.json</code> seals the validated <code>evidence</code> report before packaging.
-<code>release-metadata.json</code> includes that same report, the BOM, CI exemptions and
-<code>default_ros_distro_decision</code>. The current release-note metrics come from the
-selected signed statement, not an independently downloaded, unsigned summary.
-Bundle, installer, plan and metadata receive release-workflow build provenance.</p>
+<p><code>release-plan.json</code> seals the selected evidence summary (result, build, commit,
+run URL and cells) before packaging. <code>release-metadata.json</code> includes that same
+evidence, the BOM and the CI exemptions. Bundle, installer, plan and metadata
+receive release-workflow build provenance.</p>
 <p>The verification table shows passing-cell count, readiness time, arrival time
 and peak memory for the current build. Release never searches older runs or
-releases; its notes depend only on the sealed plan. Missing metrics are shown
+releases; its notes depend only on the release plan. Missing metrics are shown
 as <code>-</code>, never replaced with zeroes.</p>
-<p>Historical comparison is optional, outside release. With two explicitly chosen
-local summaries, run:</p>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>.github/scripts/evidence/report.py<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--current<span class="w"> </span>current.json<span class="w"> </span>--previous<span class="w"> </span>previous.json<span class="w"> </span>--output<span class="w"> </span>comparison.md
-</code></pre></div>
-<p>This is a timing/memory comparison, not an <code>openadkit upgrade</code> acceptance test,
-performance SLA or safety gate.</p>
 <p>See <a href="../verification/">Verify a Release</a> and
 <a href="../../development/evidence-workflow/">Run the Evidence Workflow</a>.</p>
 

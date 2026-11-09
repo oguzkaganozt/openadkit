@@ -16,7 +16,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="planning-simulator/">
+        <link rel="next" href="../ewaol/">
       
       
         
@@ -1340,8 +1340,6 @@
           
         
       
-        
-      
     
     
     
@@ -1379,11 +1377,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link md-nav__link--active" for="__nav_5_2" id="__nav_5_2_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
@@ -1397,78 +1390,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1655,8 +1576,6 @@
       
         
       
-        
-      
     
     
     
@@ -1784,34 +1703,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -1997,10 +1888,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#in-this-repository" class="md-nav__link">
+  <a href="#generate-a-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        In This Repository
+        Generate a Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-on-a-podman-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run on a Podman Host
       
     </span>
   </a>
@@ -2023,6 +1925,17 @@
     <span class="md-ellipsis">
       
         Run the Image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boards
       
     </span>
   </a>
@@ -2066,40 +1979,84 @@ kernel and provides:</p>
 <li><strong>Container-native runtime</strong>: Podman, Quadlet (systemd container units), and
   BlueChi orchestration, with no Docker daemon</li>
 </ul>
-<h2 id="in-this-repository">In This Repository<a class="headerlink" href="#in-this-repository" title="Permanent link">#</a></h2>
-<p>AutoSD assets live under
-<a href="https://github.com/autowarefoundation/openadkit/tree/main/platforms/autosd"><code>platforms/autosd/</code></a>.
-Each use case contains Quadlet files for its services and Automotive Image
-Builder files for its OS image.</p>
-<ul>
-<li><a href="planning-simulator/">Planning Simulator</a>: Autoware planning and
-  Scenario Simulator under Podman and Quadlet</li>
-<li><a href="https://github.com/autowarefoundation/openadkit/tree/main/platforms/autosd/x5h">R-Car X5H</a>:
-  AutoSD 10 image for the R-Car X5H board, tested in QEMU before board bring-up</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">Current scope</p>
-<p>These are platform demos. They run upstream Autoware images, not the modular
-Open AD Kit component images. Mapping the components onto AutoSD's
-root and QM partitions is on the <a href="../../releases/">roadmap</a>.</p>
+<h2 id="generate-a-deployment">Generate a Deployment<a class="headerlink" href="#generate-a-deployment" title="Permanent link">#</a></h2>
+<p>Compose stays the single source. <code>openadkit config</code> prints a deployment's resolved
+Compose model, and <code>platforms/autosd/quadlet.py</code> translates it:</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>fetch<span class="w"> </span>planning-simulation
+openadkit<span class="w"> </span>config<span class="w"> </span>planning-simulation<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>platforms/autosd/quadlet.py<span class="w"> </span>--output<span class="w"> </span>out<span class="w"> </span>--without<span class="w"> </span>visualizer<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--root-password-hash<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>openssl<span class="w"> </span>passwd<span class="w"> </span>-6<span class="w"> </span>password<span class="k">)</span><span class="s2">"</span>
+</code></pre></div>
+<p>Use the <code>openadkit</code> of an installed release and <code>platforms/autosd</code> from the same
+tag: the release's CLI puts the image digests in the model, so the result is
+pinned. From a source checkout the images are moving aliases. Kits work the same
+way, such as <code>openadkit config ./my-kit</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>out/rootfs/etc/containers/systemd/</code></td>
+<td>A Quadlet unit per service, named after its container</td>
+</tr>
+<tr>
+<td><code>out/rootfs/usr/share/openadkit/</code></td>
+<td>The bind-mounted files and data, by mount target</td>
+</tr>
+<tr>
+<td><code>out/image.aib.yml</code></td>
+<td>Automotive Image Builder manifest that embeds the images and <code>rootfs/</code>; written only with <code>--root-password-hash</code>, since an image has no default password</td>
+</tr>
+</tbody>
+</table>
+<p>A Compose field the script does not translate stops it instead of being dropped.
+It covers what Planning Simulation uses; writable mounts, for example, have no
+translation yet.</p>
+<p>The units run as root with the deployment's host networking. They use the
+component images, and mapping them onto AutoSD's root and QM partitions is not
+done yet.</p>
+<div class="admonition warning">
+<p class="admonition-title">Evidence scope</p>
+<p>Evidence runs these units under Podman and systemd on Ubuntu 24.04 and drives
+the golden path. CI does not build or boot the image below. An image built from
+these units was driven once by hand: it booted in QEMU with SELinux enforcing
+and no outside network, and the golden path arrived.</p>
 </div>
+<h2 id="run-on-a-podman-host">Run on a Podman Host<a class="headerlink" href="#run-on-a-podman-host" title="Permanent link">#</a></h2>
+<p>The tree is what an image would contain, so a host with Podman 4.9 or newer,
+<code>catatonit</code> and systemd can run it:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>cp<span class="w"> </span>-a<span class="w"> </span>out/rootfs/.<span class="w"> </span>/
+sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>autoware-api<span class="w"> </span>autoware-control<span class="w"> </span>autoware-perception-simulation<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>autoware-planning<span class="w"> </span>autoware-simulator<span class="w"> </span>autoware-system<span class="w"> </span>autoware-vehicle
+systemctl<span class="w"> </span>status<span class="w"> </span><span class="s1">'autoware-*'</span>
+journalctl<span class="w"> </span>-u<span class="w"> </span>autoware-control<span class="w"> </span>-f
+</code></pre></div>
+<p>Quadlet registers each <code>.container</code> file as a <code>.service</code> unit. The units pull
+their images on first start, which takes a while.</p>
 <h2 id="building-an-autosd-image">Build an Image<a class="headerlink" href="#building-an-autosd-image" title="Permanent link">#</a></h2>
-<p>You need Docker or Podman and QEMU. Run these commands from a use-case directory
-such as <code>platforms/autosd/planning-simulator/</code>.</p>
-<p>Download the Automotive Image Builder runner and build its container:</p>
+<p>You need Podman and QEMU; the runner does not work with Docker. Download the Automotive Image Builder runner
+and build its container:</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fL<span class="w"> </span>-o<span class="w"> </span>auto-image-builder.sh<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="s2">"https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/raw/main/auto-image-builder.sh?ref_type=heads"</span>
 chmod<span class="w"> </span>+x<span class="w"> </span>auto-image-builder.sh
 sudo<span class="w"> </span>bash<span class="w"> </span>./auto-image-builder.sh<span class="w"> </span>build-builder<span class="w"> </span>--distro<span class="w"> </span>autosd10-sig
 </code></pre></div>
-<p>Build the image. The arguments are the manifest, the container image name, and
-the disk image to write:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>bash<span class="w"> </span>./auto-image-builder.sh<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<p>Build the image from the directory you generated <code>out</code> in, because the manifest
+names its large files by path. <code>/var/tmp</code> goes on disk because the runner's own
+is in memory and too small for this image. The arguments are the manifest, the container
+image name, and the disk image to write:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/tmp/aib-work
+sudo<span class="w"> </span><span class="nv">AIB_PODMAN_OPTIONS</span><span class="o">=</span><span class="s2">"-v /var/tmp/aib-work:/var/tmp"</span><span class="w"> </span>bash<span class="w"> </span>./auto-image-builder.sh<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--distro<span class="w"> </span>autosd10-sig<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--target<span class="w"> </span>qemu<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--define-file<span class="w"> </span>aib/vars.yml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>aib/image.aib.yml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>localhost/awf-oak:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--define-file<span class="w"> </span>platforms/autosd/vars.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>out/image.aib.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>localhost/openadkit:latest<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>disk.qcow2
 sudo<span class="w"> </span>chown<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>logname<span class="k">)</span><span class="s2">"</span><span class="w"> </span>disk.qcow2
 </code></pre></div>
@@ -2124,7 +2081,12 @@ CentOS, or RHEL) with Automotive Image Builder, OSBuild, and QEMU installed.</p>
 <span class="w">  </span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span>disk.qcow2,index<span class="o">=</span><span class="m">0</span>,media<span class="o">=</span>disk,format<span class="o">=</span>qcow2,if<span class="o">=</span>virtio,id<span class="o">=</span>rootdisk,snapshot<span class="o">=</span>off
 </code></pre></div>
 <p><code>-m 16384</code> (16 GB) is the minimum for the Autoware stack; use <code>-m 32768</code> for
-heavier workloads. <code>-m 2G</code> is enough only to boot and explore the OS.</p>
+heavier workloads. <code>-m 2G</code> is enough only to boot and explore the OS. Log in as
+<code>root</code> with the password <code>password</code> from the command above, which is for this demo only.</p>
+<h2 id="boards">Boards<a class="headerlink" href="#boards" title="Permanent link">#</a></h2>
+<ul>
+<li><a href="https://github.com/oguzkaganozt/rcar-x5h-autosd">R-Car X5H</a>: AutoSD 10 image for the R-Car X5H board, kept in its own repository.</li>
+</ul>
 
 
 
@@ -2179,13 +2141,13 @@ heavier workloads. <code>-m 2G</code> is enough only to boot and explore the OS.
         
         
           
-          <a href="planning-simulator/" class="md-footer__link md-footer__link--next" aria-label="Next: AutoSD Planning Simulator">
+          <a href="../ewaol/" class="md-footer__link md-footer__link--next" aria-label="Next: EWAOL">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                AutoSD Planning Simulator
+                EWAOL
               </div>
             </div>
             <div class="md-footer__button md-icon">

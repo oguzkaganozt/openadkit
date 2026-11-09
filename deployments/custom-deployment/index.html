@@ -1219,10 +1219,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validate-run-stop" class="md-nav__link">
+  <a href="#build-validate-run-stop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validate, Run, Stop
+        Build, Validate, Run, Stop
       
     </span>
   </a>
@@ -1432,8 +1432,6 @@
           
         
       
-        
-      
     
     
     
@@ -1470,11 +1468,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1488,78 +1481,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1740,8 +1661,6 @@
       
         
       
-        
-      
     
     
     
@@ -1869,34 +1788,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2104,10 +1995,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validate-run-stop" class="md-nav__link">
+  <a href="#build-validate-run-stop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validate, Run, Stop
+        Build, Validate, Run, Stop
       
     </span>
   </a>
@@ -2140,61 +2031,56 @@
 
 
 <h1 id="custom-deployment">Custom Deployment<a class="headerlink" href="#custom-deployment" title="Permanent link">#</a></h1>
-<p>Start with the single
-<a href="https://github.com/autowarefoundation/openadkit/tree/main/deployments/custom-kit">custom-kit example</a>.
-Copy that directory into your own repository and keep only your differences.
-It extends Planning Simulation without copying its Compose files or modifying
-an installed release.</p>
+<p>Start your own kit with <code>openadkit new</code>. It makes a kit that extends this Open
+AD Kit and one of its deployments without copying them, so the kit keeps only
+your differences:</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w">                       </span><span class="c1"># on top of planning-simulation</span>
+openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w"> </span>--base<span class="w"> </span>scenario-simulation
+</code></pre></div>
 <h2 id="one-directory-one-deployment">One Directory, One Deployment<a class="headerlink" href="#one-directory-one-deployment" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>custom-kit/
+<div class="highlight"><pre><span></span><code>my-kit/
 ├── openadkit.json
 ├── deployment.json
 ├── docker-compose.yaml
 ├── config.env
-├── config/
-└── overlay_ws/
+├── config/autoware/
+└── overlay_ws/src/
 </code></pre></div>
 <ul>
-<li><code>openadkit.json</code> selects the base (<code>extends</code>), pins the extra heartbeat image,
-  and points the <code>custom-kit</code> deployment at <code>"."</code> — this same directory.</li>
-<li><code>deployment.json</code> selects <code>planning-simulation</code> as <code>base</code> and names the
-  Compose entrypoint. Architecture, ROS distro, GPU and downloads are inherited.</li>
-<li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>
-  and adds the heartbeat and overlay node. The CLI resolves that base directory;
-<code>KIT_openadkit</code> names the base root for shared assets.</li>
-<li><code>config.env</code> contains only changed values, such as <code>VEHICLE_ID=acme-01</code>.</li>
-<li><code>config/autoware/</code> changes one parameter, the control command gate's
-  <code>nominal_filter.vel_lim=8.0</code>.</li>
-<li><code>overlay_ws/</code> builds a small C++ node publishing <code>/acme/probe</code>.</li>
+<li><code>openadkit.json</code> selects the base (<code>extends</code>), lists extra images you pin
+  (<code>artifacts</code>), and points the <code>my-kit</code> deployment at <code>"."</code>, this same
+  directory.</li>
+<li><code>deployment.json</code> names the base deployment and the Compose entrypoint.
+  Architecture, ROS distro, GPU, downloads and the verify step are inherited.</li>
+<li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
+  add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the base root for
+  shared assets.</li>
+<li><code>config.env</code> holds only the values you change, such as <code>VEHICLE_ID</code>.</li>
+<li><code>config/autoware/</code> holds parameter overrides for Autoware packages.</li>
+<li><code>overlay_ws/src/</code> holds your ROS packages.</li>
 </ul>
-<p>Keep the directory named <code>custom-kit</code>. To use another name, rename the directory,
-the deployment key in <code>openadkit.json</code> and <code>name</code> in <code>deployment.json</code> together.
-The CLI checks that they agree.</p>
+<p>The directory name, the deployment key in <code>openadkit.json</code> and <code>name</code> in
+<code>deployment.json</code> agree; rename them together. The CLI checks that they agree.</p>
 <h2 id="pin-your-base">Pin Your Base<a class="headerlink" href="#pin-your-base" title="Permanent link">#</a></h2>
-<p>In this checkout the example uses <code>"extends": "../.."</code>. After copying it
-elsewhere, change that value to your base checkout or a published schema-v2
-release tag, such as <code>"v2.0.0"</code>. That version is illustrative, not a claim that
-it is released. Install the selected release with
-<code>openadkit install --version &lt;tag&gt;</code>; the CLI then uses that base's own launcher.
-Keep the example's other fields, including its pinned artifact, when changing
+<p><code>openadkit new</code> from an installed release writes its version, such as
+<code>"extends": "v2.0.0"</code>; the kit then runs with that release's own launcher.
+From a source checkout it writes the checkout's path. To move to another
+release, install it with <code>openadkit install --version &lt;tag&gt;</code> and change
 <code>extends</code>.</p>
-<h2 id="validate-run-stop">Validate, Run, Stop<a class="headerlink" href="#validate-run-stop" title="Permanent link">#</a></h2>
-<p>For the source-checkout example, first build matching base runtime/devel images
-with the overlay hook. Build the example workspace in the devel image from that
-same build; set <code>DEVEL_IMAGE</code> to its digest from the build metadata/BOM. The
-script's moving default tag is for source development, not a production pin.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>deployments/custom-kit
-bash<span class="w"> </span>overlay_ws/build.sh<span class="w"> </span>humble
-../../openadkit<span class="w"> </span>validate<span class="w"> </span>custom-kit
-../../openadkit<span class="w"> </span>run<span class="w"> </span>custom-kit
-../../openadkit<span class="w"> </span>stop<span class="w"> </span>custom-kit
+<h2 id="build-validate-run-stop">Build, Validate, Run, Stop<a class="headerlink" href="#build-validate-run-stop" title="Permanent link">#</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-kit
+openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># overlay_ws, in the release's devel image</span>
+openadkit<span class="w"> </span>validate<span class="w"> </span>my-kit
+openadkit<span class="w"> </span>run<span class="w"> </span>my-kit<span class="w"> </span>--verify<span class="w">   </span><span class="c1"># start, wait until ready, run the base's end-to-end check</span>
+openadkit<span class="w"> </span>stop
 </code></pre></div>
-<p>For your copied kit, run <code>openadkit validate/run/stop custom-kit</code> from its root,
-or set <code>OPENADKIT_KIT</code> to that directory. Add <code>--ros-distro jazzy</code> to <code>validate</code>
-and <code>run</code> after building a fresh Jazzy workspace. Static validation renders the
-Compose model; it is not runtime or ABI evidence. CI exercises the example on
-both Humble and Jazzy, including the parameters, fresh C++ publication and the
-Planning Simulation golden path.</p>
+<p>A source checkout pins no devel image: set <code>DEVEL_IMAGE</code> to the matching
+<code>universe-common-devel</code> digest from that build's metadata before <code>build</code>. Add
+<code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy. Static
+validation renders the Compose model; it is not runtime or ABI evidence. CI
+makes a kit with <code>openadkit new</code> and exercises every extension point on Humble
+and Jazzy: a value, a parameter override, a C++ package, a pinned image and a
+service with a healthcheck, then the Planning Simulation golden path.</p>
 <p>Keep parameter and package changes in <code>config/</code> and <code>overlay_ws/</code> rather than
 mounting over <code>/opt/autoware</code> or replacing base service commands. See the
 <a href="../integrator-guide/">Integrator Guide</a> for configuration order, pinned image

@@ -1333,8 +1333,6 @@
           
         
       
-        
-      
     
     
     
@@ -1371,11 +1369,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1389,78 +1382,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1641,8 +1562,6 @@
       
         
       
-        
-      
     
     
     
@@ -1770,34 +1689,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2001,17 +1892,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#verify-the-runtime-test-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify the runtime Test Result
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2067,17 +1947,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#verify-the-runtime-test-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify the runtime Test Result
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2105,14 +1974,13 @@
 
 <h1 id="verify-a-release">Verify a Release<a class="headerlink" href="#verify-a-release" title="Permanent link">#</a></h1>
 <p>Verify downloaded files before executing the installer. Use a recent GitHub
-CLI with <code>gh attestation</code>, <code>jq</code>, and a trusted checkout of Open AD Kit's release
-policy scripts. Commands below apply to releases produced by the blocking gate;
-older previews may not have these attestations or metadata fields.</p>
+CLI with <code>gh attestation</code> and <code>jq</code>. Older previews may not have these
+attestations or metadata fields.</p>
 <h2 id="download-and-verify-release-artifacts">Download and verify release artifacts<a class="headerlink" href="#download-and-verify-release-artifacts" title="Permanent link">#</a></h2>
 <p>Replace the example version with the release you intend to use:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
 <span class="nv">VERSION</span><span class="o">=</span>v2.0.0
-<span class="nv">LINE</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">VERSION</span><span class="p">#v</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1-2<span class="k">)</span><span class="w">  </span><span class="c1"># the release/X.Y branch that released it</span>
+<span class="nv">BRANCH</span><span class="o">=</span>main<span class="w">  </span><span class="c1"># or the release/X.Y branch that released it</span>
 <span class="nv">REPO</span><span class="o">=</span>autowarefoundation/openadkit
 gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span><span class="s2">"</span><span class="nv">$VERSION</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--pattern<span class="w"> </span>openadkit<span class="w"> </span>--pattern<span class="w"> </span><span class="s2">"openadkit-</span><span class="nv">$VERSION</span><span class="s2">.tar.gz"</span><span class="w"> </span><span class="se">\</span>
@@ -2121,7 +1989,7 @@ gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"
 <span class="k">for</span><span class="w"> </span>asset<span class="w"> </span><span class="k">in</span><span class="w"> </span>openadkit<span class="w"> </span><span class="s2">"openadkit-</span><span class="nv">$VERSION</span><span class="s2">.tar.gz"</span><span class="w"> </span>release-plan.json<span class="w"> </span>release-metadata.json<span class="p">;</span><span class="w"> </span><span class="k">do</span>
 <span class="w">  </span>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span><span class="s2">"</span><span class="nv">$asset</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--signer-workflow<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">/.github/workflows/release.yaml"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span>--deny-self-hosted-runners
+<span class="w">    </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/</span><span class="nv">$BRANCH</span><span class="s2">"</span><span class="w"> </span>--deny-self-hosted-runners
 <span class="k">done</span>
 </code></pre></div>
 <p>The default predicate verifies SLSA build provenance. Provenance binds the bytes
@@ -2133,41 +2001,9 @@ jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.bundles[]
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check
 </code></pre></div>
 <p>Review <code>.release</code>, <code>.releaseContext</code> and <code>.evidence</code> in the plan: the requested
-version, promoted commit, distro decision, required cells and CI exemptions.
-The metadata's <code>.evidence</code> must match the plan's <code>.evidence</code> exactly.</p>
-<h2 id="verify-the-runtime-test-result">Verify the runtime Test Result<a class="headerlink" href="#verify-the-runtime-test-result" title="Permanent link">#</a></h2>
-<p>Use an image digest from the verified plan to retrieve the Test Result:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">IMAGE</span><span class="o">=</span><span class="k">$(</span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.images[0] | "oci://" + .repo + "@" + .digest'</span><span class="w"> </span>release-plan.json<span class="k">)</span>
-gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span><span class="s2">"</span><span class="nv">$IMAGE</span><span class="s2">"</span><span class="w"> </span>--repo<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--predicate-type<span class="w"> </span>https://in-toto.io/attestation/test-result/v0.1<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--signer-workflow<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">/.github/workflows/evidence.yaml"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span>--deny-self-hosted-runners<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--format<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>evidence-verified.json
-</code></pre></div>
-<p>Authenticate with GHCR if the CLI requests registry access. <strong>Successful
-signature verification alone is insufficient:</strong> GitHub also verifies signed
-<code>FAILED</code> and <code>WARNED</code> claims.</p>
-<p>In a trusted Open AD Kit source checkout, fetch the promoted commit into a
-separate directory and run the same policy used by the release gate. Paths below
-are relative to that trusted checkout; place the downloaded files there first:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">SHA</span><span class="o">=</span><span class="k">$(</span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.release.releaseSha'</span><span class="w"> </span>release-plan.json<span class="k">)</span>
-git<span class="w"> </span>fetch<span class="w"> </span>origin<span class="w"> </span><span class="s2">"</span><span class="nv">$SHA</span><span class="s2">"</span>
-mkdir<span class="w"> </span>release-source
-git<span class="w"> </span>archive<span class="w"> </span><span class="s2">"</span><span class="nv">$SHA</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>-x<span class="w"> </span>-C<span class="w"> </span>release-source
-
-python3<span class="w"> </span>.github/scripts/evidence/release_gate.py<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--verified<span class="w"> </span>evidence-verified.json<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--build-metadata<span class="w"> </span>release-metadata.json<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--source-root<span class="w"> </span>release-source<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--default-ros-distro<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.release.defaultRosDistro'</span><span class="w"> </span>release-plan.json<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--repository<span class="w"> </span><span class="s2">"</span><span class="nv">$REPO</span><span class="s2">"</span><span class="w"> </span>--source-ref<span class="w"> </span><span class="s2">"refs/heads/release/</span><span class="nv">$LINE</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output<span class="w"> </span>evidence-report.json
-</code></pre></div>
-<p>This recomputes subjects and manifest-derived coverage and accepts only one
-complete <code>PASSED</code> statement. It never verifies signatures itself: feed it only
-the output of a successful <code>gh attestation verify</code> command with the identity
-flags shown above. Several complete successful runs can exist; the selected
-statement hash in the published plan identifies the run used for that release.</p>
+version, promoted commit, default distro, passing cells and CI exemptions.
+The metadata's <code>.evidence</code> must match the plan's <code>.evidence</code> exactly, and its
+<code>url</code> links the evidence run the release gate accepted.</p>
 <p>After verification, install the downloaded launcher or use the documented
 <a href="../../getting-started/">installation flow</a>. Evidence is bounded to the
 tested cells; it is not a vehicle-safety or security certification.</p>

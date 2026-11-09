@@ -1338,8 +1338,6 @@
           
         
       
-        
-      
     
     
     
@@ -1376,11 +1374,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1394,78 +1387,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1646,8 +1567,6 @@
       
         
       
-        
-      
     
     
     
@@ -1775,34 +1694,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2137,7 +2028,7 @@
 <p class="admonition-title">Release bundles</p>
 <p>Each stable GitHub Release will publish a versionless <code>openadkit</code> installer and
 one <code>openadkit-vX.Y.Z.tar.gz</code> containing the runtime entry point and the
-curated deployments (planning, logging, scenario, and CARLA). Split-host
+curated deployments (planning, logging, scenario, CARLA, and Safety Island). Split-host
 nodes ship as experimental. Images and sample data
 are pulled on demand. Until the first release exists, use a source checkout.</p>
 </div>
@@ -2193,14 +2084,17 @@ checkouts and release bundles.</p>
 <p><code>run</code> downloads and verifies the sample map, pulls missing images, starts the
 services, and waits until they are ready.</p>
 <h2 id="open-the-visualizer">4. Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
-<p>Wait about 10 seconds for the containers to initialize, then open:</p>
-<div class="highlight"><pre><span></span><code>https://localhost:6080/vnc.html
+<p>Once <code>run</code> returns, Autoware is ready. Open:</p>
+<div class="highlight"><pre><span></span><code>http://localhost:6080/vnc.html
 </code></pre></div>
-<p>Use the default password <strong><code>openadkit</code></strong> and accept the self-signed certificate.</p>
+<p>Use the default password <strong><code>openadkit</code></strong>.</p>
+<p>To open RViz on your own desktop instead of the browser, set
+<code>REMOTE_DISPLAY=false</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>; the
+visualizer then uses your session's <code>DISPLAY</code> and <code>XAUTHORITY</code>.</p>
 <p>For a remote host, keep noVNC loopback-only and forward it over SSH:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
-<p>Then open <code>https://localhost:8080/vnc.html</code> locally.</p>
+<p>Then open <code>http://localhost:8080/vnc.html</code> locally.</p>
 <h2 id="drive">5. Drive<a class="headerlink" href="#drive" title="Permanent link">#</a></h2>
 <p>In RViz2, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation instructions</a> to:</p>
 <ol>

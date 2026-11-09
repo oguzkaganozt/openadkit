@@ -1350,8 +1350,6 @@
           
         
       
-        
-      
     
     
     
@@ -1388,11 +1386,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1406,78 +1399,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1658,8 +1579,6 @@
       
         
       
-        
-      
     
     
     
@@ -1787,34 +1706,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2072,6 +1963,11 @@ start with Planning Simulation.</p>
 <td>Run Autoware on one host and the simulator on another over Zenoh</td>
 <td>CARLA only</td>
 </tr>
+<tr>
+<td><a href="https://github.com/autowarefoundation/openadkit/tree/main/deployments/safety-island-simulation">Safety Island Simulation</a></td>
+<td>Planning Simulation driven by the <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a> controller instead of Autoware's trajectory follower</td>
+<td>No</td>
+</tr>
 </tbody>
 </table>
 <h2 id="running-a-deployment">Running a Deployment<a class="headerlink" href="#running-a-deployment" title="Permanent link">#</a></h2>
@@ -2080,9 +1976,9 @@ start with Planning Simulation.</p>
 source checkout, prefix them with <code>./</code> and run them from the repository root.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>list
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
-openadkit<span class="w"> </span>status<span class="w"> </span>planning-simulation
-openadkit<span class="w"> </span>logs<span class="w"> </span>planning-simulation<span class="w"> </span>--follow
-openadkit<span class="w"> </span>stop<span class="w"> </span>planning-simulation
+openadkit<span class="w"> </span>status
+openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
+openadkit<span class="w"> </span>stop
 </code></pre></div>
 <ul>
 <li>Add <code>--ros-distro jazzy</code> to <code>validate</code>, <code>fetch</code>, or <code>run</code> to select Jazzy;
@@ -2100,9 +1996,9 @@ openadkit<span class="w"> </span>stop<span class="w"> </span>planning-simulation
 CARLA is explicitly exempt from hosted runtime CI. Neither is a claim of
 arbitrary two-machine or vehicle compatibility; see the
 <a href="../releases/evidence/">evidence policy</a>.</p>
-<p>To build your own stack, start with the single, flat
-<a href="custom-deployment/">custom-kit example</a>. It keeps its own kit manifest and
-deployment in one directory, extending Planning Simulation without copying it.</p>
+<p>To build your own stack, start a kit with <code>openadkit new</code> (<a href="custom-deployment/">Custom
+Deployment</a>). It keeps its own kit manifest and
+deployment in one directory, extending a deployment without copying it.</p>
 
 
 

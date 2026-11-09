@@ -1504,8 +1504,6 @@
           
         
       
-        
-      
     
     
     
@@ -1542,11 +1540,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1560,78 +1553,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1812,8 +1733,6 @@
       
         
       
-        
-      
     
     
     
@@ -1941,34 +1860,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2285,8 +2176,8 @@
 
 <h1 id="integrator-guide">Integrator Guide<a class="headerlink" href="#integrator-guide" title="Permanent link">#</a></h1>
 <p>An integrator kit owns its differences, while Open AD Kit owns the base CLI,
-images and deployments. Start with <a href="../custom-deployment/">Custom Deployment</a>
-and the <a href="https://github.com/autowarefoundation/openadkit/tree/main/deployments/custom-kit">custom-kit example</a>.
+images and deployments. Start one with <code>openadkit new</code> (<a href="../custom-deployment/">Custom Deployment</a>);
+the kit CI exercises is that output with the <a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit">example fixture</a> on top.
 This interface requires manifest schema version 2; older manifests are rejected.</p>
 <h2 id="pin-the-base">Pin the Base<a class="headerlink" href="#pin-the-base" title="Permanent link">#</a></h2>
 <p>Set <code>kind</code> to <code>kit</code> and <code>extends</code> to a published schema-v2 release tag in your
@@ -2302,13 +2193,10 @@ or widening. Base downloads and one-shot reset services are inherited; a kit
 can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.</p>
-<p>The example has just one deployment, also named <code>custom-kit</code>. Its
-<code>openadkit.json</code>, <code>deployment.json</code>, Compose and differences live in one
-directory; <code>deployments.custom-kit.path</code> is <code>"."</code>. No nested <code>deployments/</code>
+<p>A kit made by <code>openadkit new my-kit</code> has just one deployment, also named
+<code>my-kit</code>. Its <code>openadkit.json</code>, <code>deployment.json</code>, Compose and differences live
+in one directory; <code>deployments.my-kit.path</code> is <code>"."</code>. No nested <code>deployments/</code>
 directory is needed. Run commands from that directory, not the base repository.</p>
-<p>The loader resolves the inherited image/artifact set and ordered env, GPU and
-config layers once. Runtime selection consumes that resolved model. The base
-is retained only for provenance and comparison against the overlay contract.</p>
 <h2 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">#</a></h2>
 <h3 id="1-values">1. Values<a class="headerlink" href="#1-values" title="Permanent link">#</a></h3>
 <p>Put only differences in your deployment's <code>config.env</code>. Compose interpolation
@@ -2322,17 +2210,16 @@ reads these files in order (later wins):</p>
 </ol>
 <p>Container ROS/DDS defaults come from the included services' <code>runtime.env</code>.
 Shell exports do not hide values in the configuration files. The CLI injects
-the ROS distro, host UID/GID, overlay mount paths, <code>KIT_openadkit</code> (the base root)
+the ROS distro, host UID/GID, overlay mount paths, <code>OPENADKIT_BASE_ROOT</code> (the base root)
 and <code>OPENADKIT_BASE_DEPLOYMENT</code> (the directory selected by <code>base</code>); release
 component images and artifact references remain pinned.</p>
 <h3 id="2-config-differences">2. Config Differences<a class="headerlink" href="#2-config-differences" title="Permanent link">#</a></h3>
 <p>Store overrides under
 <code>config/autoware/&lt;package&gt;/&lt;path-relative-to-package-share&gt;</code>. For example,
-<code>config/autoware/autoware_control_config/config/control_command_gate/control_command_gate.param.yaml</code>:</p>
+<code>config/autoware/autoware_control_config/config/lane_departure_checker/lane_departure_checker.param.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">/**</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">ros__parameters</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">nominal_filter</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">vel_lim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.0</span>
+<span class="w">    </span><span class="nt">update_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20.0</span>
 </code></pre></div>
 <p>On each start, the entrypoint hook copies the package share directory into
 <code>/tmp/openadkit/&lt;package&gt;/share/&lt;package&gt;</code>. It applies the shared, base-deployment
@@ -2344,77 +2231,153 @@ use the same stable paths. No change is written into the image. Removing an
 override and restarting returns to the remaining layers.</p>
 <p>Unknown packages, files or YAML keys are warnings, not startup failures. The
 hook logs them and writes <code>/tmp/openadkit/overlay-report.json</code> in each container.
-After changing the base version, inspect those reports for renamed parameters.
-Every service gets the same layers, so a package is reported as unknown in the
-images that do not install it; it is a mistake only when no service has it.</p>
+Once the services are up, <code>run</code> collects those reports and warns about every
+override without a counterpart: a package no service has changes nothing, and a
+file or a parameter its package does not have is added. That is intended for a
+new file such as a diagnostics graph; after a base version change it usually
+means a renamed package, file or parameter. Every service gets the same layers, so a
+package installed in only some images is not reported.</p>
+<h4 id="a-new-vehicle">A New Vehicle<a class="headerlink" href="#a-new-vehicle" title="Permanent link">#</a></h4>
+<p>Autoware's defaults describe a passenger car. Review these for your vehicle;
+their package and path depend on the base's Autoware version, so look them up
+in its images and check <code>run</code>'s override warnings.</p>
+<table>
+<thead>
+<tr>
+<th>Parameters</th>
+<th>File</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dimensions, <code>wheel_base</code>, <code>max_steer_angle</code></td>
+<td><code>vehicle_info.param.yaml</code> of your vehicle description</td>
+<td>Planning and control use them as limits; a steering limit above the vehicle's makes control ask for angles it cannot reach.</td>
+</tr>
+<tr>
+<td>Sensor poses</td>
+<td>your sensor kit's <code>sensor_kit_calibration.yaml</code> and <code>sensors_calibration.yaml</code></td>
+<td>A wrong sign or offset shows up as a localization error of the same size.</td>
+</tr>
+<tr>
+<td><code>nominal_latency</code>, <code>assumed_limit_acc</code></td>
+<td><code>control_validator.param.yaml</code></td>
+<td>Your actuation latency and achievable braking. With car values a slower or weaker vehicle fails validation and triggers an MRM.</td>
+</tr>
+<tr>
+<td><code>pose_measurement.pose_gate_dist</code></td>
+<td><code>ekf_localizer.param.yaml</code></td>
+<td>The Mahalanobis gate for pose updates. A start pose far from the truth can be rejected for good.</td>
+</tr>
+<tr>
+<td>Velocity, acceleration, jerk and steering-rate limits</td>
+<td><code>vehicle_cmd_gate.param.yaml</code></td>
+<td>The last limits before the vehicle interface.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="3-overlay-workspace">3. Overlay Workspace<a class="headerlink" href="#3-overlay-workspace" title="Permanent link">#</a></h3>
 <p>Put ROS packages in <code>overlay_ws/src</code> and build them in the
 <code>universe-common-devel</code> image from the <strong>same build</strong> as your runtime images.
-The example's build script accepts a digest-pinned <code>DEVEL_IMAGE</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>deployments/custom-kit
-<span class="nv">DEVEL_IMAGE</span><span class="o">=</span>ghcr.io/autowarefoundation/openadkit-common@sha256:&lt;digest&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>bash<span class="w"> </span>overlay_ws/build.sh<span class="w"> </span>humble
+A release pins that image next to its runtime images, so the CLI builds with
+the right one:</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>--ros-distro<span class="w"> </span>humble<span class="o">]</span><span class="w">   </span><span class="c1"># in the kit: its overlay_ws</span>
+openadkit<span class="w"> </span>build<span class="w"> </span>PATH<span class="w">                    </span><span class="c1"># any workspace, with the pins of the kit around it</span>
+openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w"> </span>--packages-select<span class="w"> </span>my_pkg<span class="w">                </span><span class="c1"># arguments after -- go to colcon build</span>
+openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w"> </span>--cmake-args<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Debug<span class="w">   </span><span class="c1"># Release unless you set another</span>
 </code></pre></div>
-<p>Obtain the matching digest from the build metadata or release BOM. Without an
-override, the example script uses a moving source-development tag; do not use
-that default as a production pin. Keep separate workspace outputs for different
-ROS distros. The CLI mounts the workspace and the hook sources
-<code>overlay_ws/install/local_setup.bash</code> on top of Autoware.</p>
+<p>Packages build incrementally: a second build compiles only what changed. The
+hook sources the workspace on top of Autoware, so a package with the name of
+an Autoware package comes first; Autoware packages that link against its
+library keep the copy they were built with. <code>--install-base</code> and <code>--build-base</code>
+stay fixed: the services source <code>install/</code> where they mount the workspace.</p>
+<p>The CLI records the image and distro in <code>install/.openadkit-overlay.json</code>, and
+<code>validate</code> and <code>run</code> warn after a base upgrade or a distro change until you
+rebuild. Such a rebuild
+starts from a clean <code>build/</code> and <code>install/</code>, since CMake caches record the paths
+they were configured with. A source checkout pins no devel image: set
+<code>DEVEL_IMAGE</code> to the matching <code>universe-common-devel</code> digest from the build
+metadata. The hook sources <code>overlay_ws/install/local_setup.bash</code> on top of Autoware.</p>
+<p>The workspace belongs to the kit: the one <code>overlay_ws</code> at the kit root serves
+every deployment of the kit, since they all extend one base and its images.
+Every Autoware service mounts it, and the hook sources it on top of Autoware,
+so its packages are visible in every service. Whether your code runs depends on
+what starts it:</p>
+<ul>
+<li>A changed copy of an Autoware package shadows the image's own. It runs where
+  Autoware already launches that package, with nothing more to configure.</li>
+<li>A new node runs only where something starts it: an extra service (as the
+  example fixture's <code>acme-probe</code>), a launch file you override under <code>config/autoware</code>,
+  or by hand with <code>openadkit shell &lt;service&gt; ros2 run &lt;package&gt; &lt;node&gt;</code>.</li>
+</ul>
+<p>To try a workspace with a reference deployment, without writing a kit, mount it
+with <code>--ws</code>:</p>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build<span class="w"> </span>~/my_ws
+openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--ws<span class="w"> </span>~/my_ws
+</code></pre></div>
+<p><code>--ws</code> is for a deployment without a workspace of its own; on a kit that has
+one it is an error rather than a second layer.</p>
 <p>The devel and runtime images install ROS packages from the same
 <a href="../../getting-started/container-images/#ros-package-snapshot">ROS snapshot</a>, so
 an overlay built in the devel image links the ROS versions the runtime image
 ships. A dependency you add must also exist in the runtime image; the overlay
-cannot install packages. The example's C++ node links <code>diagnostic_updater</code>
+cannot install packages. The example fixture's C++ node links <code>diagnostic_updater</code>
 deliberately to test the devel/runtime ABI boundary, then publishes
 <code>/acme/probe</code>.</p>
 <h3 id="4-extra-services">4. Extra Services<a class="headerlink" href="#4-extra-services" title="Permanent link">#</a></h3>
 <p>Include the base's Compose file using <code>OPENADKIT_BASE_DEPLOYMENT</code>, then define your services
 under <code>services:</code>. Keep communicating ROS services on the base ROS domain and
-middleware. An extra Open AD Kit runtime service can load the workspace by
-mounting <code>${OPENADKIT_OVERLAY_WS}</code> at <code>/openadkit/overlay_ws:ro</code>; the example's
-<code>acme-probe</code> service shows this pattern.</p>
+middleware. An extra Open AD Kit runtime service loads the kit workspace by
+mounting <code>${OPENADKIT_OVERLAY_WS}</code> at <code>/openadkit/overlay_ws:ro</code>, as the
+example fixture's <code>acme-probe</code> does. It needs no image of its own: a runtime image and
+the workspace are enough. Build your own image only for what the runtime images
+lack, such as a system package or a non-ROS application, and declare it as an
+artifact (point 5).</p>
+<p>To replace one side of a base that runs as split-host nodes, include only the
+other side's service layer instead of the base's Compose file. For example, a
+kit that brings its own simulator to <code>carla-simulation</code> includes
+<code>${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml</code>: no service in it depends
+on a CARLA service. The base's <code>resetServices</code> that the kit's services leave
+out are skipped; the kit's own must exist.</p>
 <h3 id="5-image-replacement">5. Image Replacement<a class="headerlink" href="#5-image-replacement" title="Permanent link">#</a></h3>
-<p>Declare consumed images in your kit's <code>artifacts</code>, with a <code>workload</code> and either
-one digest-pinned <code>ref</code> or a <code>distros</code> map of digest-pinned references. An
+<p>Declare consumed images in your kit's <code>artifacts</code>, each with either one
+digest-pinned <code>ref</code> or a <code>distros</code> map of digest-pinned references. An
 artifact name matching a component image variable replaces that component;
 other artifact names can supply images for new services. Use <code>${NAME:?}</code> in
 Compose to require the declared reference.</p>
-<p>Replacing a base image is allowed but warns that the base overlay contract no
-longer holds. It needs your own runtime evidence; pinning alone does not prove
-that a replacement honors the entrypoint, launch or parameter interfaces.</p>
+<p>A replaced base image needs your own runtime evidence: pinning alone does not
+prove that it honors the entrypoint, launch or parameter interfaces.</p>
 <h2 id="validation-and-evidence">Validation and Evidence<a class="headerlink" href="#validation-and-evidence" title="Permanent link">#</a></h2>
-<p><code>openadkit validate &lt;deployment&gt; --json</code> reports <code>overlayWarnings</code> and a static
-<code>overlayConformant</code> value. It warns about:</p>
+<p><code>openadkit validate &lt;deployment&gt;</code> renders the deployment and checks its manifest
+and data. It does not pull images or prove that the runtime works; <code>run</code> reports
+overrides without a counterpart (see <a href="#2-config-differences">Config Differences</a>).</p>
+<p>Your kit's acceptance checks run where CI runs them:</p>
 <ul>
-<li>Replacing a base service's command</li>
-<li>Changing a base service's image</li>
-<li>Adding or changing mounts over image-internal paths on base services</li>
-<li>Using variables not declared by the base, kit artifacts or data destinations</li>
+<li><strong>Readiness:</strong> give a service of your own a Compose <code>healthcheck</code>. <code>run</code>
+  waits until it passes. The example fixture's <code>acme-probe</code> service runs
+  <code>checks/custom_kit.py</code>, which checks the fresh <code>/acme/probe</code> publication of
+  its C++ package and its parameters.</li>
+<li><strong>End to end:</strong> the base's <code>verify</code> step runs on top of your layer with
+  <code>openadkit run --verify</code>. To check something else, name your own in
+  <code>deployment.json</code>: <code>{"verify": {"service": "&lt;service&gt;", "command": [...]}}</code>
+  runs the command in that running service, and without <code>command</code> the step
+  waits for the service to exit and takes its exit code.</li>
 </ul>
-<p>These warnings do not make <code>validate</code> fail. Public value changes, inherited
-mounts and commands/images of new services are not reported as replacements.
-Validation does not pull images or inspect their parameter files.</p>
-<p>The evidence runner combines the static result with every mounted service's
-hook report and records <code>overlayConformant</code> in the signed Test Result. Missing
-or invalid hook reports are nonconformant, not silently clean. The example
-acceptance cell additionally requires conformance, checks shared/kit/inherited
-parameters and fresh C++ publication, and runs Planning Simulation's golden
-path. Humble and Jazzy each build the workspace against their matching devel
-digest. The attestation binds the kit's source/config checksum, excluding
-host-specific <code>build</code>, <code>install</code> and <code>log</code> products.</p>
-<p>Base deployments with a reasoned CI evidence exemption retain that exemption
-in the kit. An exemption is not evidence of runtime compatibility.</p>
-<p>The <a href="../../releases/evidence/">release gate</a> requires <code>PASSED</code>; static validation
-alone is not runtime evidence. See <a href="../../development/evidence-workflow/">Evidence Workflow</a>
-for <code>workflow_call</code> and its current build-owning-repository/example-kit scope.
-Arbitrary external kit input is not yet supported by that interface.</p>
+<p>The example kit's evidence cell runs both: its healthcheck and Planning
+Simulation's golden path. Humble and Jazzy each build the workspace against
+their matching devel digest.</p>
+<p>A base deployment's CI exemption stays with the kit; an exemption is not runtime
+evidence. The <a href="../../releases/evidence/">release gate</a> requires <code>PASSED</code>. See
+<a href="../../development/evidence-workflow/">Evidence Workflow</a> for reusing the verifier;
+it does not yet accept arbitrary external kits.</p>
 <h2 id="upgrade-without-losing-your-work">Upgrade Without Losing Your Work<a class="headerlink" href="#upgrade-without-losing-your-work" title="Permanent link">#</a></h2>
 <p>Install the new base next to the old version, update <code>extends</code>, rebuild your
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host config, downloaded data and output directories
 are outside the base release. Updating the default launcher does not change a
 kit's explicit version pin. See <a href="../../getting-started/cli/">CLI &amp; Maintenance</a>
-for config/state roots and marker-protected data cleanup.</p>
+for the config and output directories and marker-protected data cleanup.</p>
 
 
 

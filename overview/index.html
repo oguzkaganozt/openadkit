@@ -1431,8 +1431,6 @@
           
         
       
-        
-      
     
     
     
@@ -1469,11 +1467,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1487,78 +1480,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1739,8 +1660,6 @@
       
         
       
-        
-      
     
     
     
@@ -1868,34 +1787,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2156,7 +2047,7 @@
 
 <h2 id="what-is-open-ad-kit">What is Open AD Kit<a class="headerlink" href="#what-is-open-ad-kit" title="Permanent link">#</a></h2>
 <p>Open AD Kit packages the <a href="https://github.com/autowarefoundation/autoware">Autoware</a> autonomous driving stack as focused, independently deployable container images. Instead of one monolithic image, it splits the stack along the AD pipeline — sensing, perception, localization, mapping, planning, control, vehicle system, API, simulation, visualization, and the CARLA bridge — so you run only what a workload needs.</p>
-<p>Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployment configurations, integrates target platforms and vehicle systems, and maintains the build, test, and release tooling that keeps simulation and in-vehicle deployments consistent.</p>
+<p>Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployment configurations, integrates target platforms, and maintains the build, test, and release tooling that keeps deployments consistent from one host to the next. It ships simulation deployments today; a supported path to a real vehicle interface is on the <a href="../releases/#roadmap">roadmap</a>.</p>
 <p>It also integrates <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a>, which runs on real-time operating systems and automotive hardware rather than in a container. Open AD Kit is the first <a href="https://www.soafee.io/">SOAFEE</a> blueprint for the software-defined vehicle; <a href="../platforms/">Supported Platforms</a> covers the derived blueprints and the platform tiers.</p>
 <h2 id="why-open-ad-kit">Why Open AD Kit<a class="headerlink" href="#why-open-ad-kit" title="Permanent link">#</a></h2>
 <div class="oak-card-grid oak-card-grid--four">
@@ -2168,7 +2059,7 @@
 <div class="oak-card">
 <p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5l9-4 9 4zm-9 10c3.75-1 7-5.46 7-9.78V6.3l-7-3.12z"/></svg></span></p>
 <p aria-level="3" class="oak-card-title" role="heading">Mixed Criticality</p>
-<p>Separate workloads by criticality assumption across safety-qualified and standard hardware.</p>
+<p>Keep safety-critical control on the Safety Island's real-time hardware, beside the containerized stack.</p>
 </div>
 <div class="oak-card">
 <p><span class="twemoji oak-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.03 18c.05.7.21 1.38.47 2h-7c-1.5 0-2.81-.5-3.89-1.57C1.54 17.38 1 16.09 1 14.58q0-1.95 1.17-3.48C3.34 9.57 4 9.43 5.25 9.15c.42-1.53 1.25-2.77 2.5-3.72S10.42 4 12 4c1.95 0 3.6.68 4.96 2.04S19 9.05 19 11h.1c-.74.07-1.45.23-2.1.5V11c0-1.38-.5-2.56-1.46-3.54C14.56 6.5 13.38 6 12 6s-2.56.5-3.54 1.46C7.5 8.44 7 9.62 7 11h-.5c-.97 0-1.79.34-2.47 1.03-.69.68-1.03 1.5-1.03 2.47s.34 1.79 1.03 2.5c.68.66 1.5 1 2.47 1zM19 13.5V12l-2.25 2.25L19 16.5V15a2.5 2.5 0 0 1 2.5 2.5c0 .4-.09.78-.26 1.12l1.09 1.09c.42-.63.67-1.39.67-2.21 0-2.21-1.79-4-4-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5c0-.4.09-.78.26-1.12l-1.09-1.09c-.42.63-.67 1.39-.67 2.21 0 2.21 1.79 4 4 4V23l2.25-2.25L19 18.5z"/></svg></span></p>
@@ -2236,7 +2127,7 @@
 </tr>
 <tr>
 <td><strong>Evidence</strong></td>
-<td>A signed Test Result for exact runtime cells and image/source subjects; the release gate requires <code>PASSED</code>.</td>
+<td>The runtime test cells run against one build; the release gate requires a successful run that passed every cell.</td>
 </tr>
 <tr>
 <td><strong>CI exemption</strong></td>
@@ -2256,12 +2147,10 @@
 </tr>
 <tr>
 <td><strong>Mixed criticality</strong></td>
-<td>Running safety-critical and non-critical workloads in separate containers or partitions on the same hardware.</td>
+<td>Running safety-critical and non-critical workloads on separately qualified execution environments. Here, the Safety Island's real-time hardware beside the containerized stack; the containers on one host share its network and are not isolated by criticality.</td>
 </tr>
 </tbody>
 </table>
-<p>The <a href="../development/rfc-0001-toolchain-model/">toolchain RFC</a> distinguishes
-implemented v2.0 interfaces from the selected future OCI and vehicle-backend design.</p>
 
 
 

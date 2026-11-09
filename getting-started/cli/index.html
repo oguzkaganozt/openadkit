@@ -695,6 +695,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#short-name-and-tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Short Name and Tab Completion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -710,6 +721,17 @@
     <span class="md-ellipsis">
       
         Validate Before Running
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-own-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Own Kit
       
     </span>
   </a>
@@ -1464,8 +1486,6 @@
           
         
       
-        
-      
     
     
     
@@ -1502,11 +1522,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1520,78 +1535,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1772,8 +1715,6 @@
       
         
       
-        
-      
     
     
     
@@ -1901,34 +1842,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2114,6 +2027,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#short-name-and-tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Short Name and Tab Completion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2129,6 +2053,17 @@
     <span class="md-ellipsis">
       
         Validate Before Running
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-own-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Own Kit
       
     </span>
   </a>
@@ -2220,19 +2155,65 @@
 configuration, upgrades, and cleanup.</p>
 <p>Commands on this page are shown as installed by the release installer. From a
 source checkout, prefix them with <code>./</code> and run them from the repository root.</p>
+<h2 id="short-name-and-tab-completion">Short Name and Tab Completion<a class="headerlink" href="#short-name-and-tab-completion" title="Permanent link">#</a></h2>
+<p><code>openadkit install</code> also links <code>adkit</code>, a short name for the same launcher:
+<code>adkit run planning-simulation</code> is <code>openadkit run planning-simulation</code>. Tab
+completes commands, options and the deployment names of the kit or release in
+the current directory, for both names; bash-completion (installed on Ubuntu by
+default) loads it from <code>~/.local/share/bash-completion/completions</code> in a new
+shell. The installer leaves an <code>adkit</code> or a completion file that it did not
+install alone, and <code>openadkit uninstall</code> removes only its own links.</p>
 <h2 id="runtime-controls">Runtime Controls<a class="headerlink" href="#runtime-controls" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>status<span class="w"> </span>planning-simulation
-openadkit<span class="w"> </span>logs<span class="w"> </span>planning-simulation<span class="w"> </span>--follow
-openadkit<span class="w"> </span>stop<span class="w"> </span>planning-simulation
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>status
+openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
+openadkit<span class="w"> </span>logs<span class="w"> </span>map<span class="w"> </span>planning<span class="w">        </span><span class="c1"># only these services</span>
+openadkit<span class="w"> </span>restart<span class="w">                  </span><span class="c1"># services reread config and overlay workspaces</span>
+openadkit<span class="w"> </span>restart<span class="w"> </span>--all<span class="w">            </span><span class="c1"># the whole deployment, with the same settings</span>
+openadkit<span class="w"> </span>shell<span class="w">                    </span><span class="c1"># a shell in the api service with ROS sourced</span>
+openadkit<span class="w"> </span>shell<span class="w"> </span>planning<span class="w"> </span>ros2<span class="w"> </span>node<span class="w"> </span>list
+openadkit<span class="w"> </span>record<span class="w"> </span>/tf<span class="w"> </span>/localization/kinematic_state
+openadkit<span class="w"> </span>stop
 </code></pre></div>
-<p>Pass the deployment name. Without it, these commands only list what is running.
-One deployment runs at a time, including deployments from other kits. <code>run</code>
-refuses conflicting projects; stop them from their owning kit first. Declared
+<p>These act on the deployment running on this host, from any directory, so they
+take no deployment name. When several nodes of a split deployment run on one
+host, pick one with <code>--node</code>; <code>status</code> and <code>stop</code> act on all of them.</p>
+<p><code>restart</code> with no service restarts every service that takes Open AD Kit config
+or an overlay workspace, so a changed parameter file or a rebuilt workspace
+applies without restarting a simulator such as CARLA; it names the services it
+left running. <code>restart --all</code> restarts the whole deployment in place, one-shot
+services included, as a fresh start with the same settings. Changes to Compose
+files or <code>.env</code> values need <code>stop</code> and <code>run</code> again. <code>shell</code> sources ROS, Autoware and the overlay
+workspaces like the services' entrypoint; give it a service and a command to run
+one command instead.</p>
+<p>Below its services, <code>status</code> shows Autoware's state from the AD API:</p>
+<div class="highlight"><pre><span></span><code>localization initialized
+routing      set
+mode         stop (autonomous available)
+mrm          normal
+</code></pre></div>
+<p>A line reads <code>no data</code> while nothing publishes that state yet, for example
+before localization starts.</p>
+<p><code>record</code> writes a rosbag of the named topics (or <code>--all</code>) to
+<code>~/openadkit-output/&lt;deployment&gt;/recordings/</code> (<code>--output</code> to change) until
+Ctrl+C. It runs as a copy of the running api container, so it joins the
+deployment's ROS domain and knows the overlay's message types, and the bag stays
+on the host when the deployment stops.
+One deployment runs at a time, including deployments from other kits, even one
+with the same name. <code>run</code> refuses conflicting projects; stop them first with
+<code>openadkit stop</code>. Declared
 split nodes of the same deployment can still run together.
-After starting, <code>run</code> watches the services for 10 seconds and fails if one
-crashes.
+<code>run</code> returns once the deployment is ready: its services' healthchecks pass,
+for example once the AD API is up (<code>READINESS_CHECKS</code> in the deployment's
+<code>config.env</code>). It then watches the services for 10 seconds and fails if one
+crashes. <code>openadkit run &lt;deployment&gt; --verify</code> then runs the deployment's
+verify step, the check CI runs on it: Planning Simulation drives the ego from
+its start to its goal, Scenario Simulation waits for the scenarios' result.
+<code>run --verify</code> exits with the step's result; the deployment keeps running.
+Every run writes <code>results/run.json</code> in the deployment's output directory: the
+version, distro and images it started, the digest of the resolved Compose
+model, how long it took to be ready and, with <code>--verify</code>, the step's result.
 <code>openadkit run &lt;deployment&gt; --pull always</code> refreshes images before starting,
-and <code>openadkit --version</code> prints the installed version. <code>--no-visualizer</code>
+and <code>openadkit version</code> prints the installed version. <code>--no-visualizer</code>
 starts everything except the visualizer, for a host nobody watches; its
 software-rendered RViz needs CPU that Autoware lacks on a small host. CI
 evidence runs this way.</p>
@@ -2240,11 +2221,21 @@ evidence runs this way.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>planning-simulation<span class="w"> </span>--data
 </code></pre></div>
 <p><code>validate</code> checks the manifest and the Compose configuration without starting
-anything. <code>--data</code> also reports each data resource as <code>ok</code>, <code>missing</code>, or
-<code>incomplete</code> and fails on any gap. It follows the same GPU selection as <code>run</code>:
+anything. <code>--data</code> also reports each data resource as <code>ok</code>, <code>missing</code>, <code>incomplete</code>,
+or <code>outdated</code> and fails on any gap. It follows the same GPU selection as <code>run</code>:
 use <code>openadkit validate logging-simulation --gpu --data</code> to include the
 CenterPoint models.</p>
-<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting.</p>
+<p><code>list</code>, <code>version</code>, and <code>validate</code> accept <code>--json</code> for scripting. <code>config</code> prints
+the resolved Compose model of a deployment as JSON, with the same options as
+<code>validate</code>; <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
+<p><code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code> and <code>clean</code> also take a deployment's directory
+instead of its name, such as <code>openadkit run ./my-kit</code>: an argument with a <code>/</code> or
+a leading <code>.</code> is a directory, and the kit around it is used wherever you run the
+command.</p>
+<h2 id="your-own-kit">Your Own Kit<a class="headerlink" href="#your-own-kit" title="Permanent link">#</a></h2>
+<p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit on top of a
+deployment of this Open AD Kit (Planning Simulation by default) that holds
+only your differences. See <a href="../../deployments/custom-deployment/">Custom Deployment</a>.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <p>Each deployment reads its settings from environment files, in this order
 (later files win):</p>
@@ -2272,14 +2263,12 @@ override component images there; release images stay pinned.</p>
 <td><code>OPENADKIT_CONFIG_DIR</code> (or <code>XDG_CONFIG_HOME</code>)</td>
 </tr>
 <tr>
-<td>Run results</td>
-<td><code>~/.local/state/openadkit/&lt;name&gt;/output</code></td>
-<td><code>OPENADKIT_STATE_DIR</code> (or <code>XDG_STATE_HOME</code>)</td>
+<td>Results and recordings</td>
+<td><code>~/openadkit-output/&lt;name&gt;/{results,recordings}</code></td>
+<td><code>OPENADKIT_OUTPUT_DIR</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>deployments/&lt;name&gt;/config.local.env</code> is no longer read; the CLI warns when it
-finds one. Move its settings to <code>~/.config/openadkit/&lt;name&gt;.env</code>.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>upgrade<span class="w"> </span>--check<span class="w">   </span><span class="c1"># report whether a newer stable version exists</span>
 openadkit<span class="w"> </span>upgrade<span class="w">           </span><span class="c1"># install it</span>
@@ -2294,29 +2283,31 @@ that is not kept. Source checkouts update with <code>git pull</code> instead.</p
 <h2 id="uninstall-and-cleanup">Uninstall and Cleanup<a class="headerlink" href="#uninstall-and-cleanup" title="Permanent link">#</a></h2>
 <p>Stop running deployments first; <code>uninstall</code> refuses while any is running,
 because it removes the launcher that <code>openadkit stop</code> needs.</p>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop<span class="w"> </span>planning-simulation
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop
 openadkit<span class="w"> </span>uninstall<span class="w">          </span><span class="c1"># keep previously installed versions</span>
 openadkit<span class="w"> </span>uninstall<span class="w"> </span>--all<span class="w">    </span><span class="c1"># remove kept versions too</span>
 </code></pre></div>
 <p><code>uninstall</code> is for release installs; remove a source checkout with Git. Host
-settings in <code>~/.config/openadkit</code> and results in <code>~/.local/state/openadkit</code> are
-kept.</p>
+settings in <code>~/.config/openadkit</code> and results and recordings in
+<code>~/openadkit-output</code> are kept.</p>
 <p>Downloaded data (maps, rosbags, and perception models) lives under
-<code>~/autoware_map</code> and <code>~/autoware_data</code> and is kept by <code>uninstall</code>. Inspect and
+<code>~/autoware_map</code> and <code>~/autoware_data</code> and is kept by <code>uninstall</code>. Check and
 delete a deployment's data with:</p>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">            </span><span class="c1"># report only</span>
-openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w"> </span>--data<span class="w">     </span><span class="c1"># delete</span>
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>planning-simulation<span class="w"> </span>--data<span class="w">   </span><span class="c1"># report</span>
+openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">             </span><span class="c1"># delete</span>
 </code></pre></div>
-<p><code>clean --data</code> and <code>fetch --force</code> refuse while that deployment is running, or
+<p><code>clean</code> and <code>fetch --force</code> refuse while that deployment is running, or
 when any live container mounts the data (including another kit or deployment).
 If data usage cannot be checked, deletion or replacement is refused. If Scenario
 Simulation's Kashiwanoha map is removed, restore it with
 <code>openadkit fetch scenario-simulation --force</code>.</p>
 <p><code>run</code> downloads missing data, but never replaces an existing data directory.
 Replace incomplete or outdated managed data explicitly with <code>fetch --force</code>;
-<code>run --force</code> is not supported.</p>
+<code>run --force</code> is not supported. Managed data is outdated when the deployment
+now declares other content for it, for example a fixed map with a new checksum:
+<code>run</code>, <code>fetch</code> and <code>validate --data</code> then stop and ask for <code>fetch --force</code>.</p>
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file.
-<code>clean --data</code> and <code>--force</code> only delete or replace marked data. Data that was
+<code>clean</code> and <code>--force</code> only delete or replace marked data. Data that was
 already there, such as a map you copied yourself, is still used when it is
 complete, but the CLI never deletes or replaces it; move or remove it yourself.
 If a target changes during <code>fetch --force</code>, publication fails instead of deleting

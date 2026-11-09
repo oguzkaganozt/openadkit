@@ -1487,8 +1487,6 @@
           
         
       
-        
-      
     
     
     
@@ -1525,11 +1523,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1543,78 +1536,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1795,8 +1716,6 @@
       
         
       
-        
-      
     
     
     
@@ -1924,34 +1843,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2273,7 +2164,8 @@ manifest). The nodes only see each other through the Zenoh bridge, so both
 nodes can also run on <strong>one machine</strong> for testing, as long as each listens on
 its own port (see below).</p>
 <p>DDS stays local (<code>CYCLONEDDS_NETWORK_INTERFACE=lo</code>, applied by both the
-workload containers and the bridge). Only ROS traffic selected by the
+workload containers and the bridge; a node ignores another interface in the
+host settings file). Only ROS traffic selected by the
 workload allowlist crosses Zenoh: simulation time, vehicle status and
 commands, transforms, ADAPI calls, and the enabled sensors. Map blobs, camera
 images, and the visualization/teleop traffic are not routed.</p>
@@ -2347,11 +2239,11 @@ openadkit<span class="w"> </span>run<span class="w"> </span>scenario-simulation<
 </code></pre></div>
 <p>The runner waits up to <code>SCENARIO_READY_TIMEOUT</code> for Autoware readiness over
 Zenoh before launching the scenario. Results are written on the <strong>scenario</strong>
-host under <code>~/.local/state/openadkit/scenario-simulation/output</code>. The visualizer stays on the
-Autoware host; noVNC is loopback-only (<code>WEBSOCKIFY_BIND</code>), so remote desks use
-an SSH tunnel.</p>
+host under <code>~/openadkit-output/scenario-simulation/results</code>. The visualizer runs
+on the scenario host too, so RViz takes no CPU or GPU from Autoware on the edge;
+noVNC is loopback-only (<code>WEBSOCKIFY_BIND</code>), so remote desks use an SSH tunnel.</p>
 <p>Stop each host; the CLI finds the live node from its Compose project:</p>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop<span class="w"> </span>scenario-simulation
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop
 </code></pre></div>
 <h2 id="carla">CARLA<a class="headerlink" href="#carla" title="Permanent link">#</a></h2>
 <p>Both hosts need an NVIDIA GPU. Start Autoware first:</p>
@@ -2365,7 +2257,8 @@ openadkit<span class="w"> </span>run<span class="w"> </span>carla-simulation<spa
 The interface publishes simulation time, the enabled lidar/IMU/GNSS sensors,
 vehicle status, and transforms; Autoware publishes control commands. Cameras
 are disabled in <code>sensor_mapping.yaml</code>; enabling them requires an allowlist and
-throughput update.</p>
+throughput update. The visualizer runs on the CARLA host, where the raw LiDAR
+already originates.</p>
 <h2 id="allowlist">Allowlist<a class="headerlink" href="#allowlist" title="Permanent link">#</a></h2>
 <p>Each workload ships its Zenoh allowlist in
 <code>deployments/&lt;workload&gt;/config/zenoh.json5</code>, mounted into the bridge of
@@ -2373,6 +2266,16 @@ every node. Entries are full-name regular expressions, not globs. Both
 hosts use the same file: either side can own an endpoint. Review the list
 before routing anything new, and keep the host boundary on the lab LAN:
 the allowlist is not authentication.</p>
+<p>Both allowlists also carry what the visualizer on the simulator host shows:
+planning and control output, objects, the vector map marker, <code>/robot_description</code>
+and the ADAPI (<code>/api/.*</code>) its panels use. Zenoh sends a topic across only when
+the other host subscribes to it, so without a visualizer these stay on the edge.
+The processed CARLA pointclouds cross at 2 Hz (<code>pub_max_frequencies</code>), and the
+pointcloud map is not bridged. A visualizer on the edge is the single-host mode.</p>
+<p>The split scenario cell checks that every allowlisted topic exists in one of
+the two graphs, so an Autoware rename fails CI instead of silently stopping a
+topic. CI cannot run CARLA: check its allowlist against the live graph of a
+two-host run after an Autoware update.</p>
 <p>The scenario allowlist carries the simple sensor simulator's
 <code>/sensing/imu/imu_data</code> because autonomous emergency braking and
 autonomous-mode availability on the Autoware host depend on it; without
@@ -2386,7 +2289,8 @@ LAN; WAN and VPN links are best-effort and are not the supported setup.</p>
 <ul>
 <li><code>stop</code>, <code>status</code>, and <code>logs</code> find the live node from its Compose project, so
   you normally omit <code>--node</code>. When several nodes of one deployment run on the
-  same machine, pass <code>--node</code> to choose one.</li>
+  same machine, <code>status</code> and <code>stop</code> act on all of them; pass <code>--node</code> to choose
+  one for the other commands.</li>
 <li>Re-running a live node updates it in place. Starting the single-host graph
   while a node is live, or a node while the single-host graph is live, is
   refused: stop it first.</li>
@@ -2406,7 +2310,7 @@ available", a bridged vehicle-status topic has stopped flowing:</p>
   can leave Zenoh routes half-created (a route is removed and not recreated),
   so the topic no longer crosses.</li>
 <li>Remedy: stop the workload on both hosts and start the nodes again
-  (<code>openadkit stop &lt;name&gt;</code>, then <code>openadkit run &lt;name&gt; --node ...</code>). A
+  (<code>openadkit stop</code>, then <code>openadkit run &lt;name&gt; --node ...</code>). A
   clean restart restores the routes.</li>
 </ul>
 

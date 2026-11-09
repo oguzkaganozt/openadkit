@@ -1338,8 +1338,6 @@
           
         
       
-        
-      
     
     
     
@@ -1376,11 +1374,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1394,78 +1387,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1646,8 +1567,6 @@
       
         
       
-        
-      
     
     
     
@@ -1775,34 +1694,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2221,8 +2112,12 @@ hardware:</p>
 translation.</p>
 <h3 id="visualizer">Visualizer<a class="headerlink" href="#visualizer" title="Permanent link">#</a></h3>
 <p>Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
-TigerVNC, and a TLS-enabled noVNC server. The VNC backend stays loopback-only,
-and each container creates its own self-signed certificate at startup.</p>
+TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
+loopback-only, and so does noVNC by default; reach it remotely through an SSH
+tunnel. To serve HTTPS, mount your own certificate into the visualizer from an
+<a href="../deployments/integrator-guide/">integrator kit</a> or a Compose override (the
+release mounts none) and name its files in <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>; it
+stays the same across starts, so a browser exception for it holds.</p>
 <table>
 <thead>
 <tr>
@@ -2243,7 +2138,7 @@ and each container creates its own self-signed certificate at startup.</p>
 <td><code>REMOTE_DISPLAY</code></td>
 <td><code>true</code></td>
 <td><code>true</code>, <code>false</code></td>
-<td>Use browser-based RViz2; <code>false</code> launches a local display</td>
+<td>Use browser-based RViz2; <code>false</code> opens RViz2 on the desktop, using the session's <code>DISPLAY</code> and <code>XAUTHORITY</code></td>
 </tr>
 <tr>
 <td><code>REMOTE_PASSWORD</code></td>
@@ -2268,6 +2163,12 @@ and each container creates its own self-signed certificate at startup.</p>
 <td><code>auto</code></td>
 <td><code>auto</code>, <code>on</code>, <code>off</code></td>
 <td>Automatic, forced, or disabled VirtualGL acceleration</td>
+</tr>
+<tr>
+<td><code>NOVNC_CERT</code>, <code>NOVNC_KEY</code></td>
+<td>unset</td>
+<td>Paths</td>
+<td>Certificate and key inside the container; set both to serve HTTPS only</td>
 </tr>
 </tbody>
 </table>

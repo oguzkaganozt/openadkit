@@ -1350,8 +1350,6 @@
           
         
       
-        
-      
     
     
     
@@ -1388,11 +1386,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1406,78 +1399,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1658,8 +1579,6 @@
       
         
       
-        
-      
     
     
     
@@ -1787,34 +1706,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2078,20 +1969,20 @@ No GPU is required.</p>
 <p>Commands on this page are shown as installed by the release installer. From a
 source checkout, prefix them with <code>./</code> and run them from the repository root.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>scenario-simulation
-openadkit<span class="w"> </span>logs<span class="w"> </span>scenario-simulation<span class="w"> </span>--follow
+openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
 </code></pre></div>
 <p>Run Autoware on one host and the TIER IV runner on another with <code>--node</code>; see
 <a href="../split-host/">Split-host simulation</a>.</p>
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <p><code>run</code> downloads the Kashiwanoha map. Autoware takes about 90 seconds to
 initialize; the runner then executes the scenario and writes the results to
-<code>~/.local/state/openadkit/scenario-simulation/output</code> (<code>run</code> prints the path).</p>
+<code>~/openadkit-output/scenario-simulation/results</code> (<code>run</code> prints the path).</p>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
-<p>Open <code>https://localhost:6080/vnc.html</code>, accept the self-signed certificate, and
-sign in with the default password <strong><code>openadkit</code></strong>. Set your own
+<p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
+<strong><code>openadkit</code></strong>. Set your own
 <code>REMOTE_PASSWORD</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
 <p>For a remote host, forward the port over SSH and open
-<code>https://localhost:8080/vnc.html</code> locally:</p>
+<code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
 <h2 id="configure">Configure<a class="headerlink" href="#configure" title="Permanent link">#</a></h2>
@@ -2118,12 +2009,22 @@ sign in with the default password <strong><code>openadkit</code></strong>. Set y
 <tr>
 <td><code>OUTPUT_HOST_PATH</code></td>
 <td>Host results directory</td>
-<td><code>~/.local/state/openadkit/scenario-simulation/output</code></td>
+<td><code>~/openadkit-output/scenario-simulation/results</code></td>
 </tr>
 <tr>
 <td><code>SCENARIO_READY_TIMEOUT</code></td>
 <td>Seconds to wait for Autoware before running</td>
 <td><code>600</code></td>
+</tr>
+<tr>
+<td><code>GLOBAL_REAL_TIME_FACTOR</code></td>
+<td>Simulated seconds per wall-clock second; below <code>1</code> on a host that cannot run Autoware in real time</td>
+<td><code>1.0</code></td>
+</tr>
+<tr>
+<td><code>GLOBAL_TIMEOUT</code></td>
+<td>Wall-clock seconds each scenario may take; scale it with the factor</td>
+<td><code>180</code></td>
 </tr>
 <tr>
 <td><code>MAP_PATH</code></td>
@@ -2150,7 +2051,7 @@ as the bundled map, which the CLI checks before starting: <code>lanelet2_map.osm
 changed value. On every start, the images merge it into the upstream parameter
 file: <code>config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml</code>.</p>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop<span class="w"> </span>scenario-simulation
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop
 </code></pre></div>
 <p>To replace missing map data, run <code>openadkit fetch scenario-simulation --force</code>.
 For other issues, see <a href="../../getting-started/troubleshooting/">Troubleshooting</a>.</p>

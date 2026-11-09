@@ -16,7 +16,7 @@
         <link rel="prev" href="../contributing/">
       
       
-        <link rel="next" href="../rfc-0001-toolchain-model/">
+        <link rel="next" href="../../releases/">
       
       
         
@@ -1335,8 +1335,6 @@
           
         
       
-        
-      
     
     
     
@@ -1373,11 +1371,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1391,78 +1384,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1637,8 +1558,6 @@
       
         
           
-        
-      
         
       
         
@@ -1854,34 +1773,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -2107,9 +1998,9 @@
 
 <h1 id="run-the-evidence-workflow">Run the Evidence Workflow<a class="headerlink" href="#run-the-evidence-workflow" title="Permanent link">#</a></h1>
 <p>The reusable <code>.github/workflows/evidence.yaml</code> verifies a specific Open AD Kit
-build and emits a signed in-toto Test Result. It runs automatically after a
-successful <code>build-all-images</code> run on <code>main</code>. For a release, dispatch it with
-<code>build_tag</code> on the <code>release/X.Y</code> branch that built it.</p>
+build and publishes the run's summary. It runs automatically after a
+successful <code>build-all-images</code> run on <code>main</code> or a <code>release/X.Y</code> branch, which is
+the run a release of that build needs.</p>
 <h2 id="reuse-it-in-the-build-owning-repository">Reuse it in the build-owning repository<a class="headerlink" href="#reuse-it-in-the-build-owning-repository" title="Permanent link">#</a></h2>
 <p>A caller workflow in the same repository (or a fork hosting the same build and
 evidence workflows) can call it without duplicating the runner:</p>
@@ -2125,8 +2016,6 @@ evidence workflows) can call it without duplicating the runner:</p>
 <span class="nt">permissions</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">actions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
 <span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
-<span class="w">  </span><span class="nt">attestations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
-<span class="w">  </span><span class="nt">id-token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
 
 <span class="nt">jobs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">evidence</span><span class="p">:</span>
@@ -2134,13 +2023,13 @@ evidence workflows) can call it without duplicating the runner:</p>
 <span class="w">    </span><span class="nt">with</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">build_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ inputs.build_tag }}</span>
 </code></pre></div>
-<p>This runs containers and publishes attestations. A fork's attestations belong
-to that fork, not the Autoware Foundation release identity. For release
-verification the source ref must be a <code>release/X.Y</code> branch and the signer must be the expected
-evidence workflow. Do not replace the signer check with merely an owner check.</p>
+<p>This runs containers on the caller's runners. A fork's evidence runs belong to
+that fork; only runs on the branch that built the release, in the releasing
+repository, can be release evidence.</p>
 <p>The current reusable interface takes <strong>only <code>build_tag</code></strong>. Metadata and source
 come from the caller's build-owning repository. It stages that exact source's
-reference deployments and the single flat example at <code>deployments/custom-kit</code>.
+reference deployments and the example kit, which the staged CLI's <code>openadkit new</code>
+makes with the fixture in <code>.github/scripts/evidence/kit</code> on top.
 It does <strong>not</strong> take an arbitrary external kit repository, revision or scenario
 as input. Do not copy this example into an unrelated integrator repository and
 claim it verifies that kit; external kit intake needs a dedicated, pinned,
@@ -2157,19 +2046,11 @@ tree a release of that build ships, plus the example kit.</p>
 and <code>log</code> products. Hosted runners execute L0-L2 cells, retry a failed cell once,
 and aggregate all expected cells, including missing-cell failures.</p>
 <p>The workflow uploads per-cell diagnostics and the
-<code>evidence-attestation-&lt;build_tag&gt;</code> artifact with predicate, subject list, summary,
-JUnit and attestation bundle. Retention is bounded; release verification uses
-the published attestations rather than assuming CI ZIP artifacts last forever.</p>
-<p>New runner cells use <code>schemaVersion: 1</code>. The same payload is embedded under
-Test Result <code>configuration[].annotations.openadkitCell</code> and stored in the
-schema-v2 summary; CI, JUnit and release views are derived from it. Release
-reports store the original verified statement and its hash, not a second cell
-copy. Readers also accept legacy annotations, unversioned summaries and sealed
-schema-v1 release reports; signature and exact build/source/matrix checks still
-apply. New summary readers should use <code>metrics</code> rather than top-level timings.</p>
-<p>Inspect the workflow summary and failures before release. A CI quarantine
-warning never grants release permission: the
-<a href="../../releases/evidence/">release policy</a> requires <code>PASSED</code>.</p>
+<code>evidence-summary-&lt;build_tag&gt;</code> artifact. The release gate reads that summary; see the <a href="../../releases/evidence/">release policy</a>.</p>
+<p>Runner cells use <code>schemaVersion: 1</code>, and the summary (<code>schemaVersion: 3</code>)
+carries them as written. Readers accept only these versioned payloads: a cell
+without <code>schemaVersion: 1</code> and <code>metrics</code> is rejected. Summary readers should use
+<code>metrics</code> rather than top-level timings.</p>
 
 
 
@@ -2224,13 +2105,13 @@ warning never grants release permission: the
         
         
           
-          <a href="../rfc-0001-toolchain-model/" class="md-footer__link md-footer__link--next" aria-label="Next: RFC 0001: Toolchain Model">
+          <a href="../../releases/" class="md-footer__link md-footer__link--next" aria-label="Next: Releases &amp;amp; Roadmap">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                RFC 0001: Toolchain Model
+                Releases &amp; Roadmap
               </div>
             </div>
             <div class="md-footer__button md-icon">

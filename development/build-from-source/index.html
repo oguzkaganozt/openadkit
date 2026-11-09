@@ -1335,8 +1335,6 @@
           
         
       
-        
-      
     
     
     
@@ -1373,11 +1371,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1391,78 +1384,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1637,8 +1558,6 @@
       
         
           
-        
-      
         
       
         
@@ -1924,34 +1843,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2353,23 +2244,16 @@ git<span class="w"> </span>init<span class="w"> </span>autoware
 git<span class="w"> </span>-C<span class="w"> </span>autoware<span class="w"> </span>fetch<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>https://github.com/autowarefoundation/autoware.git<span class="w"> </span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
 git<span class="w"> </span>-C<span class="w"> </span>autoware<span class="w"> </span>checkout<span class="w"> </span>--detach<span class="w"> </span>FETCH_HEAD
-<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span>.github/autoware-lock.repos<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">  </span><span class="c1"># main: a snapshot of upstream development, every dependency pinned, and</span>
-<span class="w">  </span><span class="c1"># core built locally</span>
-<span class="w">  </span>cp<span class="w"> </span>.github/autoware-lock.repos<span class="w"> </span>autoware.lock
-<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">""</span>
-<span class="k">else</span>
-<span class="w">  </span><span class="c1"># release/X.Y: an Autoware release, built on its official images</span>
-<span class="w">  </span>python3<span class="w"> </span>.github/scripts/export_autoware_lock.py<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>autoware/repositories/autoware.repos<span class="w"> </span>autoware.lock
-<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
-<span class="k">fi</span>
+<span class="c1"># An Autoware release, built on its official images</span>
+python3<span class="w"> </span>.github/scripts/export_autoware_lock.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>autoware/repositories/autoware.repos<span class="w"> </span>autoware.lock
+<span class="nb">export</span><span class="w"> </span><span class="nv">UPSTREAM_TAG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$AUTOWARE_REF</span><span class="s2">"</span>
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src
 vcs<span class="w"> </span>import<span class="w"> </span>--shallow<span class="w"> </span>autoware/src<span class="w"> </span>&lt;<span class="w"> </span>autoware.lock
 mkdir<span class="w"> </span>-p<span class="w"> </span>autoware/src/middleware/external
 touch<span class="w"> </span>autoware/src/middleware/external/.keep
 
-<span class="c1"># 5. Build the shared universe-common layer (~2 hours, more with core)</span>
+<span class="c1"># 5. Build the shared universe-common layer (~2 hours)</span>
 docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>universe-common
 
 <span class="c1"># 6. Build the Planning Simulation images (~2 hours)</span>
@@ -2387,8 +2271,6 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
   with <code>--set &lt;target&gt;.tags=...</code>. To use other images, set the <code>*_IMAGE</code>
   variables in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
 <li>For Jazzy, build with <code>ROS_DISTRO=jazzy</code> and run with <code>--ros-distro jazzy</code>.</li>
-<li><code>main</code> builds for upstream development; check out a <code>release/X.Y</code> branch to
-  build a release's sources.</li>
 </ul>
 <p>Other useful targets:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w">                                </span><span class="c1"># everything</span>
@@ -2412,7 +2294,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 </tr>
 <tr>
 <td><code>UPSTREAM_TAG</code></td>
-<td>Upstream Autoware release to build on (e.g. <code>1.9.0</code>). Empty builds for upstream development: core compiles from <code>autoware/src</code> on the moving <code>base-&lt;distro&gt;</code> image (CI uses the digest pinned in <code>.github/autoware-base-images.json</code>), and ROS installs from the live repository.</td>
+<td>Upstream Autoware release to build on, the tag in <code>.github/autoware.ref</code> (e.g. <code>2.0.0</code>); required</td>
 <td><code>""</code></td>
 </tr>
 <tr>
@@ -2423,7 +2305,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
 <tr>
 <td><code>ROS_SNAPSHOT_HUMBLE</code>, <code>ROS_SNAPSHOT_JAZZY</code></td>
 <td>ROS apt snapshot the <code>UPSTREAM_TAG</code> images were built from. The build fails when they do not match; see <a href="https://github.com/autowarefoundation/openadkit/blob/main/components/shared/ros-snapshot/README.md">ROS snapshot</a>.</td>
-<td>Snapshots for <code>1.9.0</code></td>
+<td>Snapshots for <code>2.0.0</code></td>
 </tr>
 </tbody>
 </table>
@@ -2436,73 +2318,63 @@ the source of truth for which images are built and for which architectures.</p>
 <code>build-components</code>, then <code>build-carla-interface</code>. Most images build for Humble and
 Jazzy on amd64 and arm64. <code>create-manifests</code> then combines the per-arch images
 into multi-arch tags. CI disables the local tags (<code>LOCAL_IMAGE=""</code>) and tags
-images through <code>docker/metadata-action</code>. A failed scheduled build opens a GitHub
-issue.</p>
-<p>Each branch's <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref"><code>.github/autoware.ref</code></a>
-pins its Autoware sources. A <code>release/X.Y</code> branch pins an Autoware release and
-builds on its official images. <code>main</code> pins a commit of upstream <code>main</code> together
-with its dependency lock,
-<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-lock.repos"><code>.github/autoware-lock.repos</code></a>,
-and the digests of the upstream base images it builds on,
-<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware-base-images.json"><code>.github/autoware-base-images.json</code></a>.
-It compiles core on those bases and pushes it before the common images, so
-rebuilding an unchanged snapshot reuses every cached layer. Once a week
-<a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/bump-autoware.yaml"><code>bump-autoware.yaml</code></a>
-moves that snapshot to the current upstream <code>main</code> in a pull request from
-<code>ci/bump-autoware</code>, which builds every image and runs the evidence cells, so an
-upstream change that breaks Open AD Kit fails that pull request instead of
-<code>main</code>. CI builds <code>main</code> and <code>release/*</code> pushes; registry caches are kept per
-branch, and the bump shares <code>main</code>'s.</p>
+images through <code>docker/metadata-action</code>.</p>
+<p><a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref"><code>.github/autoware.ref</code></a>
+pins the Autoware release a branch builds on its official images. CI builds
+<code>main</code> and <code>release/*</code> pushes, keeps registry caches per branch, and scans and
+runs the evidence cells after each build. A weekly scan of <code>main</code>'s latest build
+opens a GitHub issue when it fails.</p>
 <h2 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
 <p>Releases promote an existing CI build; nothing is rebuilt.</p>
 <h3 id="before-you-release">Before You Release<a class="headerlink" href="#before-you-release" title="Permanent link">#</a></h3>
 <ul>
-<li><strong>A <code>release/X.Y</code> branch</strong> exists for the version, created from <code>main</code>. Its
-  <code>.github/autoware.ref</code> names the Autoware release (for example <code>1.9.0</code>), and
-  the ROS snapshots in <code>components/docker-bake.hcl</code> belong to that release.</li>
+<li><strong>The branch:</strong> <code>main</code>, or a <code>release/X.Y</code> branch created from a release tag
+  to fix an older line. Its <code>.github/autoware.ref</code> names the Autoware release
+  (for example <code>2.0.0</code>), and the ROS snapshots in <code>components/docker-bake.hcl</code>
+  belong to that release.</li>
 <li><strong><code>vars.RUNNER_AMD64</code></strong> and <strong><code>vars.RUNNER_ARM64</code></strong> optionally move the build,
   scan and evidence jobs to larger runners (for example
   <code>ubicloud-standard-8-ubuntu-2204</code> and <code>ubicloud-standard-8-arm-ubuntu-2204</code>).
-  Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.</li>
+  Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.
+  Pull request jobs run on them too, so point them only at ephemeral hosted
+  runners, never at a persistent self-hosted machine.</li>
 <li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-common</code>, and
   <code>openadkit-buildcache</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
 <li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise <code>GITHUB_TOKEN</code> is
   used.</li>
-<li><strong>A successful build</strong> of <code>build-all-images</code> exists on <code>release/X.Y</code>; stable
-  and pre-releases <code>vX.Y.Z</code> both come from it, and <code>main</code> builds are never
-  released. The build summary shows its <code>build_tag</code>. The release ships the CLI
+<li><strong>A successful build</strong> of <code>build-all-images</code> exists on that branch; stable
+  and pre-releases <code>vX.Y.Z</code> both come from it. The build summary shows its
+  <code>build_tag</code>. The release ships the CLI
   and deployments from that build's commit, and pushes that change only those
   start no build: dispatch <code>build-all-images</code> on the branch to release them. The
   release run warns when the branch has such changes.</li>
-<li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code>, dispatched on
-  the same <code>release/X.Y</code> branch.</li>
-<li><strong>Complete signed <code>PASSED</code> evidence</strong> exists for that same build, from
-  <code>evidence</code> dispatched on the same branch. Required
-  cells, source checksums and image digests must match; quarantine does not waive
-  the gate. See <a href="../../releases/evidence/">Evidence Policy</a>.</li>
+<li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code> on the same
+  branch; it runs after the build.</li>
+<li><strong>A successful <code>evidence</code> run</strong> on the same branch passed every cell for that
+  same build; it runs after the build. See <a href="../../releases/evidence/">Evidence Policy</a>.</li>
 </ul>
 <h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
-on the same <code>release/X.Y</code> branch with the version and <code>build_tag</code>. A release
-line releases with its own workflows and scripts, so a later <code>main</code> cannot
-change how an older line is validated. Its jobs run in order:</p>
+on the build's branch with the version and <code>build_tag</code>. A <code>release/X.Y</code> branch
+releases with its own workflows and scripts, so a later <code>main</code> cannot change
+how an older line is validated. Its jobs run in order:</p>
 <pre class="mermaid"><code>flowchart LR
-    V[validate] --&gt; P[package-bundles] --&gt; T[release-tag] --&gt; D[prepare-github-release] --&gt; I[release-images] --&gt; G[release-github] --&gt; W[deploy-docs]</code></pre>
+    V[validate] --&gt; P[package-bundles] --&gt; R[publish] --&gt; O[deploy-docs]</code></pre>
 <ol>
 <li><strong>validate</strong>: runs the release gates in
    <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh"><code>validate_release.sh</code></a>
    (version format, build provenance and age, scan results, metadata and file
-   integrity, image coverage, signed L0-L2 evidence, registry digests, Git tag). Nothing is tagged if a
+   integrity, image coverage, passing L0-L2 evidence, registry digests, Git tag). Nothing is tagged if a
    gate fails.</li>
 <li><strong>package-bundles</strong>: writes the immutable release plan and the runtime bundle
    for both distros.</li>
-<li><strong>release-tag</strong>: creates or verifies the Git tag.</li>
-<li><strong>prepare-github-release</strong>: writes notes/metadata from the validated plan,
-   attests bundle/installer/plan/metadata, then creates the draft with its assets.</li>
-<li><strong>release-images</strong>: creates the release tags and, for stable releases, the
-   moving aliases (see <a href="../../getting-started/container-images/#tag-reference">Tag Reference</a>).</li>
-<li><strong>release-github</strong>: publishes the draft.</li>
+<li><strong>publish</strong>: writes notes/metadata from the validated plan, attests
+   bundle/installer/plan/metadata and creates the draft with its assets. It then
+   creates the image release tags and, for stable releases, the moving aliases (see
+   <a href="../../getting-started/container-images/#tag-reference">Tag Reference</a>), and
+   publishes the draft, which creates the Git tag. A published release cannot be
+   changed: a bad one is followed by the next version.</li>
 <li><strong>deploy-docs</strong>: republishes the docs when the stable aliases moved.</li>
 </ol>
 <p>The release plan (<code>release-plan.json</code>) attached to each GitHub Release records

@@ -1459,8 +1459,6 @@
           
         
       
-        
-      
     
     
     
@@ -1497,11 +1495,6 @@
 
             </a>
             
-              
-              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
@@ -1515,78 +1508,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../platforms/autosd/planning-simulator/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Planning Simulator
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Planning Simulator
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
           </ul>
@@ -1767,8 +1688,6 @@
       
         
       
-        
-      
     
     
     
@@ -1896,34 +1815,6 @@
     
   
     Evidence Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/rfc-0001-toolchain-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RFC 0001: Toolchain Model
   
 
     
@@ -2235,12 +2126,6 @@ image digest.</p>
 <td>Yes</td>
 </tr>
 <tr>
-<td><strong>Default distro</strong></td>
-<td><code>planning-control</code></td>
-<td>Stable releases, default distro only</td>
-<td>Yes</td>
-</tr>
-<tr>
 <td><strong>Pre-release</strong></td>
 <td><code>planning-control-humble-v2.0.0-rc.1</code></td>
 <td>Pre-releases</td>
@@ -2254,12 +2139,9 @@ image digest.</p>
 </tr>
 </tbody>
 </table>
-<p>CI builds of <code>main</code> follow upstream Autoware development and are never
-released; releases come from <code>release/X.Y</code> branches (see
-<a href="#versioning">Versioning</a>).</p>
-<p>The moving aliases also exist with a <code>-latest</code> suffix
-(<code>planning-control-humble-latest</code>, <code>planning-control-latest</code>). Pre-releases
-never update them.</p>
+<p>Releases promote a CI build of <code>main</code> (see <a href="#versioning">Versioning</a>).</p>
+<p>Pre-releases never move the latest-per-distro aliases. No alias leaves out the
+distro, so an image never switches ROS distro under the same tag.</p>
 <p>Examples use <strong>Humble</strong>, the default distro. Jazzy images use
 the same patterns with <code>-jazzy</code> (for example <code>planning-control-jazzy</code>).
 <code>sensing-perception-cuda</code> and <code>carla-interface</code> are amd64-only.</p>
@@ -2267,42 +2149,25 @@ the same patterns with <code>-jazzy</code> (for example <code>planning-control-j
 <ul>
 <li><strong>Reproducible deployments</strong>: use a release tag (<code>vX.Y.Z</code>) or a digest.</li>
 <li><strong>Latest stable for a distro</strong>: use <code>&lt;target&gt;-&lt;ros_distro&gt;</code>.</li>
-<li><strong>Quick experiments</strong>: use the default alias <code>&lt;target&gt;</code>.</li>
-<li><strong>Never</strong> pin per-platform CI tags such as <code>planning-control-amd64-humble</code>;
-  they move with every build.</li>
+<li><strong>Never</strong> pin per-platform CI tags such as <code>universe-common-amd64-humble</code>;
+  they move with every build of <code>main</code>.</li>
 </ul>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">#</a></h2>
-<p>Open AD Kit uses <a href="https://semver.org/">Semantic Versioning</a>
-(<code>vMAJOR.MINOR.PATCH</code>):</p>
-<table>
-<thead>
-<tr>
-<th>Part</th>
-<th>Increments when</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>MAJOR</strong></td>
-<td>A backward-incompatible change to the image set, the documented deployment layout, or a supported platform is removed.</td>
-</tr>
-<tr>
-<td><strong>MINOR</strong></td>
-<td>New backward-compatible capability: components, platforms, deployments, or tooling.</td>
-</tr>
-<tr>
-<td><strong>PATCH</strong></td>
-<td>Backward-compatible fixes: bugs, CVE remediation, image refreshes, and documentation.</td>
-</tr>
-</tbody>
-</table>
-<p>The Open AD Kit version is <strong>independent of the Autoware version</strong>. Each release
-pins one upstream Autoware release, the ROS 2 distros, and every image digest,
-and lists them in its
-<a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Release</a>
-notes. A <code>release/X.Y</code> branch produces the <code>vX.Y.Z</code> releases and pins their
-Autoware release in <code>.github/autoware.ref</code>; <code>main</code> builds a snapshot of
-upstream development that moves weekly.</p>
+<p>Open AD Kit versions follow <a href="https://semver.org/">Semantic Versioning</a> on their
+own, starting at <code>v2.0.0</code>: a backward-incompatible change to the CLI, the
+manifests or a deployment raises the major version, and a move to a new
+Autoware release raises at least the minor version. The release notes list what
+breaks.</p>
+<p>Releases come from <code>main</code>, which pins one Autoware release in
+<code>.github/autoware.ref</code>. Every release pairs the two in its
+<a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Release</a> title,
+<code>Open AD Kit v2.0.1 · Autoware 2.0.0</code>, and so do <code>openadkit install</code> and
+<code>openadkit version</code>. The release also pins the ROS 2 distros and every image
+digest, and its images carry <code>org.opencontainers.image.autoware-base-version</code>.
+A fix that is upstream but not yet in an Autoware release can be
+<a href="../../releases/evidence/#backporting-an-autoware-fix">backported</a>; the release
+notes list it, and the Autoware version stays the tag's. A <code>release/X.Y</code> branch
+is created from a release tag only to fix an older version.</p>
 <h2 id="ros-2-distro-support">ROS 2 Distro Support<a class="headerlink" href="#ros-2-distro-support" title="Permanent link">#</a></h2>
 <table>
 <thead>
