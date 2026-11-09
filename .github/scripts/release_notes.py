@@ -156,7 +156,7 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
         out += ["Not verified in CI (the CLI warns when you run these):", ""]
         out += [f"- `{item['deployment']}`: {item['reason']}" for item in evidence["exempt"]]
         out += [""]
-    out += details("Evidence cells", render_evidence(evidence))
+    out += details("Evidence cells", render_evidence(evidence, summary=False))
     out += details("Image digests", "\n".join(f"- `{image['releaseRef']}@{image['digest']}`" for image in plan["images"]))
     out += [
         "Provenance, the BOM and checksums are in `release-metadata.json`. "

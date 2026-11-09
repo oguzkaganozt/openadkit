@@ -62,6 +62,7 @@ def test_notes_lead_with_people_and_keep_digests_folded(tmp_path):
     assert notes.index("## What's Changed") < notes.index("## Backported Autoware fixes") < notes.index("## Verification")
     assert "**1/1** runtime evidence cells passed ([evidence run](https://github.com/example/repo/actions/runs/456))" in notes
     assert "- `carla-simulation`: Needs a GPU." in notes
+    assert "Passing cells" not in notes and "| Cell | Result |" in notes
     digests = notes.index("<summary>Image digests</summary>")
     assert notes.index("<summary>Evidence cells</summary>") < digests and plan["images"][0]["digest"] in notes[digests:]
     assert "Provenance" not in notes.split("Provenance, the BOM")[0]

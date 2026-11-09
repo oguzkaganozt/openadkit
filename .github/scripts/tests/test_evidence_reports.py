@@ -13,7 +13,9 @@ def test_missing_metrics_are_not_zero():
     }]}
     text = render(summary)
     assert "Passing cells: **1/1**" in text
-    assert "| PASSED | 12 | - | - |" in text
+    assert "| Cell | Result | Ready (s) | Arrival (s) | Peak MiB |" in text
+    assert "| one | PASSED | 12 | - | - |" in text
+    assert render(summary, summary=False).startswith("| Cell |")
 
 
 def test_report_keeps_missing_cells_visible():
