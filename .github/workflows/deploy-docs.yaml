@@ -101,10 +101,20 @@ jobs:
           # PR previews leave this production marker intact. Only forward
           # source revisions (or rebuilding the same revision) may publish.
           # For the first marked deployment, use the current default branch.
-          published=$(git show origin/gh-pages:openadkit-docs-source.txt 2>/dev/null || git rev-parse "origin/$DEFAULT_BRANCH")
-          if ! printf '%s\n' "$published" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "Invalid published documentation source" >&2
-            exit 1
+          # A marker from another repository (for example, a fork that
+          # inherited gh-pages) is not comparable here; fall back to the
+          # default branch so the fork can publish its own site.
+          if published=$(git show origin/gh-pages:openadkit-docs-source.txt 2>/dev/null); then
+            if ! printf '%s\n' "$published" | grep -Eq '^[0-9a-f]{40}$'; then
+              echo "Invalid published documentation source" >&2
+              exit 1
+            fi
+            if ! git cat-file -e "$published^{commit}" 2>/dev/null; then
+              echo "Published documentation source is not in this repository; using $DEFAULT_BRANCH" >&2
+              published=$(git rev-parse "origin/$DEFAULT_BRANCH")
+            fi
+          else
+            published=$(git rev-parse "origin/$DEFAULT_BRANCH")
           fi
           if git merge-base --is-ancestor "$published" "$SOURCE_SHA"; then
             echo "current=true" >> "$GITHUB_OUTPUT"

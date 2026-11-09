@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[3]
 
 @pytest.mark.parametrize(("case", "expected"), [("older", False), ("same", True), ("newer", True),
                                               ("first", True), ("unmarked-old", False),
-                                              ("diverged", False), ("invalid", None)])
+                                              ("diverged", False), ("invalid", None),
+                                              ("foreign", True), ("foreign-old", False)])
 def test_production_site_cannot_regress_published_source(tmp_path, case, expected):
     jobs = yaml.safe_load((ROOT / ".github/workflows/deploy-docs.yaml").read_text())["jobs"]
     guard = next(step for step in jobs["deploy"]["steps"] if step.get("id") == "freshness")
@@ -24,8 +25,10 @@ def test_production_site_cannot_regress_published_source(tmp_path, case, expecte
     git("commit", "--allow-empty", "-m", "new source")
     new = git("rev-parse", "HEAD")
     git("update-ref", "refs/remotes/origin/main", new)
-    source = old if case in ("older", "unmarked-old") else new
+    source = old if case in ("older", "unmarked-old", "foreign-old") else new
     published = old if case == "newer" else new
+    if case in ("foreign", "foreign-old"):
+        published = "deadbeef" * 5  # Valid SHA, absent from this repository.
     if case == "diverged":
         empty = git("mktree", input="")
         source = git("commit-tree", empty, input="unrelated source\n")

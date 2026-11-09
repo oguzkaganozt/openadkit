@@ -62,4 +62,7 @@ Production docs builds record their checkout SHA in `openadkit-docs-source.txt`.
 Inside the shared `gh-pages` publishing lane, `deploy-docs.yaml` rejects sources
 older than, or divergent from, that published revision. Rebuilding the same SHA
 is allowed. Before the first marked publication, the current default-branch head
-is the baseline. PR previews do not replace the production marker.
+is the baseline. A marker that is absent from the repository, such as one
+inherited with a fork's `gh-pages`, is not comparable and also uses the
+default-branch head as the baseline. PR previews do not replace the production
+marker.
