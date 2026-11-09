@@ -19,7 +19,7 @@ files fail validation before starting containers, without Zenoh-specific CLI log
 It selects the declared files, image references and env files, and supplies the
 node's `rosDomainId` as `OPENADKIT_ROS_DOMAIN_ID`.
 
-Each node is isolated: its own Compose project (`openadkit-<deployment>-<node>`),
+Each node is isolated: its own Compose project (`openadkit-<deployment>_<node>`),
 its own container names, and its own ROS domain (`rosDomainId` in the
 manifest). The nodes only see each other through the Zenoh bridge, so both
 nodes can also run on **one machine** for testing, as long as each listens on

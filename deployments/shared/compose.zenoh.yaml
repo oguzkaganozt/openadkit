@@ -10,7 +10,7 @@
 # Do not add ROS_LOCALHOST_ONLY here: the plugin's discovery manager reuses the
 # same Cyclone config and rejects the duplicated `lo` selection at startup.
 #
-# Each node is its own Compose project (openadkit-<deployment>-<node>) with its
+# Each node is its own Compose project (openadkit-<deployment>_<node>) with its
 # own ROS domain, so no fixed container_name: two nodes may share one host.
 # Give each node on a shared host its own ZENOH_LISTEN port.
 services:

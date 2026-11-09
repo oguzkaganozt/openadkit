@@ -9,8 +9,8 @@ configuration, upgrades, and cleanup.
 
 `openadkit install` also links `adkit`, a short name for the same launcher:
 `adkit run planning-simulation` is `openadkit run planning-simulation`. Tab
-completes commands, options and the deployment names of the kit or release in
-the current directory, for both names; bash-completion (installed on Ubuntu by
+completes commands, options and deployment names, for both names: those of the
+kit around the current directory, or else of the active release; bash-completion (installed on Ubuntu by
 default) loads it from `~/.local/share/bash-completion/completions` in a new
 shell. The installer leaves an `adkit` or a completion file that it did not
 install alone, and `openadkit uninstall` removes only its own links.
@@ -97,9 +97,10 @@ CenterPoint models.
 Commands print what they do in plain terms; add `--verbose` (or set
 `OPENADKIT_VERBOSE=1`) to also see the docker commands they run, status queries aside.
 
-`list`, `version`, and `validate` accept `--json` for scripting. `config` prints
-the resolved Compose model of a deployment as JSON, with the same options as
-`validate`; [AutoSD](../platforms/autosd/index.md) builds on it.
+`list`, `version`, and `validate` accept `--json` for scripting; `validate --json`
+prints one JSON document also when the deployment is invalid (`"valid": false`
+with the `"error"`). `config` prints the resolved Compose model of a deployment
+as JSON; it takes `validate`'s `--ros-distro`, `--gpu`, `--node` and `--ws`; [AutoSD](../platforms/autosd/index.md) builds on it.
 
 `validate`, `config`, `fetch`, `run` and `clean` also take a deployment's directory
 instead of its name, such as `openadkit run ./my-kit`: an argument with a `/` or
@@ -170,8 +171,13 @@ delete a deployment's data with:
 
 ```bash
 openadkit validate planning-simulation --data   # report
-openadkit clean planning-simulation             # delete
+openadkit clean planning-simulation             # delete, after asking
 ```
+
+`clean` lists what it deletes and asks first; `--yes` skips the question, as
+scripts need. It deletes all the data the deployment uses, so a kit or a
+deployment on a base also deletes the base's data (the list says so); the next
+`run` or `fetch` downloads it again.
 
 `clean` and `fetch --force` refuse while that deployment is running, or
 when any live container mounts the data (including another kit or deployment).
@@ -199,8 +205,9 @@ several nodes of one deployment run on the same machine.
 
 Each node's declared Compose entrypoint owns its full service graph, including
 any bridge. The CLI selects those files and the node's ROS domain; it never
-adds a networking service behind the scenes. The printed Compose command shows
-the selected files, env files and project name.
+adds a networking service behind the scenes. With `--verbose`, the printed
+Compose command shows the selected files, env files and project name
+(`openadkit-<deployment>_<node>`).
 
 ## Verify a Release Bundle Manually
 

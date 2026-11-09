@@ -2,8 +2,8 @@
 #
 # `openadkit install` links this file as both commands into
 # ~/.local/share/bash-completion/completions, where bash-completion loads it on
-# the first Tab. Deployment names come from `list --json` of the kit or release
-# in the current directory, as the command itself would resolve them.
+# the first Tab. Deployment names come from `list --json`: the kit around the
+# current directory, or else the active release, as the command resolves them.
 # test_openadkit_cli.py checks that every subcommand and option is listed.
 
 _openadkit_deployments() {
@@ -57,7 +57,7 @@ _openadkit() {
         run) options="--ros-distro --gpu --node --ws --pull --no-visualizer --verify --verbose --help" ;;
         build) options="--ros-distro --verbose --help" ;;
         new) options="--base --verbose --help" ;;
-        clean) options="--verbose --help" ;;
+        clean) options="--yes --verbose --help" ;;
         status | stop | shell) options="--node --verbose --help" ;;
         restart) options="--node --all --verbose --help" ;;
         logs) options="--node --follow --verbose --help" ;;
