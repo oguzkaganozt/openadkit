@@ -80,8 +80,7 @@ plugins:
         contributing/index.md: development/contributing.md
         hardware/index.md: platforms/hardware/index.md
         tools/index.md: development/index.md
-        roadmap.md: releases/index.md
-        development/rfc-0001-toolchain-model.md: releases/index.md
+        development/rfc-0001-toolchain-model.md: roadmap.md
         components/sensing.md: components/index.md#sensing-perception
         components/perception.md: components/index.md#sensing-perception
         components/sensing-perception.md: components/index.md#sensing-perception
@@ -102,7 +101,7 @@ plugins:
         # Pre-restructure paths that were published before the current layout
         Architecture/index.md: overview.md
         Modules/index.md: components/index.md
-        Roadmap/index.md: releases/index.md
+        Roadmap/index.md: roadmap.md
         Introduction/start-guide/index.md: getting-started/index.md
         Introduction/application-examples/index.md: deployments/index.md
         Quickstart/start-guide/index.md: getting-started/index.md

@@ -53,6 +53,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 - [**CLI & Maintenance**](getting-started/cli.md) — Runtime controls, upgrades, and cleanup
 - [**Build from Source**](development/build-from-source.md) — Bake groups and the CI pipeline
 - [**Contributing**](development/contributing.md) — How to submit changes
-- [**Releases & Roadmap**](releases/index.md) — Release status and development phases
+- [**Releases**](releases/index.md) — Release status, evidence, and verification
+- [**Roadmap**](roadmap.md) — What comes now, next and later
 
 </div>

@@ -8,7 +8,7 @@
 
 Open AD Kit packages the [Autoware](https://github.com/autowarefoundation/autoware) autonomous driving stack as focused, independently deployable container images. Instead of one monolithic image, it splits the stack along the AD pipeline — sensing, perception, localization, mapping, planning, control, vehicle system, API, simulation, visualization, and the CARLA bridge — so you run only what a workload needs.
 
-Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployment configurations, integrates target platforms, and maintains the build, test, and release tooling that keeps deployments consistent from one host to the next. It ships simulation deployments today; a supported path to a real vehicle interface is on the [roadmap](releases/index.md#roadmap).
+Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployment configurations, integrates target platforms, and maintains the build, test, and release tooling that keeps deployments consistent from one host to the next. It ships simulation deployments today; a supported path to a real vehicle interface is on the [roadmap](roadmap.md).
 
 It also integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/), which runs on real-time operating systems and automotive hardware rather than in a container. Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle; [Supported Platforms](platforms/index.md) covers the derived blueprints and the platform tiers.
 

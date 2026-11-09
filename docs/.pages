@@ -7,4 +7,5 @@ nav:
   - Components: components
   - Platforms: platforms
   - Development: development
-  - Releases & Roadmap: releases
+  - Releases: releases
+  - Roadmap: roadmap.md
