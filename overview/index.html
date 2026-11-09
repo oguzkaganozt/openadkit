@@ -2148,8 +2148,12 @@
 <td>A named, ready-to-run stack: a manifest, environment files, and Compose configuration for a task such as planning simulation.</td>
 </tr>
 <tr>
-<td><strong>Manifest</strong></td>
+<td><strong>Deployment manifest</strong></td>
 <td>The <code>deployment.json</code> file that tells the CLI how to run a deployment: requirements, data downloads, and one-shot services.</td>
+</tr>
+<tr>
+<td><strong>Kit manifest</strong></td>
+<td>The <code>openadkit.json</code> file of a kit: what it extends, its deployments and the images it pins.</td>
 </tr>
 <tr>
 <td><strong>Kit</strong></td>
@@ -2160,7 +2164,7 @@
 <td>The kit's pinned Open AD Kit release and the reference deployment it includes.</td>
 </tr>
 <tr>
-<td><strong>Config overlay</strong></td>
+<td><strong>Config override</strong></td>
 <td>Parameter/file differences layered over package configuration; not a copy of the full base file.</td>
 </tr>
 <tr>
@@ -2173,7 +2177,11 @@
 </tr>
 <tr>
 <td><strong>Evidence</strong></td>
-<td>The runtime test cells run against one build; the release gate requires a successful run that passed every cell.</td>
+<td>The evidence cells run against one build; the release gate requires a successful run that passed every cell.</td>
+</tr>
+<tr>
+<td><strong>Evidence cell</strong></td>
+<td>One runtime test of a deployment on one ROS distro and topology, such as <code>planning-simulation-humble-linux-amd64</code>.</td>
 </tr>
 <tr>
 <td><strong>CI exemption</strong></td>
@@ -2184,8 +2192,8 @@
 <td>The release's pinned Autoware input, runtime images and upstream artifacts.</td>
 </tr>
 <tr>
-<td><strong>Tag alias</strong></td>
-<td>A moving image tag such as <code>planning-humble</code> that follows the newest stable release. Release tags (<code>-vX.Y.Z</code>) and digests stay immutable.</td>
+<td><strong>Latest alias</strong></td>
+<td>An image tag such as <code>planning-humble</code> that follows the newest stable release. Release tags (<code>-vX.Y.Z</code>) and digests stay immutable.</td>
 </tr>
 <tr>
 <td><strong>Digest pin</strong></td>

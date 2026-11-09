@@ -1278,10 +1278,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-config-differences" class="md-nav__link">
+  <a href="#2-config-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Config Differences
+        2. Config Overrides
       
     </span>
   </a>
@@ -2125,10 +2125,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-config-differences" class="md-nav__link">
+  <a href="#2-config-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Config Differences
+        2. Config Overrides
       
     </span>
   </a>
@@ -2260,7 +2260,7 @@ Shell exports do not hide values in the configuration files. The CLI injects
 the ROS distro, host UID/GID, overlay mount paths, <code>OPENADKIT_BASE_ROOT</code> (the base root)
 and <code>OPENADKIT_BASE_DEPLOYMENT</code> (the directory selected by <code>base</code>); release
 component images and artifact references remain pinned.</p>
-<h3 id="2-config-differences">2. Config Differences<a class="headerlink" href="#2-config-differences" title="Permanent link">#</a></h3>
+<h3 id="2-config-overrides">2. Config Overrides<a class="headerlink" href="#2-config-overrides" title="Permanent link">#</a></h3>
 <p>Store overrides under
 <code>config/autoware/&lt;package&gt;/&lt;path-relative-to-package-share&gt;</code>. For example,
 <code>config/autoware/autoware_control_config/config/lane_departure_checker/lane_departure_checker.param.yaml</code>:</p>
@@ -2398,7 +2398,7 @@ prove that it honors the entrypoint, launch or parameter interfaces.</p>
 <h2 id="validation-and-evidence">Validation and Evidence<a class="headerlink" href="#validation-and-evidence" title="Permanent link">#</a></h2>
 <p><code>openadkit validate &lt;deployment&gt;</code> renders the deployment and checks its manifest
 and data. It does not pull images or prove that the runtime works; <code>run</code> reports
-overrides without a counterpart (see <a href="#2-config-differences">Config Differences</a>).</p>
+overrides without a counterpart (see <a href="#2-config-overrides">Config Overrides</a>).</p>
 <p>Your kit's acceptance checks run where CI runs them:</p>
 <ul>
 <li><strong>Readiness:</strong> give a service of your own a Compose <code>healthcheck</code>. <code>run</code>
