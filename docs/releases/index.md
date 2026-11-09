@@ -13,6 +13,8 @@ metadata. Each stable release publishes:
 - a BOM, the passing runtime evidence summary, explicit CI exemptions and default distro
 - build provenance for the installer, bundle, plan and metadata
 
+The notes open with the release's highlights and install command, list the
+merged pull requests by type, and summarize the runtime evidence.
 Installed releases move to the latest stable version with `openadkit upgrade`.
 Tag naming is documented in
 [Container Images & Versioning](../getting-started/container-images.md).

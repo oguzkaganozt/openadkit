@@ -23,12 +23,8 @@ PACKAGER_SHA=$(jq -r '.release.packagerSha' "${plan_file}")
 PUBLISH_LATEST_ALIASES=$(jq -r '.release.publishLatestAliases' "${plan_file}")
 bundle_name=$(jq -r '.bundle.asset' "${plan_file}")
 bundle="dist/${bundle_name}"
-installer="dist/openadkit"
 
-temporary=$(mktemp -d)
-trap 'rm -rf "${temporary}"' EXIT
 bundle_sha256=$(sha256sum "${bundle}" | cut -d ' ' -f1)
-installer_sha256=$(sha256sum "${installer}" | cut -d ' ' -f1)
 plan_sha256=$(sha256sum "${plan_file}" | cut -d ' ' -f1)
 jq \
   --arg version "${VERSION}" \
@@ -58,94 +54,4 @@ jq \
   }' \
   release-input/build/build-metadata.json >release-metadata.json
 
-autoware_input_ref=$(jq -r '.autoware_input_ref' release-metadata.json)
-autoware_ref_type=$(jq -r '.autoware_ref_type' release-metadata.json)
-autoware_ref=$(jq -r '.autoware_ref' release-metadata.json)
-autoware_base_version=$(jq -r '.autoware_base_version' release-metadata.json)
-autoware_lock_sha256=$(jq -r '.autoware_lock_sha256' release-metadata.json)
-upstream_images_sha256=$(jq -r '.upstream_images_sha256' release-metadata.json)
-ros_snapshots=$(jq -r '.bom.rosSnapshots | to_entries | map("\(.key) `\(.value)`") | join(", ")' release-metadata.json)
-openadkit_sha=$(jq -r '.openadkit_sha' release-metadata.json)
-build_tag=$(jq -r '.build_tag' release-metadata.json)
-
-{
-  echo "Open AD Kit ${VERSION} builds on Autoware ${autoware_base_version}. Every v$(printf '%s' "${VERSION#v}" | cut -d. -f1-2).x release builds on Autoware $(printf '%s' "${autoware_base_version}" | cut -d. -f1-2).x."
-  echo ""
-  echo "## Provenance"
-  echo "| Key | Value |"
-  echo "|-----|-------|"
-  echo "| OpenADKit version | \`${VERSION}\` |"
-  echo "| OpenADKit SHA | \`${openadkit_sha}\` |"
-  echo "| Build tag | \`${build_tag}\` |"
-  echo "| Packager SHA | \`${PACKAGER_SHA}\` |"
-  echo "| Release plan SHA256 | \`${plan_sha256}\` |"
-  echo "| Autoware input ref | \`${autoware_input_ref}\` |"
-  echo "| Autoware ref type | \`${autoware_ref_type}\` |"
-  echo "| Autoware resolved SHA | \`${autoware_ref}\` |"
-  echo "| Autoware base version | \`${autoware_base_version}\` |"
-  echo "| Autoware lock SHA256 | \`${autoware_lock_sha256}\` |"
-  echo "| Upstream images SHA256 | \`${upstream_images_sha256}\` |"
-  echo "| ROS snapshots | ${ros_snapshots} |"
-  echo ""
-  # Fixes this release line carries on top of the Autoware tag.
-  backports=$(jq -r '.releaseContext.autoware.backports // [] | .[]
-    | "- \(.subject) (`\(.repository)`): \(.upstream)"' "${plan_file}")
-  if [ -n "${backports}" ]; then
-    echo "## Backported Autoware fixes"
-    echo ""
-    echo "On top of Autoware ${autoware_base_version}, from upstream:"
-    echo ""
-    echo "${backports}"
-    echo ""
-  fi
-  echo "## Open AD Kit Bundle"
-  echo "| Asset | SHA256 |"
-  echo "|-------|--------|"
-  printf '%s\n' "| \`${bundle_name}\` | \`${bundle_sha256}\` |"
-  printf '%s\n' "| \`openadkit\` | \`${installer_sha256}\` |"
-  echo ""
-  echo "## Install"
-  echo ""
-  echo "The versionless \`openadkit\` asset is the installer for this release:"
-  echo ""
-  echo '```bash'
-  echo "curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/openadkit \\"
-  echo "  | bash -s -- install --version ${VERSION}"
-  echo '```'
-  echo ""
-  echo "## Images"
-  while IFS=$'\t' read -r release_ref digest; do
-    printf '%s\n' "- \`${release_ref}\` -> \`${digest}\`"
-  done < <(jq -r '.images[] | [.releaseRef, .digest] | @tsv' "${plan_file}")
-
-  echo ""
-  echo "## Verification"
-  echo ""
-  jq '.evidence' "${plan_file}" >"${temporary}/current.json"
-  python3 "${script_dir}/evidence/report.py" --current "${temporary}/current.json"
-  echo ""
-  echo "Default ROS distro: \`${DEFAULT_ROS_DISTRO}\`, selected in the release source manifest and covered by passing evidence."
-  echo ""
-  echo "Evidence run: $(jq -r '.evidence.url // "not recorded"' "${plan_file}")"
-  echo "See [release verification](https://autowarefoundation.github.io/openadkit/releases/verification/) for how to verify the release."
-  if [ "$(jq '.evidence.exempt | length' "${plan_file}")" -gt 0 ]; then
-    echo ""
-    echo "Not verified in CI (the CLI warns when you run these):"
-    echo ""
-    while IFS=$'\t' read -r deployment reason; do
-      printf '%s\n' "- \`${deployment}\`: ${reason}"
-    done < <(jq -r '.evidence.exempt[] | [.deployment, .reason] | @tsv' "${plan_file}")
-  fi
-  echo ""
-  if [ "${PUBLISH_LATEST_ALIASES}" = true ]; then
-    echo ""
-    echo "## Stable Aliases"
-    while IFS=$'\t' read -r alias digest; do
-      printf '%s\n' "- \`${alias}\` -> \`${digest}\`"
-    done < <(jq -r '.images[] | .digest as $digest | .aliases[] | [., $digest] | @tsv' "${plan_file}")
-  elif [ "$(jq -r '.release.stable' "${plan_file}")" = true ]; then
-    echo ""
-    echo "## Stable Aliases"
-    echo "Not updated because a newer stable OpenADKit release already exists."
-  fi
-} >release-notes.md
+python3 "${script_dir}/release_notes.py" --plan "${plan_file}" --highlights-dir "${script_dir}/../release-highlights"

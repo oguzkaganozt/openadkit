@@ -188,8 +188,10 @@ jobs:
             .github/scripts/registry_lookup.sh
             .github/scripts/stable_alias_policy.sh
             .github/scripts/write_release_notes.sh
+            .github/scripts/release_notes.py
             .github/scripts/evidence/report.py
             .github/scripts/evidence/cells.py
+            .github/release-highlights
 
       - name: Download validated release metadata
         uses: actions/download-artifact@v8

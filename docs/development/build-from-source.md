@@ -159,6 +159,9 @@ Releases promote an existing CI build; nothing is rebuilt.
   branch; it runs after the build.
 - **A successful `evidence` run** on the same branch passed every cell for that
   same build; it runs after the build. See [Evidence Policy](../releases/evidence.md).
+- **Highlights** for a minor or major release are in
+  `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
+  candidates open with them; the rest of the notes is generated.
 - **The [roadmap](../roadmap.md) is reviewed:** finished items are gone, the
   next release's items are under Now, and its review date is current.
 

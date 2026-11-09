@@ -364,7 +364,12 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     scan = tmp_path / "release-input/scan"
     scan.mkdir()
     (scan / "scan-metadata.json").write_text('{"scan_status":"passed"}')
+    # No earlier release: the notes list no changes and ask GitHub for none.
+    executable(tmp_path / "bin/gh", "#!/usr/bin/env bash\n[[ \"$*\" == *\"/releases --jq\"* ]] || exit 1\n")
     subprocess.run(["bash", str(WRITE_NOTES)], cwd=tmp_path, env=env, check=True, capture_output=True)
+    notes = (tmp_path / "release-notes.md").read_text()
+    assert f"install --version {VERSION}" in notes and "What's Changed" not in notes
+    assert "**1/1** runtime evidence cells passed" in notes
     metadata = json.loads((tmp_path / "release-metadata.json").read_text())
     assert metadata["bundles"] == [{"name": asset.name, "sha256": first_asset}]
     assert metadata["release_plan_sha256"] == hashlib.sha256(first_plan).hexdigest()
