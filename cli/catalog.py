@@ -312,8 +312,8 @@ class Deployment:
         return list(self.nodes[node]["resetServices"])
 
 
-def _load_deployment(root: Path, directory: Path) -> Deployment:
-    manifest = validate_deployment_manifest(root, directory)
+def _load_deployment(root: Path, directory: Path, name: str) -> Deployment:
+    manifest = validate_deployment_manifest(root, directory, name)
     compose, nodes = manifest["compose"], manifest["nodes"]
     deployment = Deployment(root, directory, manifest)
     deployment.compose_files(False)
@@ -331,11 +331,11 @@ def _load_deployment(root: Path, directory: Path) -> Deployment:
 
 
 def _load_kit_deployment(
-    root: Path, directory: Path, base_kit: RuntimeContext, base_root: Path
+    root: Path, directory: Path, base_kit: RuntimeContext, base_root: Path, name: str
 ) -> Deployment:
     """An integrator deployment: its own Compose file and values on top of a
     base deployment from the pinned kit, whose requirements it keeps as is."""
-    manifest = read_deployment_manifest(directory, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS)
+    manifest = read_deployment_manifest(directory, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in base_kit.deployments:
         raise OpenADKitError(
@@ -523,16 +523,12 @@ def get_deployment(root: Path, kit: RuntimeContext, name: str) -> Deployment:
     directory = root.joinpath(*safe_relative(reference.path, "deployment path").parts)
     if kit.base is not None:
         assert kit.base_root is not None
-        deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root)
+        deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root, name)
     elif declares_base(root, kit, name):
         # A deployment on another of the same catalog, as a kit's is on its pinned kit.
-        deployment = _load_kit_deployment(root, directory, kit, root)
+        deployment = _load_kit_deployment(root, directory, kit, root, name)
     else:
-        deployment = _load_deployment(root, directory)
-    if deployment.name != name:
-        raise OpenADKitError(
-            f"deployment {name} path does not match manifest name {deployment.name}"
-        )
+        deployment = _load_deployment(root, directory, name)
     return deployment
 
 

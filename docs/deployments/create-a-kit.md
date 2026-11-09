@@ -24,8 +24,8 @@ my-kit/
 - `openadkit.json` selects the base (`extends`), lists extra images you pin
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
-- `deployment.json` names the base deployment and the Compose entrypoint.
-  Architecture, ROS distro, GPU, downloads and the verify step are inherited.
+- `deployment.json` names the base deployment. Compose reads
+  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS distro, GPU, downloads and the verify step are inherited.
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
   add your services below it. `OPENADKIT_BASE_ROOT` names the base root for
   shared assets.
@@ -33,8 +33,8 @@ my-kit/
 - `config/autoware/` holds parameter overrides for Autoware packages.
 - `overlay_ws/src/` holds your ROS packages.
 
-The directory name, the deployment key in `openadkit.json` and `name` in
-`deployment.json` agree; rename them together. The CLI checks that they agree.
+The deployment's name is its key in `openadkit.json`, here `my-kit`;
+`deployment.json` does not repeat it. Renaming the directory changes nothing.
 
 ## Pin Your Base
 

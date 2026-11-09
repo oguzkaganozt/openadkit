@@ -229,7 +229,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
         "deployments": {"world": {"path": "deployments/world"}}, "externalImages": {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "name": "world", "description": "Own simulator",
+        "schemaVersion": 2, "description": "Own simulator",
         "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
     }))
     (directory / "config.env").write_text("TOWN=Town01\n")
@@ -257,7 +257,7 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     directory = kit / "deployments/manual"
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "name": "manual", "description": "Drive by hand",
+        "schemaVersion": 2, "description": "Drive by hand",
         "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
     }))
     (directory / "config.env").write_text("TOWN=Town01\n")

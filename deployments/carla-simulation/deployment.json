@@ -1,6 +1,5 @@
 {
   "schemaVersion": 2,
-  "name": "carla-simulation",
   "description": "Autoware driving in the CARLA simulator",
   "evidence": {"exempt": "Needs an NVIDIA GPU with 16 GB of VRAM; the CI runners have no GPU."},
   "shared": ["shared"],
