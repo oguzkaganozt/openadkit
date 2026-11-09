@@ -87,7 +87,7 @@ jobs:
 
           policy_sha=$(jq -r '.openadkit_sha' build-metadata/build-metadata.json)
           if ! printf '%s\n' "${policy_sha}" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "Invalid OpenADKit SHA in build metadata: ${policy_sha}" >&2
+            echo "Invalid Open AD Kit SHA in build metadata: ${policy_sha}" >&2
             exit 1
           fi
 
@@ -113,7 +113,7 @@ jobs:
       max-parallel: 6
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.policy_sha }}

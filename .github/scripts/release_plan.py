@@ -183,7 +183,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     if default_ros_distro not in product["distros"]:
         fail(f"unsupported default ROS distro: {default_ros_distro}")
     if args.publish_latest_aliases and not args.stable_release:
-        fail("prereleases cannot publish stable aliases")
+        fail("prereleases cannot publish latest aliases")
     if metadata.get("openadkit_sha") != args.release_sha:
         fail("build metadata Open AD Kit SHA does not match the release SHA")
 
@@ -194,7 +194,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         repo, target, distro = raw["repo"], raw["target"], raw["ros_distro"]
         digest = raw["digest"]
         release_ref = image_ref(raw, args.version)
-        # One moving alias per image and distro; no distro-less alias, which
+        # One latest alias per image and distro; no distro-less alias, which
         # would switch ROS distro when the default changes.
         aliases: list[str] = []
         if args.stable_release and args.publish_latest_aliases:

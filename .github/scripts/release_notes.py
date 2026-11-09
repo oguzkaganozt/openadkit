@@ -130,9 +130,9 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     ]
     aliases = [alias for image in plan["images"] for alias in image.get("aliases", [])]
     if release["publishLatestAliases"] and aliases:
-        out += [f"Moving image aliases such as `{aliases[0].rsplit(':', 1)[-1]}` now point to this release.", ""]
+        out += [f"Latest aliases such as `{aliases[0].rsplit(':', 1)[-1]}` now point to this release.", ""]
     elif release["stable"]:
-        out += ["Moving image aliases stay on a newer stable release.", ""]
+        out += ["Latest aliases stay on a newer stable release.", ""]
 
     if changes:
         out += [changes.rstrip("\n"), ""]
@@ -149,7 +149,7 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     run = f" ([evidence run]({evidence['url']}))" if evidence.get("url") else ""
     out += [
         "## Verification", "",
-        f"**{passed}/{len(cells)}** runtime evidence cells passed{run}. "
+        f"**{passed}/{len(cells)}** evidence cells passed{run}. "
         f"Default ROS distro: `{release['defaultRosDistro']}`.", "",
     ]
     if evidence.get("exempt"):

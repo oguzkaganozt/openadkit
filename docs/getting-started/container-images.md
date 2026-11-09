@@ -12,13 +12,13 @@ image digest.
 | Tag | Example | Created | Moves? |
 |-----|---------|---------|--------|
 | **Release** | `planning-humble-v2.0.0` | Every release | No |
-| **Latest per distro** | `planning-humble` | Stable releases | Yes |
+| **Latest alias** | `planning-humble` | Stable releases | Yes |
 | **Pre-release** | `planning-humble-v2.0.0-rc.1` | Pre-releases | No |
 | **CI build** | `planning-humble-123456789-1` | Every CI build (`<run_id>-<run_attempt>`) | No |
 
 Releases promote a CI build of `main` (see [Versioning](#versioning)).
 
-Pre-releases never move the latest-per-distro aliases. No alias leaves out the
+Pre-releases never move the latest aliases. No alias leaves out the
 distro, so an image never switches ROS distro under the same tag.
 
 Examples use **{{ default_distro_title }}**, the default distro. Jazzy images use
@@ -61,7 +61,7 @@ is created from a release tag only to fix an older version.
 
 A release bundle carries pinned images for both distros; choose one with
 `--ros-distro`. A distro is supported only while it is supported upstream.
-Non-exempt runtime cells for each declared distro must also pass the
+Non-exempt evidence cells for each declared distro must also pass the
 [release evidence gate](../releases/evidence.md). The initial default is Humble;
 changing it requires a reviewed manifest change and passing evidence, not an
 automatic release-time fallback. Image builds alone do not prove runtime behavior

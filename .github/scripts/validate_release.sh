@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validate that a build-all-images run can be promoted to an OpenADKit release.
+# Validate that a build-all-images run can be promoted to an Open AD Kit release.
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -69,7 +69,7 @@ resolve_latest_alias_policy() {
     if [ "${current_policy}" = true ]; then
       publish_latest_aliases=true
     else
-      echo "Stable aliases will not be updated because a newer stable release exists"
+      echo "Latest aliases will not be updated because a newer stable release exists"
     fi
   fi
 }

@@ -52,11 +52,11 @@ resolve_registry_context() {
   fi
   if ! [[ "${openadkit_sha}" =~ ^[0-9a-f]{40}$ ]] \
     || ! git cat-file -e "${openadkit_sha}^{commit}"; then
-    echo "Registry context ${ref} has no reachable OpenADKit source commit" >&2
+    echo "Registry context ${ref} has no reachable Open AD Kit source commit" >&2
     return 1
   fi
   if ! git diff --quiet "${openadkit_sha}" HEAD -- "$@"; then
-    echo "Registry context ${ref} does not match the current OpenADKit build inputs: $*" >&2
+    echo "Registry context ${ref} does not match the current Open AD Kit build inputs: $*" >&2
     return 1
   fi
   digest=$(jq -r '.manifest.digest // empty' <<<"${metadata}")

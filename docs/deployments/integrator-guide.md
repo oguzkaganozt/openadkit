@@ -47,7 +47,7 @@ the ROS distro, host UID/GID, overlay mount paths, `OPENADKIT_BASE_ROOT` (the ba
 and `OPENADKIT_BASE_DEPLOYMENT` (the directory selected by `base`); release
 component images and artifact references remain pinned.
 
-### 2. Config Differences
+### 2. Config Overrides
 
 Store overrides under
 `config/autoware/<package>/<path-relative-to-package-share>`. For example,
@@ -184,7 +184,7 @@ prove that it honors the entrypoint, launch or parameter interfaces.
 
 `openadkit validate <deployment>` renders the deployment and checks its manifest
 and data. It does not pull images or prove that the runtime works; `run` reports
-overrides without a counterpart (see [Config Differences](#2-config-differences)).
+overrides without a counterpart (see [Config Overrides](#2-config-overrides)).
 
 Your kit's acceptance checks run where CI runs them:
 

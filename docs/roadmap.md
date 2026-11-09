@@ -26,7 +26,7 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
    development loop.
 3. **Comparable regression results.** A fixed scenario set whose latency,
    resource use and driving metrics are compared with a baseline.
-4. **Platform evidence.** Native arm64 runtime cells and GPU logging simulation
+4. **Platform evidence.** Native arm64 evidence cells and GPU logging simulation
    coverage.
 5. **Autoware upgrades.** Measure clean common-image builds on a 4-vCPU runner
    before the next Autoware version change.

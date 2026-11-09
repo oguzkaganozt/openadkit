@@ -115,7 +115,7 @@ jobs:
 
           build_sha=$(jq -r '.openadkit_sha' "${metadata_dir}/build-metadata.json")
           if ! printf '%s\n' "${build_sha}" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "Invalid OpenADKit SHA in build metadata: ${build_sha}" >&2
+            echo "Invalid Open AD Kit SHA in build metadata: ${build_sha}" >&2
             exit 1
           fi
 

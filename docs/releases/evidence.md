@@ -22,7 +22,7 @@ build to pass.
 
 ## Cells and levels
 
-Runtime cells are enumerated from the source deployment manifests:
+Evidence cells are enumerated from the source deployment manifests:
 
 | Deployment | Distros | Topologies |
 |------------|---------|------------|
@@ -45,7 +45,7 @@ presented as arm64 runtime, two-machine LAN, GPU, HIL or vehicle evidence.
   Planning Simulation ego arrives at its goal, or the scenarios pass, plus the split-node
   checks. Each run starts a fresh stack.
 
-The workflow retries a failed runtime cell once. A cell that still fails fails
+The workflow retries a failed evidence cell once. A cell that still fails fails
 the run and blocks a release. The cells start deployments with
 `openadkit run --no-visualizer`.
 
@@ -80,7 +80,7 @@ They remain in the bundle, are listed in release metadata/notes, and the CLI
 warns when they run. **An exemption is not runtime evidence.**
 
 Planning Simulation's cells run its CPU mode. Its GPU mode (`--gpu`, the
-Diffusion Planner on `planning-cuda`) has no hosted runtime cell; it is checked
+Diffusion Planner on `planning-cuda`) has no hosted evidence cell; it is checked
 on a GPU host and validated (L0) in CI.
 
 Adding an exemption is a reviewed source change, not a release-time override.
@@ -119,7 +119,7 @@ the pinned release as a patch instead of waiting for the next Autoware release:
    the patch.
 
 `defaultRosDistro` in the promoted `openadkit.json` explicitly selects the ROS
-distro, and its required runtime cells must pass.
+distro, and its required evidence cells must pass.
 The gate does not automatically switch from Humble to Jazzy or remove a failing
 distro. To change supported distros, update the manifests in a reviewed source
 change and build/test that revision. Humble remains the initial default.

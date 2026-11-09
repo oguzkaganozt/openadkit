@@ -25,7 +25,7 @@ openadkit config planning-simulation \
 
 Use the `openadkit` of an installed release and `platforms/autosd` from the same
 tag: the release's CLI puts the image digests in the model, so the result is
-pinned. From a source checkout the images are moving aliases. Kits work the same
+pinned. From a source checkout the images are latest aliases. Kits work the same
 way, such as `openadkit config ./my-kit`.
 
 | Output | Contents |

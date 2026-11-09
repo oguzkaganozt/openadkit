@@ -188,11 +188,11 @@ flowchart LR
    for both distros.
 3. **publish**: writes notes/metadata from the validated plan, attests
    bundle/installer/plan/metadata and creates the draft with its assets. It then
-   creates the image release tags and, for stable releases, the moving aliases (see
+   creates the image release tags and, for stable releases, the latest aliases (see
    [Tag Reference](../getting-started/container-images.md#tag-reference)), and
    publishes the draft, which creates the Git tag. A published release cannot be
    changed: a bad one is followed by the next version.
-4. **deploy-docs**: republishes the docs when the stable aliases moved.
+4. **deploy-docs**: republishes the docs when the latest aliases moved.
 
 The release plan (`release-plan.json`) attached to each GitHub Release records
 the exact image digests, aliases, assets, and checksums of that release.
