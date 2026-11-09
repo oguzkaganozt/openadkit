@@ -5,7 +5,7 @@ AD Kit from a [source checkout](../getting-started/index.md).
 
 [GitHub Releases](https://github.com/autowarefoundation/openadkit/releases) is
 the canonical source for published versions, release notes, and provenance
-metadata. Each stable release publishes:
+metadata. [Compatibility](compatibility.md) lists what a version promises. Each stable release publishes:
 
 - a versionless `openadkit` installer
 - the versioned `openadkit-vX.Y.Z.tar.gz` bundle

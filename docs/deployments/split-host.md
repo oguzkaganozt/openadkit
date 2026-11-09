@@ -1,5 +1,9 @@
 # Split-host simulation (Zenoh)
 
+!!! warning "Experimental"
+    Split-host nodes may change in a minor release. See
+    [Compatibility](../releases/compatibility.md#experimental).
+
 Run the Autoware stack on one lab machine and the simulator on another.
 Each workload keeps its catalog name and declares its **nodes** in
 `deployment.json`; each machine starts one node with `--node`.

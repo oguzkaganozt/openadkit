@@ -368,8 +368,8 @@ def print_run_next_steps(
     print("stop with: openadkit stop")
 
 
-NODE_HELP = "node from this deployment's manifest (omit for single host)"
-LIVE_NODE_HELP = "node to act on when several nodes run on this host"
+NODE_HELP = "node from this deployment's manifest (omit for single host; experimental)"
+LIVE_NODE_HELP = "node to act on when several nodes run on this host (experimental)"
 VERBOSE_HELP = "print the docker commands it runs, status queries aside (or set OPENADKIT_VERBOSE=1)"
 
 
