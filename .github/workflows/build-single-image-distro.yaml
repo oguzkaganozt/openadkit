@@ -150,7 +150,7 @@ jobs:
             || jq -e 'index("universe-common-devel") != null or index("universe-common") != null' <<<"${TARGETS_JSON}" >/dev/null; then
             names+=(core-devel base)
           fi
-          if jq -e 'index("sensing-perception-cuda") != null' <<<"${TARGETS_JSON}" >/dev/null; then
+          if jq -e 'any(.[]; endswith("-cuda"))' <<<"${TARGETS_JSON}" >/dev/null; then
             names+=(base-cuda-runtime base-cuda-devel)
           fi
           export UPSTREAM_IMAGE_NAMES="${names[*]}"

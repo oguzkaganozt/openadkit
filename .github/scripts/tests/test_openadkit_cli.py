@@ -1746,3 +1746,14 @@ def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
     result = run_cli(root, "run", "custom", "--option-from-a-newer-release", directory=kit)
     assert result.returncode == 0, result.stderr
     assert record.read_text().strip() == "run custom --option-from-a-newer-release"
+
+
+@pytest.mark.parametrize("gpu", [False, True])
+def test_only_a_gpu_run_uses_the_gpu_component_images(gpu):
+    # The CUDA builds are amd64-only: a CPU run, also on arm64, must not need them.
+    kit = cli_catalog.load_kit(ROOT)
+    environment = kit.component_environment("humble", "arm64", gpu)
+    gpu_images = {name for name in COMPONENT_IMAGES if name.endswith("_GPU_IMAGE")}
+    assert gpu_images >= {"SENSING_PERCEPTION_GPU_IMAGE", "PLANNING_GPU_IMAGE"}
+    assert (gpu_images <= set(environment)) is gpu
+    assert set(environment) - gpu_images == set(COMPONENT_IMAGES) - gpu_images
