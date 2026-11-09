@@ -23,10 +23,10 @@ from manifest import (
     OpenADKitError,
     ensure_safe_existing,
     load_json,
-    parse_artifacts,
     parse_autoware,
     parse_component_images,
     parse_deployment_refs,
+    parse_external_images,
     read_deployment_manifest,
     reject_unknown,
     require_checksum_map,
@@ -109,7 +109,7 @@ class RuntimeContext:
     deployments: dict[str, DeploymentRef]
     shared: dict[str, str]
     # Pinned images we consume rather than build: name -> {ref or distros}.
-    artifacts: dict[str, dict[str, Any]]
+    external_images: dict[str, dict[str, Any]]
     # Release only: the Autoware version, commit and lock file it was built from.
     autoware: dict[str, str] | None = None
     # Integrator kit only: the pinned Open AD Kit it extends.
@@ -127,23 +127,23 @@ class RuntimeContext:
         return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
 
     def bom(self) -> dict[str, Any]:
-        """What this kit runs: Autoware, component images and artifacts."""
+        """What this kit runs: Autoware, component images and external images."""
         return {
             "autoware": self.autoware,
             "images": self.images or None,
-            "artifacts": self.artifacts,
+            "externalImages": self.external_images,
         }
 
-    def artifact_environment(self, ros_distro: str) -> dict[str, str]:
-        """Artifact references for one distro; Compose requires them by name.
+    def external_image_environment(self, ros_distro: str) -> dict[str, str]:
+        """External image references for one distro; Compose requires them by name.
 
-        In an integrator kit its own artifacts come last, so one named like a
+        In an integrator kit its own external images come last, so one named like a
         component image replaces that component.
         """
         environment = {}
-        for name, artifact in self.artifacts.items():
+        for name, image in self.external_images.items():
             # A resolved kit can have per-distro overrides and a base fallback.
-            reference = artifact.get("distros", {}).get(ros_distro) or artifact.get("ref")
+            reference = image.get("distros", {}).get(ros_distro) or image.get("ref")
             if reference:
                 environment[name] = reference
         return environment
@@ -405,18 +405,18 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
     extends = require_string(value.get("extends"), "extends")
     base_root = resolve_extends(root, extends)
     base = load_kit(base_root)
-    # A kit artifact may reuse a component image name to replace that component.
-    own_artifacts = parse_artifacts(value.get("artifacts", {}), {})
-    artifacts = dict(base.artifacts)
-    for name, artifact in own_artifacts.items():
-        if name in artifacts and "distros" in artifact:
-            inherited = artifacts[name]
-            artifacts[name] = {
-                **inherited, **artifact,
-                "distros": {**inherited.get("distros", {}), **artifact["distros"]},
+    # A kit's external image may reuse a component image name to replace that component.
+    own_images = parse_external_images(value.get("externalImages", {}), {})
+    external_images = dict(base.external_images)
+    for name, image in own_images.items():
+        if name in external_images and "distros" in image:
+            inherited = external_images[name]
+            external_images[name] = {
+                **inherited, **image,
+                "distros": {**inherited.get("distros", {}), **image["distros"]},
             }
         else:
-            artifacts[name] = artifact
+            external_images[name] = image
     return RuntimeContext(
         kind="kit",
         default_ros_distro=base.default_ros_distro,
@@ -426,7 +426,7 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
         images=base.images,
         deployments=parse_deployment_refs(value.get("deployments"), "kit"),
         shared={},
-        artifacts=artifacts,
+        external_images=external_images,
         autoware=base.autoware,
         extends=extends,
         base=base,
@@ -493,7 +493,7 @@ def load_kit(root: Path) -> RuntimeContext:
         images=images,
         deployments=parse_deployment_refs(value.get("deployments"), kind),
         shared=require_checksum_map(value.get("shared", {}), "shared"),
-        artifacts=parse_artifacts(value.get("artifacts", {}), component_images),
+        external_images=parse_external_images(value.get("externalImages", {}), component_images),
         autoware=parse_autoware(value.get("autoware"), kind),
     )
 

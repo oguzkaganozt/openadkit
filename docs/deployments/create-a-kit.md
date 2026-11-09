@@ -22,7 +22,7 @@ my-kit/
 ```
 
 - `openadkit.json` selects the base (`extends`), lists extra images you pin
-  (`artifacts`), and points the `my-kit` deployment at `"."`, this same
+  (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment and the Compose entrypoint.
   Architecture, ROS distro, GPU, downloads and the verify step are inherited.

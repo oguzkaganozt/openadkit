@@ -35,7 +35,7 @@ PLATFORM_CELLS: dict[str, dict[str, str]] = {
 # The example kits and their bases, exercised against the same build as the
 # base: made by the staged kit's own `openadkit new` into kits/, with the CI
 # fixture on top (an overlay C++ package, a parameter override, a healthcheck
-# and a pinned artifact).
+# and a pinned external image).
 EXAMPLE_KITS = {"example-kit": "planning-simulation"}
 EXAMPLE_KIT_DIRECTORY = "kits"
 EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/kit"
@@ -172,10 +172,10 @@ def make_example_kits(launcher_root: Path, parent: Path) -> list[Path]:
         shutil.copytree(
             EXAMPLE_KIT_FIXTURE, kit, dirs_exist_ok=True,
             # The fixture's README describes the fixture; the kit keeps the one new wrote.
-            ignore=shutil.ignore_patterns("artifacts.json", "README.md", "__pycache__", *COLCON_PRODUCTS),
+            ignore=shutil.ignore_patterns("external-images.json", "README.md", "__pycache__", *COLCON_PRODUCTS),
         )
         manifest = json.loads((kit / "openadkit.json").read_text(encoding="utf-8"))
-        manifest["artifacts"] = json.loads((EXAMPLE_KIT_FIXTURE / "artifacts.json").read_text(encoding="utf-8"))
+        manifest["externalImages"] = json.loads((EXAMPLE_KIT_FIXTURE / "external-images.json").read_text(encoding="utf-8"))
         (kit / "openadkit.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         kits.append(kit)
     return kits

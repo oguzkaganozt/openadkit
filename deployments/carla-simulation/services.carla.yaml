@@ -22,7 +22,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,display
 
   carla:
-    image: ${CARLA_CONTAINER_IMAGE:?pinned in openadkit.json artifacts}
+    image: ${CARLA_CONTAINER_IMAGE:?pinned in openadkit.json externalImages}
     container_name: ${CARLA_CONTAINER_NAME}
     network_mode: host
     init: true

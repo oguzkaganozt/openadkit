@@ -33,12 +33,12 @@ ALLOWED_KIT_KEYS = {
     "images",
     "deployments",
     "shared",
-    "artifacts",
+    "externalImages",
     "autoware",
 }
-ALLOWED_ARTIFACT_KEYS = {"ref", "distros"}
+ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
 # An integrator kit: its own deployments on top of one pinned Open AD Kit.
-ALLOWED_INTEGRATOR_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "artifacts"}
+ALLOWED_INTEGRATOR_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
 ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS = {
     "schemaVersion", "name", "description", "base", "compose", "data", "verify",
 }
@@ -519,29 +519,29 @@ def parse_deployment_refs(value: Any, kind: str) -> dict[str, DeploymentRef]:
     return refs
 
 
-def parse_artifacts(value: Any, component_images: dict[str, str]) -> dict[str, dict[str, Any]]:
+def parse_external_images(value: Any, component_images: dict[str, str]) -> dict[str, dict[str, Any]]:
     """Images we pin but do not build: one ref, or one ref per ROS distro."""
     if not isinstance(value, dict):
-        raise OpenADKitError("artifacts must be an object")
-    for name, artifact in value.items():
-        where = f"artifacts.{name}"
+        raise OpenADKitError("externalImages must be an object")
+    for name, image in value.items():
+        where = f"externalImages.{name}"
         if not ENV_NAME_RE.fullmatch(name):
-            raise OpenADKitError(f"invalid artifact name: {name}")
+            raise OpenADKitError(f"invalid external image name: {name}")
         if name in component_images:
             raise OpenADKitError(f"{where} is already a component image")
-        if not isinstance(artifact, dict):
+        if not isinstance(image, dict):
             raise OpenADKitError(f"{where} must be an object")
-        reject_unknown(artifact, ALLOWED_ARTIFACT_KEYS, where)
-        if ("ref" in artifact) == ("distros" in artifact):
+        reject_unknown(image, ALLOWED_EXTERNAL_IMAGE_KEYS, where)
+        if ("ref" in image) == ("distros" in image):
             raise OpenADKitError(f"{where} needs exactly one of ref or distros")
         # `ref` serves every distro; `distros` names each one.
         references = (
-            {"*": artifact["ref"]} if "ref" in artifact else artifact["distros"]
+            {"*": image["ref"]} if "ref" in image else image["distros"]
         )
         if not isinstance(references, dict) or not references:
             raise OpenADKitError(f"{where}.distros must be a nonempty object")
         for distro, reference in references.items():
-            if "ref" not in artifact and not NAME_RE.fullmatch(distro):
+            if "ref" not in image and not NAME_RE.fullmatch(distro):
                 raise OpenADKitError(f"invalid ROS distro in {where}: {distro}")
             if not isinstance(reference, str) or not IMAGE_REFERENCE_RE.fullmatch(reference):
                 raise OpenADKitError(f"{where} must use digest-pinned image references")

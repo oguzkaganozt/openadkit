@@ -80,7 +80,7 @@ A [deployment](deployments/index.md) runs the subset of these stages a task need
 | **Evidence** | The evidence cells run against one build; the release gate requires a successful run that passed every cell. |
 | **Evidence cell** | One runtime test of a deployment on one ROS distro and topology, such as `planning-simulation-humble-linux-amd64`. |
 | **CI exemption** | A reasoned manifest entry for a deployment without hosted runtime evidence, not a passing-test claim. |
-| **BOM** | The release's pinned Autoware input, runtime images and upstream artifacts. |
+| **BOM** | The release's pinned Autoware input, component images and external images. |
 | **Latest alias** | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests stay immutable. |
 | **Digest pin** | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
 | **Mixed criticality** | Running safety-critical and non-critical workloads on separately qualified execution environments. Here, the Safety Island's real-time hardware beside the containerized stack; the containers on one host share its network and are not isolated by criticality. |

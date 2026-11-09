@@ -49,8 +49,8 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     assert set(kit.deployments) == {"example-kit"} and kit.deployments["example-kit"].path == "."
     # The staged release is not installed, so the kit extends it by its path.
     manifest = json.loads((example / "openadkit.json").read_text())
-    assert manifest["extends"] == "../.." and "HEARTBEAT_IMAGE" in manifest["artifacts"]
+    assert manifest["extends"] == "../.." and "HEARTBEAT_IMAGE" in manifest["externalImages"]
     assert all("@sha256:" in ref for refs in kit.images.values() for ref in refs.values())
     assert (example / "overlay_ws/src/acme_probe/src/probe.cpp").is_file()
-    assert (example / "README.md").read_text().startswith("# example-kit\n") and not (example / "artifacts.json").exists()
+    assert (example / "README.md").read_text().startswith("# example-kit\n") and not (example / "external-images.json").exists()
     assert not any((example / "overlay_ws" / product).exists() for product in ("build", "install", "log"))

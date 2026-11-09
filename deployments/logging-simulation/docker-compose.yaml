@@ -69,7 +69,7 @@ services:
 
   # Logging-only service.
   rosbag:
-    image: ${AUTOWARE_UNIVERSE_IMAGE:?pinned in openadkit.json artifacts}
+    image: ${AUTOWARE_UNIVERSE_IMAGE:?pinned in openadkit.json externalImages}
     container_name: autoware-rosbag
     network_mode: host
     init: true

@@ -245,7 +245,7 @@ def resolve(
     architecture = host_architecture()
     gpu = _require_host_support(deployment, distro, architecture, gpu)
     images = kit.component_environment(distro, architecture, gpu)
-    images.update(kit.artifact_environment(distro))
+    images.update(kit.external_image_environment(distro))
     file_settings = configuration_environment(deployment, gpu)
     if not kit.pinned:
         # A source checkout may set its own images in the env files; Compose

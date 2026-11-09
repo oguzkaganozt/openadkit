@@ -245,7 +245,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             {key: item[key] for key in ("repository", "subject", "upstream")} for item in backports
         ]
     release_context = {
-        "artifacts": kit.artifacts,
+        "externalImages": kit.external_images,
         "autoware": autoware,
         "componentImages": component_images,
         "defaultRosDistro": default_ros_distro,

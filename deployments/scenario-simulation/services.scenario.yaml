@@ -11,7 +11,7 @@ include:
 
 services:
   scenario_simulator:
-    image: ${SCENARIO_SIMULATOR_IMAGE:?pinned in openadkit.json artifacts}
+    image: ${SCENARIO_SIMULATOR_IMAGE:?pinned in openadkit.json externalImages}
     container_name: autoware-scenario-simulator
     network_mode: host
     init: true
