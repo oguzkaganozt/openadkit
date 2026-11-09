@@ -182,27 +182,6 @@ def live_project_files() -> dict[str, list[str]]:
     return live
 
 
-def owner(project: str, deployment_names: Iterable[str]) -> str | None:
-    """Deployment that owns a project: openadkit-<name> or openadkit-<name>-<node>.
-
-    The longest matching name wins, so planning-simulation is never read as
-    node "simulation" of a deployment called planning.
-    """
-    key = project[len(PROJECT_PREFIX) :]
-    matches = [
-        name
-        for name in deployment_names
-        if key == name or key.startswith(f"{name}-")
-    ]
-    return max(matches, key=len) if matches else None
-
-
-def running_names(deployment_names: Iterable[str]) -> list[str]:
-    wanted = list(deployment_names)
-    found = {owner(project, wanted) for project in live_projects()}
-    return [name for name in wanted if name in found]
-
-
 def other_projects(deployment: Deployment) -> list[str]:
     """Include foreign kits; only this deployment's exact views may coexist.
 
@@ -260,21 +239,16 @@ def live_state_conflict(deployment: Deployment, selection: Selection) -> str | N
     )
 
 
-def require_stopped(name: str) -> None:
-    """Refuse destructive cleanup while this deployment's project is live."""
-    if not shutil.which("docker"):
-        return
-    if name in running_names([name]):
-        raise OpenADKitError(
-            f"{name} is running; stop it before deleting data: "
-            "openadkit stop"
-        )
+def require_stopped(deployment: Deployment) -> None:
+    """Refuse destructive cleanup while any view of this deployment is live."""
+    if live_nodes(deployment):
+        raise OpenADKitError(f"{deployment.name} is running; stop it before deleting data: openadkit stop")
 
 
 def require_data_unused(paths: Iterable[Path]) -> None:
     """Protect data shared with any live container, including another kit."""
     targets = [path.resolve() for path in paths]
-    if not targets or not shutil.which("docker"):
+    if not targets:
         return
     ids = capture_process(["docker", "ps", "-aq"], trace=False).stdout.split()
     if not ids:
