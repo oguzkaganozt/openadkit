@@ -4,7 +4,7 @@ An Open AD Kit kit on top of `{{base}}` from Open AD Kit {{version}}.
 
 | File | What it holds |
 | --- | --- |
-| `openadkit.json` | The Open AD Kit it extends and the extra images it pins (`artifacts`) |
+| `openadkit.json` | The Open AD Kit it extends and the extra images it pins (`externalImages`) |
 | `deployment.json` | Its base deployment, Compose files and, optionally, its own `verify` step |
 | `config.env` | Values that differ from the base |
 | `docker-compose.yaml` | Includes the base; add your services here |

@@ -199,13 +199,13 @@ def site_config(root, text, name="example"):
     path.write_text(text)
 
 
-def integrator_kit(tmp_path, root, *, extends=None, artifacts=None):
+def integrator_kit(tmp_path, root, *, extends=None, external_images=None):
     kit = tmp_path / "kit"
     directory = kit / "deployments/custom"
     directory.mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": extends or str(root),
-        "deployments": {"custom": {"path": "deployments/custom"}}, "artifacts": artifacts or {},
+        "deployments": {"custom": {"path": "deployments/custom"}}, "externalImages": external_images or {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "name": "custom", "description": "Integrator deployment",
@@ -1451,17 +1451,17 @@ def test_fetch_checks_every_destination_before_download(tmp_path):
 
 
 @pytest.mark.parametrize("base_refs", [{"ref": PIN}, {"distros": {"humble": PIN, "jazzy": PIN}}])
-def test_kit_artifact_fallback_and_wildcard_override(tmp_path, base_refs):
+def test_kit_external_image_fallback_and_wildcard_override(tmp_path, base_refs):
     root, _ = runtime_tree(tmp_path)
-    edit_kit(root, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {**base_refs}}))
-    kit = integrator_kit(tmp_path, root, artifacts={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
+    edit_kit(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
+    kit = integrator_kit(tmp_path, root, external_images={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
     context = cli_catalog.load_kit(kit)
-    assert context.artifact_environment("humble")["EXTERNAL_IMAGE"] == OTHER_PIN
-    assert context.artifact_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
-    edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
-    assert cli_catalog.load_kit(kit).artifact_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
+    assert context.external_image_environment("humble")["EXTERNAL_IMAGE"] == OTHER_PIN
+    assert context.external_image_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
+    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
+    assert cli_catalog.load_kit(kit).external_image_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
     # Every distro is `ref`, never a "*" distro.
-    edit_kit(kit, lambda doc: doc.update(artifacts={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
+    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
     with pytest.raises(cli_manifest.OpenADKitError, match="invalid ROS distro"):
         cli_catalog.load_kit(kit)
 
@@ -1482,8 +1482,8 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
         monkeypatch.delenv(name, raising=False)
     root, base = runtime_tree(tmp_path, release=release,
                               document=manifest(gpu=True, data=[files_resource(tmp_path)]), config="VALUE=base\nMAP_PATH=$HOME/data/map\n")
-    edit_kit(root, lambda doc: doc.update(artifacts={"INHERITED_IMAGE": {"ref": PIN}}))
-    kit = integrator_kit(tmp_path, root, artifacts={"API_IMAGE": {"ref": OTHER_PIN}})
+    edit_kit(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
+    kit = integrator_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "config.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
@@ -1505,7 +1505,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
         "OPENADKIT_CONFIG_BASE", "OPENADKIT_CONFIG_DEPLOYMENT", "OPENADKIT_OVERLAY_WS",
     )] == [str(base / "config"), str(directory / "config"), str(kit / "overlay_ws")]
     bom = json.loads(run_cli(root, "version", "--json", directory=kit).stdout)["bom"]
-    assert bom["artifacts"]["INHERITED_IMAGE"]["ref"] == PIN
+    assert bom["externalImages"]["INHERITED_IMAGE"]["ref"] == PIN
     assert (bom["images"] is not None) is release
 
 
@@ -1545,7 +1545,7 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     manifest = json.loads((kit / "openadkit.json").read_text())
     # An installed release is followed by its version; anything else by its path.
     assert manifest["extends"] == ("v1.2.3" if installed else str(root.resolve()))
-    assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["artifacts"] == {}
+    assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
     deployment = json.loads((kit / "deployment.json").read_text())
     assert deployment["name"] == "my-kit" and deployment["base"] == "example"
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()

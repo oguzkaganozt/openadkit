@@ -32,7 +32,7 @@
       "path": "deployments/safety-island-simulation"
     }
   },
-  "artifacts": {
+  "externalImages": {
     "SCENARIO_SIMULATOR_IMAGE": {
       "distros": {
         "humble": "ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime@sha256:80dc759586c0aa55b5c49b120635b9bda8d52ae4fe3ad96478dd0f5a5bfec5ad",

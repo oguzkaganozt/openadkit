@@ -226,7 +226,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
     directory.mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
-        "deployments": {"world": {"path": "deployments/world"}}, "artifacts": {},
+        "deployments": {"world": {"path": "deployments/world"}}, "externalImages": {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "name": "world", "description": "Own simulator",
@@ -250,7 +250,7 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     (kit / "deployments/shared").mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
-        "deployments": {"manual": {"path": "deployments/manual"}}, "artifacts": {},
+        "deployments": {"manual": {"path": "deployments/manual"}}, "externalImages": {},
     }))
     world = '  carla:\n    image: busybox:1.36.1\n    command: ["sleep", "${TOWN}"]\n'
     (kit / "deployments/shared/world.yaml").write_text("services:\n" + world)

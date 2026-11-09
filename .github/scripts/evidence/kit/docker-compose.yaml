@@ -5,8 +5,8 @@ include:
 
 services:
   heartbeat:
-    # A kit artifact (extension point 5), pinned in this kit's openadkit.json.
-    image: ${HEARTBEAT_IMAGE:?pinned in openadkit.json artifacts}
+    # A kit's external image (extension point 5), pinned in its openadkit.json.
+    image: ${HEARTBEAT_IMAGE:?pinned in openadkit.json externalImages}
     network_mode: none
     command: ["sleep", "infinity"]
     restart: unless-stopped

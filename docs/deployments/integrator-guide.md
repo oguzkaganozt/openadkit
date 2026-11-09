@@ -45,7 +45,7 @@ Container ROS/DDS defaults come from the included services' `runtime.env`.
 Shell exports do not hide values in the configuration files. The CLI injects
 the ROS distro, host UID/GID, overlay mount paths, `OPENADKIT_BASE_ROOT` (the base root)
 and `OPENADKIT_BASE_DEPLOYMENT` (the directory selected by `base`); release
-component images and artifact references remain pinned.
+component images and external images remain pinned.
 
 ### 2. Config Overrides
 
@@ -160,7 +160,7 @@ mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the
 example fixture's `acme-probe` does. It needs no image of its own: a runtime image and
 the workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
-artifact (point 5).
+external image (point 5).
 
 To replace one side of a base that runs as split-host nodes, include only the
 other side's service layer instead of the base's Compose file. For example, a
@@ -171,10 +171,10 @@ out are skipped; the kit's own must exist.
 
 ### 5. Image Replacement
 
-Declare consumed images in your kit's `artifacts`, each with either one
-digest-pinned `ref` or a `distros` map of digest-pinned references. An
-artifact name matching a component image variable replaces that component;
-other artifact names can supply images for new services. Use `${NAME:?}` in
+Declare the images your kit uses but does not build in its `externalImages`,
+each with either one digest-pinned `ref` or a `distros` map of digest-pinned
+references. A name matching a component image variable replaces that
+component; other names supply images for new services. Use `${NAME:?}` in
 Compose to require the declared reference.
 
 A replaced base image needs your own runtime evidence: pinning alone does not

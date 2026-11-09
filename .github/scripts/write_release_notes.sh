@@ -38,7 +38,7 @@ jq \
   --slurpfile scan release-input/scan/scan-metadata.json \
   --argjson evidence_exempt "$(jq -c '.evidence.exempt' "${plan_file}")" \
   --argjson evidence "$(jq -c '.evidence' "${plan_file}")" \
-  --argjson bom "$(jq -c '(.releaseContext | {autoware, images, artifacts}) + {rosSnapshots}' "${plan_file}")" \
+  --argjson bom "$(jq -c '(.releaseContext | {autoware, images, externalImages}) + {rosSnapshots}' "${plan_file}")" \
   '. + {
     openadkit_version: $version,
     release_sha: $release_sha,
