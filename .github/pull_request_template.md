@@ -17,6 +17,13 @@
 
 <!-- If yes, specify which docs were updated and link to the MR or explain what was changed. -->
 
+## Roadmap
+
+<!-- A PR that finishes an item in docs/roadmap.md removes it; its title then reaches the release notes. -->
+
+- [ ] This PR finishes a roadmap item and removes it from `docs/roadmap.md`
+- [ ] No roadmap item
+
 ## How was this PR tested?
 
 - [ ] Unit/Integration test
