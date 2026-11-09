@@ -1,4 +1,5 @@
 nav:
   - index.md
+  - Compatibility: compatibility.md
   - Evidence Policy: evidence.md
   - Verify a Release: verification.md

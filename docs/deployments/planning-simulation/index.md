@@ -32,8 +32,8 @@ Control and the rest of the stack are the same in both modes: control follows
 for the planner. Hosted CI runs the CPU mode; the GPU mode is checked on a GPU
 host.
 
-!!! warning "Experimental"
-    The GPU mode is experimental. Autoware 2.0.0's Diffusion Planner can stop the
+!!! warning "Known limitation"
+    Autoware 2.0.0's Diffusion Planner can stop the
     ego up to about 2 m before the goal, so the route does not become `ARRIVED`
     and `run --gpu --verify` fails on the sample route. This is the planner's own
     output, reproduced with upstream's image

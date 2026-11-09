@@ -1,5 +1,9 @@
 # AutoSD
 
+!!! warning "Experimental"
+    Running Open AD Kit on AutoSD with Podman and Quadlet may change in a minor
+    release. See [Compatibility](../../releases/compatibility.md#experimental).
+
 AutoSD (Automotive Stream Distribution) is the public, in-development preview of
 **Red Hat In-Vehicle OS**. It is built on CentOS Stream with an automotive
 kernel and provides:

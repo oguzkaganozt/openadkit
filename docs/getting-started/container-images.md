@@ -39,7 +39,8 @@ Open AD Kit versions follow [Semantic Versioning](https://semver.org/) on their
 own, starting at `v2.0.0`: a backward-incompatible change to the CLI, the
 manifests or a deployment raises the major version, and a move to a new
 Autoware release raises at least the minor version. The release notes list what
-breaks.
+breaks, and [Compatibility](../releases/compatibility.md) lists what a major
+version keeps working.
 
 Releases come from `main`, which pins one Autoware release in
 `.github/autoware.ref`. Every release pairs the two in its
