@@ -112,7 +112,7 @@ PY
 
 install_resolved_release() {
   local release_version=$1 archive_name=$2 expected_sha256=$3
-  local destination=$4 force=$5 announce_next=$6
+  local destination=$4 force=$5 announce_next=$6 activate=$7
   local root_name final_root staged_bundle launcher_dir launcher_path link_path moved_aside
   local next_command completion_dir name
 
@@ -123,7 +123,7 @@ install_resolved_release() {
   fi
   launcher_dir="${HOME}/.local/bin"
   launcher_path="${launcher_dir}/openadkit"
-  if [[ -e $launcher_path && ! -L $launcher_path ]]; then
+  if [[ $activate == true && -e $launcher_path && ! -L $launcher_path ]]; then
     fail "refusing to replace non-symlink launcher: ${launcher_path}"
   fi
 
@@ -194,6 +194,14 @@ PY
   rmdir "$INSTALL_STAGE"
   INSTALL_STAGE=
 
+  if [[ $activate != true ]]; then
+    cleanup_install
+    INSTALL_TEMP=
+    trap - EXIT INT TERM
+    log "installed ${release_version} (Autoware ${RESOLVED_AUTOWARE:-unknown}) to ${final_root}"
+    return 0
+  fi
+
   mkdir -p "$launcher_dir"
   link_path="${launcher_path}.new"
   ln -sfn "$final_root/openadkit" "$link_path"
@@ -234,7 +242,7 @@ EOF
 install_openadkit() {
   # Kits find the release they extend under the same root (cli/catalog.py).
   local version=latest destination="${OPENADKIT_INSTALL_DIR:-${HOME}/.local/share/openadkit}" force=false
-  local resolve_only=false announce_next=true
+  local resolve_only=false announce_next=true activate=true
 
   while (($#)); do
     case "$1" in
@@ -251,9 +259,11 @@ install_openadkit() {
       --force) force=true ;;
       # Internal, for `openadkit upgrade` (cli/installation.py): print the
       # verified version the release metadata resolves to, or install without
-      # the first-run guidance.
+      # the first-run guidance. --no-activate, for the release a kit pins
+      # (cli/main.py), installs it without making it the active openadkit.
       --resolve) resolve_only=true ;;
       --no-next-steps) announce_next=false ;;
+      --no-activate) activate=false ;;
       -h|--help) install_usage; return 0 ;;
       *) usage_fail "unknown install option: $1" ;;
     esac
@@ -278,7 +288,7 @@ install_openadkit() {
   require_command sha256sum
   require_command tar
   install_resolved_release \
-    "$RESOLVED_VERSION" "$RESOLVED_ARCHIVE" "$RESOLVED_SHA256" "$destination" "$force" "$announce_next"
+    "$RESOLVED_VERSION" "$RESOLVED_ARCHIVE" "$RESOLVED_SHA256" "$destination" "$force" "$announce_next" "$activate"
 }
 
 if [[ ${1:-} == install ]]; then

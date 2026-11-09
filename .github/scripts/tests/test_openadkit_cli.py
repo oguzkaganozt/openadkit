@@ -1792,12 +1792,30 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
         (pinned / "openadkit.json").write_text('{"schemaVersion":2,"kind":"release"}')
         executable(pinned / "openadkit", "#!/usr/bin/env bash\n"
                    f'printf "%s|%s|%s\\n" "$OPENADKIT_KIT" "$OPENADKIT_DELEGATED" "$*" > "{record}"\n')
+    else:
+        # Offline: the download of the pinned release fails.
+        executable(tmp_path / "bin/curl", "#!/usr/bin/env bash\nexit 22\n")
     result = run_cli(root, "run", "custom", "--pull", "never", directory=kit)
     assert (result.returncode == 0) is available, result.stderr
     if available:
         assert record.read_text().strip() == f"{kit}|1|run custom --pull never"
     else:
-        assert "openadkit install --version v1.2.3" in result.stderr
+        assert "could not install Open AD Kit v1.2.3, which this kit extends" in result.stderr
+
+
+def test_a_kit_downloads_its_pinned_release_without_activating_it(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+    release = release_bin(tmp_path)
+    result = run_cli(root, "validate", "custom", "--json", directory=kit,
+                     PATH=f"{release}:{tmp_path / 'bin'}:{os.environ['PATH']}")
+    assert result.returncode == 0, result.stderr
+    # The release's own CLI ran the command; its stdout is untouched.
+    assert result.stdout == "ok\n"
+    assert "this kit uses Open AD Kit v1.2.3" in result.stderr
+    assert (tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3/openadkit").is_file()
+    assert not (tmp_path / "home/.local/bin/openadkit").exists()
+    assert not (tmp_path / "home/.local/bin/adkit").exists()
 
 
 def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):

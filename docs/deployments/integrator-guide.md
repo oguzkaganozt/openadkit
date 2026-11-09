@@ -9,8 +9,9 @@ This interface requires manifest schema version 2; older manifests are rejected.
 
 Set `kind` to `kit` and `extends` to a published schema-v2 release tag in your
 root `openadkit.json`. The CLI locates that version under
-`~/.local/share/openadkit/openadkit-<tag>` and delegates to its launcher. Install
-a missing version with `openadkit install --version <tag>`.
+`~/.local/share/openadkit/openadkit-<tag>` and delegates to its launcher. A
+missing version is downloaded and verified on first use, like a build tool's
+wrapper does; your active `openadkit` stays as it is.
 `OPENADKIT_INSTALL_DIR` overrides the install root for both.
 
 A relative or absolute source path is also accepted for development. Only one
