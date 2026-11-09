@@ -2402,8 +2402,10 @@ opens a GitHub issue when it fails.</p>
 <li><strong>Highlights</strong> for a minor or major release are in
   <code>.github/release-highlights/vX.Y.Z.md</code>. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.</li>
-<li><strong>The <a href="../../roadmap/">roadmap</a> is reviewed:</strong> finished items are gone, the
-  next release's items are under Now, and its review date is current.</li>
+<li><strong>The <a href="../../roadmap/">roadmap</a> is reviewed</strong> for a minor or major release:
+  finished items are gone, the release's items are under Now, and its
+  <code>Last reviewed</code> line names the release. Validation checks that line for the
+  release and its candidates.</li>
 </ul>
 <h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
