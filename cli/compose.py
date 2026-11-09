@@ -16,12 +16,7 @@ from typing import Any
 
 from catalog import Deployment, RuntimeContext, deployment_checksum
 from manifest import OpenADKitError
-from settings import (
-    COMPOSE_CONTROL_ENV,
-    Selection,
-    compose_process_environment,
-    process_environment,
-)
+from settings import Selection, compose_process_environment, docker_environment
 
 PROJECT_PREFIX = "openadkit-"
 LIVE_PROJECT_STATES = {"running", "restarting", "paused", "removing"}
@@ -147,12 +142,6 @@ def require_docker() -> None:
         raise OpenADKitError("Docker is unavailable. Run: openadkit setup")
 
 
-def _compose_ls_environment() -> dict[str, str]:
-    environment = dict(os.environ)
-    for name in COMPOSE_CONTROL_ENV:
-        environment.pop(name, None)
-    return environment
-
 
 def live_projects() -> set[str]:
     """Names of the Open AD Kit Compose projects that are live on this host."""
@@ -164,7 +153,7 @@ def live_project_files() -> dict[str, list[str]]:
     require_docker()
     result = capture_process(
         ["docker", "compose", "ls", "--format", "json"],
-        env=_compose_ls_environment(),
+        env=docker_environment(),
         check=False,
         trace=False,
     )
@@ -398,7 +387,7 @@ def write_run_record(deployment: Deployment, record: dict[str, Any]) -> Path:
 
 def check_daemon(selection: Selection) -> None:
     result = capture_process(
-        ["docker", "info"], env=process_environment(selection), check=False
+        ["docker", "info"], env=docker_environment(), check=False
     )
     if result.returncode != 0:
         detail = result.stderr.strip()
@@ -408,7 +397,7 @@ def check_daemon(selection: Selection) -> None:
         return
     runtimes = capture_process(
         ["docker", "info", "--format", "{{json .Runtimes}}"],
-        env=process_environment(selection),
+        env=docker_environment(),
         check=False,
     )
     try:
@@ -428,7 +417,7 @@ def restart_counts(deployment: Deployment, selection: Selection) -> dict[str, in
         return {}
     result = capture_process(
         ["docker", "inspect", "--format", "{{.Id}} {{.RestartCount}}", *ids],
-        env=process_environment(selection),
+        env=docker_environment(),
         trace=False,
     )
     return {
@@ -453,7 +442,7 @@ def failed_services(
             "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}}",
             *ids,
         ],
-        env=process_environment(selection),
+        env=docker_environment(),
         trace=False,
     )
     failed = set()
@@ -569,7 +558,7 @@ def verify(deployment: Deployment, selection: Selection, services: set[str], rec
         ids = compose_capture(deployment, selection, ["ps", "--all", "--quiet", service]).stdout.split()
         if not ids:
             raise OpenADKitError(f"{service} has no container to wait for")
-        code = int(capture_process(["docker", "wait", ids[0]], env=process_environment(selection)).stdout.strip())
+        code = int(capture_process(["docker", "wait", ids[0]], env=docker_environment()).stdout.strip())
     record["verify"] = {
         "service": service,
         "seconds": round(time.monotonic() - begin, 1),
@@ -590,7 +579,7 @@ def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
     base version change these usually are renamed packages, files or keys.
     """
     ids = compose_capture(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
-    return report_container_overrides(ids, process_environment(selection))
+    return report_container_overrides(ids, docker_environment())
 
 
 def report_container_overrides(ids: list[str], environment: dict[str, str]) -> list[str]:
@@ -696,7 +685,7 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
             "--entrypoint", "bash",
             image, "-c", OVERLAY_BUILD, "build", *colcon,
         ],
-        env=_compose_ls_environment(),
+        env=docker_environment(),
     )
     (workspace / "install").mkdir(exist_ok=True)
     (workspace / "install" / OVERLAY_STAMP).write_text(

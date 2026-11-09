@@ -15,7 +15,6 @@ from compose import (
     PROJECT_PREFIX,
     ROS_SHELL,
     SHELL_SETUP,
-    _compose_ls_environment,
     capture_process,
     live_projects,
     print_command,
@@ -23,6 +22,7 @@ from compose import (
     run_process,
 )
 from manifest import OpenADKitError, load_json
+from settings import docker_environment
 
 
 def autoware_state(project: str) -> dict[str, Any] | None:
@@ -92,12 +92,12 @@ def project_command(project: str, arguments: list[str]) -> list[str]:
 # Compose finds a running project by its labels. From / it reads no Compose
 # file of the current directory, so none of the deployment's settings are needed.
 def project_run(project: str, arguments: list[str]) -> None:
-    run_process(project_command(project, arguments), cwd=Path("/"), env=_compose_ls_environment())
+    run_process(project_command(project, arguments), cwd=Path("/"), env=docker_environment())
 
 
 def project_capture(project: str, arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return capture_process(
-        project_command(project, arguments), cwd=Path("/"), env=_compose_ls_environment(),
+        project_command(project, arguments), cwd=Path("/"), env=docker_environment(),
         check=False, trace=False,
     )
 
@@ -132,7 +132,7 @@ def hooked_services(project: str) -> list[str]:
     """Services that take the integrator's layer: config overrides or overlay workspaces."""
     ids = project_capture(project, ["ps", "--quiet"]).stdout.split()
     inspected = capture_process(
-        ["docker", "inspect", *ids], env=_compose_ls_environment(), check=False, trace=False
+        ["docker", "inspect", *ids], env=docker_environment(), check=False, trace=False
     ) if ids else None
     try:
         containers = json.loads(inspected.stdout) if inspected else []
@@ -180,7 +180,7 @@ def wait_after_restart(project: str, services: list[str]) -> None:
                 "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
                 *ids,
             ],
-            env=_compose_ls_environment(), check=False, trace=False,
+            env=docker_environment(), check=False, trace=False,
         )
         rows = [row for row in (line.split() for line in result.stdout.splitlines()) if len(row) == 4]
         # A one-shot service may finish, as map-check does, but not fail.
@@ -191,7 +191,7 @@ def wait_after_restart(project: str, services: list[str]) -> None:
         if failed:
             raise OpenADKitError(f"{', '.join(failed)} failed after restart; see: openadkit logs {' '.join(failed)}")
         if not any(health == "starting" for *_, health in rows):
-            report_container_overrides(project_capture(project, ["ps", "--quiet"]).stdout.split(), _compose_ls_environment())
+            report_container_overrides(project_capture(project, ["ps", "--quiet"]).stdout.split(), docker_environment())
             return
         time.sleep(2)
 
@@ -215,7 +215,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     ids = project_capture(project, ["ps", "--quiet", "api"]).stdout.split()
     if not ids:
         raise OpenADKitError(f"{view_name(project)} has no running api service to record from")
-    environment = _compose_ls_environment()
+    environment = docker_environment()
     inspected = capture_process(
         ["docker", "inspect", ids[0]], env=environment, check=False, trace=False
     )

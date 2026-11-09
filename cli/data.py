@@ -224,13 +224,9 @@ def extract_zip(archive: Path, stage: Path, expected_root: str) -> Path:
     return stage / expected_root
 
 
-def selected_resources(
-    deployment: Deployment,
-    selection: Selection,
-    *,
-    include_gpu: bool | None = None,
-) -> list[dict[str, Any]]:
-    want_gpu = selection.gpu if include_gpu is None else include_gpu
+def selected_resources(deployment: Deployment, selection: Selection) -> list[dict[str, Any]]:
+    # GPU-only data needs a GPU run, or a data-only selection (fetch, clean).
+    want_gpu = selection.gpu or selection.gpu_environment is not None
     resources = [
         resource
         for resource in deployment.data
@@ -246,7 +242,7 @@ def selected_resources(
 
 
 def resolve_destination(resource: dict[str, Any], selection: Selection) -> Path:
-    """Where a resource goes, from settings settings.resolve_settings resolved."""
+    """Where a resource goes, as settings.resolve resolved it."""
     variable = resource["destinationEnv"]
     environment = selection.environment
     if resource.get("gpu") and selection.gpu_environment is not None:
@@ -265,29 +261,15 @@ def resolve_destination(resource: dict[str, Any], selection: Selection) -> Path:
     return destination
 
 
-def validate_destinations(
-    deployment: Deployment,
-    selection: Selection,
-    *,
-    include_gpu: bool | None = None,
-) -> None:
-    for resource in selected_resources(
-        deployment, selection, include_gpu=include_gpu
-    ):
+def validate_destinations(deployment: Deployment, selection: Selection) -> None:
+    for resource in selected_resources(deployment, selection):
         resolve_destination(resource, selection)
 
 
-def check_installed_data(
-    deployment: Deployment,
-    selection: Selection,
-    *,
-    include_gpu: bool | None = None,
-) -> list[dict[str, Any]]:
+def check_installed_data(deployment: Deployment, selection: Selection) -> list[dict[str, Any]]:
     """Report presence and completeness for each selected data resource."""
     results: list[dict[str, Any]] = []
-    for resource in selected_resources(
-        deployment, selection, include_gpu=include_gpu
-    ):
+    for resource in selected_resources(deployment, selection):
         target = resolve_destination(resource, selection)
         if validate_dataset(target, resource["requiredFiles"]):
             if is_outdated(target, resource):
@@ -317,18 +299,11 @@ def check_installed_data(
     return results
 
 
-def remove_installed_data(
-    deployment: Deployment,
-    selection: Selection,
-    *,
-    include_gpu: bool | None = None,
-) -> list[dict[str, Any]]:
+def remove_installed_data(deployment: Deployment, selection: Selection) -> list[dict[str, Any]]:
     """Delete installed data targets and report what was removed."""
     targets: list[tuple[str, Path]] = []
     seen: set[Path] = set()
-    for resource in selected_resources(
-        deployment, selection, include_gpu=include_gpu
-    ):
+    for resource in selected_resources(deployment, selection):
         target = resolve_destination(resource, selection)
         if target in seen:
             continue
@@ -348,17 +323,9 @@ def remove_installed_data(
     return removed
 
 
-def validate_install_targets(
-    deployment: Deployment,
-    selection: Selection,
-    force: bool,
-    *,
-    include_gpu: bool | None = None,
-) -> None:
+def validate_install_targets(deployment: Deployment, selection: Selection, force: bool) -> None:
     destinations: set[Path] = set()
-    for resource in selected_resources(
-        deployment, selection, include_gpu=include_gpu
-    ):
+    for resource in selected_resources(deployment, selection):
         target = resolve_destination(resource, selection)
         if target in destinations:
             raise OpenADKitError(f"multiple data resources target the same path: {target}")
@@ -448,17 +415,7 @@ def install_resource(
         print(f"installed data: {target}")
 
 
-def install_data(
-    deployment: Deployment,
-    selection: Selection,
-    force: bool,
-    *,
-    include_gpu: bool | None = None,
-) -> None:
-    validate_install_targets(
-        deployment, selection, force, include_gpu=include_gpu
-    )
-    for resource in selected_resources(
-        deployment, selection, include_gpu=include_gpu
-    ):
+def install_data(deployment: Deployment, selection: Selection, force: bool) -> None:
+    validate_install_targets(deployment, selection, force)
+    for resource in selected_resources(deployment, selection):
         install_resource(resource, selection, force)

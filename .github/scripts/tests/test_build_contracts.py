@@ -181,7 +181,7 @@ def compose_context(tmp_path, monkeypatch):
 ])
 def test_real_compose_preserves_single_and_split_graphs(compose_context, name, node, present, absent):
     deployment = catalog.get_deployment(ROOT, compose_context, name)
-    selection = settings.select(deployment, compose_context, "humble", False, node=node)
+    selection = settings.resolve(deployment, compose_context, "humble", False, node=node)
     result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
     services = json.loads(result.stdout)["services"]
     assert present <= services.keys() and not absent & services.keys()
@@ -277,8 +277,7 @@ def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, t
     (tmp_path / "config").mkdir()
     (tmp_path / "config/logging-simulation.env").write_text("DATA_PATH=/srv/autoware_data\n")
     deployment = catalog.get_deployment(ROOT, compose_context, "logging-simulation")
-    selection = settings.resolve_settings(
-        deployment, settings.select(deployment, compose_context, "humble", True, require_gpu=False))
+    selection = settings.resolve(deployment, compose_context, "humble", True)
     resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")
     result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
     mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["perception"]["volumes"]}
