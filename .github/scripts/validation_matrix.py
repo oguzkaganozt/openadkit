@@ -36,7 +36,7 @@ PLATFORM_CELLS: dict[str, dict[str, str]] = {
 # base: made by the staged kit's own `openadkit new` into kits/, with the CI
 # fixture on top (an overlay C++ package, a parameter override, a healthcheck
 # and a pinned artifact).
-EXAMPLE_KITS = {"custom-kit": "planning-simulation"}
+EXAMPLE_KITS = {"example-kit": "planning-simulation"}
 EXAMPLE_KIT_DIRECTORY = "kits"
 EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/kit"
 # Host build products of an overlay workspace; never kit content.

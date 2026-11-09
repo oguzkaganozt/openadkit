@@ -111,7 +111,7 @@ command.
 
 `openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit on top of a
 deployment of this Open AD Kit (Planning Simulation by default) that holds
-only your differences. See [Custom Deployment](../deployments/custom-deployment.md).
+only your differences. See [Create a Kit](../deployments/create-a-kit.md).
 
 ## Configuration
 

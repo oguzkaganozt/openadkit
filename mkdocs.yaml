@@ -66,55 +66,6 @@ plugins:
       # docs/macros.py: variables + catalog-generated tables.
       module_name: docs/macros
       on_error_fail: true
-  - redirects:
-      redirect_maps:
-        # Current structure
-        deployments/samples/planning-simulation/index.md: deployments/planning-simulation/index.md
-        deployments/samples/scenario-simulation/index.md: deployments/scenario-simulation/index.md
-        deployments/samples/logging-simulation/index.md: deployments/logging-simulation/index.md
-        deployments/samples/carla-simulation/index.md: deployments/carla-simulation/index.md
-        deployments/demos/zenoh-bridge/index.md: deployments/split-host.md
-        deployments/zenoh-bridge/index.md: deployments/split-host.md
-        deployments/samples/index.md: deployments/index.md
-        deployments/demos/index.md: deployments/index.md
-        contributing/index.md: development/contributing.md
-        hardware/index.md: platforms/hardware/index.md
-        tools/index.md: development/index.md
-        development/rfc-0001-toolchain-model.md: roadmap.md
-        components/sensing.md: components/index.md#sensing-perception
-        components/perception.md: components/index.md#sensing-perception
-        components/sensing-perception.md: components/index.md#sensing-perception
-        components/localization.md: components/index.md#localization-mapping
-        components/mapping.md: components/index.md#localization-mapping
-        components/localization-mapping.md: components/index.md#localization-mapping
-        components/planning.md: components/index.md#planning
-        components/control.md: components/index.md#control
-        components/planning-control.md: components/index.md#planning
-        components/vehicle-system.md: components/index.md#vehicle-and-system
-        components/api.md: components/index.md#api
-        components/simulator.md: components/index.md#simulator
-        components/visualizer.md: components/index.md#visualizer
-        components/carla-interface.md: components/index.md#carla-interface
-        getting-started/image-tags.md: getting-started/container-images.md
-        getting-started/versioning.md: getting-started/container-images.md
-        getting-started/release-flow.md: getting-started/container-images.md
-        # Pre-restructure paths that were published before the current layout
-        Architecture/index.md: overview.md
-        Modules/index.md: components/index.md
-        Roadmap/index.md: roadmap.md
-        Introduction/start-guide/index.md: getting-started/index.md
-        Introduction/application-examples/index.md: deployments/index.md
-        Quickstart/start-guide/index.md: getting-started/index.md
-        Quickstart/application-example/index.md: deployments/index.md
-        Quickstart/system-configuration/index.md: getting-started/troubleshooting.md
-        Services/index.md: components/index.md
-        Services/API/index.md: components/index.md#api
-        Services/Localization-Mapping/index.md: components/index.md#localization-mapping
-        Services/Planning-Control/index.md: components/index.md#planning
-        Services/Sensing-Perception/index.md: components/index.md#sensing-perception
-        Services/Vehicle-System/index.md: components/index.md#vehicle-and-system
-        services/index.md: components/index.md
-        workloads/index.md: deployments/index.md
   - search
 
 markdown_extensions:

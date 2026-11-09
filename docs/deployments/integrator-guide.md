@@ -1,7 +1,7 @@
 # Integrator Guide
 
 An integrator kit owns its differences, while Open AD Kit owns the base CLI,
-images and deployments. Start one with `openadkit new` ([Custom Deployment](custom-deployment.md));
+images and deployments. Start one with `openadkit new` ([Create a Kit](create-a-kit.md));
 the kit CI exercises is that output with the [example fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit) on top.
 This interface requires manifest schema version 2; older manifests are rejected.
 
@@ -190,7 +190,7 @@ Your kit's acceptance checks run where CI runs them:
 
 - **Readiness:** give a service of your own a Compose `healthcheck`. `run`
   waits until it passes. The example fixture's `acme-probe` service runs
-  `checks/custom_kit.py`, which checks the fresh `/acme/probe` publication of
+  `checks/example_kit.py`, which checks the fresh `/acme/probe` publication of
   its C++ package and its parameters.
 - **End to end:** the base's `verify` step runs on top of your layer with
   `openadkit run --verify`. To check something else, name your own in

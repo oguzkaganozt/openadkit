@@ -1,4 +1,4 @@
-# Custom Deployment
+# Create a Kit
 
 Start your own kit with `openadkit new`. It makes a kit that extends this Open
 AD Kit and one of its deployments without copying them, so the kit keeps only

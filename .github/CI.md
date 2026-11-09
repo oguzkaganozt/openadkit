@@ -50,7 +50,7 @@ Hosted split evidence is two nodes on one runner, not proof of two physical
 hosts.
 
 The integrator example is made in CI, not kept in `deployments/`: the staged
-CLI's `openadkit new custom-kit` makes it under `kits/`, and the fixture in
+CLI's `openadkit new example-kit` makes it under `kits/`, and the fixture in
 `.github/scripts/evidence/kit/` adds every extension point on top. Lint
 validates the same kit made from the checkout.
 

@@ -37,7 +37,7 @@ capture/
 .playwright-cli/
 
 
-# Overlay workspace build output (deployments/custom-kit/overlay_ws/build.sh)
+# Overlay workspace build output from `openadkit build`
 overlay_ws/build/
 overlay_ws/install/
 overlay_ws/log/

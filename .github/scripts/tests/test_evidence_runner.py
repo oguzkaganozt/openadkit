@@ -31,10 +31,10 @@ def test_evidence_cells_carry_the_manifest_plan():
     assert split["nodes"].split() == list(scenario["nodes"]) and json.loads(split["verify"]) == scenario["verify"]
     drive = manifest("planning-simulation")["verify"]
     # A deployment with a base runs the base's verify step on top of its own layer.
-    for name in ("custom-kit", "safety-island-simulation", "planning-simulation"):
+    for name in ("example-kit", "safety-island-simulation", "planning-simulation"):
         assert json.loads(matrix_cell(name)["verify"]) == drive
     assert matrix_cell("planning-simulation")["nodes"] == ""
-    for cell in (split, matrix_cell("custom-kit"), matrix_cell("safety-island-simulation")):
+    for cell in (split, matrix_cell("example-kit"), matrix_cell("safety-island-simulation")):
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
 
 

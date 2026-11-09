@@ -150,4 +150,4 @@ rosbag replay, and CARLA. Split-host (`--node` over Zenoh) is experimental.
 - [CLI & Maintenance](cli.md) - Runtime controls, validation, upgrades, and cleanup
 - [Components](../components/index.md) - The architecture behind what you just ran
 - [Container Images & Versioning](container-images.md) - Tag schema and pinning guidance
-- [Custom Deployment](../deployments/custom-deployment.md) - Compose your own stack
+- [Create a Kit](../deployments/create-a-kit.md) - Build your own stack on a deployment

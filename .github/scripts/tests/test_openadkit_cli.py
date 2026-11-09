@@ -1693,7 +1693,7 @@ def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypat
         shutil.move(str(item), kit)
     shutil.rmtree(kit / "deployments")
     edit_kit(kit, lambda document: document["deployments"].update(custom={"path": "."}))
-    # The deployment is the kit root, so the root is named after it (as deployments/custom-kit).
+    # The deployment is the kit root, so the root is named after it.
     kit = kit.rename(tmp_path / "custom")
     (kit / "overlay_ws").mkdir()
     assert overlay_workspace(kit, "custom", monkeypatch, tmp_path) == str(kit / "overlay_ws")
