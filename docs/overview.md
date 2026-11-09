@@ -70,15 +70,17 @@ A [deployment](deployments/index.md) runs the subset of these stages a task need
 |------|---------|
 | **Component image** | A published container image holding one or more Autoware functions, for example `planning`. |
 | **Deployment** | A named, ready-to-run stack: a manifest, environment files, and Compose configuration for a task such as planning simulation. |
-| **Manifest** | The `deployment.json` file that tells the CLI how to run a deployment: requirements, data downloads, and one-shot services. |
+| **Deployment manifest** | The `deployment.json` file that tells the CLI how to run a deployment: requirements, data downloads, and one-shot services. |
+| **Kit manifest** | The `openadkit.json` file of a kit: what it extends, its deployments and the images it pins. |
 | **Kit** | An `openadkit.json` and its deployments: the reference kit or an integrator's differences over a pinned base release. |
 | **`extends` / `base`** | The kit's pinned Open AD Kit release and the reference deployment it includes. |
-| **Config overlay** | Parameter/file differences layered over package configuration; not a copy of the full base file. |
+| **Config override** | Parameter/file differences layered over package configuration; not a copy of the full base file. |
 | **Overlay workspace** | Custom ROS packages built against the matching pinned devel image and sourced over the base. |
 | **Node** | A deployment's host-local view, with its own services, Compose project, ROS domain and Zenoh endpoint. |
-| **Evidence** | The runtime test cells run against one build; the release gate requires a successful run that passed every cell. |
+| **Evidence** | The evidence cells run against one build; the release gate requires a successful run that passed every cell. |
+| **Evidence cell** | One runtime test of a deployment on one ROS distro and topology, such as `planning-simulation-humble-linux-amd64`. |
 | **CI exemption** | A reasoned manifest entry for a deployment without hosted runtime evidence, not a passing-test claim. |
 | **BOM** | The release's pinned Autoware input, runtime images and upstream artifacts. |
-| **Tag alias** | A moving image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests stay immutable. |
+| **Latest alias** | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests stay immutable. |
 | **Digest pin** | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
 | **Mixed criticality** | Running safety-critical and non-critical workloads on separately qualified execution environments. Here, the Safety Island's real-time hardware beside the containerized stack; the containers on one host share its network and are not isolated by criticality. |

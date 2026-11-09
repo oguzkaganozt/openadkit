@@ -194,7 +194,7 @@ def example_kit_cells(runtime: ModuleType, source_root: Path) -> list[dict[str, 
 
 
 def evidence_cell_name(cell: dict[str, Any]) -> str:
-    """The hosted runtime cell identity, shared by the workflow matrix and the summary."""
+    """The evidence cell identity, shared by the workflow matrix and the summary."""
     variant = cell.get("node") or cell.get("backend") or ""
     suffix = f"-{variant}" if variant else ""
     platform = EVIDENCE_PLATFORM.replace("/", "-")

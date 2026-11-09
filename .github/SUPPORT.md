@@ -28,7 +28,7 @@ source checkouts and release candidates are development previews.
 
 Release evidence covers specific deployment, ROS distro, node topology and
 platform cells, not every hardware or environment combination. The hosted
-runtime cells currently use `linux/amd64`; a successful arm64 image build is
+evidence cells currently use `linux/amd64`; a successful arm64 image build is
 not arm64 runtime evidence. A documented CI exemption means **not verified in
 CI**, not a passing test. See the
 [evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)

@@ -58,7 +58,7 @@ def git(repo, *args, capture_output=False):
         [
             "git",
             "-c",
-            "user.name=OpenADKit Tests",
+            "user.name=Open AD Kit Tests",
             "-c",
             "user.email=tests@example.com",
             *args,

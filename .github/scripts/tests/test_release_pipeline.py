@@ -384,7 +384,7 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     subprocess.run(["bash", str(WRITE_NOTES)], cwd=tmp_path, env=env, check=True, capture_output=True)
     notes = (tmp_path / "release-notes.md").read_text()
     assert f"install --version {VERSION}" in notes and "What's Changed" not in notes
-    assert "**1/1** runtime evidence cells passed" in notes
+    assert "**1/1** evidence cells passed" in notes
     metadata = json.loads((tmp_path / "release-metadata.json").read_text())
     assert metadata["bundles"] == [{"name": asset.name, "sha256": first_asset}]
     assert metadata["release_plan_sha256"] == hashlib.sha256(first_plan).hexdigest()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Promote validated build image digests to release tags and stable aliases.
+# Promote validated build image digests to release tags and latest aliases.
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

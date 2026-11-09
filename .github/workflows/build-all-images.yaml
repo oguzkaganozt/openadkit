@@ -63,7 +63,7 @@ jobs:
       component_matrix: ${{ steps.inventory.outputs.component_matrix }}
       manifest_matrix: ${{ steps.inventory.outputs.manifest_matrix }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Resolve shared build inputs
@@ -148,7 +148,7 @@ jobs:
       max-parallel: 8
       matrix: ${{ fromJson(needs.prepare.outputs.common_matrix) }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Set up build environment
@@ -197,7 +197,7 @@ jobs:
       max-parallel: 8
       matrix: ${{ fromJson(needs.prepare.outputs.component_matrix) }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Set up build environment
@@ -268,7 +268,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Download Autoware dependency lockfile

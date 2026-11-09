@@ -52,7 +52,7 @@ jobs:
       devel_context: ${{ steps.contexts.outputs.devel_context }}
       runtime_context: ${{ steps.contexts.outputs.runtime_context }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -177,7 +177,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Set up build environment
@@ -225,7 +225,7 @@ jobs:
       matrix:
         target: ${{ fromJson(needs.prepare.outputs.targets_json) }}
     steps:
-      - name: Checkout OpenADKit repository
+      - name: Check out the Open AD Kit repository
         uses: actions/checkout@v7
 
       - name: Set up build environment

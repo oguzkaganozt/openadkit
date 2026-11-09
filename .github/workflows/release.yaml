@@ -1,5 +1,5 @@
-# Manually promotes an existing build-all-images run to an OpenADKit release.
-# The build records provenance; this workflow only assigns the OpenADKit version
+# Manually promotes an existing build-all-images run to an Open AD Kit release.
+# The build records provenance; this workflow only assigns the Open AD Kit version
 # after validating build metadata, a passing full scan, a passing evidence run,
 # and registry digests.
 
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'OpenADKit release version (e.g. v1.0.0 or v1.0.0-rc.1)'
+        description: 'Open AD Kit release version (e.g. v2.0.0 or v2.0.0-rc.1)'
         required: true
       build_tag:
         description: 'Build tag of a build of this branch to promote (e.g. 123456789-1)'
