@@ -2073,6 +2073,13 @@ localization.</p>
 planning for lanes, intersections, and obstacles; kinematically feasible motion
 planning; goal and parking maneuvers; the planning validator that publishes
 <code>/planning/trajectory</code>. Launch: <code>component_planning.launch.xml</code></p>
+<ul>
+<li><strong>CUDA variant</strong> — <code>planning-cuda</code> builds the same packages with CUDA and
+  TensorRT, so <code>planning_setting:=diffusion_planner</code> runs Autoware 2.0's
+  Diffusion Planner. It is amd64-only and requires the NVIDIA Container
+  Toolkit. Used by <a href="../deployments/planning-simulation/">Planning Simulation</a>
+  (<code>--gpu</code>).</li>
+</ul>
 <h3 id="control">Control<a class="headerlink" href="#control" title="Permanent link">#</a></h3>
 <p>Vehicle control from <code>/planning/trajectory</code>: lateral steering and longitudinal
 velocity control; PID and Model Predictive Control modes; vehicle-specific
@@ -2235,6 +2242,12 @@ matches what CI builds. Tag names are explained in
 <td><code>ghcr.io/autowarefoundation/openadkit:planning</code></td>
 <td>humble, jazzy</td>
 <td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>planning-cuda</code></td>
+<td><code>ghcr.io/autowarefoundation/openadkit:planning-cuda</code></td>
+<td>humble, jazzy</td>
+<td>amd64</td>
 </tr>
 <tr>
 <td><code>control</code></td>
