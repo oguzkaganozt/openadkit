@@ -40,7 +40,7 @@ ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
 # An integrator kit: its own deployments on top of one pinned Open AD Kit.
 ALLOWED_INTEGRATOR_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
 ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS = {
-    "schemaVersion", "name", "description", "base", "compose", "data", "verify",
+    "schemaVersion", "description", "base", "compose", "data", "verify",
 }
 ALLOWED_INTEGRATOR_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
@@ -52,7 +52,6 @@ VERSION_RE = re.compile(
 ALLOWED_DEPLOYMENT_REF_KEYS = {"path", "checksum"}
 ALLOWED_DEPLOYMENT_KEYS = {
     "schemaVersion",
-    "name",
     "description",
     "compose",
     "requirements",
@@ -306,23 +305,32 @@ def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dic
     return data
 
 
+# Compose's own default file name, used when a deployment names no files.
+DEFAULT_COMPOSE_FILES = ["docker-compose.yaml"]
+
+
 def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[str, Any]:
-    """A deployment's compose section, with what it leaves out empty."""
+    """A deployment's compose section, with what it leaves out empty and
+    docker-compose.yaml as its files by default."""
+    if value is None:
+        value = {}
     if not isinstance(value, dict):
         raise OpenADKitError("compose must be an object")
     reject_unknown(value, allowed, "compose")
     compose: dict[str, Any] = {
         field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("files", "gpuFiles", "profiles", "resetServices")
+        for field in ("gpuFiles", "profiles", "resetServices")
     }
+    compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
     if not compose["files"]:
         raise OpenADKitError("compose.files must not be empty")
     compose["waitTimeout"] = validate_wait_timeout(value.get("waitTimeout", wait_timeout))
     return compose
 
 
-def read_deployment_manifest(directory: Path, allowed_keys: set[str]) -> dict[str, Any]:
-    """The part every deployment manifest shares: location, schema and identity."""
+def read_deployment_manifest(directory: Path, allowed_keys: set[str], name: str) -> dict[str, Any]:
+    """The part every deployment manifest shares: location and schema. The
+    name is the deployment's key in the kit manifest; the file does not repeat it."""
     if directory.is_symlink() or not directory.is_dir():
         raise OpenADKitError(f"unsafe deployment directory: {directory}")
     manifest = load_json(
@@ -334,12 +342,8 @@ def read_deployment_manifest(directory: Path, allowed_keys: set[str]) -> dict[st
             f"unsupported deployment schemaVersion {manifest.get('schemaVersion')!r} "
             f"(expected {SCHEMA_VERSION})"
         )
-    name = require_string(manifest.get("name"), "name")
-    if not NAME_RE.fullmatch(name) or name != directory.name:
-        raise OpenADKitError(
-            f"manifest name must match deployment directory: {directory.name}"
-        )
     require_string(manifest.get("description"), "description")
+    manifest["name"] = name
     return manifest
 
 
@@ -361,9 +365,9 @@ def validate_wait_timeout(value: Any) -> int:
     return value
 
 
-def validate_deployment_manifest(root: Path, directory: Path) -> dict[str, Any]:
+def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict[str, Any]:
     """A base deployment.json, checked and with its defaults filled in."""
-    manifest = read_deployment_manifest(directory, ALLOWED_DEPLOYMENT_KEYS)
+    manifest = read_deployment_manifest(directory, ALLOWED_DEPLOYMENT_KEYS, name)
 
     shared = require_string_list(manifest.get("shared", []), "shared")
     for shared_name in shared:

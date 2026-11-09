@@ -1,6 +1,5 @@
 {
   "schemaVersion": 2,
-  "name": "planning-simulation",
   "description": "Autoware planning and control in the built-in simulator",
   "shared": ["shared"],
   "compose": {

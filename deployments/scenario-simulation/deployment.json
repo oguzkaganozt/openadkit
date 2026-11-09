@@ -1,6 +1,5 @@
 {
   "schemaVersion": 2,
-  "name": "scenario-simulation",
   "description": "Autoware driving test scenarios in Scenario Simulator",
   "shared": ["shared"],
   "compose": {

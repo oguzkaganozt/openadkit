@@ -1,6 +1,5 @@
 {
   "schemaVersion": 2,
-  "name": "safety-island-simulation",
   "description": "Planning Simulation controlled by the Safety Island",
   "base": "planning-simulation",
   "compose": {

@@ -67,7 +67,7 @@ def run_cli(root, *args, directory=None, **env):
 
 def manifest(*, data=None, gpu=False, nodes=False):
     document = {
-        "schemaVersion": 2, "name": "example", "description": "Test deployment",
+        "schemaVersion": 2, "description": "Test deployment",
         "compose": {"files": ["docker-compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
                     "profiles": [], "resetServices": [], "waitTimeout": 1},
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
@@ -208,8 +208,7 @@ def integrator_kit(tmp_path, root, *, extends=None, external_images=None):
         "deployments": {"custom": {"path": "deployments/custom"}}, "externalImages": external_images or {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "name": "custom", "description": "Integrator deployment",
-        "base": "example", "compose": {"files": ["docker-compose.yaml"]},
+        "schemaVersion": 2, "description": "Integrator deployment", "base": "example",
     }))
     (directory / "config.env").write_text("VALUE=kit\n")
     (directory / "docker-compose.yaml").write_text(
@@ -1524,7 +1523,7 @@ def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_pa
     # A kit's own oneshot is checked like a base's.
     path = kit / "deployments/custom/deployment.json"
     document = json.loads(path.read_text())
-    document["compose"]["resetServices"] = ["probe"]
+    document["compose"] = {"resetServices": ["probe"]}
     path.write_text(json.dumps(document))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
@@ -1547,7 +1546,8 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     assert manifest["extends"] == ("v1.2.3" if installed else str(root.resolve()))
     assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
     deployment = json.loads((kit / "deployment.json").read_text())
-    assert deployment["name"] == "my-kit" and deployment["base"] == "example"
+    # The name lives once, in openadkit.json; Compose files default to docker-compose.yaml.
+    assert deployment == {"schemaVersion": 2, "description": "example with this kit's layer on top", "base": "example"}
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
@@ -1704,7 +1704,7 @@ def on_top(root, name="on-top", base="example"):
     directory = root / "deployments" / name
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "name": name, "description": "On top", "base": base,
+        "schemaVersion": 2, "description": "On top", "base": base,
         "compose": {"files": ["docker-compose.yaml"]},
     }))
     (directory / "docker-compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
@@ -1845,3 +1845,16 @@ def test_only_a_gpu_run_uses_the_gpu_component_images(gpu):
     assert gpu_images >= {"SENSING_PERCEPTION_GPU_IMAGE", "PLANNING_GPU_IMAGE"}
     assert (gpu_images <= set(environment)) is gpu
     assert set(environment) - gpu_images == set(COMPONENT_IMAGES) - gpu_images
+
+
+def test_a_deployment_is_named_by_its_kit_manifest_key_alone(tmp_path):
+    root, directory = runtime_tree(tmp_path)
+    document = json.loads((directory / "deployment.json").read_text())
+    # A renamed directory keeps working: only the kit manifest's key names it.
+    renamed = directory.rename(directory.parent / "elsewhere")
+    edit_kit(root, lambda kit: kit["deployments"].update(example={"path": "deployments/elsewhere"}))
+    assert cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example").name == "example"
+    # The file does not repeat the name.
+    (renamed / "deployment.json").write_text(json.dumps(document | {"name": "example"}))
+    with pytest.raises(cli_manifest.OpenADKitError, match="name"):
+        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example")

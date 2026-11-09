@@ -70,7 +70,7 @@ A [deployment](deployments/index.md) runs the subset of these stages a task need
 |------|---------|
 | **Component image** | A published container image holding one or more Autoware functions, for example `planning`. |
 | **Deployment** | A named, ready-to-run stack: a manifest, environment files, and Compose configuration for a task such as planning simulation. |
-| **Deployment manifest** | The `deployment.json` file that tells the CLI how to run a deployment: requirements, data downloads, and one-shot services. |
+| **Deployment manifest** | The `deployment.json` file that tells the CLI how to run a deployment: Compose files, requirements, data downloads, one-shot services and the verify step. Its name is its key in the kit manifest. |
 | **Kit manifest** | The `openadkit.json` file of a kit: what it extends, its deployments and the images it pins. |
 | **Kit** | An `openadkit.json` and its deployments: the reference kit or an integrator's differences over a pinned base release. |
 | **`extends` / `base`** | The kit's pinned Open AD Kit release and the reference deployment it includes. |
