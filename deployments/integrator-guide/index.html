@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://autowarefoundation.github.io/openadkit/deployments/integrator-guide/">
       
       
-        <link rel="prev" href="../custom-deployment/">
+        <link rel="prev" href="../create-a-kit/">
       
       
         <link rel="next" href="../../components/">
@@ -1154,14 +1154,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-deployment/" class="md-nav__link">
+      <a href="../create-a-kit/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Custom Deployment
+    Create a Kit
   
 
     
@@ -2222,7 +2222,7 @@
 
 <h1 id="integrator-guide">Integrator Guide<a class="headerlink" href="#integrator-guide" title="Permanent link">#</a></h1>
 <p>An integrator kit owns its differences, while Open AD Kit owns the base CLI,
-images and deployments. Start one with <code>openadkit new</code> (<a href="../custom-deployment/">Custom Deployment</a>);
+images and deployments. Start one with <code>openadkit new</code> (<a href="../create-a-kit/">Create a Kit</a>);
 the kit CI exercises is that output with the <a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit">example fixture</a> on top.
 This interface requires manifest schema version 2; older manifests are rejected.</p>
 <h2 id="pin-the-base">Pin the Base<a class="headerlink" href="#pin-the-base" title="Permanent link">#</a></h2>
@@ -2403,7 +2403,7 @@ overrides without a counterpart (see <a href="#2-config-differences">Config Diff
 <ul>
 <li><strong>Readiness:</strong> give a service of your own a Compose <code>healthcheck</code>. <code>run</code>
   waits until it passes. The example fixture's <code>acme-probe</code> service runs
-  <code>checks/custom_kit.py</code>, which checks the fresh <code>/acme/probe</code> publication of
+  <code>checks/example_kit.py</code>, which checks the fresh <code>/acme/probe</code> publication of
   its C++ package and its parameters.</li>
 <li><strong>End to end:</strong> the base's <code>verify</code> step runs on top of your layer with
   <code>openadkit run --verify</code>. To check something else, name your own in
@@ -2462,7 +2462,7 @@ for the config and output directories and marker-protected data cleanup.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../custom-deployment/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Custom Deployment">
+          <a href="../create-a-kit/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Create a Kit">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2472,7 +2472,7 @@ for the config and output directories and marker-protected data cleanup.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Custom Deployment
+                Create a Kit
               </div>
             </div>
           </a>
