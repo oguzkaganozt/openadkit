@@ -92,22 +92,18 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 
 USER root
+# Install the packages this image adds to universe-common, and only those
+# (install-packages.sh).
 RUN --mount=from=simulator-devel,source=/opt/autoware,target=/mnt/autoware \
-    --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
-    cp -a /mnt/autoware/. /opt/autoware/ && \
-    find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
-    bash /tmp/runtime-cleanup.sh opt
+    --mount=type=bind,source=components/shared/install-packages.sh,target=/tmp/install-packages.sh \
+    bash /tmp/install-packages.sh /mnt/autoware /opt/autoware
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
+    --mount=type=bind,source=components/shared/runtime-deps.sh,target=/tmp/runtime-deps.sh \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
-    apt-get update && \
-    . "/opt/ros/${ROS_DISTRO}/setup.sh" && \
-    internal_packages="$(colcon list --base-paths /tmp/autoware/src --names-only | tr '\n' ' ')" && \
-    rosdep install -y --from-paths /opt/autoware/*/share \
-      --dependency-types=exec --ignore-src --rosdistro "${ROS_DISTRO}" \
-      --skip-keys "${internal_packages}" && \
+    bash /tmp/runtime-deps.sh /tmp/autoware/src && \
     bash /tmp/runtime-cleanup.sh
 
 # The CARLA bridge (autoware_carla_interface, built above) needs the CARLA

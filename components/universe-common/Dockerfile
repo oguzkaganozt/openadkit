@@ -137,6 +137,10 @@ ARG ROS_DISTRO
 USER root
 ENV AUTOWARE_RUNTIME=1
 
+# Every package installed from here on, in this image and the component images
+# on it, leaves out what only a compiler reads (headers, static libraries).
+COPY components/shared/dpkg-runtime.cfg /etc/dpkg/dpkg.cfg.d/openadkit-runtime
+
 # Install ROS packages from the same snapshot as the devel stage; fails when
 # the base image's ROS packages differ from it.
 ARG ROS_SNAPSHOT
@@ -146,22 +150,23 @@ RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snap
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check
 
-# ${BASE_IMAGE} has no /opt/autoware. Copy the tree into place; cp -a src/. dest/
-# would require dest to exist, and if dest later appears this must not nest.
+# ${BASE_IMAGE} has no /opt/autoware: install the compiled tree, without the
+# RViz plugins, which the visualizer installs (install-packages.sh).
 # Of acados, the compiled tree only links its shared libraries; its sources,
 # build tree and code-generation venv stay in the devel image.
 RUN --mount=from=universe-common-build,source=/opt/acados/lib,target=/mnt/acados-lib \
     --mount=from=universe-common-build,source=/opt/autoware,target=/mnt/autoware \
+    --mount=type=bind,source=components/shared/install-packages.sh,target=/tmp/install-packages.sh \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     mkdir /opt/acados && \
     cp -a /mnt/acados-lib /opt/acados/lib && \
-    cp -a /mnt/autoware /opt/autoware && \
-    find /opt/autoware -name '*.so' -exec strip --strip-unneeded {} + && \
+    bash /tmp/install-packages.sh /mnt/autoware /opt/autoware && \
     bash /tmp/runtime-cleanup.sh opt
 
 ENV LD_LIBRARY_PATH="/opt/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
+    --mount=type=bind,source=components/shared/runtime-deps.sh,target=/tmp/runtime-deps.sh \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
@@ -171,11 +176,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
       "ros-${ROS_DISTRO}-domain-bridge" \
       "ros-${ROS_DISTRO}-topic-tools" && \
     geographiclib-get-geoids egm2008-1 && \
-    . "/opt/ros/${ROS_DISTRO}/setup.sh" && \
-    internal_packages="$(colcon list --base-paths /tmp/autoware/src --names-only | tr '\n' ' ')" && \
-    rosdep install -y --from-paths /opt/autoware/*/share \
-      --dependency-types=exec --ignore-src --rosdistro "${ROS_DISTRO}" \
-      --skip-keys "${internal_packages}" && \
+    bash /tmp/runtime-deps.sh /tmp/autoware/src && \
     bash /tmp/runtime-cleanup.sh
 
 # Same refresh as the devel image: a per-build SECURITY_REFRESH change only

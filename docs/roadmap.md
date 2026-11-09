@@ -7,9 +7,7 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
 
 ## Now: v2.0.0
 
-1. **Image contents.** Each image carries only the build inputs and runtime
-   packages it needs, before v2.0.0 makes its contents part of the contract.
-2. **Release.** A full build and evidence run, then a clean-host install, kit,
+1. **Release.** A full build and evidence run, then a clean-host install, kit,
    restart and upgrade check on a release candidate.
 
 ## Next: v2.x, in priority order
@@ -44,6 +42,9 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
   with `foxglove_bridge` for analysis and bag playback.
 - **rmw_zenoh.** Replace `zenoh-bridge-ros2dds` for split-host on Jazzy if an
   evaluation succeeds.
+- **Per-image trimming.** Packages that no catalog deployment runs and that
+  bring heavy dependencies, such as PyTorch for control's smart MPC,
+  calibration tools and DNN packages in CPU images, at the next major version.
 - **Safety Island on CARLA.** A kit with the Safety Island's closed loop over
   CAN, backed by its own runtime evidence.
 
