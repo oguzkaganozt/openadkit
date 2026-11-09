@@ -1,22 +1,36 @@
 # Planning Simulation
 
 Run the Autoware planning and control stack on a demo map with the built-in
-simulator, then set a route in browser-based RViz2. No GPU is required.
+simulator, then set a route in browser-based RViz2. No GPU is required; with an
+NVIDIA GPU, `--gpu` plans with Autoware 2.0's Diffusion Planner.
 
-Complete the [Quickstart](../../getting-started/index.md) setup first.
+Complete the [Quickstart](../../getting-started/index.md) setup first. For GPU
+mode, run `openadkit setup --gpu --verify`.
 
 ## Run
 
 --8<-- "includes/cli-command-context.md"
 
 ```bash
-openadkit run planning-simulation
+openadkit run planning-simulation         # CPU: the rule-based planner
+openadkit run planning-simulation --gpu   # GPU: the Diffusion Planner (amd64 only)
 ```
 
 --8<-- "includes/ros-distro.md"
 
 `run` downloads the sample map, pulls the images, and starts the stack. The demo
 map is Copyright 2020 TIER IV, Inc. and is provided for demonstration only.
+
+With `--gpu`, the planning service runs the `planning-cuda` image with
+`planning_setting:=diffusion_planner`, and `run` also downloads the Diffusion
+Planner v5.0 model from Hugging Face to
+`~/autoware_data/ml_models/diffusion_planner/v5.0`. The first start builds a
+TensorRT engine from the model there, so it takes longer than later starts.
+Control and the rest of the stack are the same in both modes: control follows
+`/planning/trajectory`, whichever planner makes it. See
+[Autoware Architecture 2.0](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v2/)
+for the planner. Hosted CI runs the CPU mode; the GPU mode is checked on a GPU
+host.
 
 --8<-- "includes/visualizer-remote-access.md"
 

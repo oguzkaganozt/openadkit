@@ -7,6 +7,7 @@
     {"repo": "component", "target": "sensing-perception-cuda", "stage": "component", "platforms": ["linux/amd64"]},
     {"repo": "component", "target": "localization-mapping", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"repo": "component", "target": "planning", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
+    {"repo": "component", "target": "planning-cuda", "stage": "component", "platforms": ["linux/amd64"]},
     {"repo": "component", "target": "control", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"repo": "component", "target": "vehicle-system", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"repo": "component", "target": "api", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},

@@ -50,6 +50,12 @@ planning for lanes, intersections, and obstacles; kinematically feasible motion
 planning; goal and parking maneuvers; the planning validator that publishes
 `/planning/trajectory`. Launch: `component_planning.launch.xml`
 
+- **CUDA variant** — `planning-cuda` builds the same packages with CUDA and
+  TensorRT, so `planning_setting:=diffusion_planner` runs Autoware 2.0's
+  Diffusion Planner. It is amd64-only and requires the NVIDIA Container
+  Toolkit. Used by [Planning Simulation](../deployments/planning-simulation/index.md)
+  (`--gpu`).
+
 ### Control {: #control }
 
 Vehicle control from `/planning/trajectory`: lateral steering and longitudinal

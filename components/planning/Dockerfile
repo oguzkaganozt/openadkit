@@ -9,6 +9,8 @@ ARG UNIVERSE_COMMON_IMAGE
 FROM ${UNIVERSE_COMMON_DEVEL_IMAGE} AS planning-devel
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
+# The package list, shared with Dockerfile.cuda (docker-bake.hcl planning_base_paths).
+ARG COLCON_BASE_PATHS
 
 COPY --parents --chown=${USERNAME}:${USERNAME} \
     autoware/src/**/package.xml \
@@ -28,18 +30,11 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     --mount=type=cache,id=ccache-${ROS_DISTRO},target=/home/aw/.ccache,uid=1000,gid=1000 \
     mkdir -p /opt/openadkit && \
-    printf '%s\n' \
-        /tmp/autoware/src/launcher/autoware_launch/vehicle/sample_vehicle_launch/sample_vehicle_description \
-        /tmp/autoware/src/universe/autoware_universe/planning \
-        /tmp/autoware/src/universe/autoware_universe/sensing/autoware_cuda_utils \
-        /tmp/autoware/src/universe/autoware_universe/perception/autoware_tensorrt_common \
-        /tmp/autoware/src/universe/autoware_universe/perception/autoware_tensorrt_plugins \
-      > /opt/openadkit/colcon-base-paths && \
-    colcon_base_paths=$(tr '\n' ' ' < /opt/openadkit/colcon-base-paths) && \
+    printf '%s\n' ${COLCON_BASE_PATHS} > /opt/openadkit/colcon-base-paths && \
     . "/opt/ros/${ROS_DISTRO}/setup.sh" && \
     . /opt/autoware/setup.sh && \
     colcon build \
-      --base-paths ${colcon_base_paths} \
+      --base-paths ${COLCON_BASE_PATHS} \
       --install-base /opt/autoware \
       --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     rm -rf build log
