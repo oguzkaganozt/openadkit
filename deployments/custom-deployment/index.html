@@ -2065,8 +2065,8 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <p><code>openadkit new</code> from an installed release writes its version, such as
 <code>"extends": "v2.0.0"</code>; the kit then runs with that release's own launcher.
 From a source checkout it writes the checkout's path. To move to another
-release, install it with <code>openadkit install --version &lt;tag&gt;</code> and change
-<code>extends</code>.</p>
+release, change <code>extends</code>; the next command in the kit downloads that release
+if it is missing.</p>
 <h2 id="build-validate-run-stop">Build, Validate, Run, Stop<a class="headerlink" href="#build-validate-run-stop" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-kit
 openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># overlay_ws, in the release's devel image</span>
