@@ -20,9 +20,10 @@ from compose import (
     docker,
     live_projects,
     print_command,
-    report_container_overrides,
+    read_run_state,
+    remove_run_state,
 )
-from manifest import OpenADKitError, load_json
+from manifest import OpenADKitError
 from settings import docker_environment
 
 
@@ -135,56 +136,6 @@ def hooked_services(project: str) -> list[str]:
     )
 
 
-def restart(project: str, services: list[str], everything: bool) -> tuple[list[str], list[str]]:
-    """Restart services in place, with the settings they run with.
-
-    The default is every service that takes Open AD Kit config or an overlay
-    workspace, so a change to either applies without restarting a simulator
-    such as CARLA. Everything also reruns the one-shot services, as run did.
-    Returns the restarted services and the running ones left alone.
-    """
-    running = running_services(project)
-    if everything:
-        run_project(project, ["restart"], show=True)
-        return sorted(running), []
-    services = services or hooked_services(project)
-    if not services:
-        raise OpenADKitError(f"{view_name(project)} has no service with Open AD Kit config to restart")
-    run_project(project, ["restart", *services], show=True)
-    return services, sorted(set(running) - set(services))
-
-
-def wait_after_restart(project: str, services: list[str]) -> None:
-    """Return once the restarted services are ready, as run does: their
-    healthchecks pass, and none crashed. A restart starts each healthcheck's
-    start period over, so Docker bounds the wait."""
-    ids = run_project(project, ["ps", "--all", "--quiet", *services]).stdout.split()
-    if not ids:
-        return
-    print("waiting for the restarted services to be ready...", file=sys.stderr, flush=True)
-    while True:
-        result = docker(
-            [
-                "docker", "inspect", "--format",
-                '{{index .Config.Labels "com.docker.compose.service"}} {{.State.Status}} {{.State.ExitCode}} '
-                "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
-                *ids,
-            ], check=False, trace=False,
-        )
-        rows = [row for row in (line.split() for line in result.stdout.splitlines()) if len(row) == 4]
-        # A one-shot service may finish, as map-check does, but not fail.
-        failed = sorted({
-            service for service, state, code, health in rows
-            if state in ("restarting", "dead") or (state == "exited" and code != "0") or health == "unhealthy"
-        })
-        if failed:
-            raise OpenADKitError(f"{', '.join(failed)} failed after restart; see: openadkit logs {' '.join(failed)}")
-        if not any(health == "starting" for *_, health in rows):
-            report_container_overrides(run_project(project, ["ps", "--quiet"]).stdout.split())
-            return
-        time.sleep(2)
-
-
 def shell(project: str, service: str, command: list[str]) -> None:
     """A shell, or one command, in a running service with ROS, Autoware and the overlays sourced."""
     arguments = ["exec"] if sys.stdin.isatty() else ["exec", "-T"]
@@ -209,7 +160,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
         config = json.loads(inspected.stdout)[0]["Config"]
     except (ValueError, LookupError, TypeError) as error:
         raise OpenADKitError("could not inspect the api container") from error
-    output = output or output_root() / deployment_of(config, view_name(project)) / "recordings"
+    output = output or output_root() / deployment_name(project) / "recordings"
     bag = output / f"{view_name(project)}-{time.strftime('%Y%m%d-%H%M%S')}"
     output.mkdir(parents=True, exist_ok=True)
     # The container's own entrypoint, which a service may have overridden.
@@ -257,15 +208,12 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     return bag
 
 
-def deployment_of(config: dict[str, Any], fallback: str) -> str:
-    """The deployment a container runs: its project's directory holds deployment.json."""
-    directory = (config.get("Labels") or {}).get("com.docker.compose.project.working_dir", "")
-    try:
-        name = load_json(Path(directory) / "deployment.json")["name"]
-    except (OpenADKitError, KeyError, TypeError):
-        name = None
-    return name if isinstance(name, str) and name else fallback
+def deployment_name(project: str) -> str:
+    """The deployment a project runs: names never contain "_", which separates a node."""
+    state = read_run_state(project)
+    return state["deployment"] if state else view_name(project).split("_", 1)[0]
 
 
 def stop(project: str) -> None:
     run_project(project, ["down", "--remove-orphans"], show=True)
+    remove_run_state(project)

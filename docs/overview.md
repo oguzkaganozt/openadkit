@@ -74,7 +74,7 @@ A [deployment](deployments/index.md) runs the subset of these stages a task need
 | **Kit manifest** | The `openadkit.json` file of a kit: what it extends, its deployments and the images it pins. |
 | **Kit** | An `openadkit.json` and its deployments: the reference kit or an integrator's differences over a pinned base release. |
 | **`extends` / `base`** | The kit's pinned Open AD Kit release and the reference deployment it includes. |
-| **Settings** | `KEY=value` variables a deployment runs with, such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings file. They apply on the next `run`. |
+| **Settings** | `KEY=value` variables a deployment runs with, such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings file. `restart` or `run` applies them. |
 | **Config override** | Parameter/file differences under `config/autoware/`, layered over package configuration; not a copy of the full base file. `restart` applies them. |
 | **Overlay workspace** | Custom ROS packages built against the matching pinned devel image and sourced over the base. |
 | **Node** | A deployment's host-local view, with its own services, Compose project, ROS domain and Zenoh endpoint. |

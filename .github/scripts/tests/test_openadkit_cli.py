@@ -166,8 +166,26 @@ elif args[0] == "compose" and "ps" in args and "--services" in args:
     print({service_lines!r})
 elif args[0] == "compose" and "ps" in args and "--quiet" in args:
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
+elif args[0] == "inspect" and "--format" in args:
+    template = args[args.index("--format") + 1]
+    for row in {list(containers)!r}:
+        labels = row.get("Config", {{}}).get("Labels", {{}})
+        fields = {{
+            "{{{{.Id}}}}": row["Id"], "{{{{.RestartCount}}}}": "0", "{{{{.State.Status}}}}": "running",
+            "{{{{.State.ExitCode}}}}": "0", "{{{{if .State.Health}}}}{{{{.State.Health.Status}}}}{{{{else}}}}none{{{{end}}}}": "none",
+            '{{{{index .Config.Labels "com.docker.compose.service"}}}}': labels.get("com.docker.compose.service", row["Id"]),
+            '{{{{index .Config.Labels "com.docker.compose.config-hash"}}}}': labels.get("com.docker.compose.config-hash", "same"),
+        }}
+        line = template
+        for field, value in fields.items():
+            line = line.replace(field, value)
+        print(line)
 elif args[0] == "inspect":
     print(json.dumps({list(containers)!r}))
+elif "config --hash" in text:
+    changed = os.environ.get("FAKE_CHANGED", "").split(",")
+    for name in {service_lines!r}.split():
+        print(name, "new" if name in changed else "same")
 elif "config --format json" in text:
     print('{{"services": {{}}}}')
 elif "config --services" in text:
@@ -999,13 +1017,16 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
     # Reset services may exit, but not fail: "init" finished, "rosbag" crashed.
     # A long-running service that exits cleanly is gone too: on-failure does not restart it.
-    inspect = ("kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
-               "bag rosbag 0 exited 1\nquit system 0 exited 0\n")
+    # A healthcheck that fails after up, and a dead container, fail too.
+    inspect = ("kept api 1 running 0 healthy\ncrashed planning 1 running 0 none\nreset init 3 exited 0 none\n"
+               "bag rosbag 0 exited 1 none\nquit system 0 exited 0 none\nsick map 0 running 0 unhealthy\n"
+               "gone vehicle 0 dead 0 none\n")
     monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
     deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
-    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == ["planning", "rosbag", "system"]
+    assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == [
+        "map", "planning", "rosbag", "system", "vehicle"]
 
 
 @pytest.mark.parametrize(("interrupt", "failed"), [(True, False), (False, True)])
@@ -1102,8 +1123,10 @@ def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     calls = fake_docker(tmp_path, projects=["openadkit-example"])
     assert run_cli(root, "logs", "map", "planning", directory=tmp_path).returncode == 0
     assert recorded(calls)[-1]["args"] == ["compose", "--project-name", "openadkit-example", "logs", "map", "planning"]
-    assert run_cli(root, "restart", "planning").returncode == 0
-    assert next(row["args"] for row in reversed(recorded(calls)) if "restart" in row["args"])[-2:] == ["restart", "planning"]
+    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "restart", "planning", directory=tmp_path).returncode == 0
+    up = next(row["args"] for row in reversed(recorded(calls)) if "up" in row["args"])
+    assert up[-3:] == ["--no-deps", "--force-recreate", "planning"]
     assert run_cli(root, "shell", "planning", "ros2", "topic", "list", "--include-hidden-topics").returncode == 0
     shell = recorded(calls)[-1]["args"]
     assert shell[3:6] == ["exec", "-T", "planning"] and shell[-4:] == ["ros2", "topic", "list", "--include-hidden-topics"]
@@ -1129,7 +1152,7 @@ def test_status_gives_the_visualizer_address_only_when_it_runs(tmp_path):
     assert result.returncode == 0 and "visualizer:" not in result.stdout
 
 
-def test_restart_defaults_to_the_services_with_open_ad_kit_config(tmp_path):
+def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     root, _ = runtime_tree(tmp_path)
     containers = [
         {"Id": "a", "Config": {"Labels": {"com.docker.compose.service": "planning"}},
@@ -1140,40 +1163,34 @@ def test_restart_defaults_to_the_services_with_open_ad_kit_config(tmp_path):
     ]
     calls = fake_docker(tmp_path, projects=["openadkit-example"], containers=containers,
                         services=("acme", "carla", "planning"))
-    def restart_args():
-        return next(row["args"] for row in reversed(recorded(calls)) if "restart" in row["args"])
+    # A stack this CLI did not start cannot be recreated as it was.
     result = run_cli(root, "restart")
-    assert result.returncode == 0, result.stderr
-    assert restart_args()[-3:] == ["restart", "acme", "planning"]
-    assert "restarted: acme, planning" in result.stdout and "kept running: carla" in result.stdout
-    result = run_cli(root, "restart", "--all")
-    assert result.returncode == 0, result.stderr
-    assert restart_args()[-1] == "restart" and "kept running" not in result.stdout
+    assert result.returncode != 0 and "start it again with openadkit run" in result.stderr
+    assert run_cli(root, "run", "example", "--pull", "never", "--no-visualizer").returncode == 0
+
+    def recreated(**env):
+        calls.write_text("")
+        result = run_cli(root, "restart", directory=tmp_path, **env)
+        assert result.returncode == 0, result.stderr
+        up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
+        assert {"--no-deps", "--force-recreate", "--wait"} <= set(up)
+        return up[up.index("--force-recreate") + 1:], result.stdout
+
+    # From any directory: the services with Open AD Kit config, as run started them.
+    services, output = recreated()
+    assert services == ["acme", "planning"] and "kept running: carla" in output
+    # A settings change recreates the services it changes, here one without config.
+    services, output = recreated(FAKE_CHANGED="carla")
+    assert services == ["acme", "carla", "planning"] and "kept running" not in output
+    calls.write_text("")
+    assert run_cli(root, "restart", "--all").returncode == 0
+    up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
+    assert up[up.index("--force-recreate") + 1:] == ["acme", "carla", "planning"]
     result = run_cli(root, "restart", "planning", "--all")
     assert result.returncode != 0 and "or pass --all" in result.stderr
-
-
-@pytest.mark.parametrize(("states", "failed"), [
-    # A healthcheck still starting is waited for; a one-shot may finish.
-    ([["planning running 0 starting", "map-check exited 0 none"], ["planning running 0 healthy", "map-check exited 0 none"]], None),
-    ([["planning running 0 starting"], ["planning running 0 unhealthy"]], "planning"),
-    ([["acme restarting 1 none"]], "acme"),
-])
-def test_restart_waits_for_readiness_and_reports_a_failure(monkeypatch, states, failed):
-    polls = iter(states)
-    reported = []
-    monkeypatch.setattr(cli_live, "run_project", lambda project, args: subprocess.CompletedProcess(args, 0, "c1\n", ""))
-    monkeypatch.setattr(cli_live, "docker", lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "\n".join(next(polls)), ""))
-    monkeypatch.setattr(cli_live, "report_container_overrides", lambda ids: reported.append(ids) or [])
-    monkeypatch.setattr(cli_live.time, "sleep", lambda _: None)
-    if failed:
-        with pytest.raises(cli_manifest.OpenADKitError, match=f"{failed} failed after restart"):
-            cli_live.wait_after_restart("openadkit-example", ["planning"])
-        assert reported == []
-    else:
-        cli_live.wait_after_restart("openadkit-example", ["planning"])
-        # Once ready, the overrides without a counterpart are reported, as after run.
-        assert reported == [["c1"]]
+    # stop forgets how the stack was started.
+    assert run_cli(root, "stop").returncode == 0
+    assert not list((root.parent / "home/.local/state/openadkit/runs").iterdir())
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):

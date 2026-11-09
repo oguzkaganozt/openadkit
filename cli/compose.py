@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
-from catalog import Deployment, RuntimeContext, deployment_checksum
+from catalog import Deployment, RuntimeContext, deployment_checksum, state_root
 from manifest import OpenADKitError
 from settings import Selection, compose_process_environment, docker_environment
 
@@ -362,21 +362,23 @@ def failed_services(
     ids: list[str],
     baseline: dict[str, int],
 ) -> list[str]:
-    """Long-running services that restarted since `up` or exited."""
+    """Long-running services that restarted since `up`, exited, died or turned
+    unhealthy."""
     result = docker(
         [
             "docker",
             "inspect",
             "--format",
             '{{.Id}} {{index .Config.Labels "com.docker.compose.service"}} '
-            "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}}",
+            "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} "
+            "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
             *ids,
         ],
         trace=False,
     )
     failed = set()
     for line in result.stdout.splitlines():
-        container, service, restarts, state, exit_code = line.split()
+        container, service, restarts, state, exit_code, health = line.split()
         # Reset services may finish, as map-check does, but not fail.
         if service in deployment.reset_services(selection.node):
             if state == "exited" and exit_code != "0":
@@ -385,7 +387,7 @@ def failed_services(
         # `up` keeps unchanged containers, and with them earlier restarts.
         # on-failure does not restart a clean exit, which leaves the service gone.
         restarted = int(restarts) > baseline.get(container, 0)
-        if restarted or state in ("restarting", "exited") or exit_code != "0":
+        if restarted or state in ("restarting", "exited", "dead") or exit_code != "0" or health == "unhealthy":
             failed.add(service)
     return sorted(failed)
 
@@ -397,7 +399,8 @@ def check_services_stay_up(
 
     `up --wait` waits for the services with a healthcheck to be healthy and
     only for the others to start, so one of those that fails during launch and
-    restarts would still look running.
+    restarts would still look running. A recreated service is a new container,
+    whose restarts count from zero.
     """
     ids = run_compose(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
     if not ids:
@@ -435,19 +438,79 @@ def start(
             continue
         run_compose(deployment, selection, ["rm", "--stop", "--force", service], show=True)
 
+    up(deployment, selection, ["--remove-orphans", *scale_to_zero(skipped)])
+
+
+def recreate(deployment: Deployment, selection: Selection, services: set[str], skipped: set[str]) -> None:
+    """Recreate `services` with the deployment's current settings, config and
+    workspace, leaving the others running; `skipped` ones stay without a container."""
+    up(deployment, selection, ["--no-deps", "--force-recreate", *scale_to_zero(skipped), *sorted(services)])
+
+
+def scale_to_zero(services: set[str]) -> list[str]:
+    return [f"--scale={service}=0" for service in sorted(services)]
+
+
+def up(deployment: Deployment, selection: Selection, arguments: list[str]) -> None:
+    """`compose up`, held to one readiness policy for run and restart:
+    healthchecks pass within the deployment's waitTimeout, then no service
+    crashes, restarts or exits while the stack settles. One-shot reset services
+    may finish, but not fail."""
     baseline = restart_counts(deployment, selection)
     run_compose(
         deployment,
         selection,
-        [
-            "up", "--detach", "--wait", "--wait-timeout", str(deployment.compose["waitTimeout"]),
-            "--pull", "never", "--remove-orphans",
-            *(f"--scale={service}=0" for service in sorted(skipped)),
-        ],
+        ["up", "--detach", "--wait", "--wait-timeout", str(deployment.compose["waitTimeout"]),
+         "--pull", "never", *arguments],
         show=True,
     )
     check_services_stay_up(deployment, selection, baseline)
     report_overrides(deployment, selection)
+
+
+def changed_services(deployment: Deployment, selection: Selection) -> set[str]:
+    """Running services whose Compose model differs from the current one, as
+    after a settings change: Compose labels each container with its hash."""
+    current = dict(
+        line.split(maxsplit=1)
+        for line in run_compose(deployment, selection, ["config", "--hash", "*"]).stdout.splitlines()
+        if len(line.split()) == 2
+    )
+    ids = run_compose(deployment, selection, ["ps", "--quiet"]).stdout.split()
+    if not ids:
+        return set()
+    result = docker(
+        ["docker", "inspect", "--format",
+         '{{index .Config.Labels "com.docker.compose.service"}} '
+         '{{index .Config.Labels "com.docker.compose.config-hash"}}', *ids],
+        trace=False,
+    )
+    running = dict(line.split(maxsplit=1) for line in result.stdout.splitlines() if len(line.split()) == 2)
+    return {service for service, digest in running.items() if current.get(service) != digest}
+
+
+# What run started, by Compose project, so restart can recreate it from any
+# directory with the same choices and the current settings.
+def run_state_path(project: str) -> Path:
+    return state_root() / "runs" / f"{project}.json"
+
+
+def write_run_state(project: str, state: dict[str, Any]) -> None:
+    path = run_state_path(project)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def read_run_state(project: str) -> dict[str, Any] | None:
+    try:
+        state = json.loads(run_state_path(project).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return state if isinstance(state, dict) and state.get("schemaVersion") == 1 else None
+
+
+def remove_run_state(project: str) -> None:
+    run_state_path(project).unlink(missing_ok=True)
 
 
 def verify(deployment: Deployment, selection: Selection, services: set[str], record: dict[str, Any]) -> int:
