@@ -31,13 +31,12 @@ from manifest import (
     reject_unknown,
     require_checksum_map,
     require_string,
-    require_string_list,
     safe_relative,
     sha256_file,
+    validate_compose,
     validate_data,
     validate_deployment_manifest,
     validate_verify,
-    validate_wait_timeout,
 )
 
 
@@ -347,13 +346,7 @@ def _load_kit_deployment(
         raise OpenADKitError(f"base deployment {base_name} has a base of its own")
     base = get_deployment(base_root, base_kit, base_name)
 
-    compose = manifest.get("compose")
-    if not isinstance(compose, dict):
-        raise OpenADKitError("compose must be an object")
-    reject_unknown(compose, ALLOWED_INTEGRATOR_COMPOSE_KEYS, "compose")
-    files = require_string_list(compose.get("files"), "compose.files", nonempty=True)
-    extra_resets = require_string_list(compose.get("resetServices", []), "compose.resetServices")
-    wait_timeout = validate_wait_timeout(compose.get("waitTimeout", base.compose["waitTimeout"]))
+    compose = validate_compose(manifest.get("compose"), ALLOWED_INTEGRATOR_COMPOSE_KEYS, base.compose["waitTimeout"])
 
     own_data = validate_data(manifest.get("data", []), {}, directory)
     destinations = {item["destinationEnv"] for item in base.data}
@@ -367,11 +360,9 @@ def _load_kit_deployment(
         "name": manifest["name"],
         "description": manifest["description"],
         "compose": {
-            "files": files,
-            "gpuFiles": [],
+            **compose,
             "profiles": list(base.compose["profiles"]),
-            "resetServices": list(dict.fromkeys(base.compose["resetServices"] + extra_resets)),
-            "waitTimeout": wait_timeout,
+            "resetServices": list(dict.fromkeys(base.compose["resetServices"] + compose["resetServices"])),
         },
         "nodes": {},
         "requirements": base.requirements,

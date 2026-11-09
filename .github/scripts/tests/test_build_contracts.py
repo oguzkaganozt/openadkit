@@ -182,7 +182,7 @@ def compose_context(tmp_path, monkeypatch):
 def test_real_compose_preserves_single_and_split_graphs(compose_context, name, node, present, absent):
     deployment = catalog.get_deployment(ROOT, compose_context, name)
     selection = settings.resolve(deployment, compose_context, "humble", False, node=node)
-    result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
+    result = compose.run_compose(deployment, selection, ["config", "--format", "json"])
     services = json.loads(result.stdout)["services"]
     assert present <= services.keys() and not absent & services.keys()
     if node:
@@ -279,7 +279,7 @@ def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, t
     deployment = catalog.get_deployment(ROOT, compose_context, "logging-simulation")
     selection = settings.resolve(deployment, compose_context, "humble", True)
     resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")
-    result = compose.compose_capture(deployment, selection, ["config", "--format", "json"])
+    result = compose.run_compose(deployment, selection, ["config", "--format", "json"])
     mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["perception"]["volumes"]}
     assert mounts["/autoware_data"] == "/srv/autoware_data"
     assert mounts["/autoware_data/lidar_centerpoint"] == str(data.resolve_destination(resource, selection))

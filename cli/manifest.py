@@ -306,6 +306,21 @@ def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dic
     return data
 
 
+def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[str, Any]:
+    """A deployment's compose section, with what it leaves out empty."""
+    if not isinstance(value, dict):
+        raise OpenADKitError("compose must be an object")
+    reject_unknown(value, allowed, "compose")
+    compose: dict[str, Any] = {
+        field: require_string_list(value.get(field, []), f"compose.{field}")
+        for field in ("files", "gpuFiles", "profiles", "resetServices")
+    }
+    if not compose["files"]:
+        raise OpenADKitError("compose.files must not be empty")
+    compose["waitTimeout"] = validate_wait_timeout(value.get("waitTimeout", wait_timeout))
+    return compose
+
+
 def read_deployment_manifest(directory: Path, allowed_keys: set[str]) -> dict[str, Any]:
     """The part every deployment manifest shares: location, schema and identity."""
     if directory.is_symlink() or not directory.is_dir():
@@ -395,17 +410,7 @@ def validate_deployment_manifest(root: Path, directory: Path) -> dict[str, Any]:
             )
     manifest["requirements"] = requirements
 
-    compose = manifest.get("compose")
-    if not isinstance(compose, dict):
-        raise OpenADKitError("compose must be an object")
-    reject_unknown(compose, ALLOWED_COMPOSE_KEYS, "compose")
-    for field in ("files", "gpuFiles", "profiles", "resetServices"):
-        compose[field] = require_string_list(compose.get(field, []), f"compose.{field}")
-    if not compose["files"]:
-        raise OpenADKitError("compose.files must not be empty")
-    compose["waitTimeout"] = validate_wait_timeout(compose.get("waitTimeout", 300))
-
-    manifest["compose"] = compose
+    manifest["compose"] = validate_compose(manifest.get("compose"), ALLOWED_COMPOSE_KEYS, 300)
 
     nodes = manifest.get("nodes", {})
     if not isinstance(nodes, dict):
