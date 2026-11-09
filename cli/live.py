@@ -17,11 +17,10 @@ from compose import (
     PROJECT_PREFIX,
     ROS_SHELL,
     SHELL_SETUP,
-    capture_process,
+    docker,
     live_projects,
     print_command,
     report_container_overrides,
-    run_process,
 )
 from manifest import OpenADKitError, load_json
 from settings import docker_environment
@@ -32,7 +31,7 @@ def autoware_state(project: str) -> dict[str, Any] | None:
     if "api" not in running_services(project):
         return None
     script = (Path(__file__).parent / "autoware_state.py").read_text(encoding="utf-8")
-    result = project_capture(
+    result = run_project(
         project, ["exec", "-T", "api", "bash", "-c", ROS_SHELL + 'exec python3 -c "$0"', script]
     )
     try:
@@ -87,25 +86,16 @@ def live_view(node: str | None) -> str:
     return projects[0]
 
 
-def project_command(project: str, arguments: list[str]) -> list[str]:
-    return ["docker", "compose", "--project-name", project, *arguments]
-
-
 # Compose finds a running project by its labels. From / it reads no Compose
 # file of the current directory, so none of the deployment's settings are needed.
-def project_run(project: str, arguments: list[str]) -> None:
-    run_process(project_command(project, arguments), cwd=Path("/"), env=docker_environment())
-
-
-def project_capture(project: str, arguments: list[str]) -> subprocess.CompletedProcess[str]:
-    return capture_process(
-        project_command(project, arguments), cwd=Path("/"), env=docker_environment(),
-        check=False, trace=False,
-    )
+def run_project(project: str, arguments: list[str], *, show: bool = False) -> subprocess.CompletedProcess[str]:
+    """A Compose command on a running project: shown, or captured quietly and unchecked."""
+    command = ["docker", "compose", "--project-name", project, *arguments]
+    return docker(command, cwd=Path("/"), show=show, check=show, trace=show)
 
 
 def running_services(project: str) -> list[str]:
-    return project_capture(project, ["ps", "--services", "--status", "running"]).stdout.split()
+    return run_project(project, ["ps", "--services", "--status", "running"]).stdout.split()
 
 
 def visualizer_address(tls: bool) -> str:
@@ -114,28 +104,26 @@ def visualizer_address(tls: bool) -> str:
 
 
 def status(project: str) -> None:
-    project_run(project, ["ps"])
+    run_project(project, ["ps"], show=True)
     state = autoware_state(project)
     if state is not None:
         print()
         print("\n".join(format_autoware_state(state)))
     if "visualizer" in running_services(project):
-        certificate = project_capture(project, ["exec", "-T", "visualizer", "printenv", "NOVNC_CERT"])
+        certificate = run_project(project, ["exec", "-T", "visualizer", "printenv", "NOVNC_CERT"])
         print()
         print(visualizer_address(bool(certificate.stdout.strip())))
         print("password: REMOTE_PASSWORD (default openadkit)")
 
 
 def logs(project: str, follow: bool, services: list[str]) -> None:
-    project_run(project, ["logs", *(["--follow"] if follow else []), *services])
+    run_project(project, ["logs", *(["--follow"] if follow else []), *services], show=True)
 
 
 def hooked_services(project: str) -> list[str]:
     """Services that take the integrator's layer: config overrides or overlay workspaces."""
-    ids = project_capture(project, ["ps", "--quiet"]).stdout.split()
-    inspected = capture_process(
-        ["docker", "inspect", *ids], env=docker_environment(), check=False, trace=False
-    ) if ids else None
+    ids = run_project(project, ["ps", "--quiet"]).stdout.split()
+    inspected = docker(["docker", "inspect", *ids], check=False, trace=False) if ids else None
     try:
         containers = json.loads(inspected.stdout) if inspected else []
     except json.JSONDecodeError as error:
@@ -157,12 +145,12 @@ def restart(project: str, services: list[str], everything: bool) -> tuple[list[s
     """
     running = running_services(project)
     if everything:
-        project_run(project, ["restart"])
+        run_project(project, ["restart"], show=True)
         return sorted(running), []
     services = services or hooked_services(project)
     if not services:
         raise OpenADKitError(f"{view_name(project)} has no service with Open AD Kit config to restart")
-    project_run(project, ["restart", *services])
+    run_project(project, ["restart", *services], show=True)
     return services, sorted(set(running) - set(services))
 
 
@@ -170,19 +158,18 @@ def wait_after_restart(project: str, services: list[str]) -> None:
     """Return once the restarted services are ready, as run does: their
     healthchecks pass, and none crashed. A restart starts each healthcheck's
     start period over, so Docker bounds the wait."""
-    ids = project_capture(project, ["ps", "--all", "--quiet", *services]).stdout.split()
+    ids = run_project(project, ["ps", "--all", "--quiet", *services]).stdout.split()
     if not ids:
         return
     print("waiting for the restarted services to be ready...", file=sys.stderr, flush=True)
     while True:
-        result = capture_process(
+        result = docker(
             [
                 "docker", "inspect", "--format",
                 '{{index .Config.Labels "com.docker.compose.service"}} {{.State.Status}} {{.State.ExitCode}} '
                 "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
                 *ids,
-            ],
-            env=docker_environment(), check=False, trace=False,
+            ], check=False, trace=False,
         )
         rows = [row for row in (line.split() for line in result.stdout.splitlines()) if len(row) == 4]
         # A one-shot service may finish, as map-check does, but not fail.
@@ -193,7 +180,7 @@ def wait_after_restart(project: str, services: list[str]) -> None:
         if failed:
             raise OpenADKitError(f"{', '.join(failed)} failed after restart; see: openadkit logs {' '.join(failed)}")
         if not any(health == "starting" for *_, health in rows):
-            report_container_overrides(project_capture(project, ["ps", "--quiet"]).stdout.split(), docker_environment())
+            report_container_overrides(run_project(project, ["ps", "--quiet"]).stdout.split())
             return
         time.sleep(2)
 
@@ -202,7 +189,7 @@ def shell(project: str, service: str, command: list[str]) -> None:
     """A shell, or one command, in a running service with ROS, Autoware and the overlays sourced."""
     arguments = ["exec"] if sys.stdin.isatty() else ["exec", "-T"]
     arguments += [service, "bash", "-c", SHELL_SETUP + 'exec "$@"', "bash", *(command or ["bash"])]
-    project_run(project, arguments)
+    run_project(project, arguments, show=True)
 
 
 def record(project: str, topics: list[str], output: Path | None) -> Path:
@@ -214,13 +201,10 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     integrator message types. The bag is written to a host directory, so it
     survives the deployment's containers.
     """
-    ids = project_capture(project, ["ps", "--quiet", "api"]).stdout.split()
+    ids = run_project(project, ["ps", "--quiet", "api"]).stdout.split()
     if not ids:
         raise OpenADKitError(f"{view_name(project)} has no running api service to record from")
-    environment = docker_environment()
-    inspected = capture_process(
-        ["docker", "inspect", ids[0]], env=environment, check=False, trace=False
-    )
+    inspected = docker(["docker", "inspect", ids[0]], check=False, trace=False)
     try:
         config = json.loads(inspected.stdout)[0]["Config"]
     except (ValueError, LookupError, TypeError) as error:
@@ -251,7 +235,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     ]
     print_command(command)
     try:
-        process = subprocess.Popen(command, env=environment)
+        process = subprocess.Popen(command, env=docker_environment())
         interrupted = False
         while True:
             try:
@@ -284,4 +268,4 @@ def deployment_of(config: dict[str, Any], fallback: str) -> str:
 
 
 def stop(project: str) -> None:
-    project_run(project, ["down", "--remove-orphans"])
+    run_project(project, ["down", "--remove-orphans"], show=True)

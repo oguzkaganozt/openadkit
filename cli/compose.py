@@ -43,55 +43,32 @@ def print_command(command: list[str]) -> None:
         print("+ " + shlex.join(command), file=sys.stderr, flush=True)
 
 
-def run_process(
+def docker(
     command: list[str],
     *,
-    cwd: Path | None = None,
-    env: dict[str, str] | None = None,
-) -> None:
-    print_command(command)
-    try:
-        subprocess.run(command, cwd=cwd, env=env, text=True, check=True)
-    except FileNotFoundError as error:
-        raise OpenADKitError(
-            f"required command is not installed: {command[0]}"
-        ) from error
-    except subprocess.CalledProcessError as error:
-        raise OpenADKitError(
-            f"command failed with exit code {error.returncode}: {command[0]}"
-        ) from error
-
-
-def capture_process(
-    command: list[str],
-    *,
-    cwd: Path | None = None,
-    env: dict[str, str] | None = None,
+    show: bool = False,
     check: bool = True,
     trace: bool = True,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    if trace:
+    """Run a docker command: captured, or shown on the terminal with `show`.
+
+    env defaults to the process environment without Compose's own settings.
+    """
+    if trace or show:
         print_command(command)
     try:
         return subprocess.run(
-            command,
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=check,
+            command, cwd=cwd, env=docker_environment() if env is None else env,
+            capture_output=not show, text=True, check=check,
         )
     except FileNotFoundError as error:
-        raise OpenADKitError(
-            f"required command is not installed: {command[0]}"
-        ) from error
+        raise OpenADKitError(f"required command is not installed: {command[0]}") from error
     except subprocess.CalledProcessError as error:
         detail = " ".join((error.stderr or "").split())
         suffix = f": {detail}" if detail else ""
-        raise OpenADKitError(
-            f"command failed with exit code {error.returncode}: "
-            f"{command[0]}{suffix}"
-        ) from error
+        raise OpenADKitError(f"command failed with exit code {error.returncode}: {command[0]}{suffix}") from error
 
 
 def compose_command(deployment: Deployment, selection: Selection) -> list[str]:
@@ -110,30 +87,13 @@ def compose_command(deployment: Deployment, selection: Selection) -> list[str]:
     return command
 
 
-def compose_run(
-    deployment: Deployment,
-    selection: Selection,
-    arguments: list[str],
-) -> None:
-    run_process(
-        compose_command(deployment, selection) + arguments,
-        cwd=deployment.directory,
-        env=compose_process_environment(deployment, selection),
-    )
-
-
-def compose_capture(
-    deployment: Deployment,
-    selection: Selection,
-    arguments: list[str],
-    *,
-    check: bool = True,
+def run_compose(
+    deployment: Deployment, selection: Selection, arguments: list[str], **options: Any
 ) -> subprocess.CompletedProcess[str]:
-    return capture_process(
+    """A Compose command on the deployment, with its files and settings; options as docker()."""
+    return docker(
         compose_command(deployment, selection) + arguments,
-        cwd=deployment.directory,
-        env=compose_process_environment(deployment, selection),
-        check=check,
+        cwd=deployment.directory, env=compose_process_environment(deployment, selection), **options,
     )
 
 
@@ -151,9 +111,8 @@ def live_projects() -> set[str]:
 def live_project_files() -> dict[str, list[str]]:
     """Live Open AD Kit Compose projects, with the Compose files each started from."""
     require_docker()
-    result = capture_process(
+    result = docker(
         ["docker", "compose", "ls", "--format", "json"],
-        env=docker_environment(),
         check=False,
         trace=False,
     )
@@ -249,10 +208,10 @@ def require_data_unused(paths: Iterable[Path]) -> None:
     targets = [path.resolve() for path in paths]
     if not targets:
         return
-    ids = capture_process(["docker", "ps", "-aq"], trace=False).stdout.split()
+    ids = docker(["docker", "ps", "-aq"], trace=False).stdout.split()
     if not ids:
         return
-    result = capture_process(["docker", "inspect", *ids], trace=False)
+    result = docker(["docker", "inspect", *ids], trace=False)
     try:
         containers = json.loads(result.stdout)
         if not isinstance(containers, list) or len(containers) != len(ids):
@@ -276,9 +235,9 @@ def require_data_unused(paths: Iterable[Path]) -> None:
 
 def render(deployment: Deployment, selection: Selection) -> set[str]:
     require_docker()
-    compose_run(deployment, selection, ["config", "--quiet"])
+    run_compose(deployment, selection, ["config", "--quiet"], show=True)
     configured = set(
-        compose_capture(deployment, selection, ["config", "--services"])
+        run_compose(deployment, selection, ["config", "--services"])
         .stdout.splitlines()
     )
     # The Compose project is the deployment: every configured service is meant
@@ -303,7 +262,7 @@ def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
     Docker creates a missing bind source as root, which the services, running
     as the user, then cannot write to (for example ~/autoware_data).
     """
-    result = compose_capture(deployment, selection, ["config", "--format", "json"])
+    result = run_compose(deployment, selection, ["config", "--format", "json"])
     try:
         services = json.loads(result.stdout).get("services") or {}
     except (json.JSONDecodeError, AttributeError) as error:
@@ -359,8 +318,8 @@ def write_run_record(deployment: Deployment, record: dict[str, Any]) -> Path:
 
 
 def check_daemon(selection: Selection) -> None:
-    result = capture_process(
-        ["docker", "info"], env=docker_environment(), check=False
+    result = docker(
+        ["docker", "info"], check=False
     )
     if result.returncode != 0:
         detail = result.stderr.strip()
@@ -368,9 +327,8 @@ def check_daemon(selection: Selection) -> None:
         raise OpenADKitError(f"could not access the Docker daemon{suffix}")
     if not selection.gpu:
         return
-    runtimes = capture_process(
+    runtimes = docker(
         ["docker", "info", "--format", "{{json .Runtimes}}"],
-        env=docker_environment(),
         check=False,
     )
     try:
@@ -385,12 +343,11 @@ def check_daemon(selection: Selection) -> None:
 
 def restart_counts(deployment: Deployment, selection: Selection) -> dict[str, int]:
     """Restarts each container of the project has had so far, by container id."""
-    ids = compose_capture(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
+    ids = run_compose(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
     if not ids:
         return {}
-    result = capture_process(
+    result = docker(
         ["docker", "inspect", "--format", "{{.Id}} {{.RestartCount}}", *ids],
-        env=docker_environment(),
         trace=False,
     )
     return {
@@ -406,7 +363,7 @@ def failed_services(
     baseline: dict[str, int],
 ) -> list[str]:
     """Long-running services that restarted since `up` or exited."""
-    result = capture_process(
+    result = docker(
         [
             "docker",
             "inspect",
@@ -415,7 +372,6 @@ def failed_services(
             "{{.RestartCount}} {{.State.Status}} {{.State.ExitCode}}",
             *ids,
         ],
-        env=docker_environment(),
         trace=False,
     )
     failed = set()
@@ -443,7 +399,7 @@ def check_services_stay_up(
     only for the others to start, so one of those that fails during launch and
     restarts would still look running.
     """
-    ids = compose_capture(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
+    ids = run_compose(deployment, selection, ["ps", "--all", "--quiet"]).stdout.split()
     if not ids:
         return
     print(
@@ -472,32 +428,23 @@ def start(
     skipped = skipped or set()
     if pull_policy != "never":
         pull = ["pull", "--policy", pull_policy]
-        compose_run(deployment, selection, pull + (sorted(services - skipped) if skipped else []))
+        run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
 
     for service in deployment.reset_services(selection.node):
         if service not in services:
             continue
-        compose_run(
-            deployment,
-            selection,
-            ["rm", "--stop", "--force", service],
-        )
+        run_compose(deployment, selection, ["rm", "--stop", "--force", service], show=True)
 
     baseline = restart_counts(deployment, selection)
-    compose_run(
+    run_compose(
         deployment,
         selection,
         [
-            "up",
-            "--detach",
-            "--wait",
-            "--wait-timeout",
-            str(deployment.compose["waitTimeout"]),
-            "--pull",
-            "never",
-            "--remove-orphans",
+            "up", "--detach", "--wait", "--wait-timeout", str(deployment.compose["waitTimeout"]),
+            "--pull", "never", "--remove-orphans",
             *(f"--scale={service}=0" for service in sorted(skipped)),
         ],
+        show=True,
     )
     check_services_stay_up(deployment, selection, baseline)
     report_overrides(deployment, selection)
@@ -520,18 +467,13 @@ def verify(deployment: Deployment, selection: Selection, services: set[str], rec
     print(f"verify: {' '.join(spec['command']) if 'command' in spec else f'waiting for {service} to finish'}", flush=True)
     begin = time.monotonic()
     if "command" in spec:
-        command = compose_command(deployment, selection) + [
-            "exec", "-T", service, "bash", "-c", SHELL_SETUP + 'exec "$@"', "bash", *spec["command"],
-        ]
-        print_command(command)
-        code = subprocess.run(
-            command, cwd=deployment.directory, env=compose_process_environment(deployment, selection), check=False,
-        ).returncode
+        command = ["exec", "-T", service, "bash", "-c", SHELL_SETUP + 'exec "$@"', "bash", *spec["command"]]
+        code = run_compose(deployment, selection, command, show=True, check=False).returncode
     else:
-        ids = compose_capture(deployment, selection, ["ps", "--all", "--quiet", service]).stdout.split()
+        ids = run_compose(deployment, selection, ["ps", "--all", "--quiet", service]).stdout.split()
         if not ids:
             raise OpenADKitError(f"{service} has no container to wait for")
-        code = int(capture_process(["docker", "wait", ids[0]], env=docker_environment()).stdout.strip())
+        code = int(docker(["docker", "wait", ids[0]]).stdout.strip())
     record["verify"] = {
         "service": service,
         "seconds": round(time.monotonic() - begin, 1),
@@ -551,17 +493,15 @@ def report_overrides(deployment: Deployment, selection: Selection) -> list[str]:
     from most images; it is a mistake only when no service has it. After a
     base version change these usually are renamed packages, files or keys.
     """
-    ids = compose_capture(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
-    return report_container_overrides(ids, docker_environment())
+    ids = run_compose(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    return report_container_overrides(ids)
 
 
-def report_container_overrides(ids: list[str], environment: dict[str, str]) -> list[str]:
+def report_container_overrides(ids: list[str]) -> list[str]:
     """report_overrides for these containers."""
     if not ids:
         return []
-    inspected = capture_process(
-        ["docker", "inspect", *ids], env=environment, check=False, trace=False
-    )
+    inspected = docker(["docker", "inspect", *ids], check=False, trace=False)
     try:
         containers = json.loads(inspected.stdout) if inspected.returncode == 0 else []
     except json.JSONDecodeError:
@@ -571,11 +511,8 @@ def report_container_overrides(ids: list[str], environment: dict[str, str]) -> l
         mounts = [mount.get("Destination", "") for mount in container.get("Mounts") or []]
         if not any(path.startswith(HOOK_MOUNTS) for path in mounts):
             continue
-        result = capture_process(
-            ["docker", "exec", container["Id"], "cat", "/tmp/openadkit/overlay-report.json"],
-            env=environment,
-            check=False,
-            trace=False,
+        result = docker(
+            ["docker", "exec", container["Id"], "cat", "/tmp/openadkit/overlay-report.json"], check=False, trace=False
         )
         try:
             report = json.loads(result.stdout) if result.returncode == 0 else None
@@ -651,7 +588,7 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
         (workspace / "install" / OVERLAY_STAMP).write_text(json.dumps(stamp) + "\n", encoding="utf-8")
     # The image compiles through ccache in the aw home, which only uid
     # 1000 can write; keep HOME and the cache in the container's /tmp.
-    run_process(
+    docker(
         [
             "docker", "run", "--rm",
             "--user", f"{os.getuid()}:{os.getgid()}",
@@ -663,7 +600,7 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
             "--entrypoint", "bash",
             image, "-c", OVERLAY_BUILD, "build", *colcon,
         ],
-        env=docker_environment(),
+        show=True,
     )
     print(f"built: {workspace}")
 

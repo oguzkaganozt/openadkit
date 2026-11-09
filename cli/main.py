@@ -580,7 +580,7 @@ def validate_command(root: Path, kit: RuntimeContext, deployment: Deployment, ar
 
 def config_command(root: Path, kit: RuntimeContext, deployment: Deployment, args: argparse.Namespace) -> int:
     selection = select(root, kit, deployment, args)
-    print(compose.compose_capture(deployment, selection, ["config", "--format", "json"]).stdout, end="")
+    print(compose.run_compose(deployment, selection, ["config", "--format", "json"]).stdout, end="")
     return 0
 
 

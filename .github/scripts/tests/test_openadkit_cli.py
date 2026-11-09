@@ -645,8 +645,8 @@ def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setenv("OPENADKIT_OUTPUT_DIR", str(tmp_path / "output"))
     captured = []
-    monkeypatch.setattr(cli_compose, "compose_capture", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
-    monkeypatch.setattr(cli_compose, "capture_process", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
+    monkeypatch.setattr(cli_compose, "run_compose", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
+    monkeypatch.setattr(cli_compose, "docker", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
     selection = cli_settings.Selection(ros_distro="humble", gpu=False, node=None, injections={}, environment={})
     record = {"deployment": "example"}
     assert cli_compose.verify(deployment, selection, {"scenario"}, record) == 3
@@ -1005,7 +1005,7 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # A long-running service that exits cleanly is gone too: on-failure does not restart it.
     inspect = ("kept api 1 running 0\ncrashed planning 1 running 0\nreset init 3 exited 0\n"
                "bag rosbag 0 exited 1\nquit system 0 exited 0\n")
-    monkeypatch.setattr(cli_compose, "capture_process",
+    monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
     deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
@@ -1014,9 +1014,9 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
 
 @pytest.mark.parametrize(("interrupt", "failed"), [(True, False), (False, True)])
 def test_record_keeps_an_interrupted_bag_but_reports_a_recorder_failure(monkeypatch, tmp_path, interrupt, failed):
-    monkeypatch.setattr(cli_live, "project_capture",
+    monkeypatch.setattr(cli_live, "run_project",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout="api\n"))
-    monkeypatch.setattr(cli_live, "capture_process", lambda *_, **__: subprocess.CompletedProcess(
+    monkeypatch.setattr(cli_live, "docker", lambda *_, **__: subprocess.CompletedProcess(
         [], 0, stdout=json.dumps([{"Config": {"Image": "api-image", "Env": ["ROS_DOMAIN_ID=7"], "User": "1000"}}])))
     runs = []
 
@@ -1069,9 +1069,9 @@ def test_run_reports_overrides_that_changed_nothing(monkeypatch, capsys):
             return subprocess.CompletedProcess(command, 0, stdout=json.dumps(containers))
         return subprocess.CompletedProcess(command, 0, stdout=json.dumps(reports[command[2]]))
 
-    monkeypatch.setattr(cli_compose, "compose_capture",
+    monkeypatch.setattr(cli_compose, "run_compose",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout="map\ncontrol\ncarla\n"))
-    monkeypatch.setattr(cli_compose, "capture_process", capture)
+    monkeypatch.setattr(cli_compose, "docker", capture)
     selection = cli_settings.Selection("humble", False, None, {}, {})
     warnings = cli_compose.report_overrides(None, selection)
     # autoware_control_config is installed in the control image, so it is no mistake.
@@ -1166,9 +1166,9 @@ def test_restart_defaults_to_the_services_with_open_ad_kit_config(tmp_path):
 def test_restart_waits_for_readiness_and_reports_a_failure(monkeypatch, states, failed):
     polls = iter(states)
     reported = []
-    monkeypatch.setattr(cli_live, "project_capture", lambda project, args: subprocess.CompletedProcess(args, 0, "c1\n", ""))
-    monkeypatch.setattr(cli_live, "capture_process", lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "\n".join(next(polls)), ""))
-    monkeypatch.setattr(cli_live, "report_container_overrides", lambda ids, environment: reported.append(ids) or [])
+    monkeypatch.setattr(cli_live, "run_project", lambda project, args: subprocess.CompletedProcess(args, 0, "c1\n", ""))
+    monkeypatch.setattr(cli_live, "docker", lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "\n".join(next(polls)), ""))
+    monkeypatch.setattr(cli_live, "report_container_overrides", lambda ids: reported.append(ids) or [])
     monkeypatch.setattr(cli_live.time, "sleep", lambda _: None)
     if failed:
         with pytest.raises(cli_manifest.OpenADKitError, match=f"{failed} failed after restart"):
@@ -1439,7 +1439,7 @@ def test_clean_protects_shared_data_across_kit_catalogs(tmp_path, name, status, 
 def test_cleanup_refuses_incomplete_container_inspection(tmp_path, monkeypatch, output):
     def capture(args, **kwargs):
         return subprocess.CompletedProcess(args, 0, "abc\n" if args[1] == "ps" else output, "")
-    monkeypatch.setattr(cli_compose, "capture_process", capture)
+    monkeypatch.setattr(cli_compose, "docker", capture)
     with pytest.raises(cli_manifest.OpenADKitError, match="refusing cleanup"):
         cli_compose.require_data_unused([tmp_path / "data"])
 
