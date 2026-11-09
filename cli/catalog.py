@@ -395,7 +395,7 @@ def resolve_extends(kit_root: Path, extends: str) -> Path:
         if not (candidate / "openadkit.json").is_file():
             raise OpenADKitError(
                 f"this kit extends Open AD Kit {extends}, which is not installed; "
-                f"run: openadkit install --version {extends}"
+                "run openadkit in the kit to download it"
             )
         candidate = candidate.resolve()
     else:

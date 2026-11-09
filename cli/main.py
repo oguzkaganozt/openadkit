@@ -30,7 +30,7 @@ from catalog import (
     resolve_extends,
     root_path,
 )
-from manifest import NAME_RE, OpenADKitError, load_json, require_string
+from manifest import NAME_RE, VERSION_RE, OpenADKitError, load_json, require_string
 from settings import Selection
 
 KIT_TEMPLATE = Path(__file__).resolve().parent / "templates/kit"
@@ -108,7 +108,10 @@ def hand_over(start: Path) -> Path | None:
     kit_root = find_kit(start)
     if kit_root is None:
         return None
-    base_root = resolve_extends(kit_root, read_extends(kit_root))
+    extends = read_extends(kit_root)
+    if VERSION_RE.fullmatch(extends):
+        install_pinned_release(extends)
+    base_root = resolve_extends(kit_root, extends)
     if base_root != root_path():
         if os.environ.get("OPENADKIT_DELEGATED"):
             raise OpenADKitError(f"{base_root}/openadkit did not run this kit as its own CLI")
@@ -118,6 +121,23 @@ def hand_over(start: Path) -> Path | None:
         environment = os.environ | {"OPENADKIT_KIT": str(kit_root), "OPENADKIT_DELEGATED": "1"}
         os.execve(launcher, [str(launcher), *sys.argv[1:]], environment)
     return kit_root
+
+
+def install_pinned_release(version: str) -> None:
+    """Download the release a kit pins if it is missing, as a build tool's
+    wrapper does; the active openadkit stays as it is."""
+    if (install_root() / f"openadkit-{version}" / "openadkit.json").is_file():
+        return
+    print(f"[openadkit] this kit uses Open AD Kit {version}; installing it "
+          "(your openadkit stays as it is)", file=sys.stderr, flush=True)
+    # stdout stays the command's own, for --json.
+    result = subprocess.run(
+        [str(root_path() / "openadkit"), "install", "--version", version,
+         "--destination", str(install_root()), "--no-activate", "--no-next-steps"],
+        stdout=sys.stderr, check=False,
+    )
+    if result.returncode != 0:
+        raise OpenADKitError(f"could not install Open AD Kit {version}, which this kit extends")
 
 
 def load_context(start: Path) -> tuple[Path, RuntimeContext]:
