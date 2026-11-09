@@ -2276,13 +2276,13 @@ in one directory; <code>deployments.my-kit.path</code> is <code>"."</code>. No n
 directory is needed. Run commands from that directory, not the base repository.</p>
 <h2 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">#</a></h2>
 <h3 id="1-values">1. Values<a class="headerlink" href="#1-values" title="Permanent link">#</a></h3>
-<p>Put only differences in your deployment's <code>config.env</code>. Compose interpolation
+<p>Put only differences in your deployment's <code>settings.env</code>. Compose interpolation
 reads these files in order (later wins):</p>
 <ol>
-<li>Base <code>config.env</code></li>
-<li>Base <code>config.gpu.env</code>, when GPU mode is selected</li>
-<li>Kit <code>config.env</code>, if present</li>
-<li>Kit <code>config.gpu.env</code>, if present and GPU mode is selected</li>
+<li>Base <code>settings.env</code></li>
+<li>Base <code>settings.gpu.env</code>, when GPU mode is selected</li>
+<li>Kit <code>settings.env</code>, if present</li>
+<li>Kit <code>settings.gpu.env</code>, if present and GPU mode is selected</li>
 <li><code>~/.config/openadkit/&lt;kit-deployment&gt;.env</code>, if present</li>
 </ol>
 <p>Container ROS/DDS defaults come from the included services' <code>runtime.env</code>.

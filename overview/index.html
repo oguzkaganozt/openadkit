@@ -2175,7 +2175,7 @@
 </tr>
 <tr>
 <td><strong>Deployment</strong></td>
-<td>A named, ready-to-run stack: a manifest, environment files, and Compose configuration for a task such as planning simulation.</td>
+<td>A named, ready-to-run stack: a manifest, settings, and Compose configuration for a task such as planning simulation.</td>
 </tr>
 <tr>
 <td><strong>Deployment manifest</strong></td>
@@ -2194,8 +2194,12 @@
 <td>The kit's pinned Open AD Kit release and the reference deployment it includes.</td>
 </tr>
 <tr>
+<td><strong>Settings</strong></td>
+<td><code>KEY=value</code> variables a deployment runs with, such as <code>MAP_PATH</code>: <code>settings.env</code>, then <code>settings.gpu.env</code> with <code>--gpu</code>, then the host settings file. <code>restart</code> or <code>run</code> applies them.</td>
+</tr>
+<tr>
 <td><strong>Config override</strong></td>
-<td>Parameter/file differences layered over package configuration; not a copy of the full base file.</td>
+<td>Parameter/file differences under <code>config/autoware/</code>, layered over package configuration; not a copy of the full base file. <code>restart</code> applies them.</td>
 </tr>
 <tr>
 <td><strong>Overlay workspace</strong></td>

@@ -2118,7 +2118,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 ├── openadkit.json
 ├── deployment.json
 ├── docker-compose.yaml
-├── config.env
+├── settings.env
 ├── config/autoware/
 └── overlay_ws/src/
 </code></pre></div>
@@ -2131,7 +2131,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
   add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the base root for
   shared assets.</li>
-<li><code>config.env</code> holds only the values you change, such as <code>VEHICLE_ID</code>.</li>
+<li><code>settings.env</code> holds only the values you change, such as <code>VEHICLE_ID</code>.</li>
 <li><code>config/autoware/</code> holds parameter overrides for Autoware packages.</li>
 <li><code>overlay_ws/src/</code> holds your ROS packages.</li>
 </ul>
