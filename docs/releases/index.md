@@ -42,7 +42,7 @@ vehicle certification.
 | Readiness: `run` and `restart` wait for the deployments' healthchecks; `run --verify` runs the end-to-end check CI runs | Done |
 | Dev loop: `build -- <colcon args>`, a `run.json` record of every run, `openadkit new` for kits | Done |
 | Images: planning and control as separate images (`PLANNING_IMAGE`, `CONTROL_IMAGE`), so a planner can change while control stays the same | Done |
-| Planner choice: `planning-simulation --gpu` plans with Autoware 2.0's Diffusion Planner on a `planning-cuda` image, with its model and diagnostics graph; control unchanged | Done |
+| Planner choice: `planning-simulation --gpu` (experimental) plans with Autoware 2.0's Diffusion Planner on a `planning-cuda` image, with its model and diagnostics graph; control unchanged | Done |
 
 ### After v2.0
 

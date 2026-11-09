@@ -111,6 +111,11 @@ RUN --mount=from=planning-cuda-devel,source=/opt/acados/lib,target=/mnt/acados-l
 
 ENV LD_LIBRARY_PATH="/opt/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
+# autoware_planning_launch starts demo_nodes_cpp's parameter_blackboard with the
+# Diffusion Planner (learning_based_planning/diffusion_planner.launch.xml)
+# without declaring it, so rosdep does not install it. Drop the explicit package
+# once the pinned Autoware release declares it
+# (https://github.com/autowarefoundation/autoware_launch/pull/2015).
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
@@ -121,6 +126,8 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     rosdep install -y --from-paths /opt/autoware/*/share \
       --dependency-types=exec --ignore-src --rosdistro "${ROS_DISTRO}" \
       --skip-keys "${internal_packages}" && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      "ros-${ROS_DISTRO}-demo-nodes-cpp" && \
     bash /tmp/runtime-cleanup.sh
 
 # Apply Ubuntu's updates the pinned upstream base image lags on
