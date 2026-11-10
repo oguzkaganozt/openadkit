@@ -1927,10 +1927,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing-a-change-without-a-build" class="md-nav__link">
+  <a href="#testing-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing a change without a build
+        Testing a pull request
       
     </span>
   </a>
@@ -2109,10 +2109,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing-a-change-without-a-build" class="md-nav__link">
+  <a href="#testing-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing a change without a build
+        Testing a pull request
       
     </span>
   </a>
@@ -2271,19 +2271,24 @@ half speed (<code>GLOBAL_REAL_TIME_FACTOR=0.5</code>, with <code>GLOBAL_TIMEOUT=
 seconds) through the cell's host settings file, so they test the scenarios
 rather than the runner's size. Investigate a cell that still fails after the
 workflow's retry.</p>
-<h2 id="testing-a-change-without-a-build">Testing a change without a build<a class="headerlink" href="#testing-a-change-without-a-build" title="Permanent link">#</a></h2>
+<h2 id="testing-a-pull-request">Testing a pull request<a class="headerlink" href="#testing-a-pull-request" title="Permanent link">#</a></h2>
+<p>A pull request that changes an image's inputs builds the affected images,
+amd64 only, for both distros. A pull request from this repository pushes them
+to the CI package <code>openadkit-ci</code>, completes the build there with its base
+branch's other images, copied by digest, and runs the cells on that build
+before merge. A fork's pull request cannot push; its images are checked at the
+build and scan only, and run in the cells after merge.</p>
 <p>A change that rebuilds no image, such as a deployment setting, the CLI or a
 check, runs the cells against an existing build:</p>
 <ul>
 <li>A pull request that touches <code>deployments/</code>, <code>cli/</code> or the evidence checks
-  runs them against its base branch's latest successful build. When it also
-  changes an image's inputs, it waits for the build after merge instead.</li>
+  runs them against its base branch's latest successful build.</li>
 <li>A dispatch of <code>evidence.yaml</code> with <code>source_ref</code> tests that branch or commit;
   <code>build_tag</code> defaults to the dispatched branch's latest successful build.</li>
 </ul>
 <p>The cells take the deployments, CLI and checks from the tested commit and the
-images from the build. Such a run is not release evidence: its summary names
-both commits, which the gate rejects.</p>
+images from the build. A pull request's run is not release evidence: the gate
+accepts only a build of the release branch.</p>
 <h2 id="explicit-ci-exemptions">Explicit CI exemptions<a class="headerlink" href="#explicit-ci-exemptions" title="Permanent link">#</a></h2>
 <p>CARLA Simulation requires a GPU; Logging Simulation has no hosted runtime
 cell. Their deployment manifests contain a reasoned <code>evidence.exempt</code> entry.
