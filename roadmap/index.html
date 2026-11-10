@@ -2139,8 +2139,6 @@
 <a href="https://github.com/autowarefoundation/openadkit/releases">release notes</a>.</p>
 <h2 id="now-v200">Now: v2.0.0<a class="headerlink" href="#now-v200" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Image contents.</strong> Each image carries only the build inputs and runtime
-   packages it needs, before v2.0.0 makes its contents part of the contract.</li>
 <li><strong>Release.</strong> A full build and evidence run, then a clean-host install, kit,
    restart and upgrade check on a release candidate.</li>
 </ol>
@@ -2176,6 +2174,9 @@
   with <code>foxglove_bridge</code> for analysis and bag playback.</li>
 <li><strong>rmw_zenoh.</strong> Replace <code>zenoh-bridge-ros2dds</code> for split-host on Jazzy if an
   evaluation succeeds.</li>
+<li><strong>Per-image trimming.</strong> Packages that no catalog deployment runs and that
+  bring heavy dependencies, such as PyTorch for control's smart MPC,
+  calibration tools and DNN packages in CPU images, at the next major version.</li>
 <li><strong>Safety Island on CARLA.</strong> A kit with the Safety Island's closed loop over
   CAN, backed by its own runtime evidence.</li>
 </ul>

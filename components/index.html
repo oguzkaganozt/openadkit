@@ -2115,6 +2115,10 @@ the images use Autoware's component interfaces between them.</p>
 <p>All images build on a shared <code>universe-common</code> layer; see
 <a href="../development/build-from-source/#build-system">Build from Source</a> for the
 build graph. The <a href="#image-reference">image reference</a> lists tags and platforms.</p>
+<p>The runtime images hold what Autoware runs. They leave out what only a
+compiler reads, such as headers and static libraries, and only the visualizer
+carries RViz and its plugins. Kits compile their overlay workspaces in the
+<code>universe-common-devel</code> image, which keeps both.</p>
 <h2 id="component-images">Component Images<a class="headerlink" href="#component-images" title="Permanent link">#</a></h2>
 <h3 id="sensing-perception">Sensing &amp; Perception<a class="headerlink" href="#sensing-perception" title="Permanent link">#</a></h3>
 <p>Sensor preprocessing and environment understanding in one image.</p>
