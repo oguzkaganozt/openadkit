@@ -87,7 +87,6 @@ def build_matrices(inventory):
         arches = " ".join(platform_label(p) for p in image["platforms"])
         for distro in image_distros(image, distros):
             manifest_include.append({
-                "repo": image["repo"],
                 "target": image["target"],
                 "ros-distro": distro,
                 "arches": arches,
@@ -230,7 +229,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, commo
             args["SECURITY_REFRESH"] = build_tag
         else:
             contexts["universe-common-devel"] = f"docker-image://{common_build}"
-            contexts["universe-common"] = f"docker-image://ghcr.io/{owner}/openadkit-common:universe-common-{arch}-{distro}-{build_tag}"
+            contexts["universe-common"] = f"docker-image://ghcr.io/{owner}/openadkit:universe-common-{arch}-{distro}-{build_tag}"
             upstream = json.loads(prepared["upstream_images"])[distro]
             cuda_contexts = {f"autoware-{name}": upstream[name]["uri"] for name in ("base-cuda-runtime", "base-cuda-devel")}
         labels = {f"org.opencontainers.image.{key.replace('_', '-')}": prepared[key] for key in (

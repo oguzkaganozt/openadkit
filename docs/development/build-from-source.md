@@ -34,12 +34,14 @@ CI pushes only to its build cache. Its digest changes only with its inputs, so a
 build that changes no Autoware source or component Dockerfile reuses the cached
 compiles and only refreshes and reassembles the runtime images.
 
-| Group | Targets | Published to |
-|-------|---------|--------------|
-| `universe-common` | `universe-common-devel`, `universe-common` | `ghcr.io/autowarefoundation/openadkit-common` |
-| `component` | all component images, including the amd64-only `sensing-perception-cuda` | `ghcr.io/autowarefoundation/openadkit` |
-| `planning-simulation` | `universe-common` plus the images Planning Simulation needs | — (local builds) |
-| `default` | `universe-common` + `component` | — |
+| Group | Targets |
+|-------|---------|
+| `universe-common` | `universe-common-devel`, `universe-common` |
+| `component` | all component images, including the amd64-only `sensing-perception-cuda` |
+| `planning-simulation` | `universe-common` plus the images Planning Simulation needs (local builds) |
+| `default` | `universe-common` + `component` |
+
+CI publishes every image to `ghcr.io/autowarefoundation/openadkit`.
 
 ## Build and Run Locally
 
@@ -144,8 +146,8 @@ Releases promote an existing CI build; nothing is rebuilt.
   Unset, they run on the GitHub-hosted `ubuntu-22.04` and `ubuntu-22.04-arm`.
   Pull request jobs run on them too, so point them only at ephemeral hosted
   runners, never at a persistent self-hosted machine.
-- **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-common`, and
-  `openadkit-buildcache` under `ghcr.io/autowarefoundation/`.
+- **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-buildcache`
+  and `openadkit-ci` under `ghcr.io/autowarefoundation/`.
 - **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
   used.

@@ -4,7 +4,7 @@ name: registry-cleanup
 # per run and nothing removed them:
 #   - openadkit-ci: a pull request's images (build-single-image.yaml), deleted
 #     when it closes and, for older runs of it, after 14 days.
-#   - openadkit, openadkit-common: a branch build's images, tagged
+#   - openadkit: a branch build's images, tagged
 #     <target>[-<arch>]-<distro>-<run>-<attempt>. A release only promotes a
 #     build younger than 90 days (validate_release.sh), so older ones go;
 #     release tags (-vX.Y.Z), latest aliases (<target>-<distro>) and the
@@ -98,7 +98,7 @@ jobs:
       - name: Delete branch builds older than 90 days
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          packages: openadkit,openadkit-common
+          package: openadkit
           use-regex: true
           delete-tags: ${{ env.BUILD_TAGS }}
           exclude-tags: ${{ env.KEEP_TAGS }}

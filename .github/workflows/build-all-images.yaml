@@ -38,8 +38,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
-  IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/openadkit
   IS_MAIN_PUSH: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
   SAVE_CCACHE: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push' }}
 
@@ -251,7 +250,7 @@ jobs:
       - name: Create multi-arch manifest for ${{ matrix.target }} (${{ matrix.ros-distro }})
         uses: ./.github/actions/combine-multi-arch-images
         with:
-          image: ${{ matrix.repo == 'common' && env.IMAGE_PREFIX_COMMON || env.IMAGE_PREFIX_COMPONENT }}
+          image: ${{ env.IMAGE_REPO }}
           target: ${{ matrix.target }}
           ros-distro: ${{ matrix.ros-distro }}
           arches: ${{ matrix.arches }}
@@ -308,8 +307,7 @@ jobs:
           AUTOWARE_REF: ${{ needs.prepare.outputs.autoware_ref }}
           AUTOWARE_BASE_VERSION: ${{ needs.prepare.outputs.autoware_base_version }}
           PREPARED_LOCK_SHA256: ${{ needs.prepare.outputs.autoware_lock_sha256 }}
-          COMMON: ${{ env.IMAGE_PREFIX_COMMON }}
-          COMPONENT: ${{ env.IMAGE_PREFIX_COMPONENT }}
+          IMAGE_REPO: ${{ env.IMAGE_REPO }}
         run: python3 .github/scripts/images.py capture
         shell: bash
 

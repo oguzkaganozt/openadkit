@@ -31,9 +31,8 @@ def executable(path, content):
 def build_images():
     inventory = json.loads((ROOT / ".github/image-inventory.json").read_text())
     return [
-        {"repo": f"ghcr.io/example/openadkit{'-common' if image['repo'] == 'common' else ''}",
-         "target": image["target"], "ros_distro": distro,
-         "ref": f"ghcr.io/example/openadkit{'-common' if image['repo'] == 'common' else ''}:{image['target']}-{distro}-{BUILD_TAG}",
+        {"repo": "ghcr.io/example/openadkit", "target": image["target"], "ros_distro": distro,
+         "ref": f"ghcr.io/example/openadkit:{image['target']}-{distro}-{BUILD_TAG}",
          "digest": DIGEST, "platforms": image["platforms"]}
         for image in inventory["images"]
         for distro in image.get("ros_distros", inventory["ros_distros"])
@@ -86,8 +85,7 @@ def run_validator(tmp_path, function, **env):
     ], cwd=tmp_path, text=True, capture_output=True, timeout=30, env=os.environ | {
         "BUILD_TAG": BUILD_TAG, "VERSION": VERSION, "GH_TOKEN": "test", "GITHUB_REF": "refs/heads/release/9.8",
         "GITHUB_REPOSITORY": "example/repo", "GITHUB_OUTPUT": str(tmp_path / "output"),
-        "IMAGE_PREFIX_COMMON": "ghcr.io/example/openadkit-common",
-        "IMAGE_PREFIX_COMPONENT": kit["imagePrefixComponent"],
+        "IMAGE_REPO": kit["imageRepository"],
         **env,
     })
 

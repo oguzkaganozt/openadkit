@@ -64,15 +64,9 @@ def build_images(metadata: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def inventory_images(inventory: dict[str, Any], common: str, component: str) -> list[dict[str, Any]]:
-    prefixes = {"common": common, "component": component}
-    rows = []
-    for image in inventory["images"]:
-        require(image["repo"] in prefixes, f'unsupported repo kind: {image["repo"]}')
-        for distro in image.get("ros_distros", inventory["ros_distros"]):
-            rows.append({"repo": prefixes[image["repo"]], "target": image["target"], "ros_distro": distro,
-                         "platforms": image["platforms"]})
-    return rows
+def inventory_images(inventory: dict[str, Any], repo: str) -> list[dict[str, Any]]:
+    return [{"repo": repo, "target": image["target"], "ros_distro": distro, "platforms": image["platforms"]}
+            for image in inventory["images"] for distro in image.get("ros_distros", inventory["ros_distros"])]
 
 
 def scan_rows(metadata: dict[str, Any]) -> list[dict[str, Any]]:
@@ -98,7 +92,7 @@ def validate_scan(scan: dict[str, Any], build_tag: str) -> None:
         require(row.get("image_ref") == f'{row["repo"]}@{row["digest"]}', "invalid scan image reference")
 
 
-def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, common: str, component: str) -> None:
+def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, repo: str) -> None:
     metadata = load_json(directory / "build-metadata.json")
     require(isinstance(metadata, dict), "build metadata must be an object")
     run_id, run_attempt = build_tag.split("-")
@@ -119,7 +113,7 @@ def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, co
     images = build_images(metadata)
     def inventory_key(row):
         return (row["repo"], row["target"], row["ros_distro"], tuple(sorted(row["platforms"])))
-    expected = {inventory_key(row) for row in inventory_images(inventory, common, component)}
+    expected = {inventory_key(row) for row in inventory_images(inventory, repo)}
     require(len(images) == len(expected) and {inventory_key(row) for row in images} == expected,
             "build metadata does not cover exactly the image inventory")
     require(isinstance(upstream, list) and bool(upstream), "upstream images must be a nonempty array")
@@ -145,7 +139,7 @@ def capture(directory: Path, env: dict[str, str]) -> dict[str, Any]:
     hashes = {key: hashlib.sha256((directory / file).read_bytes()).hexdigest() for file, key in (
         ("autoware-lock.repos", "autoware_lock_sha256"), ("image-inventory.json", "image_inventory_sha256"), ("upstream-images.json", "upstream_images_sha256"))}
     require(hashes["autoware_lock_sha256"] == env["PREPARED_LOCK_SHA256"], "Autoware lock SHA does not match prepare output")
-    rows = inventory_images(load_json(directory / "image-inventory.json"), env["COMMON"], env["COMPONENT"])
+    rows = inventory_images(load_json(directory / "image-inventory.json"), env["IMAGE_REPO"])
     registry = Path(__file__).with_name("registry_lookup.sh")
     for row in rows:
         ref = image_ref(row, env["BUILD_TAG"])
@@ -203,7 +197,7 @@ def main() -> None:
         elif args.operation == "check-scan":
             validate_scan(load_json(args.paths[0]), os.environ["BUILD_TAG"])
         else:
-            validate_artifacts(args.paths[0], load_json(args.paths[1]), os.environ["BUILD_TAG"], os.environ["IMAGE_PREFIX_COMMON"], os.environ["IMAGE_PREFIX_COMPONENT"])
+            validate_artifacts(args.paths[0], load_json(args.paths[1]), os.environ["BUILD_TAG"], os.environ["IMAGE_REPO"])
     except (ValueError, OSError, KeyError, IndexError, TypeError, subprocess.CalledProcessError) as error:
         parser.error(str(error))
 

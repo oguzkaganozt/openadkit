@@ -14,8 +14,7 @@ source "${script_dir}/stable_alias_policy.sh"
 : "${GITHUB_REF:?GITHUB_REF is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
-: "${IMAGE_PREFIX_COMMON:?IMAGE_PREFIX_COMMON is required}"
-: "${IMAGE_PREFIX_COMPONENT:?IMAGE_PREFIX_COMPONENT is required}"
+: "${IMAGE_REPO:?IMAGE_REPO is required}"
 
 openadkit_semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*)|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.((0|[1-9][0-9]*)|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?$'
 openadkit_stable_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
@@ -53,11 +52,11 @@ validate_manifest_consistency() {
 
   manifest="${RELEASE_SOURCE_ROOT:-${script_dir}/../..}/openadkit.json"
   [ -f "${manifest}" ] || fail "Product manifest not found at ${manifest}"
-  manifest_registry=$(jq -r '.imagePrefixComponent // empty' "${manifest}")
+  manifest_registry=$(jq -r '.imageRepository // empty' "${manifest}")
   [ -n "${manifest_registry}" ] \
-    || fail "Product manifest ${manifest} does not declare imagePrefixComponent"
-  [ "${IMAGE_PREFIX_COMPONENT}" = "${manifest_registry}" ] \
-    || fail "IMAGE_PREFIX_COMPONENT '${IMAGE_PREFIX_COMPONENT}' must match openadkit.json imagePrefixComponent '${manifest_registry}'"
+    || fail "Product manifest ${manifest} does not declare imageRepository"
+  [ "${IMAGE_REPO}" = "${manifest_registry}" ] \
+    || fail "IMAGE_REPO '${IMAGE_REPO}' must match openadkit.json imageRepository '${manifest_registry}'"
 }
 
 resolve_latest_alias_policy() {

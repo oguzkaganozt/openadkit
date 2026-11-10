@@ -21,10 +21,10 @@ inputs:
     description: Publish images as a build of a branch, with its labels and caches (false for PR and local validation)
     default: "false"
   push:
-    description: Push a pull request's images to image-prefix instead of loading them, for its evidence
+    description: Push a pull request's images to image-repo instead of loading them, for its evidence
     default: "false"
-  image-prefix:
-    description: Image prefix for every target; empty for the common and component prefixes of the environment
+  image-repo:
+    description: Image repository to push to; empty for the environment's IMAGE_REPO
     default: ""
   stable-tags:
     description: Also publish the moving <target>-<arch>-<distro> tag that PR builds start from (main pushes only)
@@ -64,7 +64,7 @@ runs:
       id: meta
       uses: docker/metadata-action@v6
       with:
-        images: ${{ inputs.image-prefix || (startsWith(inputs.target, 'universe-common') && env.IMAGE_PREFIX_COMMON || env.IMAGE_PREFIX_COMPONENT) }}
+        images: ${{ inputs.image-repo || env.IMAGE_REPO }}
         bake-target: docker-metadata-action-${{ inputs.target }}
         tags: |
           type=raw,value=${{ inputs.target }}-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }},enable=${{ inputs.stable-tags }}
@@ -76,7 +76,7 @@ runs:
       id: meta-devel
       uses: docker/metadata-action@v6
       with:
-        images: ${{ env.IMAGE_PREFIX_COMMON }}
+        images: ${{ env.IMAGE_REPO }}
         bake-target: docker-metadata-action-universe-common-devel
         tags: |
           type=raw,value=universe-common-devel-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }},enable=${{ inputs.stable-tags }}
