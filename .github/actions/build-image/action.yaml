@@ -18,8 +18,14 @@ inputs:
     description: Build tag for publishing, or pr<number> for local checks
     required: true
   publish:
-    description: Push images (false for PR and local validation)
+    description: Publish images as a build of a branch, with its labels and caches (false for PR and local validation)
     default: "false"
+  push:
+    description: Push a pull request's images to image-prefix instead of loading them, for its evidence
+    default: "false"
+  image-prefix:
+    description: Image prefix for every target; empty for the common and component prefixes of the environment
+    default: ""
   stable-tags:
     description: Also publish the moving <target>-<arch>-<distro> tag that PR builds start from (main pushes only)
     default: "false"
@@ -58,7 +64,7 @@ runs:
       id: meta
       uses: docker/metadata-action@v6
       with:
-        images: ${{ startsWith(inputs.target, 'universe-common') && env.IMAGE_PREFIX_COMMON || env.IMAGE_PREFIX_COMPONENT }}
+        images: ${{ inputs.image-prefix || (startsWith(inputs.target, 'universe-common') && env.IMAGE_PREFIX_COMMON || env.IMAGE_PREFIX_COMPONENT) }}
         bake-target: docker-metadata-action-${{ inputs.target }}
         tags: |
           type=raw,value=${{ inputs.target }}-${{ inputs.platform == 'linux/arm64' && 'arm64' || 'amd64' }}-${{ inputs.ros-distro }},enable=${{ inputs.stable-tags }}
@@ -119,8 +125,8 @@ runs:
           ${{ steps.meta.outputs.bake-file }}
           ${{ steps.meta-devel.outputs.bake-file }}
         targets: ${{ steps.recipe.outputs.targets }}
-        push: ${{ inputs.publish == 'true' }}
-        load: ${{ inputs.publish != 'true' && inputs.common-check != 'true' }}
+        push: ${{ inputs.publish == 'true' || inputs.push == 'true' }}
+        load: ${{ inputs.publish != 'true' && inputs.push != 'true' && inputs.common-check != 'true' }}
 
     - name: Prune prior ccache lineage
       if: inputs.save-ccache == 'true'

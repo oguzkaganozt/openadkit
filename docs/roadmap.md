@@ -27,9 +27,13 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
    `main`, kept out of releases and PR checks.
 8. **Upstream build fixes.** Propose upstream the dependency fixes that the
    image boundaries need.
-9. **CES 2027 demo.** Hardware integration and partner evidence for the
-   demonstrated setup; tracked in
-   [#169](https://github.com/autowarefoundation/openadkit/issues/169).
+9. **Build once, promote.** Merge a pull request's tested images to `main`
+   instead of building them again; its build then covers arm64 too.
+10. **Faster main builds.** Components wait only for their own common images,
+    and the evidence does not wait for the CUDA and arm64 images it never runs.
+11. **CES 2027 demo.** Hardware integration and partner evidence for the
+    demonstrated setup; tracked in
+    [#169](https://github.com/autowarefoundation/openadkit/issues/169).
 
 ## Later: direction, not commitment
 

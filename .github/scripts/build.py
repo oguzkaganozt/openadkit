@@ -14,6 +14,31 @@ import sys
 DEFAULT_INVENTORY = ".github/image-inventory.json"
 REPOSITORY = pathlib.Path(__file__).resolve().parents[2]
 
+# What every image is built from: a change to one rebuilds them all.
+IMAGE_INPUTS = (
+    "components/shared/*",
+    ".github/image-inventory.json",
+    ".github/scripts/export_autoware_lock.py",
+)
+# The pull request build pipeline itself, which changes no image: building
+# one small image, pushing it and running the evidence on it proves it.
+PIPELINE_INPUTS = (
+    ".github/scripts/build.py",
+    ".github/scripts/images.py",
+    ".github/scripts/assemble_pr_build.sh",
+    ".github/scripts/resolve_build_inputs.sh",
+    ".github/scripts/resolve_registry_contexts.sh",
+    ".github/scripts/resolve_upstream_images.sh",
+    ".github/scripts/registry_lookup.sh",
+    ".github/actions/free-disk-space/*",
+    ".github/actions/build-image/*",
+    ".github/actions/setup-build-env/*",
+    ".github/workflows/build-single-image.yaml",
+    ".github/workflows/build-single-image-distro.yaml",
+    ".trivyignore",
+)
+PIPELINE_CHECK_TARGET = "api"
+
 
 def platform_label(platform):
     if platform == "linux/amd64":
@@ -80,22 +105,6 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
     images = inventory["images"]
     images_by_target = {image["target"]: image for image in images}
     all_targets = set(images_by_target)
-    shared_build_inputs = (
-        "components/shared/*",
-        ".github/image-inventory.json",
-        ".github/scripts/export_autoware_lock.py",
-        ".github/scripts/build.py",
-        ".github/scripts/resolve_build_inputs.sh",
-        ".github/scripts/resolve_registry_contexts.sh",
-        ".github/scripts/resolve_upstream_images.sh",
-        ".github/scripts/registry_lookup.sh",
-        ".github/actions/free-disk-space/*",
-        ".github/actions/build-image/*",
-        ".github/actions/setup-build-env/*",
-        ".github/workflows/build-single-image.yaml",
-        ".github/workflows/build-single-image-distro.yaml",
-        ".trivyignore",
-    )
     targets = set(target_input.split())
     use_local_common = False
 
@@ -118,11 +127,10 @@ def build_single_image_plan(inventory, changed_files=(), target_input="", distro
                 changed_file.endswith("/README.md") and changed_file.count("/") == 2
             ):
                 continue
-            elif any(
-                fnmatch.fnmatchcase(changed_file, pattern)
-                for pattern in shared_build_inputs
-            ):
+            elif any(fnmatch.fnmatchcase(changed_file, pattern) for pattern in IMAGE_INPUTS):
                 targets.update(all_targets)
+            elif any(fnmatch.fnmatchcase(changed_file, pattern) for pattern in PIPELINE_INPUTS):
+                targets.add(PIPELINE_CHECK_TARGET)
             elif changed_file.startswith("components/"):
                 component, separator, component_path = changed_file.removeprefix(
                     "components/"

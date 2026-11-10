@@ -3,14 +3,17 @@ name: build-single-image
 permissions:
   contents: read
 
-# Lightweight single-image build for PR checks and manual debugging.
+# A pull request's image build, scan and evidence, and manual debugging.
 #
 # Triggers:
 #   - pull_request: when component or shared build-graph inputs change.
-#     Builds affected targets with --load, then scans them (no push), amd64
-#     only, for both ROS distributions: an image that builds on humble can
-#     still break on jazzy (Ubuntu 24.04 ships different packages).
-#     Fork-safe: elevated cache cleanup runs only for same-repository PRs.
+#     Builds the affected targets, amd64 only, for both ROS distributions: an
+#     image that builds on humble can still break on jazzy (Ubuntu 24.04 ships
+#     different packages), and scans them with the release's policy. A pull
+#     request from this repository pushes them to the CI package
+#     (openadkit-ci), completes the build there from the base branch's images
+#     and runs the evidence on it before merge. A fork's pull request, whose
+#     token cannot push, loads its images and stops at the scan.
 #   - workflow_dispatch: manual single-target or multi-target validation build
 #     for one distribution.
 #
@@ -30,6 +33,8 @@ on:
       - ".github/image-inventory.json"
       - ".github/scripts/export_autoware_lock.py"
       - ".github/scripts/build.py"
+      - ".github/scripts/images.py"
+      - ".github/scripts/assemble_pr_build.sh"
       - ".github/scripts/resolve_build_inputs.sh"
       - ".github/scripts/resolve_registry_contexts.sh"
       - ".github/scripts/resolve_upstream_images.sh"
@@ -64,8 +69,132 @@ jobs:
     permissions:
       actions: read
       contents: read
-      packages: read
+      packages: write
     uses: ./.github/workflows/build-single-image-distro.yaml
     with:
       ros-distro: ${{ matrix.ros-distro }}
       target: ${{ inputs.target || '' }}
+      push: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+
+  # Every image of the build under one build tag in the CI package, and its
+  # build metadata, as a branch build has them; see assemble_pr_build.sh.
+  pr-build:
+    needs: build
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    outputs:
+      build_tag: ${{ steps.prepare.outputs.build_tag }}
+      built: ${{ steps.assemble.outputs.built }}
+    env:
+      REGISTRY: ghcr.io
+      CI_REPO: ghcr.io/${{ github.repository_owner }}/openadkit-ci
+    steps:
+      - name: Check out the Open AD Kit repository
+        uses: actions/checkout@v7
+
+      - name: Resolve shared build inputs
+        id: prepare
+        run: bash .github/scripts/resolve_build_inputs.sh
+        shell: bash
+
+      - name: Install YAML parser
+        run: sudo apt-get update && sudo apt-get install -y python3-yaml
+        shell: bash
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download the base branch's latest build metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          run_id=$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow build-all-images.yaml \
+            --branch "${BASE_BRANCH}" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          [ -n "${run_id}" ] || { echo "No successful build-all-images run on ${BASE_BRANCH}" >&2; exit 1; }
+          base_tag=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired | not) | .name | select(startswith("build-metadata-")) | ltrimstr("build-metadata-")' \
+            | sort -V | tail -n 1)
+          [ -n "${base_tag}" ] || { echo "Build run ${run_id} has no build metadata artifact left" >&2; exit 1; }
+          gh run download "${run_id}" --repo "${GITHUB_REPOSITORY}" --name "build-metadata-${base_tag}" --dir base-metadata
+          echo "Completing the build from ${BASE_BRANCH}'s build ${base_tag}" >&2
+        shell: bash
+
+      - name: Complete the build in the CI package
+        id: assemble
+        env:
+          BUILD_TAG: ${{ steps.prepare.outputs.build_tag }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_METADATA: base-metadata/build-metadata.json
+        run: |
+          set -euo pipefail
+          built=$(bash .github/scripts/assemble_pr_build.sh)
+          echo "built=${built}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Resolve immutable upstream Autoware images
+        env:
+          UPSTREAM_TAG: ${{ steps.prepare.outputs.upstream_tag }}
+        run: bash .github/scripts/resolve_upstream_images.sh
+        shell: bash
+
+      - name: Capture build metadata
+        env:
+          BUILD_TAG: ${{ steps.prepare.outputs.build_tag }}
+          OPENADKIT_SHA: ${{ github.sha }}
+          AUTOWARE_INPUT_REF: ${{ steps.prepare.outputs.autoware_input_ref }}
+          AUTOWARE_REF_TYPE: ${{ steps.prepare.outputs.autoware_ref_type }}
+          AUTOWARE_REF: ${{ steps.prepare.outputs.autoware_ref }}
+          AUTOWARE_BASE_VERSION: ${{ steps.prepare.outputs.autoware_base_version }}
+          COMMON: ${{ env.CI_REPO }}
+          COMPONENT: ${{ env.CI_REPO }}
+        run: |
+          set -euo pipefail
+          mkdir -p build-metadata
+          python3 .github/scripts/export_autoware_lock.py \
+            autoware-metadata/repositories/autoware.repos build-metadata/autoware-lock.repos
+          cp .github/image-inventory.json build-metadata/image-inventory.json
+          cp upstream-images/upstream-images.json build-metadata/upstream-images.json
+          PREPARED_LOCK_SHA256=$(sha256sum build-metadata/autoware-lock.repos | cut -d ' ' -f1) \
+            python3 .github/scripts/images.py capture
+        shell: bash
+
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-metadata-${{ steps.prepare.outputs.build_tag }}
+          path: |
+            build-metadata/build-metadata.json
+            build-metadata/autoware-lock.repos
+            build-metadata/image-inventory.json
+            build-metadata/upstream-images.json
+          retention-days: 7
+
+  # The evidence cells on the pull request's own images, before merge.
+  evidence:
+    needs: pr-build
+    if: needs.pr-build.outputs.built != '0'
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    uses: ./.github/workflows/evidence.yaml
+    with:
+      build_tag: ${{ needs.pr-build.outputs.build_tag }}
