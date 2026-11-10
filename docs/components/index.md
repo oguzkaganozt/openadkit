@@ -10,6 +10,11 @@ All images build on a shared `universe-common` layer; see
 [Build from Source](../development/build-from-source.md#build-system) for the
 build graph. The [image reference](#image-reference) lists tags and platforms.
 
+The runtime images hold what Autoware runs. They leave out what only a
+compiler reads, such as headers and static libraries, and only the visualizer
+carries RViz and its plugins. Kits compile their overlay workspaces in the
+`universe-common-devel` image, which keeps both.
+
 ## Component Images
 
 ### Sensing & Perception {: #sensing-perception }

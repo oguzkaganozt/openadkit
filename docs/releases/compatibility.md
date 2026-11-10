@@ -70,8 +70,8 @@ See [CLI & Maintenance](../getting-started/cli.md).
   [Container Images & Versioning](../getting-started/container-images.md).
 - The image labels `org.opencontainers.image.autoware-base-version` and
   `org.opencontainers.image.ros-snapshot`.
-- The Autoware packages each image provides. They change only with the pinned
-  Autoware release: when Autoware removes a package, the minor release that
+- The Autoware packages each image provides, with RViz plugins in the visualizer
+  image only. They change only with the pinned Autoware release: when Autoware removes a package, the minor release that
   moves to that Autoware release says so. Open AD Kit does not remove a package
   from an image within a major version.
 
