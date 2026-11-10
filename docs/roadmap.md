@@ -27,8 +27,11 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
    `main`, kept out of releases and PR checks.
 8. **Upstream build fixes.** Propose upstream the dependency fixes that the
    image boundaries need.
-9. **Build once, promote.** Merge a pull request's tested images to `main`
-   instead of building them again; its build then covers arm64 too.
+9. **Build once, promote.** Build and test a pull request in the merge queue,
+   on the commit `main` will get, and copy its images to `main` by digest
+   instead of building them again; that build then covers arm64 too.
+   Build-tagged images then stay in `openadkit-ci`, and `openadkit` keeps
+   releases, latest aliases and the moving tags.
 10. **Faster main builds.** Components wait only for their own common images,
     and the evidence does not wait for the CUDA and arm64 images it never runs.
 11. **CES 2027 demo.** Hardware integration and partner evidence for the
