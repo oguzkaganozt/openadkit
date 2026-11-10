@@ -2159,8 +2159,11 @@
    <code>main</code>, kept out of releases and PR checks.</li>
 <li><strong>Upstream build fixes.</strong> Propose upstream the dependency fixes that the
    image boundaries need.</li>
-<li><strong>Build once, promote.</strong> Merge a pull request's tested images to <code>main</code>
-   instead of building them again; its build then covers arm64 too.</li>
+<li><strong>Build once, promote.</strong> Build and test a pull request in the merge queue,
+   on the commit <code>main</code> will get, and copy its images to <code>main</code> by digest
+   instead of building them again; that build then covers arm64 too.
+   Build-tagged images then stay in <code>openadkit-ci</code>, and <code>openadkit</code> keeps
+   releases, latest aliases and the moving tags.</li>
 <li><strong>Faster main builds.</strong> Components wait only for their own common images,
     and the evidence does not wait for the CUDA and arm64 images it never runs.</li>
 <li><strong>CES 2027 demo.</strong> Hardware integration and partner evidence for the

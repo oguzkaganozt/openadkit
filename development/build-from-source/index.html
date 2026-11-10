@@ -2273,32 +2273,28 @@ compiles and only refreshes and reassembles the runtime images.</p>
 <tr>
 <th>Group</th>
 <th>Targets</th>
-<th>Published to</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>universe-common</code></td>
 <td><code>universe-common-devel</code>, <code>universe-common</code></td>
-<td><code>ghcr.io/autowarefoundation/openadkit-common</code></td>
 </tr>
 <tr>
 <td><code>component</code></td>
 <td>all component images, including the amd64-only <code>sensing-perception-cuda</code></td>
-<td><code>ghcr.io/autowarefoundation/openadkit</code></td>
 </tr>
 <tr>
 <td><code>planning-simulation</code></td>
-<td><code>universe-common</code> plus the images Planning Simulation needs</td>
-<td>— (local builds)</td>
+<td><code>universe-common</code> plus the images Planning Simulation needs (local builds)</td>
 </tr>
 <tr>
 <td><code>default</code></td>
 <td><code>universe-common</code> + <code>component</code></td>
-<td>—</td>
 </tr>
 </tbody>
 </table>
+<p>CI publishes every image to <code>ghcr.io/autowarefoundation/openadkit</code>.</p>
 <h2 id="build-and-run-locally">Build and Run Locally<a class="headerlink" href="#build-and-run-locally" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code><span class="c1"># 1. Clone the repository</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
@@ -2414,8 +2410,8 @@ opens a GitHub issue when it fails.</p>
   Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.
   Pull request jobs run on them too, so point them only at ephemeral hosted
   runners, never at a persistent self-hosted machine.</li>
-<li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-common</code>, and
-  <code>openadkit-buildcache</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
+<li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-buildcache</code>
+  and <code>openadkit-ci</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
 <li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise <code>GITHUB_TOKEN</code> is
   used.</li>
