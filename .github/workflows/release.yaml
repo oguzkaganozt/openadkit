@@ -21,8 +21,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
-  IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/openadkit
 
 jobs:
   validate:

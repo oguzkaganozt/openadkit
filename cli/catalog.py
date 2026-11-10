@@ -103,7 +103,7 @@ class RuntimeContext:
     kind: str
     default_ros_distro: str
     version: str | None
-    image_prefix_component: str | None
+    image_repository: str | None
     component_images: dict[str, str]
     images: dict[str, dict[str, str]]
     deployments: dict[str, DeploymentRef]
@@ -120,7 +120,7 @@ class RuntimeContext:
     @property
     def pinned(self) -> bool:
         """Release images cannot be overridden from env files; source images can."""
-        return self.image_prefix_component is None
+        return self.image_repository is None
 
     def devel_image(self, ros_distro: str) -> str | None:
         """The devel image of the build the runtime images come from, if pinned."""
@@ -156,10 +156,10 @@ class RuntimeContext:
             for name, target in self.component_images.items()
             if gpu or not name.endswith(GPU_COMPONENT_IMAGE_SUFFIX)
         }
-        if self.image_prefix_component is not None:
+        if self.image_repository is not None:
             return {
                 name: (
-                    f"{self.image_prefix_component}:{target}-{architecture}-{ros_distro}"
+                    f"{self.image_repository}:{target}-{architecture}-{ros_distro}"
                 )
                 for name, target in applicable.items()
             }
@@ -421,7 +421,7 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
         kind="kit",
         default_ros_distro=base.default_ros_distro,
         version=None,
-        image_prefix_component=base.image_prefix_component,
+        image_repository=base.image_repository,
         component_images=base.component_images,
         images=base.images,
         deployments=parse_deployment_refs(value.get("deployments"), "kit"),
@@ -455,13 +455,13 @@ def load_kit(root: Path) -> RuntimeContext:
     images: dict[str, dict[str, str]] = {}
     if kind == "repository":
         prefix = require_string(
-            value.get("imagePrefixComponent"), "imagePrefixComponent"
+            value.get("imageRepository"), "imageRepository"
         )
         if "images" in value:
             raise OpenADKitError("repository bundles must not declare release images")
     else:
-        if "imagePrefixComponent" in value:
-            raise OpenADKitError("release bundles must not declare imagePrefixComponent")
+        if "imageRepository" in value:
+            raise OpenADKitError("release bundles must not declare imageRepository")
         raw_images = value.get("images")
         if not isinstance(raw_images, dict):
             raise OpenADKitError("images must be an object")
@@ -488,7 +488,7 @@ def load_kit(root: Path) -> RuntimeContext:
         kind=kind,
         default_ros_distro=default_ros_distro,
         version=version,
-        image_prefix_component=prefix,
+        image_repository=prefix,
         component_images=component_images,
         images=images,
         deployments=parse_deployment_refs(value.get("deployments"), kind),

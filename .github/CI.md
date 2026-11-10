@@ -67,8 +67,8 @@ promote) and overwritten build caches; release tags, latest aliases and the
 moving `<target>-<arch>-<distro>` tags stay. Its weekly run only lists until
 the repository variable `REGISTRY_CLEANUP` is `delete`. `GITHUB_TOKEN` deletes
 only in packages that give the repository the **Admin** role under the
-package's *Manage Actions access*: set it on `openadkit`, `openadkit-common`,
-`openadkit-buildcache` and `openadkit-ci` in every repository that builds.
+package's *Manage Actions access*: set it on `openadkit`, `openadkit-buildcache`
+and `openadkit-ci` in every repository that builds.
 
 After changing a shared build owner, update both workflow path triggers and the
 changed-input patterns in `build.py`. Python helpers needed by release and scan

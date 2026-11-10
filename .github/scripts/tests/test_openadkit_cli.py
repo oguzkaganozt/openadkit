@@ -111,7 +111,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
                                for distro in ("humble", "jazzy")})
         context["deployments"]["example"]["checksum"] = cli_catalog.deployment_checksum(directory)
     else:
-        context["imagePrefixComponent"] = "registry.example/openadkit"
+        context["imageRepository"] = "registry.example/openadkit"
     (root / "openadkit.json").write_text(json.dumps(context))
     return root, directory
 
@@ -1611,7 +1611,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     result = run_cli(root, "build", directory=kit)
     assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
 
-    devel = "ghcr.io/example/openadkit-common:universe-common-devel-humble@sha256:" + "d" * 64
+    devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
     edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     # In a kit, build takes its workspace; it builds where the services mount it.
     result = run_cli(root, "build", directory=kit)
@@ -1663,7 +1663,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
 
 def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
-    devel = "ghcr.io/example/openadkit-common:universe-common-devel-humble@sha256:" + "d" * 64
+    devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
     edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     kit = integrator_kit(tmp_path, root)
     (kit / "overlay_ws/src").mkdir(parents=True)

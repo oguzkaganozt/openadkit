@@ -27,8 +27,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX_COMMON: ghcr.io/${{ github.repository_owner }}/openadkit-common
-  IMAGE_PREFIX_COMPONENT: ghcr.io/${{ github.repository_owner }}/openadkit
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/openadkit
 
 jobs:
   prepare:
@@ -257,7 +256,7 @@ jobs:
           # Pushed under the run's build tag, which assemble_pr_build.sh looks for.
           tag-suffix: ${{ inputs.push && needs.prepare.outputs.build_tag || format('pr{0}', github.event.pull_request.number || github.run_id) }}
           push: ${{ inputs.push }}
-          image-prefix: ${{ inputs.push && format('ghcr.io/{0}/openadkit-ci', github.repository_owner) || '' }}
+          image-repo: ${{ inputs.push && format('ghcr.io/{0}/openadkit-ci', github.repository_owner) || '' }}
 
       - name: Scan ${{ matrix.target }} for HIGH and CRITICAL vulnerabilities
         # The release gate's policy (scan.yaml), so a finding stops the pull

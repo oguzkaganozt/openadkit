@@ -163,8 +163,7 @@ jobs:
           AUTOWARE_REF_TYPE: ${{ steps.prepare.outputs.autoware_ref_type }}
           AUTOWARE_REF: ${{ steps.prepare.outputs.autoware_ref }}
           AUTOWARE_BASE_VERSION: ${{ steps.prepare.outputs.autoware_base_version }}
-          COMMON: ${{ env.CI_REPO }}
-          COMPONENT: ${{ env.CI_REPO }}
+          IMAGE_REPO: ${{ env.CI_REPO }}
         run: |
           set -euo pipefail
           mkdir -p build-metadata

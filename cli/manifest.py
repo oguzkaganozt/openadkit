@@ -28,7 +28,7 @@ ALLOWED_KIT_KEYS = {
     "kind",
     "version",
     "defaultRosDistro",
-    "imagePrefixComponent",
+    "imageRepository",
     "componentImages",
     "images",
     "deployments",

@@ -67,7 +67,7 @@ def test_artifact_checks_stay_exact_at_the_shell_boundary(tmp_path, artifacts, p
     scan_dir = tmp_path / "release-input/scan"
     scan_dir.mkdir()
     (scan_dir / "scan-metadata.json").write_text(json.dumps(scan))
-    result = run_validator(tmp_path, "validate_metadata", IMAGE_PREFIX_COMPONENT="ghcr.io/example/openadkit")
+    result = run_validator(tmp_path, "validate_metadata", IMAGE_REPO="ghcr.io/example/openadkit")
     assert (result.returncode == 0) is (problem is None), result.stderr
 
 
@@ -81,7 +81,7 @@ def test_capture_uses_registry_platforms_and_scan_rows(artifacts, monkeypatch):
     monkeypatch.setattr(images.subprocess, "check_output", inspect)
     env = {key.upper(): metadata[key] for key in ("build_tag", "openadkit_sha", "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_base_version")}
     env.update(GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1", SCAN_REQUESTED="false", PREPARED_LOCK_SHA256=metadata["autoware_lock_sha256"],
-               COMMON="ghcr.io/example/openadkit-common", COMPONENT="ghcr.io/example/openadkit")
+               IMAGE_REPO="ghcr.io/example/openadkit")
     captured = images.capture(directory, env)
     assert captured == metadata
     assert [{key: value for key, value in row.items() if key != "platform_label"} for row in images.scan_rows(captured)] == scan["scanned_images"]
@@ -95,10 +95,10 @@ def test_scan_duplicates_and_distro_overrides_are_supported(artifacts):
     directory, metadata, scan = artifacts
     (directory / "build-metadata.json").write_text(json.dumps(metadata))
     scan["scanned_images"].append(dict(scan["scanned_images"][0]))
-    images.validate_artifacts(directory, scan, BUILD_TAG, "ghcr.io/example/openadkit-common", "ghcr.io/example/openadkit")
+    images.validate_artifacts(directory, scan, BUILD_TAG, "ghcr.io/example/openadkit")
     assert images.inventory_images({"ros_distros": ["humble", "jazzy"], "images": [
-        {"repo": "component", "target": "api", "ros_distros": ["jazzy"], "platforms": ["linux/amd64"]}]}, "common", "component") == [
-        {"repo": "component", "target": "api", "ros_distro": "jazzy", "platforms": ["linux/amd64"]}]
+        {"target": "api", "ros_distros": ["jazzy"], "platforms": ["linux/amd64"]}]}, "ghcr.io/example/openadkit") == [
+        {"repo": "ghcr.io/example/openadkit", "target": "api", "ros_distro": "jazzy", "platforms": ["linux/amd64"]}]
 
 
 def test_the_run_page_summary_names_the_build_and_each_image():

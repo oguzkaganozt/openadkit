@@ -184,7 +184,7 @@ jobs:
             x86_64|amd64) arch=amd64 ;;
             aarch64|arm64) arch=arm64 ;;
           esac
-          prefix=$(python3 -c 'import json; print(json.load(open("openadkit.json"))["imagePrefixComponent"])')
+          prefix=$(python3 -c 'import json; print(json.load(open("openadkit.json"))["imageRepository"])')
           distro=$(python3 -c 'import json; print(json.load(open("openadkit.json"))["defaultRosDistro"])')
           for target in $(python3 -c 'import json; print(" ".join(json.load(open("openadkit.json"))["componentImages"].values()))'); do
             expected="${prefix}:${target}-${arch}-${distro}"

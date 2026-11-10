@@ -31,10 +31,10 @@ def _load_json(path, label):
 
 def define_env(env):
     kit = _load_json(KIT, "bundle manifest")
-    registry = kit["imagePrefixComponent"]
+    registry = kit["imageRepository"]
     if not isinstance(registry, str) or not registry.strip():
         raise RuntimeError(
-            "bundle manifest imagePrefixComponent must be a non-empty string"
+            "bundle manifest imageRepository must be a non-empty string"
         )
     env.variables["registry"] = registry
     env.variables["default_distro_title"] = kit["defaultRosDistro"].capitalize()

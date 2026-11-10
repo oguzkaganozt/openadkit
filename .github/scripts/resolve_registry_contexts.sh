@@ -4,8 +4,7 @@ set -euo pipefail
 
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
 : "${TARGETS_JSON:?TARGETS_JSON is required}"
-: "${IMAGE_PREFIX_COMMON:?IMAGE_PREFIX_COMMON is required}"
-: "${IMAGE_PREFIX_COMPONENT:?IMAGE_PREFIX_COMPONENT is required}"
+: "${IMAGE_REPO:?IMAGE_REPO is required}"
 : "${AUTOWARE_INPUT_REF:?AUTOWARE_INPUT_REF is required}"
 : "${AUTOWARE_REF_TYPE:?AUTOWARE_REF_TYPE is required}"
 : "${AUTOWARE_REF:?AUTOWARE_REF is required}"
@@ -81,8 +80,8 @@ base_inputs=(
 use_local_common="${USE_LOCAL_COMMON:-false}"
 
 if jq -e 'length > 0' <<<"${TARGETS_JSON}" >/dev/null && [ "${use_local_common}" != true ]; then
-  devel_ref="${IMAGE_PREFIX_COMMON}:universe-common-devel-amd64-${distro}"
-  runtime_ref="${IMAGE_PREFIX_COMMON}:universe-common-amd64-${distro}"
+  devel_ref="${IMAGE_REPO}:universe-common-devel-amd64-${distro}"
+  runtime_ref="${IMAGE_REPO}:universe-common-amd64-${distro}"
   if devel_context=$(resolve_registry_context "${devel_ref}" "${base_inputs[@]}") \
     && runtime_context=$(resolve_registry_context "${runtime_ref}" "${base_inputs[@]}"); then
     echo "devel_context=${devel_context}" >> "${GITHUB_OUTPUT}"
