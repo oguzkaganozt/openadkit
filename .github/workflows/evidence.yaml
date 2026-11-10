@@ -5,9 +5,11 @@ name: evidence
 # release gate requires a successful run of this workflow whose summary is
 # PASSED for the build it promotes.
 #
-# A change that rebuilds no image is tested against an existing build: a pull
-# request uses its base branch's latest successful build, and a dispatch with
-# source_ref tests that commit. Its deployments, CLI and checks come from the
+# A pull request that rebuilds images gets this workflow from its own build
+# (build-single-image.yaml), on its images in the CI package. A change that
+# rebuilds no image is tested against an existing build: a pull request uses
+# its base branch's latest successful build, and a dispatch with source_ref
+# tests that commit. Its deployments, CLI and checks come from the
 # tested commit and its images from the build. Such a run is not release
 # evidence: its summary names the tested commit, which the release gate rejects.
 
@@ -208,6 +210,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      packages: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.cells) }}
@@ -216,6 +219,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.source_sha }}
+
+      - name: Log in to Container Registry
+        # A pull request's images are in the CI package, which is not public.
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download evidence kit
         uses: actions/download-artifact@v8

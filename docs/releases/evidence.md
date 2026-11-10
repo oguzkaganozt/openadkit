@@ -60,20 +60,26 @@ seconds) through the cell's host settings file, so they test the scenarios
 rather than the runner's size. Investigate a cell that still fails after the
 workflow's retry.
 
-## Testing a change without a build
+## Testing a pull request
+
+A pull request that changes an image's inputs builds the affected images,
+amd64 only, for both distros. A pull request from this repository pushes them
+to the CI package `openadkit-ci`, completes the build there with its base
+branch's other images, copied by digest, and runs the cells on that build
+before merge. A fork's pull request cannot push; its images are checked at the
+build and scan only, and run in the cells after merge.
 
 A change that rebuilds no image, such as a deployment setting, the CLI or a
 check, runs the cells against an existing build:
 
 - A pull request that touches `deployments/`, `cli/` or the evidence checks
-  runs them against its base branch's latest successful build. When it also
-  changes an image's inputs, it waits for the build after merge instead.
+  runs them against its base branch's latest successful build.
 - A dispatch of `evidence.yaml` with `source_ref` tests that branch or commit;
   `build_tag` defaults to the dispatched branch's latest successful build.
 
 The cells take the deployments, CLI and checks from the tested commit and the
-images from the build. Such a run is not release evidence: its summary names
-both commits, which the gate rejects.
+images from the build. A pull request's run is not release evidence: the gate
+accepts only a build of the release branch.
 
 ## Explicit CI exemptions
 

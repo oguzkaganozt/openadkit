@@ -53,6 +53,12 @@ def test_inventory_bake_and_runtime_catalog_agree():
      {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
     (".github/scripts/autoware_patches.py", {image["target"] for image in INVENTORY["images"]}, {"use_local_common": True}),
     ("components/visualizer/README.md", set(), {}),
+    # Shared by every image.
+    ("components/shared/runtime-deps.sh", {image["target"] for image in INVENTORY["images"]}, {}),
+    # The pipeline alone: one small image proves it.
+    (".github/scripts/build.py", {"api"}, {"use_local_common": False}),
+    (".github/workflows/build-single-image-distro.yaml", {"api"}, {}),
+    (".github/actions/build-image/action.yaml", {"api"}, {}),
     # Copied into the image, unlike the component's own README.
     ("components/visualizer/novnc/README.md", {"visualizer"}, {}),
 ])

@@ -17,9 +17,15 @@ data and behavior contracts; local actions own repeated execution recipes.
 | Immutable release plan, runtime pins, and bundle staging and integrity | `scripts/release_plan.py` |
 | Packaging, image promotion and GitHub publication | `scripts/*release*.sh` |
 
-The shared build action never grants permissions. PR builds remain local
-(`load`, no push), with temporary shared caches restricted to same-repository
-PRs. Published builds retain exact upstream contexts, source/lock labels,
+The shared build action never grants permissions. A pull request from this
+repository pushes the images it builds to the CI package `openadkit-ci`;
+`scripts/assemble_pr_build.sh` completes that build there with the base
+branch's other images, copied by digest, and `images.py capture` writes its
+metadata, so `evidence.yaml` runs on it unchanged before merge. A fork's pull
+request loads its images (no push, read-only token) and stops at the scan,
+which applies the release gate's policy. Only pipeline changes (`PIPELINE_INPUTS`
+in `build.py`) build a single image, `api`, which proves the pipeline end to end.
+Temporary shared caches stay restricted to same-repository PRs. Published builds retain exact upstream contexts, source/lock labels,
 security-refresh stamps and the existing bounded cache policy. The local Bake
 graph in `components/docker-bake.hcl` still owns Dockerfiles and dependency edges.
 
@@ -54,6 +60,15 @@ The integrator example is made in CI, not kept in `deployments/`: the staged
 CLI's `openadkit new example-kit` makes it under `kits/`, and the fixture in
 `.github/scripts/evidence/kit/` adds every extension point on top. Lint
 validates the same kit made from the checkout.
+
+`registry-cleanup.yaml` deletes a pull request's CI images when it closes, CI
+images after 14 days, branch builds after 90 days (the age a release may still
+promote) and overwritten build caches; release tags, latest aliases and the
+moving `<target>-<arch>-<distro>` tags stay. Its weekly run only lists until
+the repository variable `REGISTRY_CLEANUP` is `delete`. `GITHUB_TOKEN` deletes
+only in packages that give the repository the **Admin** role under the
+package's *Manage Actions access*: set it on `openadkit`, `openadkit-common`,
+`openadkit-buildcache` and `openadkit-ci` in every repository that builds.
 
 After changing a shared build owner, update both workflow path triggers and the
 changed-input patterns in `build.py`. Python helpers needed by release and scan
