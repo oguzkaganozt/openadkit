@@ -8,9 +8,9 @@ Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint, co-develope
 with SOAFEE and the [eSync Alliance](https://esyncalliance.org/); DENSO's AVP
 blueprint and Red Hat's AutoSD blueprint build on it.
 
-- [AutoSD](autosd/index.md) — the upstream preview of Red Hat In-Vehicle OS:
+- [AutoSD](autosd.md) — the upstream preview of Red Hat In-Vehicle OS:
   Quadlet units for Podman and systemd, generated from Compose (experimental)
-- [Hardware](hardware/index.md) — host requirements and boards
+- [Hardware](hardware.md) — host requirements and boards
 
 ## Support Matrix
 
@@ -21,7 +21,7 @@ release. An **unsupported** one is not built or tested here.
 
 A path that fails its build or validation gate is dropped or marked here, not
 documented as if it worked. Host requirements and boards are on the
-[Hardware](hardware/index.md) page.
+[Hardware](hardware.md) page.
 
 | Path | Tier | Notes |
 |------|------|-------|
@@ -29,7 +29,7 @@ documented as if it worked. Host requirements and boards are on the
 | Component images, amd64 + arm64 | **Supported** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
 | Jazzy images | **Supported** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
 | CARLA Simulation | **Supported** | Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand |
-| [AutoSD](autosd/index.md) with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
+| [AutoSD](autosd.md) with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
 | [EWAOL](https://ewaol.docs.arm.com/en/latest/) | **Unsupported** | Arm's Yocto framework and the original SOAFEE reference implementation; no assets in this repository |
 
 Other Linux distributions may work but are not tested.

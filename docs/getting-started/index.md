@@ -41,7 +41,7 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 
 - **Ubuntu 22.04 (Jammy) or 24.04 (Noble)** with `sudo` access
 - 8 CPU cores, 16 GB of RAM and 50 GB of storage or more; see
-  [Hardware](../platforms/hardware/index.md#host-requirements)
+  [Hardware](../platforms/hardware.md#host-requirements)
 - `curl` for the release installer; `python3` and `tar` are preinstalled on
   supported Ubuntu releases
 - A web browser: the visualizer runs in it, so no display server is needed

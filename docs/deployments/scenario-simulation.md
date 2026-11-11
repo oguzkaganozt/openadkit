@@ -5,7 +5,7 @@ Run predefined traffic scenarios with
 The deployment runs a scenario automatically and writes the results to the host.
 No GPU is required.
 
-Complete the [Quickstart](../../getting-started/index.md) setup first.
+Complete the [Quickstart](../getting-started/index.md) setup first.
 
 ## Run
 
@@ -15,7 +15,7 @@ openadkit logs --follow
 ```
 
 To run Autoware on one host and the scenario runner on another, see
-[Split-host Simulation](../split-host.md).
+[Split-host Simulation](split-host.md).
 
 --8<-- "includes/ros-distro.md"
 
@@ -64,7 +64,7 @@ as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
 `lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
 
 This deployment changes one Autoware parameter with a
-[config override](../../kits/integrator-guide.md#2-config-overrides): a file that holds
+[config override](../kits/integrator-guide.md#2-config-overrides): a file that holds
 only the changed value, merged into the upstream parameter file on every start
 (`config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`).
 
@@ -75,4 +75,4 @@ openadkit stop
 ```
 
 To replace missing map data, run `openadkit fetch scenario-simulation --force`.
-For other issues, see [Troubleshooting](../../getting-started/troubleshooting.md).
+For other issues, see [Troubleshooting](../getting-started/troubleshooting.md).

@@ -1,18 +1,8 @@
 ```mermaid
-flowchart TB
+flowchart LR
     CORE["autoware:core-devel (build)<br/>autoware:base (runtime)"] --> UC["universe-common"]
-    CORE --> UCD["universe-common-devel<br/>(kits build their overlays in it)"]
-    CUDA["autoware:base-cuda-{devel,runtime}"] --> SPC["sensing-perception-cuda"]
-    CUDA --> PLC["planning-cuda"]
-
-    UC --> SP["sensing-perception"]
-    UC --> LM["localization-mapping"]
-    UC --> PLN["planning"]
-    UC --> CTL["control"]
-    UC --> VS["vehicle-system"]
-    UC --> API["api"]
-    UC --> VIZ["visualizer"]
-    UC --> SIM["simulator"]
-    UC -.-> SPC
-    UC -.-> PLC
+    CORE --> UCD["universe-common-devel<br/>(builds kit overlays)"]
+    UC --> COMP["sensing-perception<br/>localization-mapping<br/>planning, control<br/>vehicle-system, api<br/>visualizer, simulator"]
+    CUDA["autoware:base-cuda-{devel,runtime}"] --> GPU["sensing-perception-cuda<br/>planning-cuda"]
+    UC -.-> GPU
 ```

@@ -5,11 +5,11 @@ start with Planning Simulation.
 
 | Deployment | Purpose | GPU | Architectures | CI evidence |
 |------------|---------|-----|---------------|-------------|
-| [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a sample map with the built-in simulator; `--gpu` plans with the Diffusion Planner | Optional | amd64, arm64 | Yes, in CPU mode |
-| [Scenario Simulation](scenario-simulation/index.md) | Run predefined traffic scenarios in Scenario Simulator | No | amd64, arm64 | Yes |
-| [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception and localization | Optional | amd64, arm64 | Exempt |
-| [CARLA Simulation](carla-simulation/index.md) | Drive in closed loop with the CARLA simulator | Required | amd64 | Exempt |
-| [Safety Island Simulation](safety-island-simulation/index.md) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No | amd64 | Yes |
+| [Planning Simulation](planning-simulation.md) | Plan and follow a route on a sample map with the built-in simulator; `--gpu` plans with the Diffusion Planner | Optional | amd64, arm64 | Yes, in CPU mode |
+| [Scenario Simulation](scenario-simulation.md) | Run predefined traffic scenarios in Scenario Simulator | No | amd64, arm64 | Yes |
+| [Logging Simulation](logging-simulation.md) | Replay recorded sensor data through sensing, perception and localization | Optional | amd64, arm64 | Exempt |
+| [CARLA Simulation](carla-simulation.md) | Drive in closed loop with the CARLA simulator | Required | amd64 | Exempt |
+| [Safety Island Simulation](safety-island-simulation.md) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No | amd64 | Yes |
 
 All run on Humble and Jazzy except CARLA Simulation, which is Humble-only, and
 the GPU modes are amd64-only. **CI evidence** says whether a release runs the

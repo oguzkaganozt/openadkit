@@ -1,4 +1,4 @@
 nav:
   - index.md
-  - AutoSD: autosd
-  - Hardware: hardware
+  - AutoSD: autosd.md
+  - Hardware: hardware.md

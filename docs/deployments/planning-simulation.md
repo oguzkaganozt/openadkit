@@ -4,7 +4,7 @@ Run the Autoware planning and control stack on a sample map with the built-in
 simulator, then set a route in RViz in your browser. No GPU is required; with
 an NVIDIA GPU, `--gpu` plans with Autoware 2.0's Diffusion Planner.
 
-Complete the [Quickstart](../../getting-started/index.md) setup first. For GPU
+Complete the [Quickstart](../getting-started/index.md) setup first. For GPU
 mode, run `openadkit setup --gpu --verify`.
 
 ## Run
@@ -24,7 +24,7 @@ only.
 
 !!! warning "Experimental"
     The GPU mode may change in a minor release. See
-    [Compatibility](../../releases/compatibility.md#experimental).
+    [Compatibility](../releases/compatibility.md#experimental).
 
 With `--gpu`, the planning service runs the `planning-cuda` image with
 `planning_setting:=diffusion_planner`, and `run` also downloads the Diffusion
@@ -64,4 +64,4 @@ openadkit stop
 
 To replace missing or incomplete map data, run
 `openadkit fetch planning-simulation --force`. For other issues, see
-[Troubleshooting](../../getting-started/troubleshooting.md).
+[Troubleshooting](../getting-started/troubleshooting.md).

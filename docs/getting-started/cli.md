@@ -126,7 +126,7 @@ includes the CenterPoint models.
 
 `config` prints a deployment's resolved Compose model as JSON, with `validate`'s
 `--ros-distro`, `--gpu`, `--node` and `--ws`;
-[AutoSD](../platforms/autosd/index.md) builds on it.
+[AutoSD](../platforms/autosd.md) builds on it.
 
 ## Configuration
 

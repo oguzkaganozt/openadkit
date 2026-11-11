@@ -98,10 +98,10 @@ release:
 - **Split-host nodes:** `--node`, `nodes` in `deployment.json` and the Zenoh
   bridge. See [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
-  generates. See [AutoSD](../platforms/autosd/index.md).
+  generates. See [AutoSD](../platforms/autosd.md).
 - **The Diffusion Planner:** `planning-simulation --gpu`. With Autoware 2.0.0
   its verify step fails on the sample route. See
-  [Planning Simulation](../deployments/planning-simulation/index.md#gpu-mode).
+  [Planning Simulation](../deployments/planning-simulation.md#gpu-mode).
 
 ## Not Covered
 
