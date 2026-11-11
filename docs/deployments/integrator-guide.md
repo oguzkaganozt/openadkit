@@ -32,7 +32,8 @@ split-host nodes.
 A kit made by `openadkit new my-kit` has just one deployment, also named
 `my-kit`. Its `openadkit.json`, `deployment.json`, Compose and differences live
 in one directory; `deployments.my-kit.path` is `"."`. No nested `deployments/`
-directory is needed. Run commands from that directory, not the base repository.
+directory is needed. Run commands from that directory, not the base repository;
+there they need no deployment name.
 
 ## Extension Points
 

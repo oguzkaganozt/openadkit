@@ -51,10 +51,13 @@ release, change `extends`; the next command that acts on the kit, such as
 ```bash
 cd my-kit
 openadkit build                 # overlay_ws, in the release's devel image
-openadkit validate my-kit
-openadkit run my-kit --verify   # start, wait until ready, run the base's end-to-end check
+openadkit validate
+openadkit run --verify          # start, wait until ready, run the base's end-to-end check
 openadkit stop
 ```
+
+Inside a kit with one deployment the commands need no name. From elsewhere,
+name it by its directory: `openadkit run ./my-kit`.
 
 A source checkout pins no devel image: set `DEVEL_IMAGE` to the matching
 `universe-common-devel` digest from that build's metadata before `build`. Add

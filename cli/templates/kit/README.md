@@ -13,8 +13,8 @@ An Open AD Kit kit on top of `{{base}}` from Open AD Kit {{version}}.
 
 ```bash
 openadkit build                  # build overlay_ws in the matching devel image
-openadkit validate {{name}}
-openadkit run {{name}} --verify  # start, wait until ready, run the base's end-to-end check
+openadkit validate
+openadkit run --verify           # start, wait until ready, run the base's end-to-end check
 openadkit stop
 ```
 

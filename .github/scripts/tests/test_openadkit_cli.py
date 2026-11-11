@@ -300,6 +300,33 @@ def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
 
 
 
+def test_an_installed_version_becomes_active_without_a_download(tmp_path):
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    newer = release_bin(tmp_path, "v1.3.0")
+    assert command(launcher, "upgrade", home=tmp_path / "home", bin_dir=newer).returncode == 0
+    kept = installed(tmp_path).parent / "marker"
+    kept.write_text("kept")
+    # Back to the kept version while offline: nothing is downloaded or replaced.
+    offline = tmp_path / "offline"
+    executable(offline / "curl", "#!/usr/bin/env bash\nexit 22\n")
+    result = install(tmp_path, offline, "--version", "v1.2.3")
+    assert result.returncode == 0 and "v1.2.3 is already installed" in result.stdout, result.stderr
+    assert launcher.resolve() == installed(tmp_path) and kept.read_text() == "kept"
+    assert (tmp_path / "home/.local/bin/adkit").resolve() == installed(tmp_path)
+    # The latest version, once resolved, is used the same way; --force replaces it.
+    marker = installed(tmp_path, "v1.3.0").parent / "marker"
+    marker.write_text("kept")
+    result = install(tmp_path, newer)
+    assert result.returncode == 0 and launcher.resolve() == installed(tmp_path, "v1.3.0")
+    assert marker.read_text() == "kept"
+    assert install(tmp_path, newer, "--force").returncode == 0 and not marker.exists()
+    # A directory that is no release is never taken for one.
+    installed(tmp_path, "v1.3.0").unlink()
+    result = install(tmp_path, newer)
+    assert result.returncode != 0 and "is not an installed release" in result.stderr
+
+
 def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_path):
     assert install(tmp_path, release_bin(tmp_path)).returncode == 0
     launcher = tmp_path / "home/.local/bin/openadkit"
@@ -1592,6 +1619,35 @@ def test_new_refuses_what_cannot_be_a_kit(tmp_path, name, base, message):
     (work / "taken").mkdir(parents=True)
     result = run_cli(root, "new", name, "--base", base, directory=work)
     assert result.returncode != 0 and message in result.stderr
+
+
+def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
+    assert json.loads(run_cli(root, "validate", "--json", directory=kit).stdout)["deployment"] == "custom"
+    # With several, or outside a kit, the name is still asked for.
+    assert run_cli(root, "validate").returncode == 2
+    second = kit / "deployments/second"
+    shutil.copytree(kit / "deployments/custom", second)
+    edit_kit(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 2 and "deployment name required" in result.stderr
+
+
+def test_usage_errors_exit_2_and_help_keeps_its_capitals(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path, projects=("openadkit-example",))
+    for args in (["restart", "app", "--all"], ["record"], ["record", "/tf", "--all"], ["build"]):
+        result = run_cli(root, *args)
+        assert result.returncode == 2 and result.stderr.startswith("error: "), args
+    assert "in a running service with ROS sourced." in " ".join(run_cli(root, "shell", "--help").stdout.split())
+    assert "resolved Compose model as JSON." in " ".join(run_cli(root, "config", "--help").stdout.split())
+    # A kit on a source checkout names it once; one on a release names the version too.
+    kit = integrator_kit(tmp_path, root)
+    assert f"extends: Open AD Kit at {root}" in run_cli(root, "version", directory=kit).stdout.splitlines()
 
 
 def test_new_refuses_inside_a_kit(tmp_path):

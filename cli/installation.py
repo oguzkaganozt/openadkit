@@ -29,9 +29,9 @@ UPGRADE_USAGE = """\
 Usage: openadkit upgrade [--check]
 
 Upgrades an installed release to the latest stable Open AD Kit release. The
-previous version is kept under the install destination for rollback with
-`openadkit install --version vX.Y.Z --force`; the kept directory must be
-replaced. Source checkouts update with git pull or git checkout instead.
+previous version is kept under the install destination; go back to it with
+`openadkit install --version vX.Y.Z`, which needs no download. Source
+checkouts update with git pull or git checkout instead.
 
   --check  report whether an upgrade is available without installing it
 """

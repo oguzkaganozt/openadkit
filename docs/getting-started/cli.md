@@ -145,11 +145,14 @@ The new release is verified and installed next to the old one, and the
 destination (default `~/.local/share/openadkit/`), so you can roll back:
 
 ```bash
-openadkit install --version vOLD --force
+openadkit install --version vOLD
 ```
 
-`--force` replaces the kept version directory; omit it to install a version
-that is not kept. Source checkouts update with `git pull` instead.
+A version that is already installed becomes the active one as it is, without a
+download, so this works offline; `--force` downloads and replaces it. Images of
+a version you no longer use stay in Docker until you remove them, for example
+with `docker image prune --all`. Source checkouts update with `git pull`
+instead.
 
 ## Uninstall and Cleanup
 
