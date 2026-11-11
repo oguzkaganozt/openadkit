@@ -70,9 +70,11 @@ bash .github/scripts/tests/test_setup_helpers.sh
 ./openadkit validate planning-simulation --ros-distro humble
 ./openadkit validate planning-simulation --ros-distro jazzy
 
-# Documentation (local build, from the repository root)
+# Documentation (local build, from the repository root), then the links
+# READMEs make to the docs site
 pip install -r docs/requirements.txt
 mkdocs build
+python3 .github/scripts/check_site_links.py
 ```
 
 ### Test Scope

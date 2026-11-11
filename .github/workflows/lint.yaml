@@ -205,6 +205,9 @@ jobs:
           make -C docs build
           test -f site/index.html
 
+      - name: Check the docs-site links in READMEs against the built site
+        run: python3 .github/scripts/check_site_links.py
+
       - name: Run Python tests
         run: pytest .github/scripts/
 
