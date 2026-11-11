@@ -2053,7 +2053,9 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>carla-simulation
 </code></pre></div>
 <p><code>run</code> downloads and verifies the Town01 map, then starts CARLA and the Autoware
-stack. CARLA renders offscreen by default.</p>
+stack. CARLA renders offscreen by default. <code>run</code> returns once CARLA accepts
+connections and the services stay up; this deployment declares no readiness
+check of Autoware itself and is not verified in CI.</p>
 <p>To run Autoware and CARLA on separate hosts, see
 <a href="../split-host/">Split-host simulation</a>.</p>
 <p><code>config/sensor_mapping.yaml</code> enables LiDAR, IMU, and GNSS. Camera entries are

@@ -2151,9 +2151,14 @@
    data paths, images, mounts and validation use the same result.</li>
 <li><strong>Development tooling.</strong> A devcontainer and a debugging guide for the
    development loop.</li>
+<li><strong>The base from a kit.</strong> Run a kit's unmodified base deployment from the
+   kit, with the release it pins, to tell the kit's changes from the base.</li>
+<li><strong>Two levels of base.</strong> A kit on a deployment that has a base itself, such
+   as Safety Island Simulation.</li>
 <li><strong>Comparable regression results.</strong> A fixed scenario set whose latency,
    resource use and driving metrics are compared with a baseline.</li>
-<li><strong>Platform evidence.</strong> Native arm64 evidence cells and GPU logging simulation
+<li><strong>Platform evidence.</strong> Native arm64 evidence cells, a readiness check and
+   an evidence cell for Logging Simulation on CPU, and GPU logging simulation
    coverage.</li>
 <li><strong>Autoware upgrades.</strong> Measure clean common-image builds on a 4-vCPU runner
    before the next Autoware version change.</li>
@@ -2161,14 +2166,16 @@
 <li><strong>Autoware main canary.</strong> A weekly, non-blocking build against Autoware
    <code>main</code>, kept out of releases and PR checks.</li>
 <li><strong>Upstream build fixes.</strong> Propose upstream the dependency fixes that the
-   image boundaries need.</li>
+    image boundaries need.</li>
 <li><strong>Build once, promote.</strong> Build and test a pull request in the merge queue,
-   on the commit <code>main</code> will get, and copy its images to <code>main</code> by digest
-   instead of building them again; that build then covers arm64 too.
-   Build-tagged images then stay in <code>openadkit-ci</code>, and <code>openadkit</code> keeps
-   releases, latest aliases and the moving tags.</li>
+    on the commit <code>main</code> will get, and copy its images to <code>main</code> by digest
+    instead of building them again; that build then covers arm64 too.
+    Build-tagged images then stay in <code>openadkit-ci</code>, and <code>openadkit</code> keeps
+    releases, latest aliases and the moving tags.</li>
 <li><strong>Faster main builds.</strong> Components wait only for their own common images,
     and the evidence does not wait for the CUDA and arm64 images it never runs.</li>
+<li><strong>ROS snapshot key.</strong> The snapshot signing key in the images expires on
+    2027-06-01; replace it with the extended key before then.</li>
 <li><strong>CES 2027 demo.</strong> Hardware integration and partner evidence for the
     demonstrated setup; tracked in
     <a href="https://github.com/autowarefoundation/openadkit/issues/169">#169</a>.</li>
@@ -2180,13 +2187,19 @@
   <a href="https://github.com/autowarefoundation/autoware_system_designer">Autoware System Designer</a>.</li>
 <li><strong>Path to a vehicle.</strong> A vehicle-interface contract and reference hardware, a
   validation ladder from SIL to full-scale vehicles, and offline OCI delivery.</li>
-<li><strong>Visualizer.</strong> KasmVNC in place of TigerVNC, noVNC and Openbox; Lichtblick
-  with <code>foxglove_bridge</code> for analysis and bag playback.</li>
+<li><strong>Visualizer.</strong> KasmVNC in place of TigerVNC, noVNC and Openbox, at the next
+  major version; Lichtblick with <code>foxglove_bridge</code> for analysis and bag
+  playback.</li>
 <li><strong>rmw_zenoh.</strong> Replace <code>zenoh-bridge-ros2dds</code> for split-host on Jazzy if an
   evaluation succeeds.</li>
 <li><strong>Per-image trimming.</strong> Packages that no catalog deployment runs and that
   bring heavy dependencies, such as PyTorch for control's smart MPC,
-  calibration tools and DNN packages in CPU images, at the next major version.</li>
+  calibration tools and DNN packages in CPU images, in a minor release whose
+  notes list them.</li>
+<li><strong>One layering mechanism.</strong> GPU modes, deployments on a base and split-host
+  nodes each add differences to a stack by rules of their own; one mechanism
+  could replace the three. It would come beside them in a minor release, and
+  the old ones would go only at a major version.</li>
 <li><strong>Safety Island on CARLA.</strong> A kit with the Safety Island's closed loop over
   CAN, backed by its own runtime evidence.</li>
 </ul>

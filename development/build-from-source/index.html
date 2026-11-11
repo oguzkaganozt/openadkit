@@ -2247,7 +2247,9 @@ compile their package sets from a local <code>autoware/src</code> tree (step 4 b
 the same file CI uses.</p>
 <pre class="mermaid"><code>flowchart TB
     CORE["autoware:core-devel (build)&lt;br/&gt;autoware:base (runtime)"] --&gt; UC["universe-common"]
+    CORE --&gt; UCD["universe-common-devel&lt;br/&gt;(kits build their overlays in it)"]
     CUDA["autoware:base-cuda-{devel,runtime}"] --&gt; SPC["sensing-perception-cuda"]
+    CUDA --&gt; PLC["planning-cuda"]
 
     UC --&gt; SP["sensing-perception"]
     UC --&gt; LM["localization-mapping"]
@@ -2257,7 +2259,8 @@ the same file CI uses.</p>
     UC --&gt; API["api"]
     UC --&gt; VIZ["visualizer"]
     UC --&gt; SIM["simulator"]
-    UC -.-&gt; SPC</code></pre>
+    UC -.-&gt; SPC
+    UC -.-&gt; PLC</code></pre>
 <p><code>universe-common</code> compiles the shared part of Autoware Universe on the upstream
 <code>core-devel</code> image and copies the result onto the lean upstream <code>base</code> image, so
 build tools never reach the runtime layers. Every component builds from it.

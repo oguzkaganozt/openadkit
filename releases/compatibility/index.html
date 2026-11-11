@@ -2300,8 +2300,9 @@ This page lists what that promise covers. Within one major version:</p>
 <li><code>extends</code> pinning a release, and <code>base</code> naming one of its deployments.</li>
 <li>The Compose variables <code>OPENADKIT_BASE_ROOT</code>, <code>OPENADKIT_BASE_DEPLOYMENT</code> and
   <code>OPENADKIT_OVERLAY_WS</code>.</li>
-<li>Each base deployment's Compose entrypoints, service names, settings in
-  <code>settings.env</code>, data destination variables (such as <code>MAP_PATH</code>) and verify step.</li>
+<li>Each base deployment's Compose entrypoints, service names, data destination
+  variables (such as <code>MAP_PATH</code>), verify step and the settings listed under
+  <a href="#settings-and-paths">Settings and Paths</a>.</li>
 <li>Config overrides under <code>config/</code> and the overlay workspace in <code>overlay_ws/</code>,
   which the images' entrypoint applies and sources on every start.</li>
 <li><code>externalImages</code> that replace a component image or add new ones.</li>
@@ -2314,6 +2315,11 @@ This page lists what that promise covers. Within one major version:</p>
   <code>OPENADKIT_OUTPUT_DIR</code>.</li>
 <li>The host settings file <code>~/.config/openadkit/&lt;deployment&gt;.env</code>, and the
   <code>results</code> and <code>recordings</code> directories under the output directory.</li>
+<li>These settings of a deployment's <code>settings.env</code> and of the host settings
+  file: the data destination variables, <code>VEHICLE_MODEL</code>, <code>SENSOR_MODEL</code>,
+  <code>VEHICLE_ID</code>, <code>CYCLONEDDS_NETWORK_INTERFACE</code>, and the visualizer's
+  <code>REMOTE_DISPLAY</code>, <code>REMOTE_PASSWORD</code>, <code>RVIZ_CONFIG</code>, <code>RVIZ_GPU</code>,
+  <code>WEBSOCKIFY_BIND</code>, <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>.</li>
 </ul>
 <p>See <a href="../../getting-started/cli/">CLI &amp; Maintenance</a>.</p>
 <h3 id="images">Images<a class="headerlink" href="#images" title="Permanent link">#</a></h3>
@@ -2323,10 +2329,12 @@ This page lists what that promise covers. Within one major version:</p>
   <a href="../../getting-started/container-images/">Container Images &amp; Versioning</a>.</li>
 <li>The image labels <code>org.opencontainers.image.autoware-base-version</code> and
   <code>org.opencontainers.image.ros-snapshot</code>.</li>
-<li>The Autoware packages each image provides, with RViz plugins in the visualizer
-  image only. They change only with the pinned Autoware release: when Autoware removes a package, the minor release that
-  moves to that Autoware release says so. Open AD Kit does not remove a package
-  from an image within a major version.</li>
+<li>The Autoware packages that the catalog deployments run and that each image's
+  launch files in <a href="../../components/">Components</a> need, with RViz plugins
+  in the visualizer image only. They change only with the pinned Autoware
+  release: when Autoware removes a package, the minor release that moves to
+  that Autoware release says so. An image may lose any other package in a minor
+  release, whose notes list it.</li>
 </ul>
 <h3 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h3>
 <ul>
@@ -2343,12 +2351,18 @@ release:</p>
   bridge. See <a href="../../deployments/split-host/">Split-host simulation</a>.</li>
 <li><strong>AutoSD with Podman and Quadlet:</strong> <code>platforms/autosd/</code> and the units it
   generates. See <a href="../../platforms/autosd/">AutoSD</a>.</li>
+<li><strong>The Diffusion Planner:</strong> <code>planning-simulation --gpu</code>. With Autoware 2.0.0
+  its verify step fails on the sample route. See
+  <a href="../../deployments/planning-simulation/">Planning Simulation</a>.</li>
 </ul>
 <h2 id="not-covered">Not Covered<a class="headerlink" href="#not-covered" title="Permanent link">#</a></h2>
 <ul>
 <li>Human-readable output: messages, tables and their wording.</li>
 <li>The output of <code>openadkit config</code>, which is Docker Compose's resolved model.</li>
 <li>The CI workflows and everything under <code>.github/</code>.</li>
+<li>The other settings in <code>settings.env</code>. Most are arguments of Autoware's launch
+  files and follow the pinned Autoware release; <code>READINESS_CHECKS</code> holds the
+  arguments of the readiness check.</li>
 <li>Environment variables, files and image internals that this page does not list.</li>
 </ul>
 

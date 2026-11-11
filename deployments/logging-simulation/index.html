@@ -2038,7 +2038,10 @@ openadkit<span class="w"> </span>run<span class="w"> </span>logging-simulation<s
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <p><code>run</code> downloads the sample map and rosbag, and with <code>--gpu</code> also the CenterPoint
 models (to <code>~/autoware_data/lidar_centerpoint</code>). The rosbag starts playing once
-Autoware is ready.</p>
+sensing subscribes to its LiDAR topic.</p>
+<p><code>run</code> returns once the services have started and stay up. This deployment
+declares no readiness check of Autoware itself and is not verified in CI, so
+watch <code>openadkit status</code> and the visualizer for localization to initialize.</p>
 <p>The demo rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than
 with a full recording.</p>
