@@ -126,7 +126,7 @@ def active_release(root: Path, command: str) -> str:
     except (OSError, ValueError) as error:
         raise OpenADKitError(f"could not read the installed release metadata: {error}") from error
     kind, version = kit.get("kind", "unknown"), kit.get("version", "")
-    if kind == "repository":
+    if kind == "source":
         raise OpenADKitError({
             "upgrade": "upgrade is for release installs; update a source checkout with git pull or git checkout",
             "uninstall": "uninstall is for release installs; remove a source checkout with git",

@@ -100,7 +100,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     if document["compose"]["gpuFiles"]:
         (directory / "settings.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
     context = {
-        "schemaVersion": 2, "kind": "release" if release else "repository",
+        "schemaVersion": 2, "kind": "release" if release else "source",
         "defaultRosDistro": "humble", "componentImages": COMPONENT_IMAGES,
         "deployments": {"example": {"path": "deployments/example"}},
     }
@@ -1312,7 +1312,7 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
     deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
-    kit = cli_catalog.RuntimeContext("repository", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    kit = cli_catalog.RuntimeContext("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
