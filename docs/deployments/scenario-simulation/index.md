@@ -64,7 +64,7 @@ as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
 `lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
 
 This deployment changes one Autoware parameter with a
-[config override](../integrator-guide.md#2-config-overrides): a file that holds
+[config override](../../kits/integrator-guide.md#2-config-overrides): a file that holds
 only the changed value, merged into the upstream parameter file on every start
 (`config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`).
 

@@ -5,8 +5,9 @@ nav:
     - Glossary: glossary.md
   - Getting Started: getting-started
   - Deployments: deployments
+  - Kits: kits
   - Components: components
   - Platforms: platforms
-  - Development: development
   - Releases: releases
+  - Development: development
   - Roadmap: roadmap.md

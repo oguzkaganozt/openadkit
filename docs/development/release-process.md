@@ -65,7 +65,7 @@ flowchart LR
    the bundle, installer, plan and metadata, and creates the draft with its
    assets. It then creates the image release tags and, for stable releases, the
    latest aliases (see
-   [Tag Reference](../getting-started/container-images.md#tag-reference)), and
+   [Tag Reference](../releases/container-images.md#tag-reference)), and
    publishes the draft, which creates the Git tag. A published release cannot
    be changed: a bad one is followed by the next version.
 4. **deploy-docs**: republishes the docs when the latest aliases moved.

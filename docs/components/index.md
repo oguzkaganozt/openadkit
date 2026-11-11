@@ -121,7 +121,7 @@ RViz in the browser through noVNC: RViz with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
 loopback-only, and so does noVNC by default; reach it remotely through an SSH
 tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
-[kit](../deployments/integrator-guide.md#4-extra-services) (the release mounts
+[kit](../kits/integrator-guide.md#4-extra-services) (the release mounts
 none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it stays the same
 across starts, so a browser exception for it holds.
 
@@ -160,6 +160,6 @@ Humble-only and needs an NVIDIA GPU.
 
 Generated from the image catalog (`.github/image-inventory.json`), so it always
 matches what CI builds. Tag names are explained in
-[Container Images & Versioning](../getting-started/container-images.md).
+[Container Images & Versioning](../releases/container-images.md).
 
 {{ component_table() }}

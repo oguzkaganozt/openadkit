@@ -38,7 +38,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 <p class="oak-card-title" role="heading" aria-level="3">Build your own stack</p>
 <p>A kit holds your packages, parameters and services on top of a deployment, with one CLI to build, run and restart it.</p>
-<a href="deployments/create-a-kit/" class="md-button">Create a Kit</a>
+<a href="kits/create-a-kit/" class="md-button">Create a Kit</a>
 </div>
 
 <div class="oak-card" markdown="1">
@@ -60,9 +60,9 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 - [**Glossary**](glossary.md) — The terms these docs use
 - [**CLI & Maintenance**](getting-started/cli.md) — Every command, configuration, upgrades and cleanup
 - [**Troubleshooting**](getting-started/troubleshooting.md) — Docker, data, GPU, visualizer and network
-- [**Integrator Guide**](deployments/integrator-guide.md) — The reference for every kit extension point
+- [**Integrator Guide**](kits/integrator-guide.md) — The reference for every kit extension point
 - [**Components**](components/index.md) — The container images and what each one runs
-- [**Container Images & Versioning**](getting-started/container-images.md) — Tags, versions and what to pin
+- [**Container Images & Versioning**](releases/container-images.md) — Tags, versions and what to pin
 - [**Releases**](releases/index.md) — What a release ships, promises and proves
 - [**Development**](development/index.md) — Build from source, contribute and release
 - [**Roadmap**](roadmap.md) — What comes now, next and later

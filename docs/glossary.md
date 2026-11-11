@@ -8,8 +8,8 @@ it.
 | Term | Meaning |
 |------|---------|
 | [**Component image**](components/index.md) | A published container image holding one or more Autoware functions, for example `planning`. |
-| [**Latest alias**](getting-started/container-images.md#tag-reference) | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests never move. |
-| [**Digest pin**](getting-started/container-images.md#choosing-a-tag) | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
+| [**Latest alias**](releases/container-images.md#tag-reference) | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests never move. |
+| [**Digest pin**](releases/container-images.md#choosing-a-tag) | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
 
 ## Deployments
 
@@ -24,11 +24,11 @@ it.
 
 | Term | Meaning |
 |------|---------|
-| [**Kit**](deployments/create-a-kit.md) | A kit manifest and its deployments: the reference kit in this repository, or your differences on top of a pinned release. |
-| [**Kit manifest**](deployments/integrator-guide.md#pin-the-base) | `openadkit.json`: what the kit extends, its deployments (each named by its key) and the images it pins. |
-| [**`extends` / `base`**](deployments/integrator-guide.md#base-a-deployment) | The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on. |
-| [**Config override**](deployments/integrator-guide.md#2-config-overrides) | Parameter and file differences under `config/autoware/`, merged over a package's configuration on every start; not a copy of the full file. `restart` applies them. |
-| [**Overlay workspace**](deployments/integrator-guide.md#3-overlay-workspace) | Your ROS packages in `overlay_ws/`, built in the release's devel image and sourced on top of Autoware. |
+| [**Kit**](kits/create-a-kit.md) | A kit manifest and its deployments: the reference kit in this repository, or your differences on top of a pinned release. |
+| [**Kit manifest**](kits/integrator-guide.md#pin-the-base) | `openadkit.json`: what the kit extends, its deployments (each named by its key) and the images it pins. |
+| [**`extends` / `base`**](kits/integrator-guide.md#base-a-deployment) | The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on. |
+| [**Config override**](kits/integrator-guide.md#2-config-overrides) | Parameter and file differences under `config/autoware/`, merged over a package's configuration on every start; not a copy of the full file. `restart` applies them. |
+| [**Overlay workspace**](kits/integrator-guide.md#3-overlay-workspace) | Your ROS packages in `overlay_ws/`, built in the release's devel image and sourced on top of Autoware. |
 
 ## Releases and Evidence
 

@@ -40,7 +40,7 @@ Open AD Kit versions follow [Semantic Versioning](https://semver.org/) on their
 own, starting at `v2.0.0`: a backward-incompatible change to the CLI, the
 manifests or a deployment raises the major version, and a move to a new
 Autoware release raises at least the minor version. The release notes list what
-breaks, and [Compatibility](../releases/compatibility.md) lists what a major
+breaks, and [Compatibility](compatibility.md) lists what a major
 version keeps working.
 
 - **One Autoware release per release.** Releases come from `main`, which pins
@@ -66,7 +66,7 @@ version keeps working.
 
 A release bundle pins images for both distros; choose one with `--ros-distro`.
 A release needs the evidence cells of both distros to pass its
-[gate](../releases/evidence.md), and a distro is supported only while it is
+[gate](evidence.md), and a distro is supported only while it is
 supported upstream. Changing the default takes a reviewed manifest change and
 passing evidence; a release never falls back to another distro by itself.
 Evidence runs on amd64, so an image build alone does not prove runtime behavior

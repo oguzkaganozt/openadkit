@@ -142,7 +142,7 @@ settings such as `MAP_PATH` or `REMOTE_PASSWORD` in your host settings file: it
 lives outside the release, so upgrades keep it. A source checkout can also
 override component images there; release images stay pinned. A kit adds its
 own files to this order; see the
-[Integrator Guide](../deployments/integrator-guide.md#1-settings).
+[Integrator Guide](../kits/integrator-guide.md#1-settings).
 
 | Directory | Default | Override |
 | --- | --- | --- |
@@ -185,7 +185,7 @@ data usage cannot be checked, they refuse as well.
 `openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit on top of a
 deployment of this Open AD Kit (Planning Simulation by default) that holds
 only your differences. `openadkit build` builds the kit's overlay workspace in
-the release's devel image. See [Create a Kit](../deployments/create-a-kit.md).
+the release's devel image. See [Create a Kit](../kits/create-a-kit.md).
 
 ## Upgrading
 

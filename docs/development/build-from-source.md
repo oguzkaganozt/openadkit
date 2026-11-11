@@ -2,7 +2,7 @@
 
 How to build the Open AD Kit images locally and how CI builds them. Most users
 do not need this: `openadkit run` pulls the published images (see
-[Container Images & Versioning](../getting-started/container-images.md)).
+[Container Images & Versioning](../releases/container-images.md)).
 
 ## Prerequisites
 

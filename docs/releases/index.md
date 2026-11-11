@@ -17,9 +17,9 @@ The release notes open with the highlights and the install command, list the
 merged pull requests by type, and summarize the evidence. An installed release
 moves to the latest stable version with `openadkit upgrade`.
 
+- [Container Images & Versioning](container-images.md) — image tags and what
+  to pin
 - [Compatibility](compatibility.md) — what a version number promises
 - [Evidence Policy](evidence.md) — what a build must pass to be released
 - [Verify a Release](verification.md) — check the files before you run them
-- [Container Images & Versioning](../getting-started/container-images.md) —
-  image tags and what to pin
 - [Roadmap](../roadmap.md) — planned work, in priority order

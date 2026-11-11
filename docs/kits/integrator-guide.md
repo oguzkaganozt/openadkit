@@ -167,7 +167,7 @@ one it is an error rather than a second layer.
 #### ABI
 
 The devel and runtime images install ROS packages from the same
-[ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
+[ROS snapshot](../releases/container-images.md#ros-package-snapshot), so
 an overlay built in the devel image links the ROS versions the runtime image
 ships. A dependency you add must also exist in the runtime image; the overlay
 cannot install packages. The example kit's C++ node links `diagnostic_updater`

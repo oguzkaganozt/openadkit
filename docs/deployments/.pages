@@ -6,5 +6,3 @@ nav:
   - CARLA Simulation: carla-simulation
   - Safety Island Simulation: safety-island-simulation
   - Split-host Simulation: split-host.md
-  - Create a Kit: create-a-kit.md
-  - Integrator Guide: integrator-guide.md

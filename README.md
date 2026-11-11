@@ -52,9 +52,9 @@ The [documentation site](https://autowarefoundation.github.io/openadkit/) covers
 
 - [Architecture and components](https://autowarefoundation.github.io/openadkit/overview/)
 - [Deployments](https://autowarefoundation.github.io/openadkit/deployments/)
-- [Create a kit](https://autowarefoundation.github.io/openadkit/deployments/create-a-kit/)
+- [Create a kit](https://autowarefoundation.github.io/openadkit/kits/create-a-kit/)
 - [Supported platforms](https://autowarefoundation.github.io/openadkit/platforms/)
-- [Container images and versioning](https://autowarefoundation.github.io/openadkit/getting-started/container-images/)
+- [Container images and versioning](https://autowarefoundation.github.io/openadkit/releases/container-images/)
 - [Compatibility](https://autowarefoundation.github.io/openadkit/releases/compatibility/)
 - [Building from source](https://autowarefoundation.github.io/openadkit/development/build-from-source/)
 
