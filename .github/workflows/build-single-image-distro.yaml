@@ -67,7 +67,8 @@ jobs:
         shell: bash
 
       - name: Install YAML parser
-        run: sudo apt-get update && sudo apt-get install -y python3-yaml
+        # The hosted runner images ship it; apt runs only where it is missing.
+        run: python3 -c 'import yaml' 2>/dev/null || { sudo apt-get update && sudo apt-get install -y python3-yaml; }
         shell: bash
 
       - name: Export Autoware dependency lockfile

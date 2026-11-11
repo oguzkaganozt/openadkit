@@ -12,9 +12,7 @@ DIGEST = f"sha256:{'a' * 64}"
 LOCK_SHA256 = "b" * 64
 
 
-def registry_metadata(
-    openadkit_sha, *, matches=True, plain_labels=False, lock_sha256=LOCK_SHA256
-):
+def registry_metadata(openadkit_sha, *, matches=True, lock_sha256=LOCK_SHA256):
     if matches == "same-commit-branch":
         input_ref = "main"
         ref_type = "branch"
@@ -28,24 +26,18 @@ def registry_metadata(
         ref_type = "branch"
         image_autoware_ref = "c" * 40
 
-    def label(name):
-        # `imagetools inspect --format '{{json .}}'` renders label keys with
-        # embedded quotes, which is what the resolver's quoted-key jq fallback
-        # reads. plain_labels=False emits that live shape by default.
-        return name if plain_labels else f'"{name}"'
-
     return json.dumps(
         {
             "manifest": {"digest": DIGEST},
             "image": {
                 "config": {
                     "Labels": {
-                        label("org.opencontainers.image.autoware-input-ref"): input_ref,
-                        label("org.opencontainers.image.autoware-ref-type"): ref_type,
-                        label("org.opencontainers.image.autoware-ref"): image_autoware_ref,
-                        label("org.opencontainers.image.autoware-base-version"): "1.8.0",
-                        label("org.opencontainers.image.autoware-lock-sha256"): lock_sha256,
-                        label("org.opencontainers.image.openadkit-sha"): openadkit_sha,
+                        "org.opencontainers.image.autoware-input-ref": input_ref,
+                        "org.opencontainers.image.autoware-ref-type": ref_type,
+                        "org.opencontainers.image.autoware-ref": image_autoware_ref,
+                        "org.opencontainers.image.autoware-base-version": "1.8.0",
+                        "org.opencontainers.image.autoware-lock-sha256": lock_sha256,
+                        "org.opencontainers.image.openadkit-sha": openadkit_sha,
                     }
                 }
             },
@@ -96,7 +88,7 @@ def source_repository(tmp_path, changed_source=None):
 
 def run_resolver(
     tmp_path, targets, *, common_matches=True,
-    changed_source=None, plain_labels=False, common_lock_sha256=LOCK_SHA256,
+    changed_source=None, common_lock_sha256=LOCK_SHA256,
     fail_ref="", fail_mode="notfound",
 ):
     """Run the resolver against a fake registry; return result, outputs, lookups."""
@@ -126,8 +118,7 @@ printf '%s\\n' "${COMMON_METADATA}"
         "DOCKER_FAIL_REF": fail_ref,
         "DOCKER_FAIL_MODE": fail_mode,
         "COMMON_METADATA": registry_metadata(
-            openadkit_sha, matches=common_matches, plain_labels=plain_labels,
-            lock_sha256=common_lock_sha256,
+            openadkit_sha, matches=common_matches, lock_sha256=common_lock_sha256,
         ),
         "GITHUB_OUTPUT": str(output),
         "TARGETS_JSON": json.dumps(targets),
@@ -178,7 +169,6 @@ CHECKOUT_SOURCES = (
         # "registry" reuses the pinned common images, "local" builds them.
         (["api"], {}, "registry", 2),
         (["api"], {"common_matches": "same-commit-branch"}, "registry", 2),
-        (["api"], {"plain_labels": True}, "registry", 2),
         (["api"], {"common_matches": False}, "local", 1),
         (["api"], {"common_lock_sha256": ""}, "local", 1),
         (["api"], {"common_lock_sha256": "c" * 64}, "local", 1),
