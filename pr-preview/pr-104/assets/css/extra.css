@@ -324,6 +324,23 @@
   color: var(--oak-adm-color, var(--oak-note));
 }
 
+/* Material styles a summary through its type class and the text direction,
+   which outrank the rules above: restate them so a collapsible block looks
+   like an admonition. */
+[dir] .md-typeset details[class] > summary {
+  padding: 0 1.6rem 0 0;
+  overflow: visible;
+  background: transparent;
+}
+
+[dir] .md-typeset details[class] > summary::before {
+  left: -1.6rem;
+}
+
+[dir] .md-typeset details[class] > summary::after {
+  right: 0;
+}
+
 .md-typeset .admonition > .admonition-title code,
 .md-typeset details > summary code {
   box-shadow: none;
