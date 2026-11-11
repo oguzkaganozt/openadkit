@@ -14,31 +14,34 @@ Thank you for your interest in contributing to Open AD Kit. This project is part
 
 Open AD Kit is licensed under **Apache License 2.0**. All contributions are accepted under the same license. No CLA is required.
 
-## For External Contributors
+## Submitting a Change
 
-1. **Fork** the repository and create a feature branch (`feat/`, `fix/`, `docs/`, etc.)
-2. **Sign off** your commits (`git commit -s`) to certify DCO compliance
-3. **Preview docs** locally with `make -C docs serve`
+1. **Fork** the repository and create a branch (`feat/`, `fix/`, `docs/`, etc.)
+2. **Sign off** every commit (`git commit -s`). The `Signed-off-by` line
+   certifies the [Developer Certificate of Origin](https://developercertificate.org/);
+   a PR without it is not merged
+3. **Run the [local checks](#local-checks)** that match your change, and
+   preview docs with `make -C docs serve`
 4. **Open a PR** against `main` with a clear description. Its title follows
    [Conventional Commits](https://www.conventionalcommits.org/) (`feat(cli): ...`,
    with `!` for a breaking change): PRs are squash-merged, so the title becomes
    the commit and its line in the release notes
 
-## For Internal (Foundation) Contributors
+Maintainers can branch in this repository instead of a fork. Such a PR also
+runs the evidence cells on its own images before merge; see
+[Testing a Pull Request](https://autowarefoundation.github.io/openadkit/development/evidence-workflow/#testing-a-pull-request).
 
-If you are a member of the Autoware Foundation contributing to active development branches or other internal work:
-
-### Branch Strategy
+## Branches
 
 - `main` — Open AD Kit development; releases come from it
 - `release/X.Y` — created from a release tag only when an older line needs a fix
-- `feat/...`, `fix/...`, `refactor/...` — active development branches merged into `main` via PR
+- `feat/...`, `fix/...`, `refactor/...` — development branches merged into `main` via PR
 
 `.github/autoware.ref` pins the Autoware release a branch builds on, such as
 `2.0.0`. Moving `main` to a new Autoware release is a pull request that changes
 the pin and adapts the deployments to it.
 
-### Local CI Commands
+## Local Checks
 
 Run these before pushing. They cover most of what `.github/workflows/lint.yaml` runs; CI also validates every deployment cell from `validation_matrix.py` and checks the Bake file.
 
@@ -77,7 +80,7 @@ mkdocs build
 python3 .github/scripts/check_site_links.py
 ```
 
-### Test Scope
+## Test Scope
 
 The `.github/scripts/tests/` suite is risk-focused, not exhaustive. Keep regression
 coverage for managed-data deletion/replacement, checksums and unsafe archives,
@@ -94,7 +97,7 @@ local files rather than a network server. Docker lifecycle calls use stubs; real
 Compose checks render models but do not run containers. These tests do not
 replace hosted build/scan/evidence or real two-host SIL acceptance.
 
-### Testing Deployments
+## Testing Deployments
 
 Before merging deployment-related changes, verify the Compose files. A
 deployment carries one complete `settings.env` for Compose interpolation (one
@@ -116,7 +119,7 @@ settings file, `~/.config/openadkit/<name>.env`.
 
 To test a split-host (`--node`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
 
-### Releasing
+## Releasing
 
 Every build of `main` (or of a `release/X.Y` branch) is scanned and runs the
 evidence cells. A release promotes one of those builds: run `release.yaml` on
@@ -127,7 +130,7 @@ lists what must be in place, and the
 [Evidence Policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
 what the gate accepts.
 
-### Breaking Changes
+## Breaking Changes
 
 [Compatibility](https://autowarefoundation.github.io/openadkit/releases/compatibility/)
 lists what a major version keeps working. Removing or changing one of those
@@ -135,11 +138,3 @@ items, such as a command, a manifest field, a covered setting or an extension
 point, is a breaking change: mark the pull request title with `!`, say what
 breaks and how to migrate, and expect it to wait for the next major version. A
 manifest contract change also bumps `schemaVersion`.
-
-## DCO Requirement
-
-All commits must include a `Signed-off-by` line. CI enforces this automatically — PRs without sign-off will not be merged.
-
-```bash
-git commit -s -m "your commit message"
-```

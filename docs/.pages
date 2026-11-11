@@ -2,6 +2,7 @@ nav:
   - Introduction:
     - index.md
     - Overview: overview.md
+    - Glossary: glossary.md
   - Getting Started: getting-started
   - Deployments: deployments
   - Components: components

@@ -25,8 +25,6 @@ on another over Zenoh (experimental).
 
 Complete the [Quickstart](../getting-started/index.md) setup first.
 
---8<-- "includes/cli-command-context.md"
-
 ```bash
 openadkit list
 openadkit run planning-simulation
@@ -45,7 +43,7 @@ openadkit stop
 
 [CLI & Maintenance](../getting-started/cli.md) covers the other commands.
 
-## Your Own Stack
+## Your Own Kit
 
 Start a kit with `openadkit new` ([Create a Kit](create-a-kit.md)). It extends
 a deployment without copying it and keeps only your differences. The

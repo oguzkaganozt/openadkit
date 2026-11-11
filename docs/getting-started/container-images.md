@@ -27,8 +27,12 @@ the same patterns with `-jazzy` (for example `planning-jazzy`).
 
 - **Reproducible deployments**: use a release tag (`vX.Y.Z`) or a digest.
 - **Latest stable for a distro**: use `<target>-<ros_distro>`.
-- **Never** pin per-platform CI tags such as `universe-common-amd64-humble`;
-  they move with every build of `main`.
+- **Never** pin per-architecture tags such as `universe-common-amd64-humble`:
+  CI moves them with every build of `main`, and publishes them only for the
+  common images its own builds start from.
+- **Source checkout**: `./openadkit` runs `<target>-<arch>-<ros_distro>`, the
+  tags of a [local build](../development/build-from-source.md), not published
+  images.
 
 ## Versioning
 
@@ -39,16 +43,19 @@ Autoware release raises at least the minor version. The release notes list what
 breaks, and [Compatibility](../releases/compatibility.md) lists what a major
 version keeps working.
 
-Releases come from `main`, which pins one Autoware release in
-`.github/autoware.ref`. Every release pairs the two in its
-[GitHub Release](https://github.com/autowarefoundation/openadkit/releases) title,
-`Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do `openadkit install` and
-`openadkit version`. The release also pins the ROS 2 distros and every image
-digest, and its images carry `org.opencontainers.image.autoware-base-version`.
-A fix that is upstream but not yet in an Autoware release can be
-[backported](../development/release-process.md#backporting-an-autoware-fix); the release
-notes list it, and the Autoware version stays the tag's. A `release/X.Y` branch
-is created from a release tag only to fix an older version.
+- **One Autoware release per release.** Releases come from `main`, which pins
+  one Autoware release in `.github/autoware.ref`. The
+  [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
+  title pairs the two, `Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do
+  `openadkit install` and `openadkit version`.
+- **Pinned inputs.** A release also pins the ROS 2 distros and every image
+  digest, and its images carry
+  `org.opencontainers.image.autoware-base-version`.
+- **Backports.** A fix that is upstream but not yet in an Autoware release can
+  be [backported](../development/release-process.md#backporting-an-autoware-fix);
+  the release notes list it, and the Autoware version stays the tag's.
+- **Older versions.** A `release/X.Y` branch is created from a release tag only
+  to fix an older version.
 
 ## ROS 2 Distro Support
 

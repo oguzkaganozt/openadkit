@@ -8,7 +8,7 @@ do not need this: `openadkit run` pulls the published images (see
 
 - Ubuntu 22.04 or 24.04 (`openadkit setup` supports Ubuntu only; elsewhere,
   install Docker with Buildx and Compose yourself)
-- Git, `pipx`, `vcs2l`, and `python3-yaml` to import the Autoware sources
+- Git; step 3 installs the tools that import the Autoware sources
 - Disk space for several multi-gigabyte images
 
 The component Dockerfiles build on upstream Autoware images from GHCR and
@@ -57,7 +57,9 @@ cd openadkit
 --8<-- "includes/docker-group-activation.md"
 
 ```bash
-# 3. Make the pipx-installed vcs command available in this shell
+# 3. Install the source import tools; pipx puts vcs in ~/.local/bin
+sudo apt-get install -y pipx python3-yaml
+pipx install vcs2l
 export PATH="$HOME/.local/bin:$PATH"
 
 # 4. Import the Autoware sources this branch pins
@@ -72,6 +74,8 @@ python3 .github/scripts/export_autoware_lock.py \
 export UPSTREAM_TAG="$AUTOWARE_REF"
 mkdir -p autoware/src
 vcs import --shallow autoware/src < autoware.lock
+# Backported Autoware fixes, when the branch carries any
+python3 .github/scripts/autoware_patches.py apply autoware/src
 mkdir -p autoware/src/middleware/external
 touch autoware/src/middleware/external/.keep
 
@@ -120,8 +124,9 @@ the source of truth for which images are built and for which architectures.
 
 Jobs run in dependency order: `prepare`, then `build-common`, then
 `build-components`. Most images build for Humble and Jazzy on amd64 and arm64.
-`create-manifests` then combines the per-arch images into multi-arch tags. CI disables the local tags (`LOCAL_IMAGE=""`) and tags
-images through `docker/metadata-action`.
+`create-manifests` then combines the per-arch images into multi-arch tags. CI
+disables the local tags (`LOCAL_IMAGE=""`) and tags images through
+`docker/metadata-action`.
 
 [`.github/autoware.ref`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref)
 pins the Autoware release a branch builds on its official images. CI builds

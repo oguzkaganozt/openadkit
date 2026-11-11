@@ -18,8 +18,6 @@ openadkit setup --gpu --verify
 
 ## Run
 
---8<-- "includes/cli-command-context.md"
-
 ```bash
 openadkit run carla-simulation
 ```

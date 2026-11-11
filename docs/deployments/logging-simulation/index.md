@@ -9,8 +9,6 @@ mode, run `openadkit setup --gpu --verify`.
 
 ## Run
 
---8<-- "includes/cli-command-context.md"
-
 ```bash
 openadkit run logging-simulation         # CPU: clustering-based detection
 openadkit run logging-simulation --gpu   # GPU: CenterPoint on CUDA (amd64 only)

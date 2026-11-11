@@ -91,8 +91,9 @@ the pinned release as a patch instead of waiting for the next Autoware release:
    `autoware-lock.repos`, such as `universe/autoware_universe`). The review is
    the fix's own diff.
 3. Every build applies the patches in order right after `vcs import`; one that
-   does not apply, or has no `Upstream:` line, fails the build. The release lists them under **Backported Autoware fixes**, its
-   bundle carries them as `autoware.backports`, and `openadkit version` counts
-   them. The Autoware version stays that of the tag.
+   does not apply, or has no `Upstream:` line, fails the build. The release
+   lists them under **Backported Autoware fixes**, its bundle carries them as
+   `autoware.backports`, and `openadkit version` counts them. The Autoware
+   version stays that of the tag.
 4. When the branch moves to an Autoware release that contains the fix, delete
    the patch.

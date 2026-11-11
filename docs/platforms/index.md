@@ -8,27 +8,9 @@ Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint, co-develope
 with SOAFEE and the [eSync Alliance](https://esyncalliance.org/); DENSO's AVP
 blueprint and Red Hat's AutoSD blueprint build on it.
 
-<div class="oak-card-grid" markdown="1">
-
-<div class="oak-card" markdown="1">
-
-:material-server:{ .oak-card-icon }
-
-<p class="oak-card-title" role="heading" aria-level="3">AutoSD</p>
-<p>The upstream preview of Red Hat In-Vehicle OS. Containers run under Podman and systemd with mixed-criticality partitions.</p>
-<a href="autosd/" class="md-button md-button--primary">AutoSD</a>
-</div>
-
-<div class="oak-card" markdown="1">
-
-:material-cloud-outline:{ .oak-card-icon }
-
-<p class="oak-card-title" role="heading" aria-level="3">EWAOL</p>
-<p>Arm's container-centric Yocto framework and the original SOAFEE reference. Background only; not an Open AD Kit target.</p>
-<a href="ewaol/" class="md-button">EWAOL</a>
-</div>
-
-</div>
+- [AutoSD](autosd/index.md) — the upstream preview of Red Hat In-Vehicle OS:
+  Quadlet units for Podman and systemd, generated from Compose (experimental)
+- [Hardware](hardware/index.md) — host requirements and boards
 
 ## Support Matrix
 
@@ -47,7 +29,7 @@ documented as if it worked. Host requirements and boards are on the
 | Component images, amd64 + arm64 | **Supported** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
 | Jazzy images | **Supported** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
 | CARLA Simulation | **Supported** | Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand |
-| AutoSD with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
-| EWAOL | **Unsupported** | No assets in this repository |
+| [AutoSD](autosd/index.md) with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
+| [EWAOL](https://ewaol.docs.arm.com/en/latest/) | **Unsupported** | Arm's Yocto framework and the original SOAFEE reference implementation; no assets in this repository |
 
 Other Linux distributions may work but are not tested.

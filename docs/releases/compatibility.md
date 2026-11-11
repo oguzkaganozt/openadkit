@@ -101,7 +101,7 @@ release:
   generates. See [AutoSD](../platforms/autosd/index.md).
 - **The Diffusion Planner:** `planning-simulation --gpu`. With Autoware 2.0.0
   its verify step fails on the sample route. See
-  [Planning Simulation](../deployments/planning-simulation/index.md).
+  [Planning Simulation](../deployments/planning-simulation/index.md#gpu-mode).
 
 ## Not Covered
 

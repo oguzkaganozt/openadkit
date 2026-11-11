@@ -69,7 +69,7 @@ command conversion; emergency stop and heartbeat monitoring. Control reads only
 that trajectory, so it stays the same whichever planner produces it. Launch:
 `component_control.launch.xml`
 
-### Vehicle and System {: #vehicle-and-system }
+### Vehicle & System {: #vehicle-and-system }
 
 Vehicle actuation and system diagnostics, run as separate containers from one
 image.

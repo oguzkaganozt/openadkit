@@ -9,8 +9,6 @@ Complete the [Quickstart](../../getting-started/index.md) setup first.
 
 ## Run
 
---8<-- "includes/cli-command-context.md"
-
 ```bash
 openadkit run scenario-simulation
 openadkit logs --follow
