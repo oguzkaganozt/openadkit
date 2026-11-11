@@ -170,7 +170,7 @@ jobs:
         with:
           package: openadkit-buildcache
           use-regex: true
-          delete-tags: '^.*$'
+          delete-tags: '^.+$'
           exclude-tags: ${{ steps.buildcache.outputs.caches }}|${{ env.BUILD_TAGS }}
           dry-run: ${{ env.DRY_RUN }}
           token: ${{ secrets.GITHUB_TOKEN }}
