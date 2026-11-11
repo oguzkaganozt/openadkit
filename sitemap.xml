@@ -5,11 +5,11 @@
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/openadkit/overview/</loc>
+         <loc>https://autowarefoundation.github.io/openadkit/glossary/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/openadkit/roadmap/</loc>
+         <loc>https://autowarefoundation.github.io/openadkit/overview/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
@@ -18,18 +18,6 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/openadkit/deployments/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/openadkit/deployments/create-a-kit/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/openadkit/deployments/integrator-guide/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/openadkit/deployments/split-host/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
@@ -53,15 +41,15 @@
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/openadkit/deployments/split-host/</loc>
+         <lastmod>2026-11-11</lastmod>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/openadkit/development/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/openadkit/development/build-from-source/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/openadkit/development/contributing/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
@@ -81,11 +69,15 @@
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/openadkit/getting-started/container-images/</loc>
+         <loc>https://autowarefoundation.github.io/openadkit/getting-started/troubleshooting/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/openadkit/getting-started/troubleshooting/</loc>
+         <loc>https://autowarefoundation.github.io/openadkit/kits/create-a-kit/</loc>
+         <lastmod>2026-11-11</lastmod>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/openadkit/kits/integrator-guide/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
@@ -94,10 +86,6 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/openadkit/platforms/autosd/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/openadkit/platforms/ewaol/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
@@ -110,6 +98,10 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/openadkit/releases/compatibility/</loc>
+         <lastmod>2026-11-11</lastmod>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/openadkit/releases/container-images/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
