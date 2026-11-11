@@ -929,6 +929,15 @@
   border-bottom: 1px solid var(--oak-border);
 }
 
+/* Material hides the tabs below 76.25em (1220px), which a 1920x1080 laptop at
+   150% scaling never reaches. They fit from 60em, so show them from there; the
+   drawer still holds the pages of a section. */
+@media screen and (min-width: 60em) and (max-width: 76.234375em) {
+  .md-tabs {
+    display: block;
+  }
+}
+
 .md-tabs__link {
   font-size: 0.72rem;
   opacity: 0.75;
