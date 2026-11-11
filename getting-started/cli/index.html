@@ -2359,10 +2359,13 @@ openadkit<span class="w"> </span>upgrade<span class="w">           </span><span 
 <p>The new release is verified and installed next to the old one, and the
 <code>openadkit</code> launcher is repointed. The previous version stays in the install
 destination (default <code>~/.local/share/openadkit/</code>), so you can roll back:</p>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>install<span class="w"> </span>--version<span class="w"> </span>vOLD<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>install<span class="w"> </span>--version<span class="w"> </span>vOLD
 </code></pre></div>
-<p><code>--force</code> replaces the kept version directory; omit it to install a version
-that is not kept. Source checkouts update with <code>git pull</code> instead.</p>
+<p>A version that is already installed becomes the active one as it is, without a
+download, so this works offline; <code>--force</code> downloads and replaces it. Images of
+a version you no longer use stay in Docker until you remove them, for example
+with <code>docker image prune --all</code>. Source checkouts update with <code>git pull</code>
+instead.</p>
 <h2 id="uninstall-and-cleanup">Uninstall and Cleanup<a class="headerlink" href="#uninstall-and-cleanup" title="Permanent link">#</a></h2>
 <p>Stop running deployments first; <code>uninstall</code> refuses while any is running,
 because it removes the launcher that <code>openadkit stop</code> needs.</p>

@@ -2260,20 +2260,27 @@ This interface requires manifest schema version 2; older manifests are rejected.
 root <code>openadkit.json</code>. The CLI locates that version under
 <code>~/.local/share/openadkit/openadkit-&lt;tag&gt;</code> and delegates to its launcher. A
 missing version is downloaded and verified on first use, like a build tool's
-wrapper does; your active <code>openadkit</code> stays as it is.
+wrapper does; your active <code>openadkit</code> stays as it is. Only the commands that
+act on a kit do this: <code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code>, <code>build</code> and <code>clean</code>.
+<code>list</code>, <code>version</code>, every <code>--help</code> and Tab completion read the kit with the CLI
+you called, so a directory you only look at starts no program and no download.
 <code>OPENADKIT_INSTALL_DIR</code> overrides the install root for both.</p>
 <p>A relative or absolute source path is also accepted for development. Only one
 level of <code>extends</code> is supported: a kit extends Open AD Kit, not another kit.
 Each kit deployment names a <code>base</code> deployment in the pinned release. Its
-architecture, ROS distro and GPU requirements are inherited without narrowing
-or widening. Base downloads and one-shot reset services are inherited; a kit
+architecture, ROS distro and GPU requirements are inherited. <code>requirements</code> in
+the kit's <code>deployment.json</code> may narrow them: fewer architectures or ROS
+distros, or <code>gpu</code> set to <code>none</code> or <code>required</code> where the base leaves it
+optional. It never widens them, since the kit runs the base's services.
+Without a GPU mode the base's GPU-only downloads are left out. Base downloads and one-shot reset services are inherited; a kit
 can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.</p>
 <p>A kit made by <code>openadkit new my-kit</code> has just one deployment, also named
 <code>my-kit</code>. Its <code>openadkit.json</code>, <code>deployment.json</code>, Compose and differences live
 in one directory; <code>deployments.my-kit.path</code> is <code>"."</code>. No nested <code>deployments/</code>
-directory is needed. Run commands from that directory, not the base repository.</p>
+directory is needed. Run commands from that directory, not the base repository;
+there they need no deployment name.</p>
 <h2 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">#</a></h2>
 <h3 id="1-values">1. Values<a class="headerlink" href="#1-values" title="Permanent link">#</a></h3>
 <p>Put only differences in your deployment's <code>settings.env</code>. Compose interpolation

@@ -2461,6 +2461,9 @@ how an older line is validated. Its jobs run in order:</p>
 </ol>
 <p>The release plan (<code>release-plan.json</code>) attached to each GitHub Release records
 the exact image digests, aliases, assets, and checksums of that release.</p>
+<p>A fork can rehearse a release with the same workflow: it promotes its own
+build in its own registry namespace and publishes in the fork. Validation only
+requires the registry and the package name that <code>openadkit.json</code> names.</p>
 
 
 

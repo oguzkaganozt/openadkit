@@ -2127,7 +2127,9 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
   (<code>externalImages</code>), and points the <code>my-kit</code> deployment at <code>"."</code>, this same
   directory.</li>
 <li><code>deployment.json</code> names the base deployment. Compose reads
-  <code>docker-compose.yaml</code> unless <code>compose.files</code> names others. Architecture, ROS distro, GPU, downloads and the verify step are inherited.</li>
+  <code>docker-compose.yaml</code> unless <code>compose.files</code> names others. Architecture, ROS
+  distro, GPU, downloads and the verify step are inherited; <code>requirements</code> may
+  narrow the first three.</li>
 <li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
   add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the base root for
   shared assets.</li>
@@ -2141,15 +2143,17 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <p><code>openadkit new</code> from an installed release writes its version, such as
 <code>"extends": "v2.0.0"</code>; the kit then runs with that release's own launcher.
 From a source checkout it writes the checkout's path. To move to another
-release, change <code>extends</code>; the next command in the kit downloads that release
-if it is missing.</p>
+release, change <code>extends</code>; the next command that acts on the kit, such as
+<code>validate</code> or <code>run</code>, downloads that release if it is missing.</p>
 <h2 id="build-validate-run-stop">Build, Validate, Run, Stop<a class="headerlink" href="#build-validate-run-stop" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-kit
 openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># overlay_ws, in the release's devel image</span>
-openadkit<span class="w"> </span>validate<span class="w"> </span>my-kit
-openadkit<span class="w"> </span>run<span class="w"> </span>my-kit<span class="w"> </span>--verify<span class="w">   </span><span class="c1"># start, wait until ready, run the base's end-to-end check</span>
+openadkit<span class="w"> </span>validate
+openadkit<span class="w"> </span>run<span class="w"> </span>--verify<span class="w">          </span><span class="c1"># start, wait until ready, run the base's end-to-end check</span>
 openadkit<span class="w"> </span>stop
 </code></pre></div>
+<p>Inside a kit with one deployment the commands need no name. From elsewhere,
+name it by its directory: <code>openadkit run ./my-kit</code>.</p>
 <p>A source checkout pins no devel image: set <code>DEVEL_IMAGE</code> to the matching
 <code>universe-common-devel</code> digest from that build's metadata before <code>build</code>. Add
 <code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy. Static
