@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -762,6 +762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1125,6 +1127,81 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../split-host/" class="md-nav__link">
         
@@ -1133,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1598,6 +1675,8 @@
       
         
       
+        
+      
     
     
     
@@ -1725,6 +1804,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2025,8 +2132,9 @@
 
 
 <h1 id="logging-simulation">Logging Simulation<a class="headerlink" href="#logging-simulation" title="Permanent link">#</a></h1>
-<p>Replay a demo rosbag through sensing, perception, and localization. An NVIDIA
-GPU with at least 4 GB VRAM is recommended; CPU mode works but is much slower.</p>
+<p>Replay a sample rosbag through sensing, perception and localization. An NVIDIA
+GPU with at least 4 GB of VRAM is recommended; CPU mode works but is much
+slower.</p>
 <p>Complete the <a href="../../getting-started/">Quickstart</a> setup first. For GPU
 mode, run <code>openadkit setup --gpu --verify</code>.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h2>
@@ -2040,17 +2148,18 @@ openadkit<span class="w"> </span>run<span class="w"> </span>logging-simulation<s
 models (to <code>~/autoware_data/lidar_centerpoint</code>). The rosbag starts playing once
 sensing subscribes to its LiDAR topic.</p>
 <p><code>run</code> returns once the services have started and stay up. This deployment
-declares no readiness check of Autoware itself and is not verified in CI, so
-watch <code>openadkit status</code> and the visualizer for localization to initialize.</p>
-<p>The demo rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
+declares no readiness check of Autoware itself and is
+<a href="../../releases/evidence/#ci-exemptions">exempt from CI evidence</a>, so watch
+<code>openadkit status</code> and the visualizer for localization to initialize.</p>
+<p>The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than
 with a full recording.</p>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
-<strong><code>openadkit</code></strong>. Set your own
-<code>REMOTE_PASSWORD</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
-<p>For a remote host, forward the port over SSH and open
-<code>http://localhost:8080/vnc.html</code> locally:</p>
+<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in
+<code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
+<p>The visualizer listens on loopback only. For a remote host, forward the port
+over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>

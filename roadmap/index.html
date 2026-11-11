@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -758,6 +758,8 @@
       
         
       
+        
+      
     
     
     
@@ -1108,6 +1110,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1116,7 +1190,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1581,6 +1655,8 @@
       
         
       
+        
+      
     
     
     
@@ -1708,6 +1784,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2143,7 +2247,8 @@
    restart and upgrade check on a release candidate. Before it, review the
    registry cleanup's first list-only run and set <code>REGISTRY_CLEANUP=delete</code>;
    after it, delete the <code>openadkit-common</code> package, which no build uses since
-   every image went to <code>openadkit</code>.</li>
+   every image went to <code>openadkit</code>, and remove the pre-release note
+   (<code>docs/includes/first-release-note.md</code> and the line in <code>README.md</code>).</li>
 </ol>
 <h2 id="next-v2x-in-priority-order">Next: v2.x, in priority order<a class="headerlink" href="#next-v2x-in-priority-order" title="Permanent link">#</a></h2>
 <ol>

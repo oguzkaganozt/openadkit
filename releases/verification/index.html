@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1583,6 +1657,8 @@
       
         
       
+        
+      
     
     
     
@@ -1710,6 +1786,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -1933,10 +2037,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#download-and-verify-release-artifacts" class="md-nav__link">
+  <a href="#provenance-and-checksums" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Download and verify release artifacts
+        Provenance and Checksums
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checksum-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checksum Only
       
     </span>
   </a>
@@ -2015,10 +2130,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#download-and-verify-release-artifacts" class="md-nav__link">
+  <a href="#provenance-and-checksums" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Download and verify release artifacts
+        Provenance and Checksums
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checksum-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checksum Only
       
     </span>
   </a>
@@ -2051,10 +2177,10 @@
 
 
 <h1 id="verify-a-release">Verify a Release<a class="headerlink" href="#verify-a-release" title="Permanent link">#</a></h1>
-<p>Verify downloaded files before executing the installer. Use a recent GitHub
-CLI with <code>gh attestation</code> and <code>jq</code>. Older previews may not have these
-attestations or metadata fields.</p>
-<h2 id="download-and-verify-release-artifacts">Download and verify release artifacts<a class="headerlink" href="#download-and-verify-release-artifacts" title="Permanent link">#</a></h2>
+<p>Verify downloaded files before executing the installer. The full check needs
+a recent GitHub CLI with <code>gh attestation</code>, and <code>jq</code>; releases before v2.0.0
+may lack these attestations and metadata fields.</p>
+<h2 id="provenance-and-checksums">Provenance and Checksums<a class="headerlink" href="#provenance-and-checksums" title="Permanent link">#</a></h2>
 <p>Replace the example version with the release you intend to use:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
 <span class="nv">VERSION</span><span class="o">=</span>v2.0.0
@@ -2082,9 +2208,25 @@ jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.bundles[]
 version, promoted commit, default distro, passing cells and CI exemptions.
 The metadata's <code>.evidence</code> must match the plan's <code>.evidence</code> exactly, and its
 <code>url</code> links the evidence run the release gate accepted.</p>
-<p>After verification, install the downloaded launcher or use the documented
-<a href="../../getting-started/">installation flow</a>. Evidence is bounded to the
-tested cells; it is not a vehicle-safety or security certification.</p>
+<p>After verification, install with the downloaded <code>openadkit</code> or follow the
+<a href="../../getting-started/">Quickstart</a>. Evidence is bounded to the tested
+cells; it is not a vehicle-safety or security certification.</p>
+<h2 id="checksum-only">Checksum Only<a class="headerlink" href="#checksum-only" title="Permanent link">#</a></h2>
+<p>Without the GitHub CLI you can still check the bundle against the release
+metadata. This proves the bundle is the one the release names, not where it
+was built:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">VERSION</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-fsSL<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.github.com/repos/autowarefoundation/openadkit/releases/latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import json,sys; print(json.load(sys.stdin)["tag_name"])'</span><span class="k">)</span>
+curl<span class="w"> </span>-fLO<span class="w"> </span><span class="s2">"https://github.com/autowarefoundation/openadkit/releases/download/</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">/openadkit-</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">.tar.gz"</span>
+curl<span class="w"> </span>-fLO<span class="w"> </span><span class="s2">"https://github.com/autowarefoundation/openadkit/releases/download/</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">/release-metadata.json"</span>
+<span class="nv">EXPECTED</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import json; print(json.load(open("release-metadata.json"))["bundles"][0]["sha256"])'</span><span class="k">)</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'%s  %s\n'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$EXPECTED</span><span class="s2">"</span><span class="w"> </span><span class="s2">"openadkit-</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">.tar.gz"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check<span class="w"> </span>-
+tar<span class="w"> </span>-xzf<span class="w"> </span><span class="s2">"openadkit-</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">.tar.gz"</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">"openadkit-</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">"</span>
+</code></pre></div>
+<p>The extracted directory is a complete runtime; run it with <code>./openadkit</code>. The
+installer makes this same check before it installs a bundle.</p>
 
 
 

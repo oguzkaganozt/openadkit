@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -884,6 +884,8 @@
       
         
       
+        
+      
     
     
     
@@ -1234,6 +1236,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1242,7 +1316,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1707,6 +1781,8 @@
       
         
       
+        
+      
     
     
     
@@ -1834,6 +1910,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2176,9 +2280,8 @@
 <p>Open AD Kit publishes images to the GitHub Container Registry (<code>ghcr.io/autowarefoundation/openadkit</code>).
 This page is the reference for image tags, versions, and what "supported" means.</p>
 <h2 id="tag-reference">Tag Reference<a class="headerlink" href="#tag-reference" title="Permanent link">#</a></h2>
-<p>Releases are promoted from existing CI builds rather than rebuilt, so the images
-tested in CI are the images that ship. Every tag below points at a promoted
-image digest.</p>
+<p>A release promotes an existing CI build instead of rebuilding it, so the
+images tested in CI are the images that ship.</p>
 <table>
 <thead>
 <tr>
@@ -2215,7 +2318,6 @@ image digest.</p>
 </tr>
 </tbody>
 </table>
-<p>Releases promote a CI build of <code>main</code> (see <a href="#versioning">Versioning</a>).</p>
 <p>Pre-releases never move the latest aliases. No alias leaves out the
 distro, so an image never switches ROS distro under the same tag.</p>
 <p>Examples use <strong>Humble</strong>, the default distro. Jazzy images use
@@ -2243,7 +2345,7 @@ version keeps working.</p>
 <code>openadkit version</code>. The release also pins the ROS 2 distros and every image
 digest, and its images carry <code>org.opencontainers.image.autoware-base-version</code>.
 A fix that is upstream but not yet in an Autoware release can be
-<a href="../../releases/evidence/#backporting-an-autoware-fix">backported</a>; the release
+<a href="../../development/release-process/#backporting-an-autoware-fix">backported</a>; the release
 notes list it, and the Autoware version stays the tag's. A <code>release/X.Y</code> branch
 is created from a release tag only to fix an older version.</p>
 <h2 id="ros-2-distro-support">ROS 2 Distro Support<a class="headerlink" href="#ros-2-distro-support" title="Permanent link">#</a></h2>
@@ -2261,17 +2363,17 @@ is created from a release tag only to fix an older version.</p>
 </tr>
 <tr>
 <td><strong>Jazzy</strong></td>
-<td>Published where required builds, scans and runtime evidence pass</td>
+<td>Supported</td>
 </tr>
 </tbody>
 </table>
-<p>A release bundle carries pinned images for both distros; choose one with
-<code>--ros-distro</code>. A distro is supported only while it is supported upstream.
-Non-exempt evidence cells for each declared distro must also pass the
-<a href="../../releases/evidence/">release evidence gate</a>. The initial default is Humble;
-changing it requires a reviewed manifest change and passing evidence, not an
-automatic release-time fallback. Image builds alone do not prove runtime behavior
-on every architecture.</p>
+<p>A release bundle pins images for both distros; choose one with <code>--ros-distro</code>.
+A release needs the evidence cells of both distros to pass its
+<a href="../../releases/evidence/">gate</a>, and a distro is supported only while it is
+supported upstream. Changing the default takes a reviewed manifest change and
+passing evidence; a release never falls back to another distro by itself.
+Evidence runs on amd64, so an image build alone does not prove runtime behavior
+on arm64.</p>
 <h3 id="ros-package-snapshot">ROS Package Snapshot<a class="headerlink" href="#ros-package-snapshot" title="Permanent link">#</a></h3>
 <p>Every image installs its ROS packages from one dated
 <a href="http://snapshots.ros.org/">ROS snapshot</a>: the one the upstream Autoware images
@@ -2290,13 +2392,13 @@ are not pinned, so security updates keep flowing into new builds.</p>
 <li><strong>Platforms</strong>: support is tiered (committed, experimental, best-effort,
   unsupported). See <a href="../../platforms/">Supported Platforms</a>.</li>
 <li><strong>No certification claims</strong>: Open AD Kit makes no safety-certification,
-   functional-safety, or production-readiness claims.</li>
+  functional-safety or production-readiness claim.</li>
 </ul>
 <p>Community help and version coverage are described in
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/SUPPORT.md">SUPPORT.md</a>;
 report security vulnerabilities through the
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/SECURITY.md">private reporting policy</a>.</p>
-<p>Maintainers: see the <a href="../../development/build-from-source/#release-process">Release Process</a>.</p>
+<p>Maintainers: see the <a href="../../development/release-process/">Release Process</a>.</p>
 
 
 

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -16,7 +16,7 @@
         <link rel="prev" href="../contributing/">
       
       
-        <link rel="next" href="../../releases/">
+        <link rel="next" href="../release-process/">
       
       
         
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#run-the-evidence-workflow" class="md-skip">
+        <a href="#evidence-workflow" class="md-skip">
           Skip to content
         </a>
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1585,6 +1659,8 @@
       
         
       
+        
+      
     
     
     
@@ -1767,10 +1843,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reuse-it-in-the-build-owning-repository" class="md-nav__link">
+  <a href="#testing-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reuse it in the build-owning repository
+        Testing a Pull Request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-it-for-an-existing-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse It for an Existing Build
       
     </span>
   </a>
@@ -1781,7 +1868,7 @@
   <a href="#inputs-outputs-and-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inputs, outputs and boundaries
+        Inputs, Outputs and Boundaries
       
     </span>
   </a>
@@ -1792,6 +1879,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2026,10 +2141,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reuse-it-in-the-build-owning-repository" class="md-nav__link">
+  <a href="#testing-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reuse it in the build-owning repository
+        Testing a Pull Request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-it-for-an-existing-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse It for an Existing Build
       
     </span>
   </a>
@@ -2040,7 +2166,7 @@
   <a href="#inputs-outputs-and-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inputs, outputs and boundaries
+        Inputs, Outputs and Boundaries
       
     </span>
   </a>
@@ -2072,14 +2198,33 @@
   
 
 
-<h1 id="run-the-evidence-workflow">Run the Evidence Workflow<a class="headerlink" href="#run-the-evidence-workflow" title="Permanent link">#</a></h1>
-<p>The reusable <code>.github/workflows/evidence.yaml</code> verifies a specific Open AD Kit
-build and publishes the run's summary. It runs automatically after a
-successful <code>build-all-images</code> run on <code>main</code> or a <code>release/X.Y</code> branch, which is
-the run a release of that build needs.</p>
-<h2 id="reuse-it-in-the-build-owning-repository">Reuse it in the build-owning repository<a class="headerlink" href="#reuse-it-in-the-build-owning-repository" title="Permanent link">#</a></h2>
-<p>A caller workflow in the same repository (or a fork hosting the same build and
-evidence workflows) can call it without duplicating the runner:</p>
+<h1 id="evidence-workflow">Evidence Workflow<a class="headerlink" href="#evidence-workflow" title="Permanent link">#</a></h1>
+<p><code>.github/workflows/evidence.yaml</code> runs the
+<a href="../../releases/evidence/#cells-and-levels">evidence cells</a> against one build and
+publishes the run's summary. It runs after every successful <code>build-all-images</code>
+run on <code>main</code> or a <code>release/X.Y</code> branch, which is the run a release of that
+build needs.</p>
+<h2 id="testing-a-pull-request">Testing a Pull Request<a class="headerlink" href="#testing-a-pull-request" title="Permanent link">#</a></h2>
+<p>A pull request that changes an image's inputs builds the affected images,
+amd64 only, for both distros. A pull request from this repository pushes them
+to the CI package <code>openadkit-ci</code>, completes the build there with its base
+branch's other images, copied by digest, and runs the cells on that build
+before merge. A fork's pull request cannot push; its images are checked at the
+build and scan only, and run in the cells after merge.</p>
+<p>A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against an existing build:</p>
+<ul>
+<li>A pull request that touches <code>deployments/</code>, <code>cli/</code> or the evidence checks
+  runs them against its base branch's latest successful build.</li>
+<li>A dispatch of <code>evidence.yaml</code> with <code>source_ref</code> tests that branch or commit;
+  <code>build_tag</code> defaults to the dispatched branch's latest successful build.</li>
+</ul>
+<p>The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. A pull request's run is not release evidence: the gate
+accepts only a run on the release branch that tested the build's own commit.</p>
+<h2 id="reuse-it-for-an-existing-build">Reuse It for an Existing Build<a class="headerlink" href="#reuse-it-for-an-existing-build" title="Permanent link">#</a></h2>
+<p>A caller workflow in the same repository (or in a fork that hosts the same
+build and evidence workflows) can call it without duplicating the runner:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">verify-existing-build</span>
 <span class="nt">on</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">workflow_dispatch</span><span class="p">:</span>
@@ -2102,31 +2247,31 @@ evidence workflows) can call it without duplicating the runner:</p>
 <p>This runs containers on the caller's runners. A fork's evidence runs belong to
 that fork; only runs on the branch that built the release, in the releasing
 repository, can be release evidence.</p>
-<p>The current reusable interface takes <strong>only <code>build_tag</code></strong>. Metadata and source
-come from the caller's build-owning repository. It stages that exact source's
-reference deployments and the example kit, which the staged CLI's <code>openadkit new</code>
-makes with the fixture in <code>.github/scripts/evidence/kit</code> on top.
-It does <strong>not</strong> take an arbitrary external kit repository, revision or scenario
-as input. Do not copy this example into an unrelated integrator repository and
-claim it verifies that kit; external kit intake needs a dedicated, pinned,
-trusted-builder implementation before such a claim is valid.</p>
-<h2 id="inputs-outputs-and-boundaries">Inputs, outputs and boundaries<a class="headerlink" href="#inputs-outputs-and-boundaries" title="Permanent link">#</a></h2>
-<p><code>build_tag</code> has the form <code>&lt;run_id&gt;-&lt;run_attempt&gt;</code>. The matching
-<code>build-metadata-&lt;build_tag&gt;</code> artifact must be available in the repository.
-The workflow checks out its <code>openadkit_sha</code> and stages runtime image digests
-from the same metadata, never latest aliases. It stages and verifies the
-kit with the same step that assembles release bundles, so the cells run the
-tree a release of that build ships, plus the example kit.</p>
-<p>The example workspace builds against that build's matching distro-specific
-<code>universe-common-devel</code> digest. Source/config checksums omit <code>build</code>, <code>install</code>
-and <code>log</code> products. Hosted runners execute L0-L3 cells, retry a failed cell once,
-and aggregate all expected cells, including missing-cell failures.</p>
-<p>The workflow uploads per-cell diagnostics and the
-<code>evidence-summary-&lt;build_tag&gt;</code> artifact. The release gate reads that summary; see the <a href="../../releases/evidence/">release policy</a>.</p>
-<p>Runner cells use <code>schemaVersion: 1</code>, and the summary (<code>schemaVersion: 3</code>)
-carries them as written. Readers accept only these versioned payloads: a cell
-without <code>schemaVersion: 1</code> and <code>metrics</code> is rejected. Summary readers should use
-<code>metrics</code> rather than top-level timings.</p>
+<p>The reusable interface takes <strong>only <code>build_tag</code></strong>. It does not take an external
+kit repository, revision or scenario as input, so do not copy this example into
+an unrelated repository and claim it verifies that kit: external kits need a
+dedicated, pinned, trusted-builder implementation first.</p>
+<h2 id="inputs-outputs-and-boundaries">Inputs, Outputs and Boundaries<a class="headerlink" href="#inputs-outputs-and-boundaries" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Input:</strong> <code>build_tag</code> has the form <code>&lt;run_id&gt;-&lt;run_attempt&gt;</code>. The matching
+  <code>build-metadata-&lt;build_tag&gt;</code> artifact must be available in the repository.</li>
+<li><strong>What it tests:</strong> the workflow checks out the build's <code>openadkit_sha</code> and
+  takes the image digests from the same metadata, never latest aliases. It
+  stages the kit with the same step that assembles release bundles, so the
+  cells run the tree a release of that build ships, plus the example kit. The
+  staged CLI's <code>openadkit new</code> makes that kit, with the fixture in
+  <code>.github/scripts/evidence/kit</code> on top; its workspace builds against the
+  build's <code>universe-common-devel</code> digest for each distro.</li>
+<li><strong>How it runs:</strong> hosted runners execute the L0-L3 cells, retry a failed cell
+  once, and aggregate every expected cell; a missing cell fails the run.</li>
+<li><strong>Output:</strong> per-cell diagnostics and the <code>evidence-summary-&lt;build_tag&gt;</code>
+  artifact, which the <a href="../../releases/evidence/">release gate</a> reads.</li>
+</ul>
+<p>Cells use <code>schemaVersion: 1</code>, and the summary (<code>schemaVersion: 3</code>) carries them
+as written. Readers accept only these versioned payloads: a cell without
+<code>schemaVersion: 1</code> and <code>metrics</code> is rejected. Read timings from <code>metrics</code>
+rather than from top-level fields. Source and config checksums leave out the
+<code>build</code>, <code>install</code> and <code>log</code> products of a workspace.</p>
 
 
 
@@ -2181,13 +2326,13 @@ without <code>schemaVersion: 1</code> and <code>metrics</code> is rejected. Summ
         
         
           
-          <a href="../../releases/" class="md-footer__link md-footer__link--next" aria-label="Next: Releases">
+          <a href="../release-process/" class="md-footer__link md-footer__link--next" aria-label="Next: Release Process">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Releases
+                Release Process
               </div>
             </div>
             <div class="md-footer__button md-icon">

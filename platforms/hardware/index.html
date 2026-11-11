@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1595,6 +1669,8 @@
       
         
       
+        
+      
     
     
     
@@ -1722,6 +1798,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -1964,10 +2068,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#workstation-or-cloud-instance" class="md-nav__link">
+  <a href="#host-requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workstation or Cloud Instance
+        Host Requirements
       
     </span>
   </a>
@@ -1975,21 +2079,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#edge-deployment" class="md-nav__link">
+  <a href="#boards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Edge Deployment
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tested-hardware" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tested Hardware
+        Boards
       
     </span>
   </a>
@@ -2022,10 +2115,9 @@
 
 
 <h1 id="hardware">Hardware<a class="headerlink" href="#hardware" title="Permanent link">#</a></h1>
-<p>Requirements and tested hardware for Open AD Kit. Both <strong>amd64</strong> and <strong>arm64</strong>
-are supported.</p>
-<h2 id="workstation-or-cloud-instance">Workstation or Cloud Instance<a class="headerlink" href="#workstation-or-cloud-instance" title="Permanent link">#</a></h2>
-<p>For deployments, simulation, and development:</p>
+<p>What a host needs to run Open AD Kit, and the boards with their own support.</p>
+<h2 id="host-requirements">Host Requirements<a class="headerlink" href="#host-requirements" title="Permanent link">#</a></h2>
+<p>For deployments, simulation and development:</p>
 <table>
 <thead>
 <tr>
@@ -2048,7 +2140,7 @@ are supported.</p>
 <tr>
 <td>GPU</td>
 <td>None</td>
-<td>NVIDIA with 4 GB+ VRAM (for perception)</td>
+<td>NVIDIA with 4 GB+ VRAM for Logging Simulation's GPU mode; 16 GB for CARLA Simulation</td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -2057,76 +2149,32 @@ are supported.</p>
 </tr>
 </tbody>
 </table>
-<p>The CUDA perception image is amd64-only and does not fall back to CPU. Hosts
-without an NVIDIA GPU, and all arm64 hosts, use the CPU perception image.</p>
-<h2 id="edge-deployment">Edge Deployment<a class="headerlink" href="#edge-deployment" title="Permanent link">#</a></h2>
-<p>Running the full Autoware stack in real time on a vehicle computer needs more.
-These figures come from the verified ADLINK AADP-AVA platform:</p>
+<p>Images are published for <strong>amd64</strong> and <strong>arm64</strong>. The GPU modes and CARLA
+Simulation are amd64-only: the CUDA images do not fall back to CPU, so hosts
+without an NVIDIA GPU, and all arm64 hosts, run the CPU images.</p>
+<p>On a host below the recommended size Autoware may not keep up in real time;
+Scenario Simulation can then run slower than real time with
+<a href="../../deployments/scenario-simulation/#configure"><code>GLOBAL_REAL_TIME_FACTOR</code></a>.</p>
+<h2 id="boards">Boards<a class="headerlink" href="#boards" title="Permanent link">#</a></h2>
 <table>
 <thead>
 <tr>
-<th>Resource</th>
-<th>Specification</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU</td>
-<td>40-core Arm Neoverse N1 or equivalent</td>
-</tr>
-<tr>
-<td>RAM</td>
-<td>32 GB</td>
-</tr>
-<tr>
-<td>Architecture</td>
-<td>arm64</td>
-</tr>
-</tbody>
-</table>
-<h2 id="tested-hardware">Tested Hardware<a class="headerlink" href="#tested-hardware" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Platform</th>
+<th>Board</th>
 <th>Architecture</th>
-<th>Status</th>
-<th>Notes</th>
+<th>Support</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>ADLINK AADP-AVA</td>
-<td>arm64 (Ampere Altra)</td>
-<td><span class="oak-badge oak-badge--verified">Verified</span></td>
-<td>Primary edge platform</td>
-</tr>
-<tr>
-<td>AWS EC2 G5.4XLarge</td>
-<td>amd64</td>
-<td><span class="oak-badge oak-badge--verified">Verified</span></td>
-<td>GPU cloud instance for simulation</td>
-</tr>
-<tr>
-<td>NVIDIA Jetson Orin</td>
-<td>arm64</td>
-<td><span class="oak-badge oak-badge--testing">Tests Ongoing</span></td>
-<td>JetPack 6 validation in progress</td>
-</tr>
 <tr>
 <td>R-Car X5H</td>
 <td>arm64</td>
-<td><span class="oak-badge oak-badge--testing">Tests Ongoing</span></td>
-<td>AutoSD 10 bring-up in <a href="https://github.com/autowarefoundation/openadkit-rcar-x5h">its own repository</a>; board tests manual</td>
-</tr>
-<tr>
-<td>ADLINK ADM-AL30</td>
-<td>arm64</td>
-<td><span class="oak-badge oak-badge--testing">Tests Ongoing</span></td>
-<td>No validation results recorded yet</td>
+<td>AutoSD 10 image in <a href="https://github.com/autowarefoundation/openadkit-rcar-x5h">openadkit-rcar-x5h</a>, its own repository; board tests are manual</td>
 </tr>
 </tbody>
 </table>
+<p>No board is part of the release evidence: the
+<a href="../../releases/evidence/">evidence cells</a> run on hosted amd64 runners, and
+native arm64 cells are on the <a href="../../roadmap/">roadmap</a>.</p>
 
 
 

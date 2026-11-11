@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -856,6 +856,8 @@
       
         
       
+        
+      
     
     
     
@@ -1206,6 +1208,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1214,7 +1288,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1679,6 +1753,8 @@
       
         
       
+        
+      
     
     
     
@@ -1806,6 +1882,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2118,13 +2222,13 @@
 
 <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h1>
 <p class="oak-hero-lead">
-  What Open AD Kit is, why it exists, and how it relates to the Autoware ecosystem: the software it packages for cloud-native deployment.
+  What Open AD Kit is, why it exists, and how it relates to Autoware.
 </p>
 
 <h2 id="what-is-open-ad-kit">What is Open AD Kit<a class="headerlink" href="#what-is-open-ad-kit" title="Permanent link">#</a></h2>
-<p>Open AD Kit packages the <a href="https://github.com/autowarefoundation/autoware">Autoware</a> autonomous driving stack as focused, independently deployable container images. Instead of one monolithic image, it splits the stack along the AD pipeline — sensing, perception, localization, mapping, planning, control, vehicle system, API, simulation, visualization, and the CARLA bridge — so you run only what a workload needs.</p>
-<p>Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployment configurations, integrates target platforms, and maintains the build, test, and release tooling that keeps deployments consistent from one host to the next. It ships simulation deployments today; a supported path to a real vehicle interface is on the <a href="../roadmap/">roadmap</a>.</p>
-<p>It also integrates <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a>, which runs on real-time operating systems and automotive hardware rather than in a container. Open AD Kit is the first <a href="https://www.soafee.io/">SOAFEE</a> blueprint for the software-defined vehicle; <a href="../platforms/">Supported Platforms</a> covers the derived blueprints and the platform tiers.</p>
+<p>Open AD Kit packages the <a href="https://github.com/autowarefoundation/autoware">Autoware</a> autonomous driving stack as focused, independently deployable container images. Instead of one monolithic image, it splits the stack along the AD pipeline (sensing and perception, localization and mapping, planning, control, vehicle and system, API, simulator and visualizer), so a deployment runs only what its task needs.</p>
+<p>Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployments, integrates target platforms, and maintains the build, test and release tooling that keeps a deployment the same from one host to the next. It ships simulation deployments today; a supported path to a real vehicle interface is on the <a href="../roadmap/">roadmap</a>.</p>
+<p>It also integrates <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a>, which runs on real-time operating systems and automotive hardware rather than in a container. Open AD Kit is the first <a href="https://www.soafee.io/">SOAFEE</a> blueprint for the software-defined vehicle; <a href="../platforms/">Supported Platforms</a> covers the derived blueprints and the support tiers.</p>
 <h2 id="why-open-ad-kit">Why Open AD Kit<a class="headerlink" href="#why-open-ad-kit" title="Permanent link">#</a></h2>
 <div class="oak-card-grid oak-card-grid--four">
 <div class="oak-card">
@@ -2149,7 +2253,7 @@
 </div>
 </div>
 <h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
-<p>Open AD Kit runs Autoware as a pipeline of containerized components. Each container handles one stage of autonomous driving, and the stages communicate over ROS 2 DDS on the host network.</p>
+<p>Open AD Kit runs Autoware as a pipeline of containers. Each container handles one stage of autonomous driving, and the stages talk over ROS 2 DDS on the host network.</p>
 <ol>
 <li><a href="../components/#sensing-perception"><strong>Sensing</strong></a> captures and preprocesses raw sensor data (LiDAR, camera, IMU).</li>
 <li><a href="../components/#sensing-perception"><strong>Perception</strong></a> detects and tracks objects, traffic lights, and drivable space.</li>
@@ -2157,7 +2261,7 @@
 <li><a href="../components/#localization-mapping"><strong>Localization</strong></a> determines the vehicle's exact position on the map.</li>
 <li><a href="../components/#planning"><strong>Planning</strong></a> computes a safe, feasible trajectory to the goal.</li>
 <li><a href="../components/#control"><strong>Control</strong></a> converts that trajectory into throttle, brake, and steering commands.</li>
-<li><a href="../components/#vehicle-and-system"><strong>Vehicle System</strong></a> bridges those commands to the actual vehicle or simulator.</li>
+<li><a href="../components/#vehicle-and-system"><strong>Vehicle and System</strong></a> bridges those commands to the vehicle or simulator and monitors the stack.</li>
 </ol>
 <p>A <a href="../deployments/">deployment</a> runs the subset of these stages a task needs. Autoware Safety Island joins the same pipeline over DDS, adding a safety-critical actuation path alongside the containerized services.</p>
 <h2 id="key-terms">Key Terms<a class="headerlink" href="#key-terms" title="Permanent link">#</a></h2>
@@ -2174,64 +2278,64 @@
 <td>A published container image holding one or more Autoware functions, for example <code>planning</code>.</td>
 </tr>
 <tr>
+<td><strong>Latest alias</strong></td>
+<td>An image tag such as <code>planning-humble</code> that follows the newest stable release. Release tags (<code>-vX.Y.Z</code>) and digests never move.</td>
+</tr>
+<tr>
+<td><strong>Digest pin</strong></td>
+<td>An image reference by content hash (<code>@sha256:…</code>) instead of a tag, so the same image bits are always used.</td>
+</tr>
+<tr>
 <td><strong>Deployment</strong></td>
-<td>A named, ready-to-run stack: a manifest, settings, and Compose configuration for a task such as planning simulation.</td>
+<td>A named, ready-to-run stack for one task, such as Planning Simulation: a deployment manifest, settings and Compose files.</td>
 </tr>
 <tr>
 <td><strong>Deployment manifest</strong></td>
-<td>The <code>deployment.json</code> file that tells the CLI how to run a deployment: Compose files, requirements, data downloads, one-shot services and the verify step. Its name is its key in the kit manifest.</td>
-</tr>
-<tr>
-<td><strong>Kit manifest</strong></td>
-<td>The <code>openadkit.json</code> file of a kit: what it extends, its deployments and the images it pins.</td>
-</tr>
-<tr>
-<td><strong>Kit</strong></td>
-<td>An <code>openadkit.json</code> and its deployments: the reference kit or an integrator's differences over a pinned base release.</td>
-</tr>
-<tr>
-<td><strong><code>extends</code> / <code>base</code></strong></td>
-<td>The kit's pinned Open AD Kit release and the reference deployment it includes.</td>
+<td><code>deployment.json</code>: what the CLI needs to run a deployment. Compose files, requirements, data downloads, one-shot services and the verify step.</td>
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td><code>KEY=value</code> variables a deployment runs with, such as <code>MAP_PATH</code>: <code>settings.env</code>, then <code>settings.gpu.env</code> with <code>--gpu</code>, then the host settings file. <code>restart</code> or <code>run</code> applies them.</td>
-</tr>
-<tr>
-<td><strong>Config override</strong></td>
-<td>Parameter/file differences under <code>config/autoware/</code>, layered over package configuration; not a copy of the full base file. <code>restart</code> applies them.</td>
-</tr>
-<tr>
-<td><strong>Overlay workspace</strong></td>
-<td>Custom ROS packages built against the matching pinned devel image and sourced over the base.</td>
+<td><code>KEY=value</code> variables a deployment runs with, such as <code>MAP_PATH</code>: <code>settings.env</code>, then <code>settings.gpu.env</code> with <code>--gpu</code>, then the host settings file. <code>run</code> and <code>restart</code> apply them.</td>
 </tr>
 <tr>
 <td><strong>Node</strong></td>
-<td>A deployment's host-local view, with its own services, Compose project, ROS domain and Zenoh endpoint.</td>
+<td>One host's part of a split-host deployment, with its own services, Compose project, ROS domain and Zenoh endpoint.</td>
 </tr>
 <tr>
-<td><strong>Evidence</strong></td>
-<td>The evidence cells run against one build; the release gate requires a successful run that passed every cell.</td>
+<td><strong>Kit</strong></td>
+<td>A kit manifest and its deployments: the reference kit in this repository, or your differences on top of a pinned release.</td>
+</tr>
+<tr>
+<td><strong>Kit manifest</strong></td>
+<td><code>openadkit.json</code>: what the kit extends, its deployments (each named by its key) and the images it pins.</td>
+</tr>
+<tr>
+<td><strong><code>extends</code> / <code>base</code></strong></td>
+<td>The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on.</td>
+</tr>
+<tr>
+<td><strong>Config override</strong></td>
+<td>Parameter and file differences under <code>config/autoware/</code>, merged over a package's configuration on every start; not a copy of the full file. <code>restart</code> applies them.</td>
+</tr>
+<tr>
+<td><strong>Overlay workspace</strong></td>
+<td>Your ROS packages in <code>overlay_ws/</code>, built in the release's devel image and sourced on top of Autoware.</td>
 </tr>
 <tr>
 <td><strong>Evidence cell</strong></td>
 <td>One runtime test of a deployment on one ROS distro and topology, such as <code>planning-simulation-humble-linux-amd64</code>.</td>
 </tr>
 <tr>
+<td><strong>Evidence</strong></td>
+<td>The evidence cells run against one build. A release needs a run in which every cell passed.</td>
+</tr>
+<tr>
 <td><strong>CI exemption</strong></td>
-<td>A reasoned manifest entry for a deployment without hosted runtime evidence, not a passing-test claim.</td>
+<td>A reasoned manifest entry for a deployment without a hosted evidence cell. It is not a passing test.</td>
 </tr>
 <tr>
 <td><strong>BOM</strong></td>
-<td>The release's pinned Autoware input, component images and external images.</td>
-</tr>
-<tr>
-<td><strong>Latest alias</strong></td>
-<td>An image tag such as <code>planning-humble</code> that follows the newest stable release. Release tags (<code>-vX.Y.Z</code>) and digests stay immutable.</td>
-</tr>
-<tr>
-<td><strong>Digest pin</strong></td>
-<td>An image reference by content hash (<code>@sha256:…</code>) instead of a tag, so the same image bits are always used.</td>
+<td>A release's bill of materials: the pinned Autoware release, component images and external images.</td>
 </tr>
 <tr>
 <td><strong>Mixed criticality</strong></td>

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -762,6 +762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1125,6 +1127,81 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../split-host/" class="md-nav__link">
         
@@ -1133,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1598,6 +1675,8 @@
       
         
       
+        
+      
     
     
     
@@ -1725,6 +1804,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2025,9 +2132,9 @@
 
 
 <h1 id="planning-simulation">Planning Simulation<a class="headerlink" href="#planning-simulation" title="Permanent link">#</a></h1>
-<p>Run the Autoware planning and control stack on a demo map with the built-in
-simulator, then set a route in browser-based RViz2. No GPU is required; with an
-NVIDIA GPU, <code>--gpu</code> plans with Autoware 2.0's Diffusion Planner.</p>
+<p>Run the Autoware planning and control stack on a sample map with the built-in
+simulator, then set a route in RViz in your browser. No GPU is required; with
+an NVIDIA GPU, <code>--gpu</code> plans with Autoware 2.0's Diffusion Planner.</p>
 <p>Complete the <a href="../../getting-started/">Quickstart</a> setup first. For GPU
 mode, run <code>openadkit setup --gpu --verify</code>.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h2>
@@ -2037,8 +2144,9 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--gpu<span class="w">   </span><span class="c1"># GPU: the Diffusion Planner (amd64 only)</span>
 </code></pre></div>
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
-<p><code>run</code> downloads the sample map, pulls the images, and starts the stack. The demo
-map is Copyright 2020 TIER IV, Inc. and is provided for demonstration only.</p>
+<p><code>run</code> downloads the sample map, pulls the images and starts the stack. The
+sample map is Copyright 2020 TIER IV, Inc. and is provided for demonstration
+only.</p>
 <p>With <code>--gpu</code>, the planning service runs the <code>planning-cuda</code> image with
 <code>planning_setting:=diffusion_planner</code>, and <code>run</code> also downloads the Diffusion
 Planner v5.0 model from Hugging Face to
@@ -2047,8 +2155,8 @@ TensorRT engine from the model there, so it takes longer than later starts.
 Control and the rest of the stack are the same in both modes: control follows
 <code>/planning/trajectory</code>, whichever planner makes it. See
 <a href="https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v2/">Autoware Architecture 2.0</a>
-for the planner. Hosted CI runs the CPU mode; the GPU mode is checked on a GPU
-host.</p>
+for the planner. CI evidence runs the CPU mode; the GPU mode is checked by
+hand on a GPU host.</p>
 <div class="admonition warning">
 <p class="admonition-title">Experimental</p>
 <p>The GPU mode may change in a minor release. See
@@ -2064,13 +2172,13 @@ output, reproduced with upstream's image
 </div>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
-<strong><code>openadkit</code></strong>. Set your own
-<code>REMOTE_PASSWORD</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
-<p>For a remote host, forward the port over SSH and open
-<code>http://localhost:8080/vnc.html</code> locally:</p>
+<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in
+<code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
+<p>The visualizer listens on loopback only. For a remote host, forward the port
+over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
-<p>In RViz2, set an initial pose and a goal pose, then watch the vehicle drive the
+<p>In RViz, set an initial pose and a goal pose, then watch the vehicle drive the
 route. See the
 <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation guide</a>
 for details.</p>

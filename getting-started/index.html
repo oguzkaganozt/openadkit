@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -763,6 +763,8 @@
       
         
       
+        
+      
     
     
     
@@ -1113,6 +1115,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1121,7 +1195,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1586,6 +1660,8 @@
       
         
       
+        
+      
     
     
     
@@ -1713,6 +1789,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2096,29 +2200,21 @@
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <ul>
 <li><strong>Ubuntu 22.04 (Jammy) or 24.04 (Noble)</strong> with <code>sudo</code> access</li>
-<li><code>curl</code> for the release installer; <code>python3</code> and <code>tar</code> are preinstalled on supported Ubuntu releases</li>
-<li>A web browser - the visualizer runs in it, no display server needed</li>
+<li><code>curl</code> for the release installer; <code>python3</code> and <code>tar</code> are preinstalled on
+  supported Ubuntu releases</li>
+<li>A web browser: the visualizer runs in it, so no display server is needed</li>
 </ul>
 <h2 id="get-open-ad-kit">1. Get Open AD Kit<a class="headerlink" href="#get-open-ad-kit" title="Permanent link">#</a></h2>
-<div class="admonition tip">
-<p class="admonition-title">Release bundles</p>
-<p>Each stable GitHub Release will publish a versionless <code>openadkit</code> installer and
-one <code>openadkit-vX.Y.Z.tar.gz</code> containing the runtime entry point and the
-curated deployments (planning, logging, scenario, CARLA, and Safety Island). Split-host
-nodes ship as experimental. Images and sample data
-are pulled on demand. Until the first release exists, use a source checkout.</p>
+<div class="admonition note">
+<p class="admonition-title">v2.0.0 is not published yet</p>
+<p>Until the first stable release there is no release bundle to install: run
+Open AD Kit from a source checkout instead.</p>
 </div>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Source checkout</label><label for="__tabbed_1_2">Release bundle</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Release bundle</label><label for="__tabbed_1_2">Source checkout</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
-<span class="nb">cd</span><span class="w"> </span>openadkit
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<p>Download the latest release. The command verifies the release bundle before
-installing it to <code>~/.local/share/openadkit</code> and makes <code>openadkit</code> available
-from <code>~/.local/bin</code>.</p>
+<p>The installer verifies the release bundle, installs it to
+<code>~/.local/share/openadkit</code> and puts <code>openadkit</code> in <code>~/.local/bin</code>:</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>install
 </code></pre></div>
@@ -2128,26 +2224,27 @@ and pass the same version to <code>install</code>:</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/download/vX.Y.Z/openadkit<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>install<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
 </code></pre></div>
-<p>To verify the bundle yourself before running it, see
-<a href="cli/#verify-a-release-bundle-manually">Verify a Release Bundle Manually</a>.</p>
+<p>To check the files yourself before running them, see
+<a href="../releases/verification/">Verify a Release</a>.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autowarefoundation/openadkit.git
+<span class="nb">cd</span><span class="w"> </span>openadkit
+</code></pre></div>
+<p>Run the commands below as <code>./openadkit</code> from the repository root.</p>
 </div>
 </div>
 </div>
-<p>The release bundle contains only the runtime and deployment assets. A source
-checkout also contains the image sources, CI, and development tools.</p>
+<p>The release bundle holds the CLI and the deployments; images and sample data
+are pulled on demand. A source checkout also holds the image sources, CI and
+development tools.</p>
 <h2 id="set-up-the-host">2. Set Up the Host<a class="headerlink" href="#set-up-the-host" title="Permanent link">#</a></h2>
-<p>After a release install, these commands work from any directory. For a source
-checkout, prefix them with <code>./</code> (for example <code>./openadkit</code>) and run them from
-the repository root.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>setup<span class="w"> </span>--verify
 </code></pre></div>
-<p>Run setup as your normal user. It requests <code>sudo</code> only for host changes. CPU is
-the default; add <code>--gpu</code> for NVIDIA deployments. <code>--gpu</code> also installs NVIDIA
-OpenGL/Vulkan libraries needed for CARLA. Setup installs Docker only when the
-host has none; it never replaces an existing engine. If Docker is installed but
-Docker Compose 5.0 or newer is missing, install Docker's <code>docker-compose-plugin</code>
-(<a href="https://docs.docker.com/compose/install/linux/">instructions</a>) and rerun
-setup. Ubuntu's own <code>docker-compose-v2</code> package is too old.</p>
+<p>Run setup as your normal user; it asks for <code>sudo</code> only for host changes. It
+installs Docker when the host has none and never replaces an existing engine.
+Add <code>--gpu</code> for NVIDIA deployments: it also installs the NVIDIA Container
+Toolkit and the OpenGL/Vulkan libraries CARLA needs.</p>
 <p>Activate the Docker group membership added by <code>openadkit setup</code> before running
 Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker
@@ -2155,37 +2252,33 @@ Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <h2 id="run-planning-simulation">3. Run Planning Simulation<a class="headerlink" href="#run-planning-simulation" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
 </code></pre></div>
-<p>Add <code>--ros-distro jazzy</code> to select Jazzy. Humble is the default in both source
-checkouts and release bundles.</p>
 <p><code>run</code> downloads and verifies the sample map, pulls missing images, starts the
-services, and waits until they are ready.</p>
+services, and returns once Autoware is ready.</p>
+<p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <h2 id="open-the-visualizer">4. Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
-<p>Once <code>run</code> returns, Autoware is ready. Open:</p>
-<div class="highlight"><pre><span></span><code>http://localhost:6080/vnc.html
-</code></pre></div>
-<p>Use the default password <strong><code>openadkit</code></strong>.</p>
-<p>To open RViz on your own desktop instead of the browser, set
-<code>REMOTE_DISPLAY=false</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>; the
-visualizer then uses your session's <code>DISPLAY</code> and <code>XAUTHORITY</code>.</p>
-<p>For a remote host, keep noVNC loopback-only and forward it over SSH:</p>
+<p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
+<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in
+<code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
+<p>The visualizer listens on loopback only. For a remote host, forward the port
+over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
-<p>Then open <code>http://localhost:8080/vnc.html</code> locally.</p>
+<p>To open RViz on your own desktop instead of the browser, see
+<a href="../components/#visualizer">Visualizer</a>.</p>
 <h2 id="drive">5. Drive<a class="headerlink" href="#drive" title="Permanent link">#</a></h2>
-<p>In RViz2, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation instructions</a> to:</p>
+<p>In RViz, follow the <a href="https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle">Autoware planning simulation instructions</a> to:</p>
 <ol>
 <li>Set an <strong>initial pose</strong> for the ego vehicle</li>
 <li>Set a <strong>goal pose</strong> on the map</li>
 <li>Watch the vehicle plan and drive the route</li>
 </ol>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
-<p><strong><a href="../deployments/">Explore the other deployments</a></strong> - scenario testing,
-rosbag replay, and CARLA. Split-host (<code>--node</code> over Zenoh) is experimental.</p>
 <ul>
-<li><a href="cli/">CLI &amp; Maintenance</a> - Runtime controls, validation, upgrades, and cleanup</li>
-<li><a href="../components/">Components</a> - The architecture behind what you just ran</li>
-<li><a href="container-images/">Container Images &amp; Versioning</a> - Tag schema and pinning guidance</li>
-<li><a href="../deployments/create-a-kit/">Create a Kit</a> - Build your own stack on a deployment</li>
+<li><a href="../deployments/">Deployments</a> — scenario testing, rosbag replay, CARLA and Safety Island</li>
+<li><a href="cli/">CLI &amp; Maintenance</a> — runtime controls, configuration, upgrades and cleanup</li>
+<li><a href="../deployments/create-a-kit/">Create a Kit</a> — your own stack on top of a deployment</li>
+<li><a href="../components/">Components</a> — the images behind what you just ran</li>
+<li><a href="troubleshooting/">Troubleshooting</a> — when something does not start</li>
 </ul>
 
 

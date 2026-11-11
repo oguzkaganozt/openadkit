@@ -6,14 +6,14 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
         <link rel="canonical" href="https://autowarefoundation.github.io/openadkit/releases/">
       
       
-        <link rel="prev" href="../development/evidence-workflow/">
+        <link rel="prev" href="../development/release-process/">
       
       
         <link rel="next" href="compatibility/">
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1583,6 +1657,8 @@
       
         
       
+        
+      
     
     
     
@@ -1710,6 +1786,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -1972,26 +2076,33 @@
 
 
 <h1 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h1>
-<p><strong>No stable release has been published yet.</strong> Until the first release, run Open
-AD Kit from a <a href="../getting-started/">source checkout</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">v2.0.0 is not published yet</p>
+<p>Until the first stable release there is no release bundle to install: run
+Open AD Kit from a source checkout instead.</p>
+</div>
 <p><a href="https://github.com/autowarefoundation/openadkit/releases">GitHub Releases</a> is
-the canonical source for published versions, release notes, and provenance
-metadata. <a href="compatibility/">Compatibility</a> lists what a version promises. Each stable release publishes:</p>
+the canonical source for published versions, release notes and provenance
+metadata. Each stable release publishes:</p>
 <ul>
 <li>a versionless <code>openadkit</code> installer</li>
-<li>the versioned <code>openadkit-vX.Y.Z.tar.gz</code> bundle</li>
-<li>the pinned Autoware meta-release, ROS 2 distro(s), and image tags and digests</li>
-<li>a BOM, the passing runtime evidence summary, explicit CI exemptions and default distro</li>
+<li>the versioned <code>openadkit-vX.Y.Z.tar.gz</code> bundle: the CLI and the deployments</li>
+<li><code>release-plan.json</code> and <code>release-metadata.json</code>: the pinned Autoware release,
+  ROS 2 distros, image tags and digests, the BOM, the passing evidence summary
+  and the CI exemptions</li>
 <li>build provenance for the installer, bundle, plan and metadata</li>
 </ul>
-<p>The notes open with the release's highlights and install command, list the
-merged pull requests by type, and summarize the runtime evidence.
-Installed releases move to the latest stable version with <code>openadkit upgrade</code>.
-Tag naming is documented in
-<a href="../getting-started/container-images/">Container Images &amp; Versioning</a>.
-See <a href="evidence/">Evidence Policy</a> for the blocking gate and verification report, and
-<a href="verification/">Verify a Release</a> before executing downloaded artifacts.</p>
-<p>Planned work and its priority order are on the <a href="../roadmap/">Roadmap</a>.</p>
+<p>The release notes open with the highlights and the install command, list the
+merged pull requests by type, and summarize the evidence. An installed release
+moves to the latest stable version with <code>openadkit upgrade</code>.</p>
+<ul>
+<li><a href="compatibility/">Compatibility</a> — what a version number promises</li>
+<li><a href="evidence/">Evidence Policy</a> — what a build must pass to be released</li>
+<li><a href="verification/">Verify a Release</a> — check the files before you run them</li>
+<li><a href="../getting-started/container-images/">Container Images &amp; Versioning</a> —
+  image tags and what to pin</li>
+<li><a href="../roadmap/">Roadmap</a> — planned work, in priority order</li>
+</ul>
 
 
 
@@ -2029,7 +2140,7 @@ See <a href="evidence/">Evidence Policy</a> for the blocking gate and verificati
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../development/evidence-workflow/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Evidence Workflow">
+          <a href="../development/release-process/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Release Process">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2039,7 +2150,7 @@ See <a href="evidence/">Evidence Policy</a> for the blocking gate and verificati
                 Previous
               </span>
               <div class="md-ellipsis">
-                Evidence Workflow
+                Release Process
               </div>
             </div>
           </a>

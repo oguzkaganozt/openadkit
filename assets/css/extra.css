@@ -577,18 +577,6 @@
   content: "";
 }
 
-.oak-badge--verified {
-  background-color: rgba(18, 161, 80, 0.1);
-  border-color: rgba(18, 161, 80, 0.28);
-  color: #0f7a3d;
-}
-
-.oak-badge--testing {
-  background-color: rgba(194, 116, 10, 0.1);
-  border-color: rgba(194, 116, 10, 0.28);
-  color: #92580a;
-}
-
 .oak-badge--neutral {
   background-color: var(--oak-surface-alt);
   border-color: var(--oak-border-strong);
@@ -599,18 +587,6 @@
   background-color: var(--oak-accent-soft);
   border-color: var(--oak-accent-line);
   color: var(--oak-accent);
-}
-
-[data-md-color-scheme="slate"] .oak-badge--verified {
-  background-color: rgba(52, 211, 153, 0.12);
-  border-color: rgba(52, 211, 153, 0.32);
-  color: #6ee7b7;
-}
-
-[data-md-color-scheme="slate"] .oak-badge--testing {
-  background-color: rgba(251, 191, 36, 0.12);
-  border-color: rgba(251, 191, 36, 0.32);
-  color: #fcd34d;
 }
 
 /* --------------------------------------------------------------------------

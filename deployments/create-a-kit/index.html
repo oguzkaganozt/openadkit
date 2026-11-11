@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -762,6 +762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1125,6 +1127,81 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../split-host/" class="md-nav__link">
         
@@ -1133,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1242,6 +1319,17 @@
     <span class="md-ellipsis">
       
         Build, Validate, Run, Stop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-changes-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Changes Go
       
     </span>
   </a>
@@ -1680,6 +1768,8 @@
       
         
       
+        
+      
     
     
     
@@ -1807,6 +1897,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2081,6 +2199,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#where-changes-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Changes Go
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2107,9 +2236,8 @@
 
 
 <h1 id="create-a-kit">Create a Kit<a class="headerlink" href="#create-a-kit" title="Permanent link">#</a></h1>
-<p>Start your own kit with <code>openadkit new</code>. It makes a kit that extends this Open
-AD Kit and one of its deployments without copying them, so the kit keeps only
-your differences:</p>
+<p><code>openadkit new</code> makes a kit that extends this Open AD Kit and one of its
+deployments without copying them, so the kit holds only your differences:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w">                       </span><span class="c1"># on top of planning-simulation</span>
 openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w"> </span>--base<span class="w"> </span>scenario-simulation
 </code></pre></div>
@@ -2153,18 +2281,21 @@ openadkit<span class="w"> </span>run<span class="w"> </span>--verify<span class=
 openadkit<span class="w"> </span>stop
 </code></pre></div>
 <p>Inside a kit with one deployment the commands need no name. From elsewhere,
-name it by its directory: <code>openadkit run ./my-kit</code>.</p>
-<p>A source checkout pins no devel image: set <code>DEVEL_IMAGE</code> to the matching
-<code>universe-common-devel</code> digest from that build's metadata before <code>build</code>. Add
-<code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy. Static
-validation renders the Compose model; it is not runtime or ABI evidence. CI
-makes a kit with <code>openadkit new</code> and exercises every extension point on Humble
-and Jazzy: a value, a parameter override, a C++ package, a pinned image and a
-service with a healthcheck, then Planning Simulation's drive-to-goal check.</p>
-<p>Keep parameter and package changes in <code>config/</code> and <code>overlay_ws/</code> rather than
-mounting over <code>/opt/autoware</code> or replacing base service commands. See the
-<a href="../integrator-guide/">Integrator Guide</a> for configuration order, pinned image
-replacement and contract warnings.</p>
+name it by its directory: <code>openadkit run ./my-kit</code>. A kit on a source checkout
+needs <code>DEVEL_IMAGE</code> for <code>build</code>; see
+<a href="../integrator-guide/#3-overlay-workspace">Overlay Workspace</a>.</p>
+<p>Add <code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy.
+<code>validate</code> renders the Compose model without starting anything; it is not
+runtime or ABI evidence, so finish with <code>run --verify</code>.</p>
+<p>Every release tests a kit made this way: the
+<a href="../../releases/evidence/#cells-and-levels">example kit</a> exercises each
+extension point on Humble and Jazzy.</p>
+<h2 id="where-changes-go">Where Changes Go<a class="headerlink" href="#where-changes-go" title="Permanent link">#</a></h2>
+<p>Keep parameter changes in <code>config/autoware/</code> and packages in <code>overlay_ws/</code>
+rather than mounting over <code>/opt/autoware</code> or replacing a base service's
+command. The <a href="../integrator-guide/">Integrator Guide</a> is the reference for the
+settings order, config overrides, the overlay workspace, extra services and
+image replacement.</p>
 
 
 
@@ -2202,7 +2333,7 @@ replacement and contract warnings.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../split-host/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Split-host simulation">
+          <a href="../split-host/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Split-host Simulation">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2212,7 +2343,7 @@ replacement and contract warnings.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Split-host simulation
+                Split-host Simulation
               </div>
             </div>
           </a>

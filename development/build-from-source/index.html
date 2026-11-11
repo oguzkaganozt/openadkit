@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1585,6 +1659,8 @@
       
         
       
+        
+      
     
     
     
@@ -1771,45 +1847,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#release-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release Process
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Release Process">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-you-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before You Release
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1862,6 +1899,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2164,45 +2229,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#release-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release Process
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Release Process">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-you-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before You Release
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2229,9 +2255,9 @@
 
 
 <h1 id="build-from-source">Build from Source<a class="headerlink" href="#build-from-source" title="Permanent link">#</a></h1>
-<p>How to build the Open AD Kit images locally, how CI builds them, and how
-releases are cut. Most users do not need this; pull the published images
-instead (see <a href="../../getting-started/container-images/">Container Images &amp; Versioning</a>).</p>
+<p>How to build the Open AD Kit images locally and how CI builds them. Most users
+do not need this: <code>openadkit run</code> pulls the published images (see
+<a href="../../getting-started/container-images/">Container Images &amp; Versioning</a>).</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <ul>
 <li>Ubuntu 22.04 or 24.04 (<code>openadkit setup</code> supports Ubuntu only; elsewhere,
@@ -2264,8 +2290,8 @@ the same file CI uses.</p>
 <p><code>universe-common</code> compiles the shared part of Autoware Universe on the upstream
 <code>core-devel</code> image and copies the result onto the lean upstream <code>base</code> image, so
 build tools never reach the runtime layers. Every component builds from it.
-<code>sensing-perception-cuda</code> builds on the upstream CUDA images and adds the
-<code>universe-common</code> install tree.</p>
+The CUDA variants, <code>sensing-perception-cuda</code> and <code>planning-cuda</code>, build on the
+upstream CUDA images and add the <code>universe-common</code> install tree.</p>
 <p>The published images end with a per-build Ubuntu security refresh. Components
 compile on <code>universe-common-build</code>, the devel image without that refresh, which
 CI pushes only to its build cache. Its digest changes only with its inputs, so a
@@ -2285,7 +2311,7 @@ compiles and only refreshes and reassembles the runtime images.</p>
 </tr>
 <tr>
 <td><code>component</code></td>
-<td>all component images, including the amd64-only <code>sensing-perception-cuda</code></td>
+<td>all component images, including the amd64-only <code>sensing-perception-cuda</code> and <code>planning-cuda</code></td>
 </tr>
 <tr>
 <td><code>planning-simulation</code></td>
@@ -2390,80 +2416,17 @@ builds every target with the same Bake file. The build matrix comes from
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/image-inventory.json"><code>.github/image-inventory.json</code></a>,
 the source of truth for which images are built and for which architectures.</p>
 <p>Jobs run in dependency order: <code>prepare</code>, then <code>build-common</code>, then
-<code>build-components</code>. Most images build for Humble and
-Jazzy on amd64 and arm64. <code>create-manifests</code> then combines the per-arch images
-into multi-arch tags. CI disables the local tags (<code>LOCAL_IMAGE=""</code>) and tags
+<code>build-components</code>. Most images build for Humble and Jazzy on amd64 and arm64.
+<code>create-manifests</code> then combines the per-arch images into multi-arch tags. CI disables the local tags (<code>LOCAL_IMAGE=""</code>) and tags
 images through <code>docker/metadata-action</code>.</p>
 <p><a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref"><code>.github/autoware.ref</code></a>
 pins the Autoware release a branch builds on its official images. CI builds
 <code>main</code> and <code>release/*</code> pushes, keeps registry caches per branch, and scans and
 runs the evidence cells after each build. A weekly scan of <code>main</code>'s latest build
 opens a GitHub issue when it fails.</p>
-<h2 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
-<p>Releases promote an existing CI build; nothing is rebuilt.</p>
-<h3 id="before-you-release">Before You Release<a class="headerlink" href="#before-you-release" title="Permanent link">#</a></h3>
-<ul>
-<li><strong>The branch:</strong> <code>main</code>, or a <code>release/X.Y</code> branch created from a release tag
-  to fix an older line. Its <code>.github/autoware.ref</code> names the Autoware release
-  (for example <code>2.0.0</code>), and the ROS snapshots in <code>components/docker-bake.hcl</code>
-  belong to that release.</li>
-<li><strong><code>vars.RUNNER_AMD64</code></strong> and <strong><code>vars.RUNNER_ARM64</code></strong> optionally move the build,
-  scan and evidence jobs to larger runners (for example
-  <code>ubicloud-standard-8-ubuntu-2204</code> and <code>ubicloud-standard-8-arm-ubuntu-2204</code>).
-  Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.
-  Pull request jobs run on them too, so point them only at ephemeral hosted
-  runners, never at a persistent self-hosted machine.</li>
-<li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-buildcache</code>
-  and <code>openadkit-ci</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
-<li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
-  a build commit older than later workflow changes; otherwise <code>GITHUB_TOKEN</code> is
-  used.</li>
-<li><strong>A successful build</strong> of <code>build-all-images</code> exists on that branch; stable
-  and pre-releases <code>vX.Y.Z</code> both come from it. The build summary shows its
-  <code>build_tag</code>. The release ships the CLI
-  and deployments from that build's commit, and pushes that change only those
-  start no build: dispatch <code>build-all-images</code> on the branch to release them. The
-  release run warns when the branch has such changes.</li>
-<li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code> on the same
-  branch; it runs after the build.</li>
-<li><strong>A successful <code>evidence</code> run</strong> on the same branch passed every cell for that
-  same build; it runs after the build. See <a href="../../releases/evidence/">Evidence Policy</a>.</li>
-<li><strong>Highlights</strong> for a minor or major release are in
-  <code>.github/release-highlights/vX.Y.Z.md</code>. The notes of that release and of its
-  candidates open with them; the rest of the notes is generated.</li>
-<li><strong>The <a href="../../roadmap/">roadmap</a> is reviewed</strong> for a minor or major release:
-  finished items are gone, the release's items are under Now, and its
-  <code>Last reviewed</code> line names the release. Validation checks that line for the
-  release and its candidates.</li>
-</ul>
-<h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h3>
-<p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
-on the build's branch with the version and <code>build_tag</code>. A <code>release/X.Y</code> branch
-releases with its own workflows and scripts, so a later <code>main</code> cannot change
-how an older line is validated. Its jobs run in order:</p>
-<pre class="mermaid"><code>flowchart LR
-    V[validate] --&gt; P[package-bundles] --&gt; R[publish] --&gt; O[deploy-docs]</code></pre>
-<ol>
-<li><strong>validate</strong>: runs the release gates in
-   <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh"><code>validate_release.sh</code></a>
-   (version format, build provenance and age, scan results, metadata and file
-   integrity, image coverage, passing L0-L3 evidence, registry digests, Git tag). Nothing is tagged if a
-   gate fails.</li>
-<li><strong>package-bundles</strong>: writes the immutable release plan and the runtime bundle
-   for both distros.</li>
-<li><strong>publish</strong>: writes notes/metadata from the validated plan, attests
-   bundle/installer/plan/metadata and creates the draft with its assets. It then
-   creates the image release tags and, for stable releases, the latest aliases (see
-   <a href="../../getting-started/container-images/#tag-reference">Tag Reference</a>), and
-   publishes the draft, which creates the Git tag. A published release cannot be
-   changed: a bad one is followed by the next version.</li>
-<li><strong>deploy-docs</strong>: republishes the docs when the latest aliases moved.</li>
-</ol>
-<p>The release plan (<code>release-plan.json</code>) attached to each GitHub Release records
-the exact image digests, aliases, assets, and checksums of that release.</p>
-<p>A fork can rehearse a release with the same workflow: it promotes its own
-build in its own registry namespace and publishes in the fork. Validation only
-requires the registry and the package name that <code>openadkit.json</code> names.</p>
+<p>A pull request builds only the images its changes affect; see
+<a href="../evidence-workflow/#testing-a-pull-request">Testing a Pull Request</a>. Releases
+promote one of these builds; see the <a href="../release-process/">Release Process</a>.</p>
 
 
 

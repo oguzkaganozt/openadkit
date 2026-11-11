@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1595,6 +1669,8 @@
       
         
       
+        
+      
     
     
     
@@ -1722,6 +1798,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2000,7 +2104,7 @@
 
 
 <h1 id="supported-platforms">Supported Platforms<a class="headerlink" href="#supported-platforms" title="Permanent link">#</a></h1>
-<p><a href="../deployments/">Deployments</a> run on Ubuntu with Docker Compose for
+<p><a href="../deployments/">Deployments</a> run on Ubuntu with Docker Compose, for
 development and simulation. <strong>Platforms</strong> are edge targets on automotive
 operating systems such as AutoSD.</p>
 <p>Open AD Kit is the first <a href="https://www.soafee.io/">SOAFEE</a> blueprint, co-developed
@@ -2021,8 +2125,34 @@ blueprint and Red Hat's AutoSD blueprint build on it.</p>
 </div>
 </div>
 <h2 id="support-matrix">Support Matrix<a class="headerlink" href="#support-matrix" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Committed</strong></td>
+<td>Gated by every release: it builds and passes its checks, or the release does not ship</td>
+</tr>
+<tr>
+<td><strong>Experimental</strong></td>
+<td>Works and is tested where its page says so, but may change in a minor release</td>
+</tr>
+<tr>
+<td><strong>Best-effort</strong></td>
+<td>Ships in the release without CI evidence</td>
+</tr>
+<tr>
+<td><strong>Unsupported</strong></td>
+<td>Not built or tested in this repository</td>
+</tr>
+</tbody>
+</table>
 <p>A path that fails its build or validation gate is dropped or marked here, not
-documented as if it worked. Individual boards are listed on the
+documented as if it worked. Host requirements and boards are on the
 <a href="hardware/">Hardware</a> page.</p>
 <table>
 <thead>
@@ -2036,12 +2166,12 @@ documented as if it worked. Individual boards are listed on the
 <tr>
 <td>Ubuntu 22.04 and 24.04 + Docker Compose deployments</td>
 <td><strong>Committed</strong></td>
-<td>Compose validated in CI; CARLA runs on 22.04 only</td>
+<td>Compose validated in CI; CARLA Simulation runs on 22.04 only</td>
 </tr>
 <tr>
 <td>Component images, amd64 + arm64</td>
 <td><strong>Committed</strong></td>
-<td><code>sensing-perception-cuda</code> and <code>planning-cuda</code> are amd64-only; only the amd64 <code>simulator</code> carries the CARLA client</td>
+<td>Built and scanned for both; the evidence cells run on amd64. <code>sensing-perception-cuda</code> and <code>planning-cuda</code> are amd64-only; only the amd64 <code>simulator</code> carries the CARLA client</td>
 </tr>
 <tr>
 <td>Jazzy images</td>
@@ -2049,9 +2179,9 @@ documented as if it worked. Individual boards are listed on the
 <td>A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default</td>
 </tr>
 <tr>
-<td>CARLA deployment</td>
+<td>CARLA Simulation</td>
 <td><strong>Best-effort</strong></td>
-<td>Humble, amd64, NVIDIA GPU; not verified in CI</td>
+<td>Humble, amd64, NVIDIA GPU; exempt from CI evidence</td>
 </tr>
 <tr>
 <td>AutoSD with Podman and Quadlet</td>

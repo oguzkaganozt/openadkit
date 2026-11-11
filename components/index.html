@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -760,6 +760,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../deployments/split-host/" class="md-nav__link">
         
@@ -1118,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1586,6 +1660,8 @@
       
         
       
+        
+      
     
     
     
@@ -1713,6 +1789,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2117,7 +2221,7 @@ the images use Autoware's component interfaces between them.</p>
 build graph. The <a href="#image-reference">image reference</a> lists tags and platforms.</p>
 <p>The runtime images hold what Autoware runs. They leave out what only a
 compiler reads, such as headers and static libraries, and only the visualizer
-carries RViz and its plugins. Kits compile their overlay workspaces in the
+carries RViz and its plugins. A kit compiles its overlay workspace in the
 <code>universe-common-devel</code> image, which keeps both.</p>
 <h2 id="component-images">Component Images<a class="headerlink" href="#component-images" title="Permanent link">#</a></h2>
 <h3 id="sensing-perception">Sensing &amp; Perception<a class="headerlink" href="#sensing-perception" title="Permanent link">#</a></h3>
@@ -2188,8 +2292,8 @@ and topics for:</p>
 <li>emergency stop and engage/disengage commands</li>
 <li>scenario simulation auto-engage and route integration</li>
 </ul>
-<p>Launch: <code>tier4_autoware_api_component.launch.xml</code>. It is the standard external
-entry point for the modular simulation deployments.</p>
+<p>Launch: <code>tier4_autoware_api_component.launch.xml</code>. It is the external entry
+point of every deployment.</p>
 <h3 id="simulator">Simulator<a class="headerlink" href="#simulator" title="Permanent link">#</a></h3>
 <p>Closed-loop vehicle and environment simulation without real sensors or vehicle
 hardware:</p>
@@ -2208,13 +2312,14 @@ On amd64 it also carries the CARLA bridge and the CARLA Python client that the
 <a href="../deployments/carla-simulation/">CARLA Simulation</a> deployment runs in
 its <code>carla-interface</code> service.</p>
 <h3 id="visualizer">Visualizer<a class="headerlink" href="#visualizer" title="Permanent link">#</a></h3>
-<p>Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
+<p>RViz in the browser through noVNC: RViz with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
 loopback-only, and so does noVNC by default; reach it remotely through an SSH
-tunnel. To serve HTTPS, mount your own certificate into the visualizer from an
-<a href="../deployments/integrator-guide/">integrator kit</a> or a Compose override (the
-release mounts none) and name its files in <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>; it
-stays the same across starts, so a browser exception for it holds.</p>
+tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
+<a href="../deployments/integrator-guide/#4-extra-services">kit</a> (the release mounts
+none) and name its files in <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>; it stays the same
+across starts, so a browser exception for it holds.</p>
+<p>Set these in the <a href="../getting-started/cli/#configuration">host settings file</a>:</p>
 <table>
 <thead>
 <tr>
@@ -2229,19 +2334,19 @@ stays the same across starts, so a browser exception for it holds.</p>
 <td><code>RVIZ_CONFIG</code></td>
 <td><code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code></td>
 <td>Path</td>
-<td>RViz2 configuration inside the container; the default is the copy with config overrides applied</td>
+<td>RViz configuration inside the container; the default is the copy with config overrides applied</td>
 </tr>
 <tr>
 <td><code>REMOTE_DISPLAY</code></td>
 <td><code>true</code></td>
 <td><code>true</code>, <code>false</code></td>
-<td>Use browser-based RViz2; <code>false</code> opens RViz2 on the desktop, using the session's <code>DISPLAY</code> and <code>XAUTHORITY</code></td>
+<td>RViz in the browser; <code>false</code> opens RViz on your own desktop instead, using the session's <code>DISPLAY</code> and <code>XAUTHORITY</code></td>
 </tr>
 <tr>
 <td><code>REMOTE_PASSWORD</code></td>
-<td>—</td>
+<td><code>openadkit</code></td>
 <td>String</td>
-<td>Required when <code>REMOTE_DISPLAY=true</code></td>
+<td>noVNC password, required when <code>REMOTE_DISPLAY=true</code>. The deployments set this default; the image itself has none</td>
 </tr>
 <tr>
 <td><code>WEBSOCKIFY_BIND</code></td>
@@ -2269,7 +2374,7 @@ stays the same across starts, so a browser exception for it holds.</p>
 </tr>
 </tbody>
 </table>
-<p>For access and remote use, see the
+<p>To open it, see the
 <a href="../getting-started/#open-the-visualizer">Quickstart</a>.</p>
 <h3 id="carla-interface">CARLA Interface<a class="headerlink" href="#carla-interface" title="Permanent link">#</a></h3>
 <p>The simulator image's <code>autoware_carla_interface</code> translates Autoware control
@@ -2283,8 +2388,8 @@ commands to CARLA and CARLA sensor data to ROS 2 messages:</p>
 </ul>
 <p>Launch: <code>autoware_carla_interface.launch.xml</code>. CARLA publishes its Python
 client for x86_64 only, so only the amd64 simulator image has it (Humble and
-Jazzy); the <a href="../deployments/carla-simulation/">CARLA Simulation</a>
-deployment is Humble-only and needs an NVIDIA GPU.</p>
+Jazzy); <a href="../deployments/carla-simulation/">CARLA Simulation</a> is
+Humble-only and needs an NVIDIA GPU.</p>
 <h2 id="image-reference">Image Reference<a class="headerlink" href="#image-reference" title="Permanent link">#</a></h2>
 <p>Generated from the image catalog (<code>.github/image-inventory.json</code>), so it always
 matches what CI builds. Tag names are explained in

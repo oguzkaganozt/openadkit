@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -793,6 +793,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#docker-compose-is-too-old" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose is too old
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#a-deployment-fails-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -985,6 +996,8 @@
       
         
           
+        
+      
         
       
         
@@ -1351,6 +1364,78 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../deployments/safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../deployments/split-host/" class="md-nav__link">
         
@@ -1359,7 +1444,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1824,6 +1909,8 @@
       
         
       
+        
+      
     
     
     
@@ -1951,6 +2038,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2216,6 +2331,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#docker-compose-is-too-old" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose is too old
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#a-deployment-fails-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2413,6 +2539,11 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <h3 id="permission-denied">Permission denied<a class="headerlink" href="#permission-denied" title="Permanent link">#</a></h3>
 <p>Your user must be in the <code>docker</code> group. Log out and back in after
 <code>openadkit setup</code>, or run <code>newgrp docker</code>. Do not run <code>openadkit</code> with <code>sudo</code>.</p>
+<h3 id="docker-compose-is-too-old">Docker Compose is too old<a class="headerlink" href="#docker-compose-is-too-old" title="Permanent link">#</a></h3>
+<p><code>openadkit setup</code> stops when Docker is installed but Docker Compose 5.0 or
+newer is missing. Install Docker's <code>docker-compose-plugin</code>
+(<a href="https://docs.docker.com/compose/install/linux/">instructions</a>) and rerun
+setup. Ubuntu's own <code>docker-compose-v2</code> package is too old.</p>
 <h3 id="a-deployment-fails-to-start">A deployment fails to start<a class="headerlink" href="#a-deployment-fails-to-start" title="Permanent link">#</a></h3>
 <ol>
 <li>Check that Docker is running: <code>docker info</code>.</li>
@@ -2426,11 +2557,12 @@ read their logs. Stop them with <code>openadkit stop</code>.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>&lt;deployment&gt;<span class="w"> </span>--data
 openadkit<span class="w"> </span>fetch<span class="w"> </span>&lt;deployment&gt;<span class="w"> </span>--force
 </code></pre></div>
-<p><code>validate --data</code> reports each resource as <code>ok</code>, <code>missing</code>, <code>incomplete</code>, or <code>outdated</code>;
-add <code>--gpu</code> to it for Logging Simulation's CenterPoint models (CARLA always
-runs in GPU mode).
-<code>fetch</code> always includes GPU data. <code>--force</code> only replaces data the CLI
-installed; remove data you placed yourself, then run <code>openadkit fetch &lt;deployment&gt;</code>.</p>
+<p><code>validate --data</code> reports each resource as <code>ok</code>, <code>missing</code>, <code>incomplete</code> or
+<code>outdated</code>; add <code>--gpu</code> to include the data of a GPU mode, such as Logging
+Simulation's CenterPoint models. <code>fetch</code> always includes it. <code>--force</code> only
+replaces data the CLI installed; remove data you placed yourself, then run
+<code>openadkit fetch &lt;deployment&gt;</code>. See
+<a href="../cli/#downloaded-data">Downloaded Data</a>.</p>
 <h2 id="gpu">GPU<a class="headerlink" href="#gpu" title="Permanent link">#</a></h2>
 <h3 id="nvidia-container-toolkit-not-detected">NVIDIA Container Toolkit not detected<a class="headerlink" href="#nvidia-container-toolkit-not-detected" title="Permanent link">#</a></h3>
 <ul>
@@ -2451,8 +2583,9 @@ check <code>openadkit logs --follow</code>.</p>
 it a certificate (<code>NOVNC_CERT</code>, <code>NOVNC_KEY</code>); with one, open it over
 <code>https://</code>.</p>
 <h3 id="port-6080-already-in-use">Port 6080 already in use<a class="headerlink" href="#port-6080-already-in-use" title="Permanent link">#</a></h3>
-<p>Port 6080 serves the visualizer. Stop the service that holds the port. The CLI deployments use host
-networking, so adding a <code>ports:</code> mapping to <code>docker-compose.yaml</code> has no effect.</p>
+<p>Port 6080 serves the visualizer. Stop the service that holds the port. The
+deployments use host networking, so a <code>ports:</code> mapping in <code>docker-compose.yaml</code>
+has no effect.</p>
 <h3 id="point-clouds-arrive-at-a-lower-rate-than-they-are-published">Point clouds arrive at a lower rate than they are published<a class="headerlink" href="#point-clouds-arrive-at-a-lower-rate-than-they-are-published" title="Permanent link">#</a></h3>
 <p>Large messages need large UDP buffers between the containers.
 <code>deployments/shared/cyclonedds.xml</code> requests them, and <code>openadkit setup</code> raises
@@ -2464,7 +2597,8 @@ nstat<span class="w"> </span>-az<span class="w"> </span>UdpRcvbufErrors<span cla
 <h3 id="ros-2-nodes-on-another-machine-cannot-see-the-stack">ROS 2 nodes on another machine cannot see the stack<a class="headerlink" href="#ros-2-nodes-on-another-machine-cannot-see-the-stack" title="Permanent link">#</a></h3>
 <p>DDS stays on loopback by default. To reach other hosts, set
 <code>CYCLONEDDS_NETWORK_INTERFACE</code> to the exact LAN or VPN interface name in your
-<a href="../cli/">host settings file</a> (<code>~/.config/openadkit/&lt;deployment&gt;.env</code>):</p>
+<a href="../cli/#configuration">host settings file</a>
+(<code>~/.config/openadkit/&lt;deployment&gt;.env</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="nv">CYCLONEDDS_NETWORK_INTERFACE</span><span class="o">=</span>eth0
 </code></pre></div>
 <p>This applies to single-host runs; a split-host node always keeps DDS on

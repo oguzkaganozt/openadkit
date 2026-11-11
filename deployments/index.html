@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -762,6 +762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1125,6 +1127,81 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="split-host/" class="md-nav__link">
         
@@ -1133,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1598,6 +1675,8 @@
       
         
       
+        
+      
     
     
     
@@ -1725,6 +1804,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -1977,6 +2084,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#your-own-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Own Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2011,41 +2129,56 @@ start with Planning Simulation.</p>
 <th>Deployment</th>
 <th>Purpose</th>
 <th>GPU</th>
+<th>Architectures</th>
+<th>CI evidence</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><a href="planning-simulation/">Planning Simulation</a></td>
-<td>Plan and follow a route on a demo map</td>
+<td>Plan and follow a route on a sample map with the built-in simulator; <code>--gpu</code> plans with the Diffusion Planner</td>
 <td>Optional</td>
+<td>amd64, arm64</td>
+<td>Yes, in CPU mode</td>
 </tr>
 <tr>
 <td><a href="scenario-simulation/">Scenario Simulation</a></td>
-<td>Run predefined traffic scenarios</td>
+<td>Run predefined traffic scenarios in Scenario Simulator</td>
 <td>No</td>
+<td>amd64, arm64</td>
+<td>Yes</td>
 </tr>
 <tr>
 <td><a href="logging-simulation/">Logging Simulation</a></td>
-<td>Replay recorded sensor data through sensing, perception, and localization</td>
+<td>Replay recorded sensor data through sensing, perception and localization</td>
 <td>Optional</td>
+<td>amd64, arm64</td>
+<td>Exempt</td>
 </tr>
 <tr>
 <td><a href="carla-simulation/">CARLA Simulation</a></td>
-<td>Drive a CARLA vehicle in closed loop</td>
+<td>Drive in closed loop with the CARLA simulator</td>
 <td>Required</td>
+<td>amd64</td>
+<td>Exempt</td>
 </tr>
 <tr>
-<td><a href="split-host/">Split-host simulation</a></td>
-<td>Run Autoware on one host and the simulator on another over Zenoh</td>
-<td>CARLA only</td>
-</tr>
-<tr>
-<td><a href="https://github.com/autowarefoundation/openadkit/tree/main/deployments/safety-island-simulation">Safety Island Simulation</a></td>
-<td>Planning Simulation driven by the <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a> controller instead of Autoware's trajectory follower</td>
+<td><a href="safety-island-simulation/">Safety Island Simulation</a></td>
+<td>Planning Simulation driven by the <a href="https://autowarefoundation.github.io/autoware-safety-island/">Autoware Safety Island</a> controller</td>
 <td>No</td>
+<td>amd64</td>
+<td>Yes</td>
 </tr>
 </tbody>
 </table>
+<p>All run on Humble and Jazzy except CARLA Simulation, which is Humble-only, and
+the GPU modes are amd64-only. <strong>CI evidence</strong> says whether a release runs the
+deployment end to end before it ships; an exempt deployment ships without that
+check, and evidence runs on amd64 only. See the
+<a href="../releases/evidence/">Evidence Policy</a>.</p>
+<p>Scenario and CARLA Simulation can also run as
+<a href="split-host/">split-host</a> nodes, with Autoware on one host and the simulator
+on another over Zenoh (experimental).</p>
 <h2 id="running-a-deployment">Running a Deployment<a class="headerlink" href="#running-a-deployment" title="Permanent link">#</a></h2>
 <p>Complete the <a href="../getting-started/">Quickstart</a> setup first.</p>
 <p>Commands on this page are shown as installed by the release installer. From a
@@ -2057,25 +2190,20 @@ openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
 openadkit<span class="w"> </span>stop
 </code></pre></div>
 <ul>
-<li>Add <code>--ros-distro jazzy</code> to <code>validate</code>, <code>fetch</code>, or <code>run</code> to select Jazzy;
-  Humble is the default.</li>
+<li>Add <code>--ros-distro jazzy</code> to <code>validate</code>, <code>fetch</code>, <code>run</code> or <code>build</code> to select
+  Jazzy; Humble is the default.</li>
 <li>Add <code>--gpu</code> for the optional GPU mode of Planning Simulation (the Diffusion
-  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU,
-  so its GPU mode turns on by itself; it is Humble-only.</li>
-<li>Add <code>--node</code> to <code>validate</code> or <code>run</code> to start one node of a
-  <a href="split-host/">split-host</a> run. <code>status</code>, <code>logs</code>, and <code>stop</code> find the
-  running node themselves; they take <code>--node</code> only when several nodes of one
-  deployment run on the same machine.</li>
+  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
+  mode turns on by itself.</li>
 <li>Put host settings in <code>~/.config/openadkit/&lt;name&gt;.env</code>; see
   <a href="../getting-started/cli/#configuration">Configuration</a>.</li>
 </ul>
-<p>Scenario split-node evidence covers two isolated nodes on one hosted runner.
-CARLA is explicitly exempt from hosted runtime CI. Neither is a claim of
-arbitrary two-machine or vehicle compatibility; see the
-<a href="../releases/evidence/">evidence policy</a>.</p>
-<p>To build your own stack, start a kit with <code>openadkit new</code> (<a href="create-a-kit/">Create a
-Kit</a>). It keeps its own kit manifest and
-deployment in one directory, extending a deployment without copying it.</p>
+<p><a href="../getting-started/cli/">CLI &amp; Maintenance</a> covers the other commands.</p>
+<h2 id="your-own-stack">Your Own Stack<a class="headerlink" href="#your-own-stack" title="Permanent link">#</a></h2>
+<p>Start a kit with <code>openadkit new</code> (<a href="create-a-kit/">Create a Kit</a>). It extends
+a deployment without copying it and keeps only your differences. The
+<a href="integrator-guide/">Integrator Guide</a> is the reference for every extension
+point.</p>
 
 
 

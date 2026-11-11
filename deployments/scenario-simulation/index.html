@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The deployment layer for the Autoware ecosystem: building autonomous driving and ADAS systems from simulation to in-vehicle deployment.">
+        <meta name="description" content="The deployment layer for the Autoware ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.">
       
       
       
@@ -762,6 +762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1125,6 +1127,81 @@
   
   
   
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../safety-island-simulation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety Island Simulation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Safety Island Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../split-host/" class="md-nav__link">
         
@@ -1133,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Split-host simulation
+    Split-host Simulation
   
 
     
@@ -1598,6 +1675,8 @@
       
         
       
+        
+      
     
     
     
@@ -1725,6 +1804,34 @@
     
   
     Evidence Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Process
   
 
     
@@ -2047,22 +2154,23 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>scenario-simulation
 openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
 </code></pre></div>
-<p>Run Autoware on one host and the TIER IV runner on another with <code>--node</code>; see
-<a href="../split-host/">Split-host simulation</a>.</p>
+<p>To run Autoware on one host and the scenario runner on another, see
+<a href="../split-host/">Split-host Simulation</a>.</p>
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <p><code>run</code> downloads the Kashiwanoha map. Autoware takes about 90 seconds to
 initialize; the runner then executes the scenario and writes the results to
 <code>~/openadkit-output/scenario-simulation/results</code> (<code>run</code> prints the path).</p>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
-<strong><code>openadkit</code></strong>. Set your own
-<code>REMOTE_PASSWORD</code> in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
-<p>For a remote host, forward the port over SSH and open
-<code>http://localhost:8080/vnc.html</code> locally:</p>
+<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in
+<code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
+<p>The visualizer listens on loopback only. For a remote host, forward the port
+over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
 </code></pre></div>
 <h2 id="configure">Configure<a class="headerlink" href="#configure" title="Permanent link">#</a></h2>
-<p>Put overrides in <code>~/.config/openadkit/scenario-simulation.env</code>:</p>
+<p>Set these in the host settings file,
+<code>~/.config/openadkit/scenario-simulation.env</code>:</p>
 <table>
 <thead>
 <tr>
@@ -2109,7 +2217,8 @@ initialize; the runner then executes the scenario and writes the results to
 </tr>
 </tbody>
 </table>
-<p>A relative <code>SCENARIO_HOST_DIR</code> resolves from <code>deployments/scenario-simulation/</code>. <code>MAP_PATH</code> must be absolute; use <code>$HOME</code>
+<p>A relative <code>SCENARIO_HOST_DIR</code> resolves from
+<code>deployments/scenario-simulation/</code>. <code>MAP_PATH</code> must be absolute; use <code>$HOME</code>
 rather than <code>~</code>.</p>
 <p>To run your own scenario, keep it outside the release. Create a directory, put
 the YAML there, and point the deployment at it in the host settings file:</p>
@@ -2123,9 +2232,10 @@ To use your own map, point <code>MAP_PATH</code> at a directory that holds the s
 as the bundled map, which the CLI checks before starting: <code>lanelet2_map.osm</code>,
 <code>pointcloud_map.pcd</code>, <code>global_map_center.pcd.yaml</code>,
 <code>lanelet2_map_provider.osm.yaml</code> and <code>map.map_publisher.yaml</code>.</p>
-<p>This deployment changes one Autoware parameter, in a file that holds only the
-changed value. On every start, the images merge it into the upstream parameter
-file: <code>config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml</code>.</p>
+<p>This deployment changes one Autoware parameter with a
+<a href="../integrator-guide/#2-config-overrides">config override</a>: a file that holds
+only the changed value, merged into the upstream parameter file on every start
+(<code>config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml</code>).</p>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop
 </code></pre></div>
