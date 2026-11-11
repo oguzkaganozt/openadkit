@@ -98,21 +98,35 @@ jobs:
 
       - name: Name what the build cache still uses
         # Compile bases of the builds from the last 90 days, and the cache of
-        # each inventory image on each branch (build.py's cache_ref).
+        # each inventory image on main and each maintenance branch, the only
+        # branches whose builds export caches (build.py's cache_ref). The
+        # action takes patterns of at most 1000 characters.
         id: buildcache
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          runs=$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow build-all-images.yaml \
+          oldest=$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow build-all-images.yaml \
             --created ">=$(date -u -d '90 days ago' +%F)" --limit 1000 --json databaseId \
-            --jq '[.[].databaseId | tostring] | join("|")')
+            --jq 'map(.databaseId) | min // empty')
+          recent='^$'
+          if [ -n "${oldest}" ]; then
+            # Run IDs only grow: match that build's ID and every larger one.
+            recent="^.*-($(python3 -c '
+          import sys
+          n = sys.argv[1]
+          alternatives = [n, f"[0-9]{{{len(n) + 1},}}"]
+          for i, digit in enumerate(n):
+              if digit != "9":
+                  alternatives.append(f"{n[:i]}[{int(digit) + 1}-9][0-9]{{{len(n) - i - 1}}}")
+          print("|".join(alternatives))' "${oldest}"))-[0-9]+\$"
+          fi
           targets=$(jq -r '[.images[].target, "universe-common-build"] | join("|")' .github/image-inventory.json)
           distros=$(jq -r '.ros_distros | join("|")' .github/image-inventory.json)
           # Each branch's cache scope, as resolve_build_inputs.sh spells it.
-          scopes=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/branches" --jq '.[].name' \
+          scopes=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/branches" --jq '.[].name | select(. == "main" or startswith("release/"))' \
             | tr -c 'A-Za-z0-9_.\n-' '-' | sed 's/\./\\./g' | paste -sd '|')
-          echo "recent_builds=^.*-(${runs:-0})-[0-9]+\$" >> "$GITHUB_OUTPUT"
+          echo "recent_builds=${recent}" >> "$GITHUB_OUTPUT"
           echo "caches=^(${targets})-(amd64|arm64)-(${distros})-(${scopes})\$" >> "$GITHUB_OUTPUT"
         shell: bash
 
