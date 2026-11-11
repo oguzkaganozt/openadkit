@@ -1741,6 +1741,49 @@ def test_a_catalog_deployment_can_build_on_another(tmp_path):
         cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-on-top")
 
 
+def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
+    gpu_data = files_resource(tmp_path, env="MODEL_PATH", name="model", gpu=True)
+    document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
+    document["requirements"]["gpuArchitectures"] = ["amd64"]
+    root, _ = runtime_tree(tmp_path, document=document)
+    directory = on_top(root)
+
+    def on_top_with(requirements):
+        path = directory / "deployment.json"
+        path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
+        return cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
+
+    # Only what it names changes; without a GPU mode the GPU-only data goes too.
+    deployment = on_top_with({"architectures": ["amd64"], "gpu": "none"})
+    assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
+    assert [item["name"] for item in deployment.data] == ["dataset"]
+    assert on_top_with({"gpu": "required"}).requirements["gpu"] == "required"
+    assert [item["name"] for item in on_top_with({"rosDistros": ["jazzy"]}).data] == ["dataset", "model"]
+    for requirements, message in (
+        ({"architectures": ["amd64", "riscv64"]}, "adds riscv64, which the base deployment does not support"),
+        ({"rosDistros": ["rolling"]}, "adds rolling"),
+        ({"gpuArchitectures": ["arm64"]}, "adds arm64"),
+        ({"architectures": ["arm64"]}, "leave no architecture for the GPU mode"),
+        ({"gpu": "sometimes"}, "must be none, optional, or required"),
+        ({"cpus": 8}, "unknown requirements field"),
+    ):
+        with pytest.raises(cli_manifest.OpenADKitError, match=message):
+            on_top_with(requirements)
+    # A base that settled its GPU mode leaves nothing to choose.
+    assert cli_manifest.narrow_requirements({"architectures": ["amd64"], "rosDistros": ["humble"], "gpu": "none"},
+                                            {"gpu": "none"})["gpu"] == "none"
+    with pytest.raises(cli_manifest.OpenADKitError, match="cannot change the base deployment's none"):
+        cli_manifest.narrow_requirements({"architectures": ["amd64"], "rosDistros": ["humble"], "gpu": "none"},
+                                         {"gpu": "optional"})
+
+
+def test_safety_island_simulation_runs_where_its_release_does():
+    kit = cli_catalog.load_kit(ROOT)
+    deployment = cli_catalog.get_deployment(ROOT, kit, "safety-island-simulation")
+    assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
+    assert not any(item.get("gpu") for item in deployment.data)
+
+
 def test_a_released_deployment_is_intact_only_with_its_base(tmp_path):
     root, base = runtime_tree(tmp_path, release=True)
     directory = on_top(root)

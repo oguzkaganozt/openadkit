@@ -34,9 +34,10 @@ until localization is initialized.
 `run` warns that the override adds `autoware-safety-island.yaml`, which
 `autoware_launch` does not have. That is expected: the file is new.
 
-The released binary is linux/amd64 only. The deployment inherits Planning
-Simulation's requirements, so `validate` accepts arm64, but the Safety Island
-container does not start there.
+The released binary is linux/amd64 only, and the diagnostics graph is the
+rule-based planner's. `deployment.json` therefore narrows Planning Simulation's
+requirements to amd64 without a GPU mode: `validate` and `run` refuse arm64 and
+`--gpu`.
 
 ## Evidence
 

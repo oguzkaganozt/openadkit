@@ -25,7 +25,9 @@ my-kit/
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment. Compose reads
-  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS distro, GPU, downloads and the verify step are inherited.
+  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS
+  distro, GPU, downloads and the verify step are inherited; `requirements` may
+  narrow the first three.
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
   add your services below it. `OPENADKIT_BASE_ROOT` names the base root for
   shared assets.

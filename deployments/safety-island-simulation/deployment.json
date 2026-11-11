@@ -7,6 +7,10 @@
       "docker-compose.yaml"
     ]
   },
+  "requirements": {
+    "architectures": ["amd64"],
+    "gpu": "none"
+  },
   "data": [
     {
       "name": "safety-island-simulation",

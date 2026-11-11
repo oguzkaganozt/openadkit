@@ -23,6 +23,7 @@ from manifest import (
     OpenADKitError,
     ensure_safe_existing,
     load_json,
+    narrow_requirements,
     parse_autoware,
     parse_component_images,
     parse_deployment_refs,
@@ -334,7 +335,7 @@ def _load_kit_deployment(
     root: Path, directory: Path, base_kit: RuntimeContext, base_root: Path, name: str
 ) -> Deployment:
     """An integrator deployment: its own Compose file and values on top of a
-    base deployment from the pinned kit, whose requirements it keeps as is."""
+    base deployment from the pinned kit, whose requirements it keeps or narrows."""
     manifest = read_deployment_manifest(directory, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in base_kit.deployments:
@@ -347,6 +348,9 @@ def _load_kit_deployment(
     base = get_deployment(base_root, base_kit, base_name)
 
     compose = validate_compose(manifest.get("compose"), ALLOWED_INTEGRATOR_COMPOSE_KEYS, base.compose["waitTimeout"])
+    requirements = narrow_requirements(base.requirements, manifest.get("requirements"))
+    # Without a GPU mode it never mounts the data only that mode uses.
+    base_data = [item for item in base.data if requirements["gpu"] != "none" or not item.get("gpu")]
 
     own_data = validate_data(manifest.get("data", []), {}, directory)
     destinations = {item["destinationEnv"] for item in base.data}
@@ -365,8 +369,8 @@ def _load_kit_deployment(
             "resetServices": list(dict.fromkeys(base.compose["resetServices"] + compose["resetServices"])),
         },
         "nodes": {},
-        "requirements": base.requirements,
-        "data": base.data + own_data,
+        "requirements": requirements,
+        "data": base_data + own_data,
         "shared": [],
         "evidence": dict(base.manifest["evidence"]),
         # The base's verify step runs on top of this layer unless it names its own.

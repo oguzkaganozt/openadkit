@@ -20,8 +20,11 @@ you called, so a directory you only look at starts no program and no download.
 A relative or absolute source path is also accepted for development. Only one
 level of `extends` is supported: a kit extends Open AD Kit, not another kit.
 Each kit deployment names a `base` deployment in the pinned release. Its
-architecture, ROS distro and GPU requirements are inherited without narrowing
-or widening. Base downloads and one-shot reset services are inherited; a kit
+architecture, ROS distro and GPU requirements are inherited. `requirements` in
+the kit's `deployment.json` may narrow them: fewer architectures or ROS
+distros, or `gpu` set to `none` or `required` where the base leaves it
+optional. It never widens them, since the kit runs the base's services.
+Without a GPU mode the base's GPU-only downloads are left out. Base downloads and one-shot reset services are inherited; a kit
 can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.
