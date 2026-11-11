@@ -71,6 +71,9 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
   the old ones would go only at a major version.
 - **Safety Island on CARLA.** A kit with the Safety Island's closed loop over
   CAN, backed by its own runtime evidence.
+- **Manifests without `kind`.** `extends` already marks a kit and `version` a
+  release, so `kind` repeats them. It could become optional in a minor
+  release, with manifests that carry it still read.
 
 ## Non-goals
 

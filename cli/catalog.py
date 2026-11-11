@@ -447,8 +447,8 @@ def load_kit(root: Path) -> RuntimeContext:
     if value.get("kind") == "kit":
         return _load_integrator_kit(root, value)
     reject_unknown(value, ALLOWED_KIT_KEYS, "kit manifest")
-    if value.get("kind") not in ("repository", "release"):
-        raise OpenADKitError("openadkit.json kind must be repository, release or kit")
+    if value.get("kind") not in ("source", "release"):
+        raise OpenADKitError("openadkit.json kind must be source, release or kit")
     default_ros_distro = require_string(
         value.get("defaultRosDistro", "humble"), "defaultRosDistro"
     )
@@ -456,7 +456,7 @@ def load_kit(root: Path) -> RuntimeContext:
     component_images = parse_component_images(value.get("componentImages"))
     prefix: str | None = None
     images: dict[str, dict[str, str]] = {}
-    if kind == "repository":
+    if kind == "source":
         prefix = require_string(
             value.get("imageRepository"), "imageRepository"
         )
