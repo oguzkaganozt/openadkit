@@ -2,7 +2,7 @@
 
 !!! warning "Experimental"
     Running Open AD Kit on AutoSD with Podman and Quadlet may change in a minor
-    release. See [Compatibility](../../releases/compatibility.md#experimental).
+    release. See [Compatibility](../releases/compatibility.md#experimental).
 
 AutoSD (Automotive Stream Distribution) is the public, in-development preview of
 **Red Hat In-Vehicle OS**. It is built on CentOS Stream with an automotive
@@ -29,8 +29,8 @@ openadkit config planning-simulation \
 
 Use the `openadkit` of an installed release and `platforms/autosd` from the same
 tag: the release's CLI puts the image digests in the model, so the result is
-pinned. From a source checkout the images are latest aliases. Kits work the same
-way, such as `openadkit config ./my-kit`.
+pinned. A source checkout names the tags of a local build instead. Kits work
+the same way, such as `openadkit config ./my-kit`.
 
 | Output | Contents |
 |--------|----------|
@@ -48,9 +48,9 @@ done yet.
 
 !!! warning "Evidence scope"
     Evidence runs these units under Podman and systemd on Ubuntu 24.04 and drives
-    the ego to its goal. CI does not build or boot the image below. An image built from
-    these units was driven once by hand: it booted in QEMU with SELinux enforcing
-    and no outside network, and the ego arrived at its goal.
+    the ego to its goal. CI does not build or boot the image below. An image
+    built from these units was driven once by hand: it booted in QEMU with
+    SELinux enforcing and no outside network, and the ego arrived at its goal.
 
 ## Run on a Podman Host
 
@@ -71,8 +71,8 @@ their images on first start, which takes a while.
 
 ## Build an Image {: #building-an-autosd-image }
 
-You need Podman and QEMU; the runner does not work with Docker. Download the Automotive Image Builder runner
-and build its container:
+You need Podman and QEMU; the runner does not work with Docker. Download the
+Automotive Image Builder runner and build its container:
 
 ```bash
 curl -fL -o auto-image-builder.sh \
@@ -83,8 +83,8 @@ sudo bash ./auto-image-builder.sh build-builder --distro autosd10-sig
 
 Build the image from the directory you generated `out` in, because the manifest
 names its large files by path. `/var/tmp` goes on disk because the runner's own
-is in memory and too small for this image. The arguments are the manifest, the container
-image name, and the disk image to write:
+is in memory and too small for this image. The arguments are the manifest, the
+container image name, and the disk image to write:
 
 ```bash
 sudo mkdir -p /var/tmp/aib-work
@@ -103,7 +103,7 @@ CentOS, or RHEL) with Automotive Image Builder, OSBuild, and QEMU installed.
 
 ## Run the Image
 
-With `air` installed:
+With Automotive Image Builder's runner, `air`, installed:
 
 ```bash
 air disk.qcow2
@@ -128,7 +128,9 @@ Or with QEMU directly:
 
 `-m 16384` (16 GB) is the minimum for the Autoware stack; use `-m 32768` for
 heavier workloads. `-m 2G` is enough only to boot and explore the OS. Log in as
-`root` with the password `password` from the command above, which is for this demo only.
+`root` with the password you hashed in
+[Generate a Deployment](#generate-a-deployment), here `password`, which is for
+this demo only.
 
 ## Boards
 

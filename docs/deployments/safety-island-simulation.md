@@ -13,11 +13,9 @@ is required.
 - No GPU mode: the deployment's diagnostics graph belongs to the rule-based
   planner. `validate` and `run` refuse arm64 and `--gpu`.
 
-Complete the [Quickstart](../../getting-started/index.md) setup first.
+Complete the [Quickstart](../getting-started/index.md) setup first.
 
 ## Run
-
---8<-- "includes/cli-command-context.md"
 
 ```bash
 openadkit run safety-island-simulation
@@ -70,4 +68,4 @@ openadkit stop
 
 To replace missing data, run
 `openadkit fetch safety-island-simulation --force`. For other issues, see
-[Troubleshooting](../../getting-started/troubleshooting.md).
+[Troubleshooting](../getting-started/troubleshooting.md).

@@ -1,10 +1,22 @@
 # CLI & Maintenance
 
-The commands you need after the first run: running and controlling a
-deployment, validation, configuration, upgrades and cleanup.
-`openadkit --help` and `openadkit <command> --help` list every option.
+The commands you need after the first run. `openadkit --help` and
+`openadkit <command> --help` list every option.
 
 --8<-- "includes/cli-command-context.md"
+
+| Command | What it does |
+|---------|--------------|
+| [`list`, `run`](#run-a-deployment) | List the deployments, and start one and wait until it is ready |
+| [`status`, `logs`, `shell`, `record`](#runtime-controls) | Inspect the running deployment and record its topics |
+| [`restart`](#restart) | Apply changed settings, config and overlay workspaces |
+| [`stop`](#runtime-controls) | Stop and remove the running deployment |
+| [`validate`, `config`](#validate-before-running) | Check a deployment, or print its Compose model, without starting it |
+| [`fetch`, `clean`](#downloaded-data) | Download or delete a deployment's data |
+| [`new`, `build`](#your-own-kit) | Create a kit and build its overlay workspace |
+| [`setup`](index.md#set-up-the-host) | Install the host dependencies |
+| [`install`, `upgrade`](#upgrading), [`uninstall`](#uninstall) | Install, move between and remove releases |
+| [`version`](#names-directories-and-output) | Show the installed release and its Autoware release |
 
 ## Run a Deployment
 
@@ -114,29 +126,7 @@ includes the CenterPoint models.
 
 `config` prints a deployment's resolved Compose model as JSON, with `validate`'s
 `--ros-distro`, `--gpu`, `--node` and `--ws`;
-[AutoSD](../platforms/autosd/index.md) builds on it.
-
-## Names, Directories and Output
-
-- **A directory instead of a name:** `validate`, `config`, `fetch`, `run` and
-  `clean` also take a deployment's directory, such as `openadkit run ./my-kit`.
-  An argument with a `/` or a leading `.` is a directory, and the kit around it
-  is used wherever you run the command.
-- **Version:** `openadkit version` prints the installed release and the
-  Autoware release it pins; in a source checkout, the commit.
-- **Scripting:** `list`, `version` and `validate` accept `--json`.
-  `validate --json` prints one JSON document also when the deployment is
-  invalid (`"valid": false` with the `"error"`).
-- **Docker commands:** commands print what they do in plain terms; add
-  `--verbose` (or set `OPENADKIT_VERBOSE=1`) to also see the docker commands
-  they run, status queries aside.
-- **Short name and Tab completion:** `openadkit install` also links `adkit`, a
-  short name for the same launcher. Tab completes commands, options and
-  deployment names for both names, from the kit around the current directory
-  or else the active release; bash-completion (installed on Ubuntu by default)
-  loads it from `~/.local/share/bash-completion/completions` in a new shell.
-  The installer leaves an `adkit` or a completion file it did not install
-  alone, and `openadkit uninstall` removes only its own links.
+[AutoSD](../platforms/autosd.md) builds on it.
 
 ## Configuration
 
@@ -152,7 +142,7 @@ settings such as `MAP_PATH` or `REMOTE_PASSWORD` in your host settings file: it
 lives outside the release, so upgrades keep it. A source checkout can also
 override component images there; release images stay pinned. A kit adds its
 own files to this order; see the
-[Integrator Guide](../deployments/integrator-guide.md#1-settings).
+[Integrator Guide](../kits/integrator-guide.md#1-settings).
 
 | Directory | Default | Override |
 | --- | --- | --- |
@@ -160,11 +150,42 @@ own files to this order; see the
 | Results and recordings | `~/openadkit-output/<name>/{results,recordings}` | `OPENADKIT_OUTPUT_DIR` |
 | Installed releases | `~/.local/share/openadkit` | `OPENADKIT_INSTALL_DIR` |
 
+## Downloaded Data
+
+Maps, rosbags and models live under `~/autoware_map` and `~/autoware_data`.
+
+```bash
+openadkit validate planning-simulation --data   # report
+openadkit fetch planning-simulation --force     # replace
+openadkit clean planning-simulation             # delete, after asking
+```
+
+- **`run`** downloads missing data but never replaces an existing data
+  directory; `run --force` is not supported.
+- **`fetch --force`** replaces incomplete or outdated data. Data is outdated
+  when the deployment now declares other content for it, for example a map with
+  a new checksum: `run`, `fetch` and `validate --data` then stop and ask for
+  `fetch --force`. `fetch` always includes the GPU data.
+- **`clean`** lists what it deletes and asks first; `--yes` skips the question,
+  as scripts need. It deletes all the data the deployment uses, so a kit or a
+  deployment on a base also deletes the base's data (the list says so). The
+  next `run` or `fetch` downloads it again.
+
+The CLI marks the data it installs with a `.openadkit-resource.json` file, and
+`clean` and `--force` only delete or replace marked data. Data that was already
+there, such as a map you copied yourself, is used when it is complete, but the
+CLI never deletes or replaces it; move or remove it yourself.
+
+`clean` and `fetch --force` refuse while that deployment is running, or while
+any live container mounts the data (including another kit or deployment). If
+data usage cannot be checked, they refuse as well.
+
 ## Your Own Kit
 
 `openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit on top of a
 deployment of this Open AD Kit (Planning Simulation by default) that holds
-only your differences. See [Create a Kit](../deployments/create-a-kit.md).
+only your differences. `openadkit build` builds the kit's overlay workspace in
+the release's devel image. See [Create a Kit](../kits/create-a-kit.md).
 
 ## Upgrading
 
@@ -202,32 +223,24 @@ openadkit uninstall --all    # remove kept versions too
 keeps your host settings in `~/.config/openadkit`, results and recordings in
 `~/openadkit-output`, and downloaded data.
 
-## Downloaded Data
+## Names, Directories and Output
 
-Maps, rosbags and models live under `~/autoware_map` and `~/autoware_data`.
-
-```bash
-openadkit validate planning-simulation --data   # report
-openadkit fetch planning-simulation --force     # replace
-openadkit clean planning-simulation             # delete, after asking
-```
-
-- **`run`** downloads missing data but never replaces an existing data
-  directory; `run --force` is not supported.
-- **`fetch --force`** replaces incomplete or outdated data. Data is outdated
-  when the deployment now declares other content for it, for example a map with
-  a new checksum: `run`, `fetch` and `validate --data` then stop and ask for
-  `fetch --force`. `fetch` always includes the GPU data.
-- **`clean`** lists what it deletes and asks first; `--yes` skips the question,
-  as scripts need. It deletes all the data the deployment uses, so a kit or a
-  deployment on a base also deletes the base's data (the list says so). The
-  next `run` or `fetch` downloads it again.
-
-The CLI marks the data it installs with a `.openadkit-resource.json` file, and
-`clean` and `--force` only delete or replace marked data. Data that was already
-there, such as a map you copied yourself, is used when it is complete, but the
-CLI never deletes or replaces it; move or remove it yourself.
-
-`clean` and `fetch --force` refuse while that deployment is running, or while
-any live container mounts the data (including another kit or deployment). If
-data usage cannot be checked, they refuse as well.
+- **A directory instead of a name:** `validate`, `config`, `fetch`, `run` and
+  `clean` also take a deployment's directory, such as `openadkit run ./my-kit`.
+  An argument with a `/` or a leading `.` is a directory, and the kit around it
+  is used wherever you run the command.
+- **Version:** `openadkit version` prints the installed release and the
+  Autoware release it pins; in a source checkout, the commit.
+- **Scripting:** `list`, `version` and `validate` accept `--json`.
+  `validate --json` prints one JSON document also when the deployment is
+  invalid (`"valid": false` with the `"error"`).
+- **Docker commands:** commands print what they do in plain terms; add
+  `--verbose` (or set `OPENADKIT_VERBOSE=1`) to also see the docker commands
+  they run, status queries aside.
+- **Short name and Tab completion:** `openadkit install` also links `adkit`, a
+  short name for the same launcher. Tab completes commands, options and
+  deployment names for both names, from the kit around the current directory
+  or else the active release; bash-completion (installed on Ubuntu by default)
+  loads it from `~/.local/share/bash-completion/completions` in a new shell.
+  The installer leaves an `adkit` or a completion file it did not install
+  alone, and `openadkit uninstall` removes only its own links.

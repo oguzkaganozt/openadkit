@@ -30,8 +30,8 @@ Sensor preprocessing and environment understanding in one image.
 - **CUDA variant** — `sensing-perception-cuda` accelerates point cloud
   processing and neural-network inference on NVIDIA GPUs. It is amd64-only and
   requires the NVIDIA Container Toolkit. Used by
-  [Logging Simulation](../deployments/logging-simulation/index.md) (`--gpu`) and
-  [CARLA Simulation](../deployments/carla-simulation/index.md).
+  [Logging Simulation](../deployments/logging-simulation.md) (`--gpu`) and
+  [CARLA Simulation](../deployments/carla-simulation.md).
 
 ### Localization & Mapping {: #localization-mapping }
 
@@ -58,7 +58,7 @@ planning; goal and parking maneuvers; the planning validator that publishes
 - **CUDA variant** — `planning-cuda` builds the same packages with CUDA and
   TensorRT, so `planning_setting:=diffusion_planner` runs Autoware 2.0's
   Diffusion Planner. It is amd64-only and requires the NVIDIA Container
-  Toolkit. Used by [Planning Simulation](../deployments/planning-simulation/index.md)
+  Toolkit. Used by [Planning Simulation](../deployments/planning-simulation.md)
   (`--gpu`).
 
 ### Control {: #control }
@@ -69,7 +69,7 @@ command conversion; emergency stop and heartbeat monitoring. Control reads only
 that trajectory, so it stays the same whichever planner produces it. Launch:
 `component_control.launch.xml`
 
-### Vehicle and System {: #vehicle-and-system }
+### Vehicle & System {: #vehicle-and-system }
 
 Vehicle actuation and system diagnostics, run as separate containers from one
 image.
@@ -112,7 +112,7 @@ Launch: `tier4_simulator_component.launch.xml`, with the perception simulation
 (dummy objects, tracking, prediction and the occupancy grid map) in its own
 `perception-simulation` service from `planning_simulator/perception_simulation.launch.xml`.
 On amd64 it also carries the CARLA bridge and the CARLA Python client that the
-[CARLA Simulation](../deployments/carla-simulation/index.md) deployment runs in
+[CARLA Simulation](../deployments/carla-simulation.md) deployment runs in
 its `carla-interface` service.
 
 ### Visualizer {: #visualizer }
@@ -121,7 +121,7 @@ RViz in the browser through noVNC: RViz with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
 loopback-only, and so does noVNC by default; reach it remotely through an SSH
 tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
-[kit](../deployments/integrator-guide.md#4-extra-services) (the release mounts
+[kit](../kits/integrator-guide.md#4-extra-services) (the release mounts
 none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it stays the same
 across starts, so a browser exception for it holds.
 
@@ -153,13 +153,13 @@ commands to CARLA and CARLA sensor data to ROS 2 messages:
 
 Launch: `autoware_carla_interface.launch.xml`. CARLA publishes its Python
 client for x86_64 only, so only the amd64 simulator image has it (Humble and
-Jazzy); [CARLA Simulation](../deployments/carla-simulation/index.md) is
+Jazzy); [CARLA Simulation](../deployments/carla-simulation.md) is
 Humble-only and needs an NVIDIA GPU.
 
 ## Image Reference
 
 Generated from the image catalog (`.github/image-inventory.json`), so it always
 matches what CI builds. Tag names are explained in
-[Container Images & Versioning](../getting-started/container-images.md).
+[Container Images & Versioning](../releases/container-images.md).
 
 {{ component_table() }}

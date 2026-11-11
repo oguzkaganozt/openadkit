@@ -4,12 +4,10 @@ Replay a sample rosbag through sensing, perception and localization. An NVIDIA
 GPU with at least 4 GB of VRAM is recommended; CPU mode works but is much
 slower.
 
-Complete the [Quickstart](../../getting-started/index.md) setup first. For GPU
+Complete the [Quickstart](../getting-started/index.md) setup first. For GPU
 mode, run `openadkit setup --gpu --verify`.
 
 ## Run
-
---8<-- "includes/cli-command-context.md"
 
 ```bash
 openadkit run logging-simulation         # CPU: clustering-based detection
@@ -24,7 +22,7 @@ sensing subscribes to its LiDAR topic.
 
 `run` returns once the services have started and stay up. This deployment
 declares no readiness check of Autoware itself and is
-[exempt from CI evidence](../../releases/evidence.md#ci-exemptions), so watch
+[exempt from CI evidence](../releases/evidence.md#ci-exemptions), so watch
 `openadkit status` and the visualizer for localization to initialize.
 
 The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
@@ -43,4 +41,4 @@ openadkit stop
 
 To replace missing sample data, run `openadkit fetch logging-simulation --force`;
 it also refreshes the CenterPoint models. For other issues, see
-[Troubleshooting](../../getting-started/troubleshooting.md).
+[Troubleshooting](../getting-started/troubleshooting.md).

@@ -1,4 +1,3 @@
-- [ ] This PR finishes a roadmap item and removes it from `docs/roadmap.md`
 - [ ] The docs match the change, or it needs none
 
 <!-- The title becomes the squashed commit and its release-notes line:

@@ -9,7 +9,7 @@ Run the full modular Autoware stack against CARLA 0.9.16 in closed loop.
   OpenGL/Vulkan libraries that `openadkit setup --gpu` installs
 - ROS 2 Humble images; this deployment does not support Jazzy
 
-Complete the [Quickstart](../../getting-started/index.md) setup with GPU
+Complete the [Quickstart](../getting-started/index.md) setup with GPU
 support:
 
 ```bash
@@ -17,8 +17,6 @@ openadkit setup --gpu --verify
 ```
 
 ## Run
-
---8<-- "includes/cli-command-context.md"
 
 ```bash
 openadkit run carla-simulation
@@ -28,10 +26,10 @@ openadkit run carla-simulation
 stack. CARLA renders offscreen by default. `run` returns once CARLA accepts
 connections and the services stay up; this deployment declares no readiness
 check of Autoware itself and is
-[exempt from CI evidence](../../releases/evidence.md#ci-exemptions).
+[exempt from CI evidence](../releases/evidence.md#ci-exemptions).
 
 To run Autoware and CARLA on separate hosts, see
-[Split-host Simulation](../split-host.md).
+[Split-host Simulation](split-host.md).
 
 `config/sensor_mapping.yaml` enables LiDAR, IMU, and GNSS. Camera entries are
 available but commented out.
@@ -51,4 +49,4 @@ openadkit stop
 Run `stop` also after a failed start, to release the GPU. If autonomous mode is
 unavailable, inspect `/system/command_mode/availability` and
 `/diagnostics_graph/status`. For other issues, see
-[Troubleshooting](../../getting-started/troubleshooting.md).
+[Troubleshooting](../getting-started/troubleshooting.md).

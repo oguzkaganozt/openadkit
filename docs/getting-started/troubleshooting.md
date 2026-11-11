@@ -2,6 +2,16 @@
 
 --8<-- "includes/cli-command-context.md"
 
+## A Deployment Fails to Start
+
+1. Check that Docker is running: `docker info`.
+2. Check the configuration and the data: `openadkit validate <deployment> --data`.
+3. See which services are up: `openadkit status`.
+4. Read the logs: `openadkit logs --follow`.
+
+If `run` fails after the containers are created, they keep running so you can
+read their logs. Stop them with `openadkit stop`.
+
 ## Docker
 
 ### Permission denied
@@ -15,15 +25,6 @@ Your user must be in the `docker` group. Log out and back in after
 newer is missing. Install Docker's `docker-compose-plugin`
 ([instructions](https://docs.docker.com/compose/install/linux/)) and rerun
 setup. Ubuntu's own `docker-compose-v2` package is too old.
-
-### A deployment fails to start
-
-1. Check that Docker is running: `docker info`.
-2. Check the configuration: `openadkit validate <deployment> --data`.
-3. Read the logs: `openadkit logs --follow`.
-
-If `run` fails after the containers are created, they keep running so you can
-read their logs. Stop them with `openadkit stop`.
 
 ## Data
 

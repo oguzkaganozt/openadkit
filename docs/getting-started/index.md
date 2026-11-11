@@ -5,9 +5,9 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 <nav class="oak-quickstart" aria-label="Quickstart steps">
   <ol>
     <li>
-      <a href="#get-open-ad-kit">
+      <a href="#install">
         <span class="oak-quickstart__number">1</span>
-        <span><strong>Get the kit</strong><small>Download or clone</small></span>
+        <span><strong>Install</strong><small>One command</small></span>
       </a>
     </li>
     <li>
@@ -40,27 +40,29 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 ## Prerequisites
 
 - **Ubuntu 22.04 (Jammy) or 24.04 (Noble)** with `sudo` access
+- 8 CPU cores, 16 GB of RAM and 50 GB of storage or more; see
+  [Hardware](../platforms/hardware.md#host-requirements)
 - `curl` for the release installer; `python3` and `tar` are preinstalled on
   supported Ubuntu releases
 - A web browser: the visualizer runs in it, so no display server is needed
 
-## 1. Get Open AD Kit {: #get-open-ad-kit }
+## 1. Install {: #install }
 
 --8<-- "includes/first-release-note.md"
 
-=== "Release bundle"
+```bash
+curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
+  | bash -s -- install
+```
 
-    The installer verifies the release bundle, installs it to
-    `~/.local/share/openadkit` and puts `openadkit` in `~/.local/bin`:
+The installer verifies the release bundle, installs it to
+`~/.local/share/openadkit` and puts `openadkit` in `~/.local/bin`. If that
+directory is not on your `PATH`, it prints the command to add it. The bundle
+holds the CLI and the deployments; images and sample data are pulled on demand.
 
-    ```bash
-    curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
-      | bash -s -- install
-    ```
-
-    If `~/.local/bin` is not on your `PATH`, the installer prints the command to
-    add it. For a reproducible install, replace `latest` with a release version
-    and pass the same version to `install`:
+??? note "Pin a version, or check the files first"
+    For a reproducible install, replace `latest` with a release version and
+    pass the same version to `install`:
 
     ```bash
     curl -fsSL https://github.com/autowarefoundation/openadkit/releases/download/vX.Y.Z/openadkit \
@@ -69,19 +71,6 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 
     To check the files yourself before running them, see
     [Verify a Release](../releases/verification.md).
-
-=== "Source checkout"
-
-    ```bash
-    git clone https://github.com/autowarefoundation/openadkit.git
-    cd openadkit
-    ```
-
-    Run the commands below as `./openadkit` from the repository root.
-
-The release bundle holds the CLI and the deployments; images and sample data
-are pulled on demand. A source checkout also holds the image sources, CI and
-development tools.
 
 ## 2. Set Up the Host {: #set-up-the-host }
 
@@ -122,10 +111,19 @@ In RViz, follow the [Autoware planning simulation instructions](https://autoware
 2. Set a **goal pose** on the map
 3. Watch the vehicle plan and drive the route
 
+## When You Are Done
+
+```bash
+openadkit stop
+```
+
+`stop` removes the containers. The images and the sample map stay on the host,
+so the next `run` starts faster.
+
 ## Next Steps
 
 - [Deployments](../deployments/index.md) — scenario testing, rosbag replay, CARLA and Safety Island
 - [CLI & Maintenance](cli.md) — runtime controls, configuration, upgrades and cleanup
-- [Create a Kit](../deployments/create-a-kit.md) — your own stack on top of a deployment
+- [Create a Kit](../kits/create-a-kit.md) — your own stack on top of a deployment
 - [Components](../components/index.md) — the images behind what you just ran
 - [Troubleshooting](troubleshooting.md) — when something does not start

@@ -76,10 +76,10 @@ Store overrides under
 ```
 
 On each start, the entrypoint hook copies the package share directory into
-`/tmp/openadkit/<package>/share/<package>`. It applies the shared, base-deployment
-and kit-deployment layers in that order. YAML mappings merge recursively;
-scalars and lists replace the old value. Launch substitutions such as
-`$(var ...)` stay intact. Non-YAML files replace their counterpart.
+`/tmp/openadkit/<package>/share/<package>`. It applies the shared,
+base-deployment and kit-deployment layers in that order. YAML mappings merge
+recursively; scalars and lists replace the old value. Launch substitutions such
+as `$(var ...)` stay intact. Non-YAML files replace their counterpart.
 
 The copied prefixes go first on `AMENT_PREFIX_PATH`, and base launch arguments
 use the same stable paths. No change is written into the image. Removing an
@@ -91,8 +91,8 @@ Once the services are up, `run` collects those reports and warns about every
 override without a counterpart: a package no service has changes nothing, and a
 file or a parameter its package does not have is added. That is intended for a
 new file such as a diagnostics graph; after a base version change it usually
-means a renamed package, file or parameter. Every service gets the same layers, so a
-package installed in only some images is not reported.
+means a renamed package, file or parameter. Every service gets the same layers,
+so a package installed in only some images is not reported.
 
 #### A New Vehicle
 
@@ -167,7 +167,7 @@ one it is an error rather than a second layer.
 #### ABI
 
 The devel and runtime images install ROS packages from the same
-[ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
+[ROS snapshot](../releases/container-images.md#ros-package-snapshot), so
 an overlay built in the devel image links the ROS versions the runtime image
 ships. A dependency you add must also exist in the runtime image; the overlay
 cannot install packages. The example kit's C++ node links `diagnostic_updater`
@@ -176,11 +176,13 @@ deliberately to test this devel/runtime boundary, then publishes `/acme/probe`.
 ### 4. Extra Services
 
 Include the base's Compose file through `OPENADKIT_BASE_DEPLOYMENT`, then
-define your services under `services:`. Keep communicating ROS services on the base ROS domain and
-middleware. An extra Open AD Kit runtime service loads the kit workspace by
-mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the
-example kit's `acme-probe` does. It needs no image of its own: a runtime image and
-the workspace are enough. Build your own image only for what the runtime images
+define your services under `services:`. Keep communicating ROS services on the
+base ROS domain and middleware.
+
+An extra Open AD Kit runtime service loads the kit workspace by mounting
+`${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the example kit's
+`acme-probe` does. It needs no image of its own: a runtime image and the
+workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 

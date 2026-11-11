@@ -12,7 +12,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 ## Start Here { .oak-eyebrow }
 
-<div class="oak-card-grid oak-card-grid--three" markdown="1">
+<div class="oak-card-grid oak-card-grid--four" markdown="1">
 
 <div class="oak-card" markdown="1">
 
@@ -34,6 +34,15 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 <div class="oak-card" markdown="1">
 
+:material-layers-plus:{ .oak-card-icon }
+
+<p class="oak-card-title" role="heading" aria-level="3">Build your own stack</p>
+<p>A kit holds your packages, parameters and services on top of a deployment, with one CLI to build, run and restart it.</p>
+<a href="kits/create-a-kit/" class="md-button">Create a Kit</a>
+</div>
+
+<div class="oak-card" markdown="1">
+
 :material-server-outline:{ .oak-card-icon }
 
 <p class="oak-card-title" role="heading" aria-level="3">Target a platform</p>
@@ -48,13 +57,13 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 <div class="oak-link-list" markdown="1">
 
 - [**Overview**](overview.md) — What Open AD Kit is and how it is put together
-- [**CLI & Maintenance**](getting-started/cli.md) — Runtime controls, configuration, upgrades and cleanup
-- [**Create a Kit**](deployments/create-a-kit.md) — Your own stack on top of a deployment
-- [**Components**](components/index.md) — The container images and what each one runs
-- [**Container Images & Versioning**](getting-started/container-images.md) — Tags, versions and what to pin
+- [**Glossary**](glossary.md) — The terms these docs use
+- [**CLI & Maintenance**](getting-started/cli.md) — Every command, configuration, upgrades and cleanup
 - [**Troubleshooting**](getting-started/troubleshooting.md) — Docker, data, GPU, visualizer and network
+- [**Integrator Guide**](kits/integrator-guide.md) — The reference for every kit extension point
+- [**Components**](components/index.md) — The container images and what each one runs
+- [**Container Images & Versioning**](releases/container-images.md) — Tags, versions and what to pin
 - [**Releases**](releases/index.md) — What a release ships, promises and proves
 - [**Development**](development/index.md) — Build from source, contribute and release
-- [**Roadmap**](roadmap.md) — What comes now, next and later
 
 </div>

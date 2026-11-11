@@ -324,6 +324,23 @@
   color: var(--oak-adm-color, var(--oak-note));
 }
 
+/* Material styles a summary through its type class and the text direction,
+   which outrank the rules above: restate them so a collapsible block looks
+   like an admonition. */
+[dir] .md-typeset details[class] > summary {
+  padding: 0 1.6rem 0 0;
+  overflow: visible;
+  background: transparent;
+}
+
+[dir] .md-typeset details[class] > summary::before {
+  left: -1.6rem;
+}
+
+[dir] .md-typeset details[class] > summary::after {
+  right: 0;
+}
+
 .md-typeset .admonition > .admonition-title code,
 .md-typeset details > summary code {
   box-shadow: none;
@@ -910,6 +927,15 @@
 
 .md-tabs {
   border-bottom: 1px solid var(--oak-border);
+}
+
+/* Material hides the tabs below 76.25em (1220px), which a 1920x1080 laptop at
+   150% scaling never reaches. They fit from 60em, so show them from there; the
+   drawer still holds the pages of a section. */
+@media screen and (min-width: 60em) and (max-width: 76.234375em) {
+  .md-tabs {
+    display: block;
+  }
 }
 
 .md-tabs__link {

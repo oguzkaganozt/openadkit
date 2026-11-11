@@ -36,10 +36,6 @@ number promises.
 - **Highlights** for a minor or major release are in
   `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.
-- **The [roadmap](../roadmap.md) is reviewed** for a minor or major release:
-  finished items are gone, the release's items are under Now, and its
-  `Last reviewed` line names the release. Validation checks that line for the
-  release and its candidates.
 
 ## Workflow
 
@@ -55,7 +51,7 @@ flowchart LR
 
 1. **validate**: runs the release gates in
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
-   (version format, roadmap review, build provenance and age, scan results,
+   (version format, build provenance and age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
    digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
    tagged if a gate fails.
@@ -65,7 +61,7 @@ flowchart LR
    the bundle, installer, plan and metadata, and creates the draft with its
    assets. It then creates the image release tags and, for stable releases, the
    latest aliases (see
-   [Tag Reference](../getting-started/container-images.md#tag-reference)), and
+   [Tag Reference](../releases/container-images.md#tag-reference)), and
    publishes the draft, which creates the Git tag. A published release cannot
    be changed: a bad one is followed by the next version.
 4. **deploy-docs**: republishes the docs when the latest aliases moved.
@@ -91,8 +87,9 @@ the pinned release as a patch instead of waiting for the next Autoware release:
    `autoware-lock.repos`, such as `universe/autoware_universe`). The review is
    the fix's own diff.
 3. Every build applies the patches in order right after `vcs import`; one that
-   does not apply, or has no `Upstream:` line, fails the build. The release lists them under **Backported Autoware fixes**, its
-   bundle carries them as `autoware.backports`, and `openadkit version` counts
-   them. The Autoware version stays that of the tag.
+   does not apply, or has no `Upstream:` line, fails the build. The release
+   lists them under **Backported Autoware fixes**, its bundle carries them as
+   `autoware.backports`, and `openadkit version` counts them. The Autoware
+   version stays that of the tag.
 4. When the branch moves to an Autoware release that contains the fix, delete
    the patch.

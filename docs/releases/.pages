@@ -1,5 +1,6 @@
 nav:
   - index.md
+  - Container Images & Versioning: container-images.md
   - Compatibility: compatibility.md
   - Evidence Policy: evidence.md
   - Verify a Release: verification.md

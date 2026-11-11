@@ -27,8 +27,12 @@ the same patterns with `-jazzy` (for example `planning-jazzy`).
 
 - **Reproducible deployments**: use a release tag (`vX.Y.Z`) or a digest.
 - **Latest stable for a distro**: use `<target>-<ros_distro>`.
-- **Never** pin per-platform CI tags such as `universe-common-amd64-humble`;
-  they move with every build of `main`.
+- **Never** pin per-architecture tags such as `universe-common-amd64-humble`:
+  CI moves them with every build of `main`, and publishes them only for the
+  common images its own builds start from.
+- **Source checkout**: `./openadkit` runs `<target>-<arch>-<ros_distro>`, the
+  tags of a [local build](../development/build-from-source.md), not published
+  images.
 
 ## Versioning
 
@@ -36,19 +40,22 @@ Open AD Kit versions follow [Semantic Versioning](https://semver.org/) on their
 own, starting at `v2.0.0`: a backward-incompatible change to the CLI, the
 manifests or a deployment raises the major version, and a move to a new
 Autoware release raises at least the minor version. The release notes list what
-breaks, and [Compatibility](../releases/compatibility.md) lists what a major
+breaks, and [Compatibility](compatibility.md) lists what a major
 version keeps working.
 
-Releases come from `main`, which pins one Autoware release in
-`.github/autoware.ref`. Every release pairs the two in its
-[GitHub Release](https://github.com/autowarefoundation/openadkit/releases) title,
-`Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do `openadkit install` and
-`openadkit version`. The release also pins the ROS 2 distros and every image
-digest, and its images carry `org.opencontainers.image.autoware-base-version`.
-A fix that is upstream but not yet in an Autoware release can be
-[backported](../development/release-process.md#backporting-an-autoware-fix); the release
-notes list it, and the Autoware version stays the tag's. A `release/X.Y` branch
-is created from a release tag only to fix an older version.
+- **One Autoware release per release.** Releases come from `main`, which pins
+  one Autoware release in `.github/autoware.ref`. The
+  [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
+  title pairs the two, `Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do
+  `openadkit install` and `openadkit version`.
+- **Pinned inputs.** A release also pins the ROS 2 distros and every image
+  digest, and its images carry
+  `org.opencontainers.image.autoware-base-version`.
+- **Backports.** A fix that is upstream but not yet in an Autoware release can
+  be [backported](../development/release-process.md#backporting-an-autoware-fix);
+  the release notes list it, and the Autoware version stays the tag's.
+- **Older versions.** A `release/X.Y` branch is created from a release tag only
+  to fix an older version.
 
 ## ROS 2 Distro Support
 
@@ -59,7 +66,7 @@ is created from a release tag only to fix an older version.
 
 A release bundle pins images for both distros; choose one with `--ros-distro`.
 A release needs the evidence cells of both distros to pass its
-[gate](../releases/evidence.md), and a distro is supported only while it is
+[gate](evidence.md), and a distro is supported only while it is
 supported upstream. Changing the default takes a reviewed manifest change and
 passing evidence; a release never falls back to another distro by itself.
 Evidence runs on amd64, so an image build alone does not prove runtime behavior

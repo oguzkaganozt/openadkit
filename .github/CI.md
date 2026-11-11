@@ -25,9 +25,10 @@ metadata, so `evidence.yaml` runs on it unchanged before merge. A fork's pull
 request loads its images (no push, read-only token) and stops at the scan,
 which applies the release gate's policy. Only pipeline changes (`PIPELINE_INPUTS`
 in `build.py`) build a single image, `api`, which proves the pipeline end to end.
-Temporary shared caches stay restricted to same-repository PRs. Published builds retain exact upstream contexts, source/lock labels,
-security-refresh stamps and the existing bounded cache policy. The local Bake
-graph in `components/docker-bake.hcl` still owns Dockerfiles and dependency edges.
+Temporary shared caches stay restricted to same-repository PRs. Published
+builds retain exact upstream contexts, source/lock labels, security-refresh
+stamps and the existing bounded cache policy. The local Bake graph in
+`components/docker-bake.hcl` still owns Dockerfiles and dependency edges.
 
 `images.py` keeps the existing unversioned, snake-case build/scan JSON formats.
 It records **observed** registry platforms, not the inventory's expected list.
@@ -49,12 +50,10 @@ evidence subjects all read one kit inventory.
 Each evidence matrix row is the complete cell plan: identity, the node list in
 manifest order and the deployment's verify step. L1 is `openadkit run`, which
 waits for the deployment's healthchecks; L2 is `run --verify`; L3 is the example
-kit's `checks/dev_loop.sh`. `run_cell.sh`
-executes the row with a common validate/start/cleanup lifecycle; it does not
-derive policy from deployment names. Scenario isolation and drive-to-goal checks
-stay distinct.
-Hosted split evidence is two nodes on one runner, not proof of two physical
-hosts.
+kit's `checks/dev_loop.sh`. `run_cell.sh` executes the row with a common
+validate/start/cleanup lifecycle; it does not derive policy from deployment
+names. Scenario isolation and drive-to-goal checks stay distinct. Hosted split
+evidence is two nodes on one runner, not proof of two physical hosts.
 
 The integrator example is made in CI, not kept in `deployments/`: the staged
 CLI's `openadkit new example-kit` makes it under `kits/`, and the fixture in
@@ -65,8 +64,9 @@ validates the same kit made from the checkout.
 images after 14 days, branch builds after 90 days (the age a release may still
 promote), the compile bases of builds older than that, the caches of images and
 branches that no longer exist, and overwritten caches; release tags, latest
-aliases and the moving `<target>-<arch>-<distro>` tags stay. Its weekly run only lists until
-the repository variable `REGISTRY_CLEANUP` is `delete`. `GITHUB_TOKEN` deletes
+aliases and the moving `<target>-<arch>-<distro>` tags stay. Its weekly run
+only lists until the repository variable `REGISTRY_CLEANUP` is `delete`.
+`GITHUB_TOKEN` deletes
 only in packages that give the repository the **Admin** role under the
 package's *Manage Actions access*: set it on `openadkit`, `openadkit-buildcache`
 and `openadkit-ci` in every repository that builds.

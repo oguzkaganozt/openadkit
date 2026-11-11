@@ -52,8 +52,8 @@ What a kit made with `openadkit new` builds on:
   which the images' entrypoint applies and sources on every start.
 - `externalImages` that replace a component image or add new ones.
 
-See [Create a Kit](../deployments/create-a-kit.md) and the
-[Integrator Guide](../deployments/integrator-guide.md).
+See [Create a Kit](../kits/create-a-kit.md) and the
+[Integrator Guide](../kits/integrator-guide.md).
 
 ### Settings and Paths
 
@@ -73,7 +73,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
 
 - Component image names and the tag scheme: release tags, latest aliases and
   the devel image a kit builds its overlay in. See
-  [Container Images & Versioning](../getting-started/container-images.md).
+  [Container Images & Versioning](container-images.md).
 - The image labels `org.opencontainers.image.autoware-base-version` and
   `org.opencontainers.image.ros-snapshot`.
 - The Autoware packages that the catalog deployments run and that each image's
@@ -98,10 +98,10 @@ release:
 - **Split-host nodes:** `--node`, `nodes` in `deployment.json` and the Zenoh
   bridge. See [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
-  generates. See [AutoSD](../platforms/autosd/index.md).
+  generates. See [AutoSD](../platforms/autosd.md).
 - **The Diffusion Planner:** `planning-simulation --gpu`. With Autoware 2.0.0
   its verify step fails on the sample route. See
-  [Planning Simulation](../deployments/planning-simulation/index.md).
+  [Planning Simulation](../deployments/planning-simulation.md#gpu-mode).
 
 ## Not Covered
 

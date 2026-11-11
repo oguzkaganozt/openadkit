@@ -11,15 +11,15 @@
 
 > The deployment layer for the [Autoware](https://github.com/autowarefoundation/autoware) ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.
 
-Open AD Kit packages Autoware into focused component images and ready-to-run deployments, and integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) with the deployed stack. Its CLI, deployment assets, and build and release automation run autonomous driving and ADAS systems the same way on every host. Today it ships simulation deployments; vehicle integration is on the [roadmap](https://autowarefoundation.github.io/openadkit/roadmap/).
+Open AD Kit packages Autoware into focused component images and ready-to-run deployments, and integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) with the deployed stack. Its CLI, deployment assets, and build and release automation run autonomous driving and ADAS systems the same way on every host. Today it ships simulation deployments; vehicle integration is planned.
 
 Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle.
 
-## Quick Start
+## Quickstart
 
 Run Planning Simulation on Ubuntu 22.04 or 24.04. No GPU is required.
 
-> **v2.0.0 is not published yet.** Until it is, clone this repository and run the commands below as `./openadkit` from its root, without the `install` step.
+> **v2.0.0 is not published yet.** Until it is, there is no release to install: [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
 
 ```bash
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
@@ -52,9 +52,9 @@ The [documentation site](https://autowarefoundation.github.io/openadkit/) covers
 
 - [Architecture and components](https://autowarefoundation.github.io/openadkit/overview/)
 - [Deployments](https://autowarefoundation.github.io/openadkit/deployments/)
-- [Your own kit](https://autowarefoundation.github.io/openadkit/deployments/create-a-kit/)
+- [Create a kit](https://autowarefoundation.github.io/openadkit/kits/create-a-kit/)
 - [Supported platforms](https://autowarefoundation.github.io/openadkit/platforms/)
-- [Container images and versioning](https://autowarefoundation.github.io/openadkit/getting-started/container-images/)
+- [Container images and versioning](https://autowarefoundation.github.io/openadkit/releases/container-images/)
 - [Compatibility](https://autowarefoundation.github.io/openadkit/releases/compatibility/)
 - [Building from source](https://autowarefoundation.github.io/openadkit/development/build-from-source/)
 
