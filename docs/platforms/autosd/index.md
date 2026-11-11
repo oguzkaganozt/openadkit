@@ -132,4 +132,4 @@ heavier workloads. `-m 2G` is enough only to boot and explore the OS. Log in as
 
 ## Boards
 
-- [R-Car X5H](https://github.com/oguzkaganozt/rcar-x5h-autosd): AutoSD 10 image for the R-Car X5H board, kept in its own repository.
+- [R-Car X5H](https://github.com/autowarefoundation/openadkit-rcar-x5h): AutoSD 10 image for the R-Car X5H board, kept in its own repository.
