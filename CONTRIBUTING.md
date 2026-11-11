@@ -119,15 +119,6 @@ settings file, `~/.config/openadkit/<name>.env`.
 
 To test a split-host (`--node`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
 
-## Roadmap
-
-The [roadmap](https://autowarefoundation.github.io/openadkit/roadmap/) lists
-outcomes a user will notice, one row each, in engineering priority rather than
-by date. Maintenance, CI and release chores are issues instead. The pull
-request that finishes an item removes its row, and each minor or major release
-reviews the page: items move from Next to Now, Later is pruned, and the
-`Last reviewed` line names the release, which release validation checks.
-
 ## Releasing
 
 Every build of `main` (or of a `release/X.Y` branch) is scanned and runs the

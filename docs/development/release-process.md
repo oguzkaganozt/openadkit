@@ -36,10 +36,6 @@ number promises.
 - **Highlights** for a minor or major release are in
   `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.
-- **The [roadmap](../roadmap.md) is reviewed** for a minor or major release:
-  finished items are gone, the release's items are under Now, and its
-  `Last reviewed` line names the release. Validation checks that line for the
-  release and its candidates.
 
 ## Workflow
 
@@ -55,7 +51,7 @@ flowchart LR
 
 1. **validate**: runs the release gates in
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
-   (version format, roadmap review, build provenance and age, scan results,
+   (version format, build provenance and age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
    digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
    tagged if a gate fails.

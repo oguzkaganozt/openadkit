@@ -65,6 +65,5 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 - [**Container Images & Versioning**](releases/container-images.md) — Tags, versions and what to pin
 - [**Releases**](releases/index.md) — What a release ships, promises and proves
 - [**Development**](development/index.md) — Build from source, contribute and release
-- [**Roadmap**](roadmap.md) — What comes now, next and later
 
 </div>

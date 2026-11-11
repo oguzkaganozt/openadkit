@@ -22,4 +22,3 @@ moves to the latest stable version with `openadkit upgrade`.
 - [Compatibility](compatibility.md) — what a version number promises
 - [Evidence Policy](evidence.md) — what a build must pass to be released
 - [Verify a Release](verification.md) — check the files before you run them
-- [Roadmap](../roadmap.md) — planned work, in priority order
