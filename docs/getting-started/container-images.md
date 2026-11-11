@@ -85,8 +85,8 @@ are not pinned, so security updates keep flowing into new builds.
 
 - **Releases**: the latest stable release is supported. Fixes, including CVE
   remediation, ship in a new release; older releases are not patched.
-- **Platforms**: support is tiered (committed, experimental, best-effort,
-  unsupported). See [Supported Platforms](../platforms/index.md).
+- **Platforms**: a path is supported, experimental or unsupported. See
+  [Supported Platforms](../platforms/index.md).
 - **No certification claims**: Open AD Kit makes no safety-certification,
   functional-safety or production-readiness claim.
 

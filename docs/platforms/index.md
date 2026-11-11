@@ -32,12 +32,10 @@ blueprint and Red Hat's AutoSD blueprint build on it.
 
 ## Support Matrix
 
-| Tier | Meaning |
-|------|---------|
-| **Committed** | Gated by every release: it builds and passes its checks, or the release does not ship |
-| **Experimental** | Works and is tested where its page says so, but may change in a minor release |
-| **Best-effort** | Ships in the release without CI evidence |
-| **Unsupported** | Not built or tested in this repository |
+A **supported** path is built and shipped by every release and covered by
+[Compatibility](../releases/compatibility.md); the notes say where CI evidence
+does not reach it. An **experimental** one works but may change in a minor
+release. An **unsupported** one is not built or tested here.
 
 A path that fails its build or validation gate is dropped or marked here, not
 documented as if it worked. Host requirements and boards are on the
@@ -45,10 +43,10 @@ documented as if it worked. Host requirements and boards are on the
 
 | Path | Tier | Notes |
 |------|------|-------|
-| Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Committed** | Compose validated in CI; CARLA Simulation runs on 22.04 only |
-| Component images, amd64 + arm64 | **Committed** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
-| Jazzy images | **Committed** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
-| CARLA Simulation | **Best-effort** | Humble, amd64, NVIDIA GPU; exempt from CI evidence |
+| Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Supported** | Compose validated in CI; CARLA Simulation runs on 22.04 only |
+| Component images, amd64 + arm64 | **Supported** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
+| Jazzy images | **Supported** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
+| CARLA Simulation | **Supported** | Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand |
 | AutoSD with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
 | EWAOL | **Unsupported** | No assets in this repository |
 
