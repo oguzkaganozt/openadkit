@@ -70,9 +70,11 @@ bash .github/scripts/tests/test_setup_helpers.sh
 ./openadkit validate planning-simulation --ros-distro humble
 ./openadkit validate planning-simulation --ros-distro jazzy
 
-# Documentation (local build, from the repository root)
+# Documentation (local build, from the repository root), then the links
+# READMEs make to the docs site
 pip install -r docs/requirements.txt
 mkdocs build
+python3 .github/scripts/check_site_links.py
 ```
 
 ### Test Scope
@@ -94,12 +96,12 @@ replace hosted build/scan/evidence or real two-host SIL acceptance.
 
 ### Testing Deployments
 
-Before merging deployment-related changes, verify the Compose files. Every
-deployment carries one complete `settings.env` for Compose interpolation. A
-deployment that declares `gpuFiles` also carries `settings.gpu.env`, loaded
-after `settings.env` when `--gpu` is set. The shared
-`deployments/shared/runtime.env` is loaded inside containers via `env_file:`
-and is not passed on the command line.
+Before merging deployment-related changes, verify the Compose files. A
+deployment carries one complete `settings.env` for Compose interpolation (one
+with a `base` carries only its differences). A deployment that declares
+`gpuFiles` also carries `settings.gpu.env`, loaded after `settings.env` when
+`--gpu` is set. The shared `deployments/shared/runtime.env` is loaded inside
+containers via `env_file:` and is not passed on the command line.
 
 ```bash
 # Validate the manifest and Compose configuration
@@ -109,23 +111,30 @@ and is not passed on the command line.
 ./openadkit run planning-simulation
 ```
 
-The same command surface is included in the release bundle. Use
-`~/.config/openadkit/<name>.env` for local overrides.
+The release bundle ships the same commands. Put local overrides in the host
+settings file, `~/.config/openadkit/<name>.env`.
 
-For split-host (`--node`) topology testing, follow the [documentation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
+To test a split-host (`--node`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
 
 ### Releasing
 
-Every build of `main` (or of a `release/X.Y` branch) is scanned and runs the evidence cells. Run `release.yaml` (GitHub Actions) on the same branch with a version and the `build_tag` of a build whose scan and evidence passed to promote it to a `vX.Y.Z` release or pre-release. See the workflow input descriptions for details. The release takes its default ROS distro from `openadkit.json` `defaultRosDistro`: to change the default, update the manifest (and its docs) in a commit before releasing.
+Every build of `main` (or of a `release/X.Y` branch) is scanned and runs the
+evidence cells. A release promotes one of those builds: run `release.yaml` on
+the same branch with a version and the `build_tag` of a build whose scan and
+evidence passed. The
+[Release Process](https://autowarefoundation.github.io/openadkit/development/release-process/)
+lists what must be in place, and the
+[Evidence Policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
+what the gate accepts.
 
-Both release candidates and stable releases require a successful evidence run
-that passed every cell for the promoted build; reviewed manifest exemptions
-remain explicitly unverified. Read the
-[evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
-and [verification guide](https://autowarefoundation.github.io/openadkit/releases/verification/).
+### Breaking Changes
 
-Manifest contract changes bump `schemaVersion` and come with migration notes.
-Removing a public variable or extension point is a breaking change, so it waits for the next Autoware release (see [Versioning](docs/getting-started/container-images.md#versioning)).
+[Compatibility](https://autowarefoundation.github.io/openadkit/releases/compatibility/)
+lists what a major version keeps working. Removing or changing one of those
+items, such as a command, a manifest field, a covered setting or an extension
+point, is a breaking change: mark the pull request title with `!`, say what
+breaks and how to migrate, and expect it to wait for the next major version. A
+manifest contract change also bumps `schemaVersion`.
 
 ## DCO Requirement
 

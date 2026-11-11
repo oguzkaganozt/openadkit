@@ -1,46 +1,54 @@
 # Integrator Guide
 
-An integrator kit owns its differences, while Open AD Kit owns the base CLI,
-images and deployments. Start one with `openadkit new` ([Create a Kit](create-a-kit.md));
-the kit CI exercises is that output with the [example fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit) on top.
-This interface requires manifest schema version 2; older manifests are rejected.
+The reference for a kit: what it pins, each extension point, and how it is
+validated and upgraded. A kit owns its differences; Open AD Kit owns the base
+CLI, images and deployments. Start one with `openadkit new`
+([Create a Kit](create-a-kit.md)).
 
 ## Pin the Base
 
-Set `kind` to `kit` and `extends` to a published schema-v2 release tag in your
-root `openadkit.json`. The CLI locates that version under
-`~/.local/share/openadkit/openadkit-<tag>` and delegates to its launcher. A
-missing version is downloaded and verified on first use, like a build tool's
-wrapper does; your active `openadkit` stays as it is. Only the commands that
-act on a kit do this: `validate`, `config`, `fetch`, `run`, `build` and `clean`.
-`list`, `version`, every `--help` and Tab completion read the kit with the CLI
-you called, so a directory you only look at starts no program and no download.
-`OPENADKIT_INSTALL_DIR` overrides the install root for both.
+In the kit's `openadkit.json`, `kind` is `kit` and `extends` names a published
+release tag or, for development, the path of a source checkout. Manifests use
+`schemaVersion: 2`; older ones are rejected.
 
-A relative or absolute source path is also accepted for development. Only one
-level of `extends` is supported: a kit extends Open AD Kit, not another kit.
-Each kit deployment names a `base` deployment in the pinned release. Its
-architecture, ROS distro and GPU requirements are inherited. `requirements` in
-the kit's `deployment.json` may narrow them: fewer architectures or ROS
-distros, or `gpu` set to `none` or `required` where the base leaves it
-optional. It never widens them, since the kit runs the base's services.
-Without a GPU mode the base's GPU-only downloads are left out. Base downloads and one-shot reset services are inherited; a kit
-can add downloads with distinct destination variables and extra reset services.
-Kit deployments currently use the single-host Compose view, not inherited
-split-host nodes.
+- **The pinned release runs the kit.** The CLI finds it under
+  `~/.local/share/openadkit/openadkit-<tag>` (`OPENADKIT_INSTALL_DIR` to
+  change) and hands the command to its launcher. A missing version is
+  downloaded and verified on first use, as a build tool's wrapper does; your
+  active `openadkit` stays as it is.
+- **Only the commands that act on a kit do this:** `validate`, `config`,
+  `fetch`, `run`, `build` and `clean`. `list`, `version`, `new`, every `--help`
+  and Tab completion read the kit with the CLI you called, so a directory you
+  only look at starts no program and no download.
+- **One level of `extends`:** a kit extends Open AD Kit, not another kit.
 
-A kit made by `openadkit new my-kit` has just one deployment, also named
-`my-kit`. Its `openadkit.json`, `deployment.json`, Compose and differences live
-in one directory; `deployments.my-kit.path` is `"."`. No nested `deployments/`
-directory is needed. Run commands from that directory, not the base repository;
-there they need no deployment name.
+## Base a Deployment
+
+Each kit deployment names a `base` deployment of the pinned release in its
+`deployment.json`.
+
+- **Requirements** (architectures, ROS distros, GPU) are inherited.
+  `requirements` may narrow them: fewer architectures or ROS distros, or `gpu`
+  set to `none` or `required` where the base leaves it optional. It never
+  widens them, since the kit runs the base's services. Without a GPU mode, the
+  base's GPU-only downloads are left out.
+- **Downloads and one-shot reset services** are inherited. A kit can add
+  downloads with distinct destination variables, and reset services of its
+  own.
+- **Split-host nodes are not inherited:** a kit deployment runs on one host.
+
+A kit made by `openadkit new my-kit` has one deployment, also named `my-kit`.
+Its manifests, Compose file and differences live in one directory
+(`deployments.my-kit.path` is `"."`), so it needs no nested `deployments/`
+directory. Run commands from that directory, where they need no deployment
+name.
 
 ## Extension Points
 
-### 1. Values
+### 1. Settings
 
-Put only differences in your deployment's `settings.env`. Compose interpolation
-reads these files in order (later wins):
+Put only differences in your deployment's `settings.env`. Compose reads these
+files in order (later files win):
 
 1. Base `settings.env`
 2. Base `settings.gpu.env`, when GPU mode is selected
@@ -48,11 +56,12 @@ reads these files in order (later wins):
 4. Kit `settings.gpu.env`, if present and GPU mode is selected
 5. `~/.config/openadkit/<kit-deployment>.env`, if present
 
-Container ROS/DDS defaults come from the included services' `runtime.env`.
-Shell exports do not hide values in the configuration files. The CLI injects
-the ROS distro, host UID/GID, overlay mount paths, `OPENADKIT_BASE_ROOT` (the base root)
-and `OPENADKIT_BASE_DEPLOYMENT` (the directory selected by `base`); release
-component images and external images remain pinned.
+Shell exports do not override values set in these files. The CLI adds the ROS
+distro, the host UID and GID, the overlay mount paths, `OPENADKIT_BASE_ROOT`
+(the base's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
+deployment); a release's component and external images stay pinned. Inside the
+containers, the ROS and DDS defaults come from the base services'
+`runtime.env`.
 
 ### 2. Config Overrides
 
@@ -113,31 +122,36 @@ openadkit build -- --packages-select my_pkg                # arguments after -- 
 openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you set another
 ```
 
-Packages build incrementally: a second build compiles only what changed. The
-hook sources the workspace on top of Autoware, so a package with the name of
-an Autoware package comes first; Autoware packages that link against its
-library keep the copy they were built with. `--install-base` and `--build-base`
-stay fixed: the services source `install/` where they mount the workspace.
+#### Build
 
-The CLI records the image and distro in `install/.openadkit-overlay.json`, and
-`validate` and `run` warn after a base upgrade or a distro change until you
-rebuild. Such a rebuild
-starts from a clean `build/` and `install/`, since CMake caches record the paths
-they were configured with. A source checkout pins no devel image: set
-`DEVEL_IMAGE` to the matching `universe-common-devel` digest from the build
-metadata. The hook sources `overlay_ws/install/local_setup.bash` on top of Autoware.
+- Packages build incrementally: a second build compiles only what changed.
+- The CLI records the image and distro in `install/.openadkit-overlay.json`.
+  After a base upgrade or a distro change, `validate` and `run` warn until you
+  rebuild, and that rebuild starts from a clean `build/` and `install/`, since
+  CMake caches record the paths they were configured with.
+- `--install-base` and `--build-base` stay fixed: the services source
+  `install/` where they mount the workspace.
+- A source checkout pins no devel image: set `DEVEL_IMAGE` to the matching
+  `universe-common-devel` digest from the build's metadata.
+
+#### Run
 
 The workspace belongs to the kit: the one `overlay_ws` at the kit root serves
 every deployment of the kit, since they all extend one base and its images.
-Every Autoware service mounts it, and the hook sources it on top of Autoware,
-so its packages are visible in every service. Whether your code runs depends on
-what starts it:
+Every Autoware service mounts it, and the entrypoint hook sources
+`overlay_ws/install/local_setup.bash` on top of Autoware, so its packages are
+visible in every service. Whether your code runs depends on what starts it:
 
 - A changed copy of an Autoware package shadows the image's own. It runs where
-  Autoware already launches that package, with nothing more to configure.
+  Autoware already launches that package, with nothing more to configure;
+  Autoware packages that link against its library keep the copy they were
+  built with.
 - A new node runs only where something starts it: an extra service (as the
-  example fixture's `acme-probe`), a launch file you override under `config/autoware`,
-  or by hand with `openadkit shell <service> ros2 run <package> <node>`.
+  example kit's `acme-probe`), a launch file you override under
+  `config/autoware`, or by hand with
+  `openadkit shell <service> ros2 run <package> <node>`.
+
+#### Without a Kit
 
 To try a workspace with a reference deployment, without writing a kit, mount it
 with `--ws`:
@@ -150,24 +164,25 @@ openadkit run planning-simulation --ws ~/my_ws
 `--ws` is for a deployment without a workspace of its own; on a kit that has
 one it is an error rather than a second layer.
 
+#### ABI
+
 The devel and runtime images install ROS packages from the same
 [ROS snapshot](../getting-started/container-images.md#ros-package-snapshot), so
 an overlay built in the devel image links the ROS versions the runtime image
 ships. A dependency you add must also exist in the runtime image; the overlay
-cannot install packages. The example fixture's C++ node links `diagnostic_updater`
-deliberately to test the devel/runtime ABI boundary, then publishes
-`/acme/probe`.
+cannot install packages. The example kit's C++ node links `diagnostic_updater`
+deliberately to test this devel/runtime boundary, then publishes `/acme/probe`.
 
 ### 4. Extra Services
 
-Include the base's Compose file using `OPENADKIT_BASE_DEPLOYMENT`, then define your services
-under `services:`. Keep communicating ROS services on the base ROS domain and
+Include the base's Compose file through `OPENADKIT_BASE_DEPLOYMENT`, then
+define your services under `services:`. Keep communicating ROS services on the base ROS domain and
 middleware. An extra Open AD Kit runtime service loads the kit workspace by
 mounting `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the
-example fixture's `acme-probe` does. It needs no image of its own: a runtime image and
+example kit's `acme-probe` does. It needs no image of its own: a runtime image and
 the workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
-external image (point 5).
+external image ([point 5](#5-image-replacement)).
 
 To replace one side of a base that runs as split-host nodes, include only the
 other side's service layer instead of the base's Compose file. For example, a
@@ -189,14 +204,15 @@ prove that it honors the entrypoint, launch or parameter interfaces.
 
 ## Validation and Evidence
 
-`openadkit validate <deployment>` renders the deployment and checks its manifest
-and data. It does not pull images or prove that the runtime works; `run` reports
-overrides without a counterpart (see [Config Overrides](#2-config-overrides)).
+`openadkit validate` renders the deployment and checks its manifest (and, with
+`--data`, its data). It does not pull images or prove that the runtime works;
+`run` reports overrides without a counterpart (see
+[Config Overrides](#2-config-overrides)).
 
-Your kit's acceptance checks run where CI runs them:
+Your kit's acceptance checks run where CI runs its own:
 
 - **Readiness:** give a service of your own a Compose `healthcheck`. `run`
-  waits until it passes. The example fixture's `acme-probe` service runs
+  waits until it passes. The example kit's `acme-probe` service runs
   `checks/example_kit.py`, which checks the fresh `/acme/probe` publication of
   its C++ package and its parameters.
 - **End to end:** the base's `verify` step runs on top of your layer with
@@ -205,20 +221,22 @@ Your kit's acceptance checks run where CI runs them:
   runs the command in that running service, and without `command` the step
   waits for the service to exit and takes its exit code.
 
-The example kit's evidence cell runs both: its healthcheck and Planning
-Simulation's drive-to-goal check. Humble and Jazzy each build the workspace against
-their matching devel digest.
+The example kit is what `openadkit new` makes, with a
+[fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit)
+that uses every extension point on top. Its evidence cells run both checks on
+Humble and Jazzy, each with a workspace built against the matching devel
+digest, and every release needs them to pass. They show that the extension
+points work on that build; they do not verify your kit.
 
-A base deployment's CI exemption stays with the kit; an exemption is not runtime
-evidence. The [release gate](../releases/evidence.md) requires `PASSED`. See
-[Evidence Workflow](../development/evidence-workflow.md) for reusing the verifier;
-it does not yet accept arbitrary external kits.
+A base deployment's CI exemption stays with the kit; an exemption is not
+runtime evidence. The [evidence workflow](../development/evidence-workflow.md)
+does not yet accept external kits.
 
 ## Upgrade Without Losing Your Work
 
 Install the new base next to the old version, update `extends`, rebuild your
 workspace against its devel digest, then validate and run your acceptance
-checks. Your repository, host config, downloaded data and output directories
-are outside the base release. Updating the default launcher does not change a
-kit's explicit version pin. See [CLI & Maintenance](../getting-started/cli.md)
-for the config and output directories and marker-protected data cleanup.
+checks. Your repository, host settings, downloaded data and output directories
+are outside the base release, and `openadkit upgrade` does not change a kit's
+`extends`. See [Configuration](../getting-started/cli.md#configuration) and
+[Downloaded Data](../getting-started/cli.md#downloaded-data).

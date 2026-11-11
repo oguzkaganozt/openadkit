@@ -18,4 +18,5 @@ openadkit run --verify           # start, wait until ready, run the base's end-t
 openadkit stop
 ```
 
-See the Integrator Guide for every extension point and how to upgrade.
+See the [Integrator Guide](https://autowarefoundation.github.io/openadkit/deployments/integrator-guide/)
+for every extension point and how to upgrade.

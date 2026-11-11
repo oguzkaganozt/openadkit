@@ -3,3 +3,4 @@ nav:
   - Build from Source: build-from-source.md
   - Contributing: contributing.md
   - Evidence Workflow: evidence-workflow.md
+  - Release Process: release-process.md

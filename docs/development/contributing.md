@@ -5,14 +5,14 @@ repository's [CONTRIBUTING.md](https://github.com/autowarefoundation/openadkit/b
 is the canonical guide for:
 
 - Developer Certificate of Origin (DCO) sign-off
-- Branch and commit conventions
+- Branch and pull request conventions
 - Local lint and test commands
 - Deployment validation
-- Release workflow
 
 Before opening a pull request, run the checks relevant to your change and sign
-every commit with `git commit -s`. Significant architectural changes should be
-discussed on [Discord](https://discord.gg/Q94UsPvReQ) before implementation.
+every commit with `git commit -s`. Discuss significant architectural changes
+on [Discord](https://discord.gg/Q94UsPvReQ) before implementing them.
+Maintainers cut releases with the [Release Process](release-process.md).
 
 ## Community
 

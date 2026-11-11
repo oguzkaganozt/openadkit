@@ -1,8 +1,8 @@
 """mkdocs-macros module — single-source repeated reference facts.
 
 The registry prefix and default ROS distro title come from openadkit.json, the
-manifest the release reads them from, so the published docs cannot contradict
-the release. The component image table is generated from the catalog
+kit manifest the release reads them from, so the published docs cannot
+contradict the release. The component image table is generated from the catalog
 (.github/image-inventory.json) so the docs cannot drift from what CI builds.
 
 Used by the `macros` plugin configured in mkdocs.yaml. Reference in any page
@@ -30,11 +30,11 @@ def _load_json(path, label):
 
 
 def define_env(env):
-    kit = _load_json(KIT, "bundle manifest")
+    kit = _load_json(KIT, "kit manifest")
     registry = kit["imageRepository"]
     if not isinstance(registry, str) or not registry.strip():
         raise RuntimeError(
-            "bundle manifest imageRepository must be a non-empty string"
+            "kit manifest imageRepository must be a non-empty string"
         )
     env.variables["registry"] = registry
     env.variables["default_distro_title"] = kit["defaultRosDistro"].capitalize()

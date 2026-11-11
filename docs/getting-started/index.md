@@ -40,25 +40,18 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 ## Prerequisites
 
 - **Ubuntu 22.04 (Jammy) or 24.04 (Noble)** with `sudo` access
-- `curl` for the release installer; `python3` and `tar` are preinstalled on supported Ubuntu releases
-- A web browser - the visualizer runs in it, no display server needed
+- `curl` for the release installer; `python3` and `tar` are preinstalled on
+  supported Ubuntu releases
+- A web browser: the visualizer runs in it, so no display server is needed
 
 ## 1. Get Open AD Kit {: #get-open-ad-kit }
 
 --8<-- "includes/first-release-note.md"
 
-=== "Source checkout"
-
-    ```bash
-    git clone https://github.com/autowarefoundation/openadkit.git
-    cd openadkit
-    ```
-
 === "Release bundle"
 
-    Download the latest release. The command verifies the release bundle before
-    installing it to `~/.local/share/openadkit` and makes `openadkit` available
-    from `~/.local/bin`.
+    The installer verifies the release bundle, installs it to
+    `~/.local/share/openadkit` and puts `openadkit` in `~/.local/bin`:
 
     ```bash
     curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
@@ -74,29 +67,32 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
       | bash -s -- install --version vX.Y.Z
     ```
 
-    To verify the bundle yourself before running it, see
-    [Verify a Release Bundle Manually](cli.md#verify-a-release-bundle-manually).
+    To check the files yourself before running them, see
+    [Verify a Release](../releases/verification.md).
 
-The release bundle contains only the runtime and deployment assets. A source
-checkout also contains the image sources, CI, and development tools.
+=== "Source checkout"
+
+    ```bash
+    git clone https://github.com/autowarefoundation/openadkit.git
+    cd openadkit
+    ```
+
+    Run the commands below as `./openadkit` from the repository root.
+
+The release bundle holds the CLI and the deployments; images and sample data
+are pulled on demand. A source checkout also holds the image sources, CI and
+development tools.
 
 ## 2. Set Up the Host {: #set-up-the-host }
-
-After a release install, these commands work from any directory. For a source
-checkout, prefix them with `./` (for example `./openadkit`) and run them from
-the repository root.
 
 ```bash
 openadkit setup --verify
 ```
 
-Run setup as your normal user. It requests `sudo` only for host changes. CPU is
-the default; add `--gpu` for NVIDIA deployments. `--gpu` also installs NVIDIA
-OpenGL/Vulkan libraries needed for CARLA. Setup installs Docker only when the
-host has none; it never replaces an existing engine. If Docker is installed but
-Docker Compose 5.0 or newer is missing, install Docker's `docker-compose-plugin`
-([instructions](https://docs.docker.com/compose/install/linux/)) and rerun
-setup. Ubuntu's own `docker-compose-v2` package is too old.
+Run setup as your normal user; it asks for `sudo` only for host changes. It
+installs Docker when the host has none and never replaces an existing engine.
+Add `--gpu` for NVIDIA deployments: it also installs the NVIDIA Container
+Toolkit and the OpenGL/Vulkan libraries CARLA needs.
 
 --8<-- "includes/docker-group-activation.md"
 
@@ -106,37 +102,21 @@ setup. Ubuntu's own `docker-compose-v2` package is too old.
 openadkit run planning-simulation
 ```
 
-Add `--ros-distro jazzy` to select Jazzy. Humble is the default in both source
-checkouts and release bundles.
-
 `run` downloads and verifies the sample map, pulls missing images, starts the
-services, and waits until they are ready.
+services, and returns once Autoware is ready.
+
+--8<-- "includes/ros-distro.md"
 
 ## 4. Open the Visualizer {: #open-the-visualizer }
 
-Once `run` returns, Autoware is ready. Open:
+--8<-- "includes/visualizer-remote-access.md"
 
-```text
-http://localhost:6080/vnc.html
-```
-
-Use the default password **`openadkit`**.
-
-To open RViz on your own desktop instead of the browser, set
-`REMOTE_DISPLAY=false` in `~/.config/openadkit/<deployment>.env`; the
-visualizer then uses your session's `DISPLAY` and `XAUTHORITY`.
-
-For a remote host, keep noVNC loopback-only and forward it over SSH:
-
-```bash
-ssh -L 8080:localhost:6080 <user>@<host>
-```
-
-Then open `http://localhost:8080/vnc.html` locally.
+To open RViz on your own desktop instead of the browser, see
+[Visualizer](../components/index.md#visualizer).
 
 ## 5. Drive {: #drive }
 
-In RViz2, follow the [Autoware planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle) to:
+In RViz, follow the [Autoware planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle) to:
 
 1. Set an **initial pose** for the ego vehicle
 2. Set a **goal pose** on the map
@@ -144,10 +124,8 @@ In RViz2, follow the [Autoware planning simulation instructions](https://autowar
 
 ## Next Steps
 
-**[Explore the other deployments](../deployments/index.md)** - scenario testing,
-rosbag replay, and CARLA. Split-host (`--node` over Zenoh) is experimental.
-
-- [CLI & Maintenance](cli.md) - Runtime controls, validation, upgrades, and cleanup
-- [Components](../components/index.md) - The architecture behind what you just ran
-- [Container Images & Versioning](container-images.md) - Tag schema and pinning guidance
-- [Create a Kit](../deployments/create-a-kit.md) - Build your own stack on a deployment
+- [Deployments](../deployments/index.md) — scenario testing, rosbag replay, CARLA and Safety Island
+- [CLI & Maintenance](cli.md) — runtime controls, configuration, upgrades and cleanup
+- [Create a Kit](../deployments/create-a-kit.md) — your own stack on top of a deployment
+- [Components](../components/index.md) — the images behind what you just ran
+- [Troubleshooting](troubleshooting.md) — when something does not start

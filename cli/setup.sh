@@ -232,25 +232,16 @@ dds_buffers_configured() {
 }
 
 configure_dds_buffers() {
-  local temporary legacy=false
+  local temporary
   if dds_buffers_configured; then
     log "kernel UDP buffer limits for DDS are already configured"
     return 0
-  fi
-  # Earlier releases also raised the defaults for every socket on the host.
-  # Removing them from the file does not reset the running values.
-  if grep -qs '^net\.core\.[rw]mem_default' "$DDS_SYSCTL"; then
-    legacy=true
   fi
   temporary=$(mktemp)
   trap 'rm -f "$temporary"; trap - RETURN' RETURN
   dds_buffer_settings >"$temporary"
   log "configuring kernel UDP buffer limits for DDS"
   sudo install -m 0644 "$temporary" "$DDS_SYSCTL"
-  if [[ $legacy == true ]]; then
-    # The Linux default; any other sysctl.d setting is reapplied below.
-    sudo sysctl -qw net.core.rmem_default=212992 net.core.wmem_default=212992
-  fi
   sudo sysctl --system >/dev/null
 }
 

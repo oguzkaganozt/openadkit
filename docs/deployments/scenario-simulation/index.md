@@ -16,8 +16,8 @@ openadkit run scenario-simulation
 openadkit logs --follow
 ```
 
-Run Autoware on one host and the TIER IV runner on another with `--node`; see
-[Split-host simulation](../split-host.md).
+To run Autoware on one host and the scenario runner on another, see
+[Split-host Simulation](../split-host.md).
 
 --8<-- "includes/ros-distro.md"
 
@@ -25,11 +25,14 @@ Run Autoware on one host and the TIER IV runner on another with `--node`; see
 initialize; the runner then executes the scenario and writes the results to
 `~/openadkit-output/scenario-simulation/results` (`run` prints the path).
 
+## Open the Visualizer
+
 --8<-- "includes/visualizer-remote-access.md"
 
 ## Configure
 
-Put overrides in `~/.config/openadkit/scenario-simulation.env`:
+Set these in the host settings file,
+`~/.config/openadkit/scenario-simulation.env`:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
@@ -41,7 +44,8 @@ Put overrides in `~/.config/openadkit/scenario-simulation.env`:
 | `GLOBAL_TIMEOUT` | Wall-clock seconds each scenario may take; scale it with the factor | `180` |
 | `MAP_PATH` | Host map directory | `~/autoware_map/kashiwanoha_map` |
 
-A relative `SCENARIO_HOST_DIR` resolves from `deployments/scenario-simulation/`. `MAP_PATH` must be absolute; use `$HOME`
+A relative `SCENARIO_HOST_DIR` resolves from
+`deployments/scenario-simulation/`. `MAP_PATH` must be absolute; use `$HOME`
 rather than `~`.
 
 To run your own scenario, keep it outside the release. Create a directory, put
@@ -61,9 +65,10 @@ as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
 `pointcloud_map.pcd`, `global_map_center.pcd.yaml`,
 `lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
 
-This deployment changes one Autoware parameter, in a file that holds only the
-changed value. On every start, the images merge it into the upstream parameter
-file: `config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`.
+This deployment changes one Autoware parameter with a
+[config override](../integrator-guide.md#2-config-overrides): a file that holds
+only the changed value, merged into the upstream parameter file on every start
+(`config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`).
 
 ## Stop and Recover
 

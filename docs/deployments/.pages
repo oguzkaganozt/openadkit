@@ -4,6 +4,7 @@ nav:
   - Scenario Simulation: scenario-simulation
   - Logging Simulation: logging-simulation
   - CARLA Simulation: carla-simulation
-  - Split-host simulation: split-host.md
+  - Safety Island Simulation: safety-island-simulation
+  - Split-host Simulation: split-host.md
   - Create a Kit: create-a-kit.md
   - Integrator Guide: integrator-guide.md

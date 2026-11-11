@@ -1,8 +1,8 @@
 # Build from Source
 
-How to build the Open AD Kit images locally, how CI builds them, and how
-releases are cut. Most users do not need this; pull the published images
-instead (see [Container Images & Versioning](../getting-started/container-images.md)).
+How to build the Open AD Kit images locally and how CI builds them. Most users
+do not need this: `openadkit run` pulls the published images (see
+[Container Images & Versioning](../getting-started/container-images.md)).
 
 ## Prerequisites
 
@@ -25,8 +25,8 @@ the same file CI uses.
 `universe-common` compiles the shared part of Autoware Universe on the upstream
 `core-devel` image and copies the result onto the lean upstream `base` image, so
 build tools never reach the runtime layers. Every component builds from it.
-`sensing-perception-cuda` builds on the upstream CUDA images and adds the
-`universe-common` install tree.
+The CUDA variants, `sensing-perception-cuda` and `planning-cuda`, build on the
+upstream CUDA images and add the `universe-common` install tree.
 
 The published images end with a per-build Ubuntu security refresh. Components
 compile on `universe-common-build`, the devel image without that refresh, which
@@ -37,11 +37,11 @@ compiles and only refreshes and reassembles the runtime images.
 | Group | Targets |
 |-------|---------|
 | `universe-common` | `universe-common-devel`, `universe-common` |
-| `component` | all component images, including the amd64-only `sensing-perception-cuda` |
+| `component` | all component images, including the amd64-only `sensing-perception-cuda` and `planning-cuda` |
 | `planning-simulation` | `universe-common` plus the images Planning Simulation needs (local builds) |
 | `default` | `universe-common` + `component` |
 
-CI publishes every image to `ghcr.io/autowarefoundation/openadkit`.
+CI publishes every image to `{{ registry }}`.
 
 ## Build and Run Locally
 
@@ -119,9 +119,8 @@ builds every target with the same Bake file. The build matrix comes from
 the source of truth for which images are built and for which architectures.
 
 Jobs run in dependency order: `prepare`, then `build-common`, then
-`build-components`. Most images build for Humble and
-Jazzy on amd64 and arm64. `create-manifests` then combines the per-arch images
-into multi-arch tags. CI disables the local tags (`LOCAL_IMAGE=""`) and tags
+`build-components`. Most images build for Humble and Jazzy on amd64 and arm64.
+`create-manifests` then combines the per-arch images into multi-arch tags. CI disables the local tags (`LOCAL_IMAGE=""`) and tags
 images through `docker/metadata-action`.
 
 [`.github/autoware.ref`](https://github.com/autowarefoundation/openadkit/blob/main/.github/autoware.ref)
@@ -130,75 +129,6 @@ pins the Autoware release a branch builds on its official images. CI builds
 runs the evidence cells after each build. A weekly scan of `main`'s latest build
 opens a GitHub issue when it fails.
 
-## Release Process
-
-Releases promote an existing CI build; nothing is rebuilt.
-
-### Before You Release
-
-- **The branch:** `main`, or a `release/X.Y` branch created from a release tag
-  to fix an older line. Its `.github/autoware.ref` names the Autoware release
-  (for example `2.0.0`), and the ROS snapshots in `components/docker-bake.hcl`
-  belong to that release.
-- **`vars.RUNNER_AMD64`** and **`vars.RUNNER_ARM64`** optionally move the build,
-  scan and evidence jobs to larger runners (for example
-  `ubicloud-standard-8-ubuntu-2204` and `ubicloud-standard-8-arm-ubuntu-2204`).
-  Unset, they run on the GitHub-hosted `ubuntu-22.04` and `ubuntu-22.04-arm`.
-  Pull request jobs run on them too, so point them only at ephemeral hosted
-  runners, never at a persistent self-hosted machine.
-- **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-buildcache`
-  and `openadkit-ci` under `ghcr.io/autowarefoundation/`.
-- **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
-  a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
-  used.
-- **A successful build** of `build-all-images` exists on that branch; stable
-  and pre-releases `vX.Y.Z` both come from it. The build summary shows its
-  `build_tag`. The release ships the CLI
-  and deployments from that build's commit, and pushes that change only those
-  start no build: dispatch `build-all-images` on the branch to release them. The
-  release run warns when the branch has such changes.
-- **A passing scan** of `scan-images` exists for that `build_tag` on the same
-  branch; it runs after the build.
-- **A successful `evidence` run** on the same branch passed every cell for that
-  same build; it runs after the build. See [Evidence Policy](../releases/evidence.md).
-- **Highlights** for a minor or major release are in
-  `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
-  candidates open with them; the rest of the notes is generated.
-- **The [roadmap](../roadmap.md) is reviewed** for a minor or major release:
-  finished items are gone, the release's items are under Now, and its
-  `Last reviewed` line names the release. Validation checks that line for the
-  release and its candidates.
-
-### Workflow
-
-Run [`release.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml)
-on the build's branch with the version and `build_tag`. A `release/X.Y` branch
-releases with its own workflows and scripts, so a later `main` cannot change
-how an older line is validated. Its jobs run in order:
-
-```mermaid
-flowchart LR
-    V[validate] --> P[package-bundles] --> R[publish] --> O[deploy-docs]
-```
-
-1. **validate**: runs the release gates in
-   [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
-   (version format, build provenance and age, scan results, metadata and file
-   integrity, image coverage, passing L0-L3 evidence, registry digests, Git tag). Nothing is tagged if a
-   gate fails.
-2. **package-bundles**: writes the immutable release plan and the runtime bundle
-   for both distros.
-3. **publish**: writes notes/metadata from the validated plan, attests
-   bundle/installer/plan/metadata and creates the draft with its assets. It then
-   creates the image release tags and, for stable releases, the latest aliases (see
-   [Tag Reference](../getting-started/container-images.md#tag-reference)), and
-   publishes the draft, which creates the Git tag. A published release cannot be
-   changed: a bad one is followed by the next version.
-4. **deploy-docs**: republishes the docs when the latest aliases moved.
-
-The release plan (`release-plan.json`) attached to each GitHub Release records
-the exact image digests, aliases, assets, and checksums of that release.
-
-A fork can rehearse a release with the same workflow: it promotes its own
-build in its own registry namespace and publishes in the fork. Validation only
-requires the registry and the package name that `openadkit.json` names.
+A pull request builds only the images its changes affect; see
+[Testing a Pull Request](evidence-workflow.md#testing-a-pull-request). Releases
+promote one of these builds; see the [Release Process](release-process.md).

@@ -3,14 +3,23 @@
 A deployment is a ready-to-run Autoware stack for one task. New users should
 start with Planning Simulation.
 
-| Deployment | Purpose | GPU |
-|------------|---------|-----|
-| [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a demo map | Optional |
-| [Scenario Simulation](scenario-simulation/index.md) | Run predefined traffic scenarios | No |
-| [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception, and localization | Optional |
-| [CARLA Simulation](carla-simulation/index.md) | Drive a CARLA vehicle in closed loop | Required |
-| [Split-host simulation](split-host.md) | Run Autoware on one host and the simulator on another over Zenoh | CARLA only |
-| [Safety Island Simulation](https://github.com/autowarefoundation/openadkit/tree/main/deployments/safety-island-simulation) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller instead of Autoware's trajectory follower | No |
+| Deployment | Purpose | GPU | Architectures | CI evidence |
+|------------|---------|-----|---------------|-------------|
+| [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a sample map with the built-in simulator; `--gpu` plans with the Diffusion Planner | Optional | amd64, arm64 | Yes, in CPU mode |
+| [Scenario Simulation](scenario-simulation/index.md) | Run predefined traffic scenarios in Scenario Simulator | No | amd64, arm64 | Yes |
+| [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception and localization | Optional | amd64, arm64 | Exempt |
+| [CARLA Simulation](carla-simulation/index.md) | Drive in closed loop with the CARLA simulator | Required | amd64 | Exempt |
+| [Safety Island Simulation](safety-island-simulation/index.md) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No | amd64 | Yes |
+
+All run on Humble and Jazzy except CARLA Simulation, which is Humble-only, and
+the GPU modes are amd64-only. **CI evidence** says whether a release runs the
+deployment end to end before it ships; an exempt deployment ships without that
+check, and evidence runs on amd64 only. See the
+[Evidence Policy](../releases/evidence.md).
+
+Scenario and CARLA Simulation can also run as
+[split-host](split-host.md) nodes, with Autoware on one host and the simulator
+on another over Zenoh (experimental).
 
 ## Running a Deployment
 
@@ -26,23 +35,19 @@ openadkit logs --follow
 openadkit stop
 ```
 
-- Add `--ros-distro jazzy` to `validate`, `fetch`, or `run` to select Jazzy;
-  Humble is the default.
+- Add `--ros-distro jazzy` to `validate`, `fetch`, `run` or `build` to select
+  Jazzy; Humble is the default.
 - Add `--gpu` for the optional GPU mode of Planning Simulation (the Diffusion
-  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU,
-  so its GPU mode turns on by itself; it is Humble-only.
-- Add `--node` to `validate` or `run` to start one node of a
-  [split-host](split-host.md) run. `status`, `logs`, and `stop` find the
-  running node themselves; they take `--node` only when several nodes of one
-  deployment run on the same machine.
+  Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
+  mode turns on by itself.
 - Put host settings in `~/.config/openadkit/<name>.env`; see
   [Configuration](../getting-started/cli.md#configuration).
 
-Scenario split-node evidence covers two isolated nodes on one hosted runner.
-CARLA is explicitly exempt from hosted runtime CI. Neither is a claim of
-arbitrary two-machine or vehicle compatibility; see the
-[evidence policy](../releases/evidence.md).
+[CLI & Maintenance](../getting-started/cli.md) covers the other commands.
 
-To build your own stack, start a kit with `openadkit new` ([Create a
-Kit](create-a-kit.md)). It keeps its own kit manifest and
-deployment in one directory, extending a deployment without copying it.
+## Your Own Stack
+
+Start a kit with `openadkit new` ([Create a Kit](create-a-kit.md)). It extends
+a deployment without copying it and keeps only your differences. The
+[Integrator Guide](integrator-guide.md) is the reference for every extension
+point.
