@@ -2140,7 +2140,10 @@
 <h2 id="now-v200">Now: v2.0.0<a class="headerlink" href="#now-v200" title="Permanent link">#</a></h2>
 <ol>
 <li><strong>Release.</strong> A full build and evidence run, then a clean-host install, kit,
-   restart and upgrade check on a release candidate.</li>
+   restart and upgrade check on a release candidate. Before it, review the
+   registry cleanup's first list-only run and set <code>REGISTRY_CLEANUP=delete</code>;
+   after it, delete the <code>openadkit-common</code> package, which no build uses since
+   every image went to <code>openadkit</code>.</li>
 </ol>
 <h2 id="next-v2x-in-priority-order">Next: v2.x, in priority order<a class="headerlink" href="#next-v2x-in-priority-order" title="Permanent link">#</a></h2>
 <ol>
