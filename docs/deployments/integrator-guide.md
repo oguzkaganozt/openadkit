@@ -11,14 +11,20 @@ Set `kind` to `kit` and `extends` to a published schema-v2 release tag in your
 root `openadkit.json`. The CLI locates that version under
 `~/.local/share/openadkit/openadkit-<tag>` and delegates to its launcher. A
 missing version is downloaded and verified on first use, like a build tool's
-wrapper does; your active `openadkit` stays as it is.
+wrapper does; your active `openadkit` stays as it is. Only the commands that
+act on a kit do this: `validate`, `config`, `fetch`, `run`, `build` and `clean`.
+`list`, `version`, every `--help` and Tab completion read the kit with the CLI
+you called, so a directory you only look at starts no program and no download.
 `OPENADKIT_INSTALL_DIR` overrides the install root for both.
 
 A relative or absolute source path is also accepted for development. Only one
 level of `extends` is supported: a kit extends Open AD Kit, not another kit.
 Each kit deployment names a `base` deployment in the pinned release. Its
-architecture, ROS distro and GPU requirements are inherited without narrowing
-or widening. Base downloads and one-shot reset services are inherited; a kit
+architecture, ROS distro and GPU requirements are inherited. `requirements` in
+the kit's `deployment.json` may narrow them: fewer architectures or ROS
+distros, or `gpu` set to `none` or `required` where the base leaves it
+optional. It never widens them, since the kit runs the base's services.
+Without a GPU mode the base's GPU-only downloads are left out. Base downloads and one-shot reset services are inherited; a kit
 can add downloads with distinct destination variables and extra reset services.
 Kit deployments currently use the single-host Compose view, not inherited
 split-host nodes.
@@ -26,7 +32,8 @@ split-host nodes.
 A kit made by `openadkit new my-kit` has just one deployment, also named
 `my-kit`. Its `openadkit.json`, `deployment.json`, Compose and differences live
 in one directory; `deployments.my-kit.path` is `"."`. No nested `deployments/`
-directory is needed. Run commands from that directory, not the base repository.
+directory is needed. Run commands from that directory, not the base repository;
+there they need no deployment name.
 
 ## Extension Points
 

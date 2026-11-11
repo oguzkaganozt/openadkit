@@ -40,7 +40,7 @@ ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
 # An integrator kit: its own deployments on top of one pinned Open AD Kit.
 ALLOWED_INTEGRATOR_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
 ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS = {
-    "schemaVersion", "description", "base", "compose", "data", "verify",
+    "schemaVersion", "description", "base", "compose", "requirements", "data", "verify",
 }
 ALLOWED_INTEGRATOR_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
@@ -67,7 +67,6 @@ ALLOWED_VERIFY_KEYS = {"service", "command"}
 ALLOWED_COMPOSE_KEYS = {
     "files",
     "gpuFiles",
-    "profiles",
     "resetServices",
     "waitTimeout",
 }
@@ -319,7 +318,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
     reject_unknown(value, allowed, "compose")
     compose: dict[str, Any] = {
         field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("gpuFiles", "profiles", "resetServices")
+        for field in ("gpuFiles", "resetServices")
     }
     compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
     if not compose["files"]:
@@ -363,6 +362,48 @@ def validate_wait_timeout(value: Any) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
         raise OpenADKitError("compose.waitTimeout must be a positive integer")
     return value
+
+
+def narrow_requirements(base: dict[str, Any], value: Any) -> dict[str, Any]:
+    """The requirements of a deployment on a base: the base's, or fewer.
+
+    It runs the base's services, so it runs nowhere the base does not. It may
+    name fewer architectures or ROS distros, and settle the GPU mode the base
+    leaves optional: none or required.
+    """
+    if value is None:
+        return base
+    if not isinstance(value, dict):
+        raise OpenADKitError("requirements must be an object")
+    reject_unknown(value, ALLOWED_REQUIREMENT_KEYS, "requirements")
+    requirements = dict(base)
+    for field in ("architectures", "rosDistros", "gpuArchitectures"):
+        if field not in value:
+            continue
+        items = require_string_list(value[field], f"requirements.{field}", nonempty=True)
+        added = sorted(set(items) - set(base.get(field, base["architectures"])))
+        if added:
+            raise OpenADKitError(
+                f"requirements.{field} adds {', '.join(added)}, which the base deployment does not support"
+            )
+        requirements[field] = items
+    gpu = value.get("gpu", base["gpu"])
+    if gpu not in ("none", "optional", "required"):
+        raise OpenADKitError("requirements.gpu must be none, optional, or required")
+    if gpu != base["gpu"] and base["gpu"] != "optional":
+        raise OpenADKitError(f"requirements.gpu cannot change the base deployment's {base['gpu']}")
+    requirements["gpu"] = gpu
+    if gpu == "none":
+        requirements.pop("gpuArchitectures", None)
+    elif "gpuArchitectures" in requirements:
+        requirements["gpuArchitectures"] = [
+            item for item in requirements["gpuArchitectures"] if item in requirements["architectures"]
+        ]
+        if not requirements["gpuArchitectures"]:
+            raise OpenADKitError(
+                "requirements leave no architecture for the GPU mode; set requirements.gpu to none"
+            )
+    return requirements
 
 
 def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict[str, Any]:

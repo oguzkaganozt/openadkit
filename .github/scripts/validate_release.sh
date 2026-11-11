@@ -45,8 +45,9 @@ validate_inputs() {
   esac
 }
 
-# A prefix that differs from openadkit.json would push images the manifest
-# does not name.
+# Another registry or package than openadkit.json names would push images the
+# manifest does not name. The owner is the releasing repository's own: a fork
+# releases to its own namespace, which is how a release is rehearsed.
 validate_manifest_consistency() {
   local manifest manifest_registry
 
@@ -55,8 +56,8 @@ validate_manifest_consistency() {
   manifest_registry=$(jq -r '.imageRepository // empty' "${manifest}")
   [ -n "${manifest_registry}" ] \
     || fail "Product manifest ${manifest} does not declare imageRepository"
-  [ "${IMAGE_REPO}" = "${manifest_registry}" ] \
-    || fail "IMAGE_REPO '${IMAGE_REPO}' must match openadkit.json imageRepository '${manifest_registry}'"
+  [ "${IMAGE_REPO%%/*}" = "${manifest_registry%%/*}" ] && [ "${IMAGE_REPO##*/}" = "${manifest_registry##*/}" ] \
+    || fail "IMAGE_REPO '${IMAGE_REPO}' must name the registry and package of openadkit.json imageRepository '${manifest_registry}'"
 }
 
 resolve_latest_alias_policy() {

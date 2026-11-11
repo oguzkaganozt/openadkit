@@ -5,12 +5,11 @@
   "compose": {
     "files": ["docker-compose.yaml"],
     "gpuFiles": [],
-    "profiles": [],
-    "resetServices": ["map-check", "scenario_simulator"],
+    "resetServices": ["map-check", "scenario-simulator"],
     "waitTimeout": 600
   },
   "verify": {
-    "service": "scenario_simulator"
+    "service": "scenario-simulator"
   },
   "nodes": {
     "autoware": {
@@ -24,7 +23,7 @@
       "rosDomainId": 2,
       "files": ["compose.scenario.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
-      "resetServices": ["scenario_simulator"],
+      "resetServices": ["scenario-simulator"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
   },

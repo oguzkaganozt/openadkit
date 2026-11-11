@@ -198,3 +198,7 @@ flowchart LR
 
 The release plan (`release-plan.json`) attached to each GitHub Release records
 the exact image digests, aliases, assets, and checksums of that release.
+
+A fork can rehearse a release with the same workflow: it promotes its own
+build in its own registry namespace and publishes in the fork. Validation only
+requires the registry and the package name that `openadkit.json` names.

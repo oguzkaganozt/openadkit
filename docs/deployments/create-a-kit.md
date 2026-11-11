@@ -25,7 +25,9 @@ my-kit/
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment. Compose reads
-  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS distro, GPU, downloads and the verify step are inherited.
+  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS
+  distro, GPU, downloads and the verify step are inherited; `requirements` may
+  narrow the first three.
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
   add your services below it. `OPENADKIT_BASE_ROOT` names the base root for
   shared assets.
@@ -41,18 +43,21 @@ The deployment's name is its key in `openadkit.json`, here `my-kit`;
 `openadkit new` from an installed release writes its version, such as
 `"extends": "v2.0.0"`; the kit then runs with that release's own launcher.
 From a source checkout it writes the checkout's path. To move to another
-release, change `extends`; the next command in the kit downloads that release
-if it is missing.
+release, change `extends`; the next command that acts on the kit, such as
+`validate` or `run`, downloads that release if it is missing.
 
 ## Build, Validate, Run, Stop
 
 ```bash
 cd my-kit
 openadkit build                 # overlay_ws, in the release's devel image
-openadkit validate my-kit
-openadkit run my-kit --verify   # start, wait until ready, run the base's end-to-end check
+openadkit validate
+openadkit run --verify          # start, wait until ready, run the base's end-to-end check
 openadkit stop
 ```
+
+Inside a kit with one deployment the commands need no name. From elsewhere,
+name it by its directory: `openadkit run ./my-kit`.
 
 A source checkout pins no devel image: set `DEVEL_IMAGE` to the matching
 `universe-common-devel` digest from that build's metadata before `build`. Add

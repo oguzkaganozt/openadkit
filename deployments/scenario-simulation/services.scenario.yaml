@@ -10,7 +10,7 @@ include:
   - ../shared/services/visualizer.yaml
 
 services:
-  scenario_simulator:
+  scenario-simulator:
     image: ${SCENARIO_SIMULATOR_IMAGE:?pinned in openadkit.json externalImages}
     container_name: autoware-scenario-simulator
     network_mode: host

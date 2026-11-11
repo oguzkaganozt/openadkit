@@ -122,5 +122,3 @@ services:
         done
         exec ros2 bag play /autoware_map/rosbag -r "$$ROSBAG_RATE" -s "$$ROSBAG_FORMAT"
     restart: "no"
-    profiles:
-      - rosbag

@@ -80,6 +80,20 @@ def test_releases_are_dispatched_from_main_or_a_maintenance_branch(tmp_path, ref
     assert (result.returncode == 0) is accepted, result.stderr
 
 
+@pytest.mark.parametrize(("image_repo", "accepted"), [
+    ("ghcr.io/autowarefoundation/openadkit", True),
+    # A fork releases to its own namespace, as a rehearsal does.
+    ("ghcr.io/a-fork/openadkit", True),
+    ("ghcr.io/autowarefoundation/openadkit-ci", False),
+    ("docker.io/autowarefoundation/openadkit", False),
+])
+def test_a_release_pushes_to_the_registry_and_package_the_manifest_names(tmp_path, image_repo, accepted):
+    result = run_validator(tmp_path, "validate_manifest_consistency", IMAGE_REPO=image_repo,
+                           RELEASE_SOURCE_ROOT=str(ROOT))
+    assert (result.returncode == 0) is accepted, result.stderr
+    assert accepted or "must name the registry and package" in result.stderr
+
+
 @pytest.mark.parametrize("problem", [None, "missing", "duplicate"])
 def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     images = build_images()

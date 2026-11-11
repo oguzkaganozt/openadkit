@@ -6,7 +6,6 @@
   "compose": {
     "files": ["docker-compose.yaml"],
     "gpuFiles": [],
-    "profiles": [],
     "resetServices": ["map-check", "carla-map-loader"],
     "waitTimeout": 480
   },

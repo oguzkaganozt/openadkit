@@ -69,7 +69,7 @@ def manifest(*, data=None, gpu=False, nodes=False):
     document = {
         "schemaVersion": 2, "description": "Test deployment",
         "compose": {"files": ["docker-compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
-                    "profiles": [], "resetServices": [], "waitTimeout": 1},
+                    "resetServices": [], "waitTimeout": 1},
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],
@@ -298,6 +298,33 @@ def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
     assert not launcher.exists() and not installed(tmp_path, "v1.3.0").exists()
     assert installed(tmp_path).is_file()
 
+
+
+def test_an_installed_version_becomes_active_without_a_download(tmp_path):
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    newer = release_bin(tmp_path, "v1.3.0")
+    assert command(launcher, "upgrade", home=tmp_path / "home", bin_dir=newer).returncode == 0
+    kept = installed(tmp_path).parent / "marker"
+    kept.write_text("kept")
+    # Back to the kept version while offline: nothing is downloaded or replaced.
+    offline = tmp_path / "offline"
+    executable(offline / "curl", "#!/usr/bin/env bash\nexit 22\n")
+    result = install(tmp_path, offline, "--version", "v1.2.3")
+    assert result.returncode == 0 and "v1.2.3 is already installed" in result.stdout, result.stderr
+    assert launcher.resolve() == installed(tmp_path) and kept.read_text() == "kept"
+    assert (tmp_path / "home/.local/bin/adkit").resolve() == installed(tmp_path)
+    # The latest version, once resolved, is used the same way; --force replaces it.
+    marker = installed(tmp_path, "v1.3.0").parent / "marker"
+    marker.write_text("kept")
+    result = install(tmp_path, newer)
+    assert result.returncode == 0 and launcher.resolve() == installed(tmp_path, "v1.3.0")
+    assert marker.read_text() == "kept"
+    assert install(tmp_path, newer, "--force").returncode == 0 and not marker.exists()
+    # A directory that is no release is never taken for one.
+    installed(tmp_path, "v1.3.0").unlink()
+    result = install(tmp_path, newer)
+    assert result.returncode != 0 and "is not an installed release" in result.stderr
 
 
 def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_path):
@@ -1594,6 +1621,35 @@ def test_new_refuses_what_cannot_be_a_kit(tmp_path, name, base, message):
     assert result.returncode != 0 and message in result.stderr
 
 
+def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
+    assert json.loads(run_cli(root, "validate", "--json", directory=kit).stdout)["deployment"] == "custom"
+    # With several, or outside a kit, the name is still asked for.
+    assert run_cli(root, "validate").returncode == 2
+    second = kit / "deployments/second"
+    shutil.copytree(kit / "deployments/custom", second)
+    edit_kit(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 2 and "deployment name required" in result.stderr
+
+
+def test_usage_errors_exit_2_and_help_keeps_its_capitals(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path, projects=("openadkit-example",))
+    for args in (["restart", "app", "--all"], ["record"], ["record", "/tf", "--all"], ["build"]):
+        result = run_cli(root, *args)
+        assert result.returncode == 2 and result.stderr.startswith("error: "), args
+    assert "in a running service with ROS sourced." in " ".join(run_cli(root, "shell", "--help").stdout.split())
+    assert "resolved Compose model as JSON." in " ".join(run_cli(root, "config", "--help").stdout.split())
+    # A kit on a source checkout names it once; one on a release names the version too.
+    kit = integrator_kit(tmp_path, root)
+    assert f"extends: Open AD Kit at {root}" in run_cli(root, "version", directory=kit).stdout.splitlines()
+
+
 def test_new_refuses_inside_a_kit(tmp_path):
     root, _ = runtime_tree(tmp_path)
     kit = integrator_kit(tmp_path, root)
@@ -1741,6 +1797,49 @@ def test_a_catalog_deployment_can_build_on_another(tmp_path):
         cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-on-top")
 
 
+def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
+    gpu_data = files_resource(tmp_path, env="MODEL_PATH", name="model", gpu=True)
+    document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
+    document["requirements"]["gpuArchitectures"] = ["amd64"]
+    root, _ = runtime_tree(tmp_path, document=document)
+    directory = on_top(root)
+
+    def on_top_with(requirements):
+        path = directory / "deployment.json"
+        path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
+        return cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
+
+    # Only what it names changes; without a GPU mode the GPU-only data goes too.
+    deployment = on_top_with({"architectures": ["amd64"], "gpu": "none"})
+    assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
+    assert [item["name"] for item in deployment.data] == ["dataset"]
+    assert on_top_with({"gpu": "required"}).requirements["gpu"] == "required"
+    assert [item["name"] for item in on_top_with({"rosDistros": ["jazzy"]}).data] == ["dataset", "model"]
+    for requirements, message in (
+        ({"architectures": ["amd64", "riscv64"]}, "adds riscv64, which the base deployment does not support"),
+        ({"rosDistros": ["rolling"]}, "adds rolling"),
+        ({"gpuArchitectures": ["arm64"]}, "adds arm64"),
+        ({"architectures": ["arm64"]}, "leave no architecture for the GPU mode"),
+        ({"gpu": "sometimes"}, "must be none, optional, or required"),
+        ({"cpus": 8}, "unknown requirements field"),
+    ):
+        with pytest.raises(cli_manifest.OpenADKitError, match=message):
+            on_top_with(requirements)
+    # A base that settled its GPU mode leaves nothing to choose.
+    assert cli_manifest.narrow_requirements({"architectures": ["amd64"], "rosDistros": ["humble"], "gpu": "none"},
+                                            {"gpu": "none"})["gpu"] == "none"
+    with pytest.raises(cli_manifest.OpenADKitError, match="cannot change the base deployment's none"):
+        cli_manifest.narrow_requirements({"architectures": ["amd64"], "rosDistros": ["humble"], "gpu": "none"},
+                                         {"gpu": "optional"})
+
+
+def test_safety_island_simulation_runs_where_its_release_does():
+    kit = cli_catalog.load_kit(ROOT)
+    deployment = cli_catalog.get_deployment(ROOT, kit, "safety-island-simulation")
+    assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
+    assert not any(item.get("gpu") for item in deployment.data)
+
+
 def test_a_released_deployment_is_intact_only_with_its_base(tmp_path):
     root, base = runtime_tree(tmp_path, release=True)
     directory = on_top(root)
@@ -1851,6 +1950,45 @@ def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
         result = run_cli(root, *args, directory=directory)
         assert result.returncode == 0, result.stderr
         assert record.read_text().strip() == " ".join(args)
+
+
+@pytest.mark.parametrize("pinned", ["path", "version"])
+def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned):
+    root, _ = runtime_tree(tmp_path)
+    acted = tmp_path / "acted"
+    if pinned == "path":
+        # Another Open AD Kit, whose launcher a command that acts runs.
+        other = tmp_path / "other"
+        shutil.copytree(root, other)
+        executable(other / "openadkit", f'#!/usr/bin/env bash\ntouch "{acted}"\n')
+        kit = integrator_kit(tmp_path, root, extends=str(other))
+    else:
+        kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+        executable(tmp_path / "bin/curl", f'#!/usr/bin/env bash\ntouch "{acted}"\nexit 22\n')
+    fake_docker(tmp_path)
+    for args in (["list"], ["list", "--json"], ["version"], ["run", "--help"], ["validate", "custom", "--help"]):
+        result = run_cli(root, *args, directory=kit)
+        assert not acted.exists(), args
+        assert pinned == "version" or result.returncode == 0, result.stderr
+    # Tab asks list for the names; a release that is not installed offers none.
+    names = complete(root, ["openadkit", "run", ""], directory=kit)
+    assert names == ({"custom"} if pinned == "path" else set())
+    assert not acted.exists()
+    missing = run_cli(root, "list", directory=kit)
+    assert pinned == "path" or "openadkit validate, downloads it" in missing.stdout + missing.stderr
+    # A command that acts hands over to the pinned launcher, or downloads the release.
+    run_cli(root, "validate", "custom", directory=kit)
+    assert acted.exists()
+
+
+def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, extends=str(tmp_path / "nowhere"))
+    result = run_cli(root, "validate", "custom", "--json", directory=kit)
+    assert result.returncode == 1
+    document = json.loads(result.stdout)
+    assert document["valid"] is False and document["deployment"] == "custom"
+    assert "extends does not point to an Open AD Kit" in document["error"]
 
 
 @pytest.mark.parametrize("gpu", [False, True])

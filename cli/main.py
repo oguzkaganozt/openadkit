@@ -36,6 +36,10 @@ from settings import Selection
 KIT_TEMPLATE = Path(__file__).resolve().parent / "templates/kit"
 
 
+class UsageError(OpenADKitError):
+    """A command line that cannot run as given; exits 2 like the parser's own errors."""
+
+
 def find_kit(start: Path) -> Path | None:
     """The integrator kit around the working directory, if any.
 
@@ -144,9 +148,14 @@ def install_pinned_release(version: str) -> None:
         raise OpenADKitError(f"could not install Open AD Kit {version}, which this kit extends")
 
 
-def load_context(start: Path) -> tuple[Path, RuntimeContext]:
-    """The kit around start, or this CLI's own Open AD Kit."""
-    root = hand_over(start) or root_path()
+def load_context(start: Path, *, act: bool = True) -> tuple[Path, RuntimeContext]:
+    """The kit around start, or this CLI's own Open AD Kit.
+
+    A command that acts on a kit runs with the CLI of the release the kit pins.
+    Reading one (act=False) only reads its manifests with this CLI: it starts
+    no other program and downloads nothing.
+    """
+    root = (hand_over(start) if act else find_kit(start)) or root_path()
     return root, load_kit(root)
 
 
@@ -165,7 +174,7 @@ class OpenADKitParser(argparse.ArgumentParser):
         if self.help_inventory != "catalog":
             return
         try:
-            root, kit = load_context(Path.cwd())
+            root, kit = load_context(Path.cwd(), act=False)
         except OpenADKitError:
             return
         print(file=file)
@@ -298,7 +307,9 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
         return 0
     if kit.extends is not None:
         print(f"kit: {root}")
-        print(f"extends: Open AD Kit {kit.extends} ({kit.base_root})")
+        # A pinned release, or a source checkout named by its path.
+        pinned = f"{kit.extends} ({kit.base_root})" if VERSION_RE.fullmatch(kit.extends) else f"at {kit.base_root}"
+        print(f"extends: Open AD Kit {pinned}")
         if kit.autoware:
             print(autoware_line(kit.autoware))
     elif kit.kind == "release":
@@ -382,7 +393,10 @@ def json_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def deployment_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("deployment", nargs="?", help="deployment name or directory (omitted: list them)")
+    parser.add_argument(
+        "deployment", nargs="?",
+        help="deployment name or directory (omitted: a kit's only deployment, or else list them)",
+    )
 
 
 def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) -> None:
@@ -502,7 +516,7 @@ def version_command(root: Path, kit: RuntimeContext, args: argparse.Namespace) -
 def new_command(root: Path, kit: RuntimeContext, args: argparse.Namespace) -> int:
     target = create_kit(root, kit, args.name, args.base, Path.cwd())
     print(f"created: {target}")
-    print(f"next: cd {args.name} && openadkit validate {args.name} && openadkit run {args.name}")
+    print(f"next: cd {args.name} && openadkit validate && openadkit run")
     return 0
 
 
@@ -517,7 +531,7 @@ def build_command(root: Path, kit: RuntimeContext, args: argparse.Namespace) -> 
     elif kit.kind == "kit":
         workspace = root / "overlay_ws"
     else:
-        raise OpenADKitError("name the workspace to build: openadkit build PATH")
+        raise UsageError("name the workspace to build: openadkit build PATH")
     if not (workspace / "src").is_dir():
         raise OpenADKitError(f"{workspace} has no src/ to build")
     ros_distro = args.ros_distro or kit.default_ros_distro
@@ -697,7 +711,7 @@ def restart_command(args: argparse.Namespace) -> int:
     """Recreate services of the running deployment, as run started them but
     with the current settings, config and overlay workspace; from any directory."""
     if args.services and args.all_services:
-        raise OpenADKitError("name the services to restart, or pass --all")
+        raise UsageError("name the services to restart, or pass --all")
     project = live.live_view(args.node)
     state = compose.read_run_state(project)
     if state is None:
@@ -737,7 +751,7 @@ def shell_command(args: argparse.Namespace) -> int:
 
 def record_command(args: argparse.Namespace) -> int:
     if bool(args.topics) == args.all_topics:
-        raise OpenADKitError("name the topics to record, or pass --all")
+        raise UsageError("name the topics to record, or pass --all")
     output = Path(args.output).expanduser().resolve() if args.output else None
     bag = live.record(live.live_view(args.node), args.topics, output)
     print(f"recorded: {bag}")
@@ -790,6 +804,12 @@ COMMANDS = {
     "stop": Command("live", "stop and remove the running deployment", status_command),
 }
 
+# These act on a kit, so they run with the CLI of the release it pins and
+# download that release when it is missing. list, version, new and every
+# --help only read the kit, and Tab completion asks list for the names: a
+# directory someone else wrote must not start a program or a download there.
+ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "clean"})
+
 # The launcher runs these itself; main.py sees them only from a broken install.
 INSTALL_USAGE = {
     "install": "openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]",
@@ -818,7 +838,9 @@ def build_parser() -> OpenADKitParser:
     subparsers = parser.add_subparsers(dest="command", parser_class=OpenADKitParser)
     parser.commands = subparsers.choices
     for name, command in COMMANDS.items():
-        subparser = subparsers.add_parser(name, help=command.help, description=command.help.capitalize() + ".")
+        # Not capitalize(): it would lower the case of ROS, Compose and JSON.
+        description = command.help[0].upper() + command.help[1:] + "."
+        subparser = subparsers.add_parser(name, help=command.help, description=description)
         if command.arguments:
             command.arguments(subparser)
         if command.group == "deployment":
@@ -830,27 +852,34 @@ def build_parser() -> OpenADKitParser:
     return parser
 
 
+def command_and_target(parser: OpenADKitParser, arguments: list[str]) -> tuple[str | None, str | None]:
+    """The command and the deployment or workspace it names, read before parsing."""
+    words = iter(arguments)
+    name = next((word for word in words if not word.startswith("-")), None)
+    if name not in COMMANDS or COMMANDS[name].group not in ("catalog", "deployment"):
+        return name, None
+    takes_value = {
+        flag for action in parser.commands[name]._actions if action.nargs != 0 for flag in action.option_strings
+    }
+    for word in words:
+        if word in takes_value:
+            next(words, None)
+        elif not word.startswith("-"):
+            return name, word
+    return name, None
+
+
 def hand_over_before_parsing(parser: OpenADKitParser, arguments: list[str]) -> None:
     """Run a kit's command with the CLI of the release it pins before reading
     its options: this CLI may be older and not know them.
 
     The kit is the one around the deployment or workspace the command names by
-    its directory, or else around the working directory.
+    its directory, or else around the working directory. Only a command that
+    acts hands over, and never to print its help.
     """
-    words = iter(arguments)
-    name = next((word for word in words if not word.startswith("-")), None)
-    if name not in COMMANDS or COMMANDS[name].group not in ("catalog", "deployment"):
+    name, target = command_and_target(parser, arguments)
+    if name not in ACTING_COMMANDS or {"-h", "--help"} & set(arguments):
         return
-    takes_value = {
-        flag for action in parser.commands[name]._actions if action.nargs != 0 for flag in action.option_strings
-    }
-    target = None
-    for word in words:
-        if word in takes_value:
-            next(words, None)
-        elif not word.startswith("-"):
-            target = word
-            break
     hand_over(Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd())
 
 
@@ -862,9 +891,24 @@ def main() -> int:
         split = arguments.index("--")
         arguments, colcon = arguments[:split], arguments[split + 1:]
     parser = build_parser()
-    hand_over_before_parsing(parser, arguments)
-    args = parser.parse_args(arguments)
-    args.colcon = colcon
+    try:
+        hand_over_before_parsing(parser, arguments)
+        args = parser.parse_args(arguments)
+        args.colcon = colcon
+        return dispatch(parser, args)
+    except OpenADKitError as error:
+        name, target = command_and_target(parser, arguments)
+        if name != "validate" or "--json" not in arguments:
+            raise
+        # validate --json: one JSON document on stdout, also when the kit or
+        # the deployment is invalid.
+        print(json.dumps({"schemaVersion": 1, "deployment": target, "valid": False, "error": str(error)}))
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+
+
+def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
+    """Run the parsed command."""
     if getattr(args, "verbose", False):
         os.environ["OPENADKIT_VERBOSE"] = "1"
     if not args.command:
@@ -883,12 +927,15 @@ def main() -> int:
     # A deployment or workspace named by its directory belongs to the kit around it.
     target = getattr(args, "deployment", None) or getattr(args, "workspace", None)
     start = Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd()
-    root, kit = load_context(start)
+    root, kit = load_context(start, act=args.command in ACTING_COMMANDS)
     if command.group == "catalog":
         return handler(root, kit, args)
-    if getattr(args, "json_output", False):
-        return validate_json(root, kit, args, handler)
+    if not args.deployment and kit.kind == "kit" and len(kit.deployments) == 1:
+        # A kit made by `openadkit new` is one deployment; naming it again adds nothing.
+        args.deployment = next(iter(kit.deployments))
     if not args.deployment:
+        if getattr(args, "json_output", False):
+            raise OpenADKitError("deployment name required")
         require_deployment_name(args.command)
         list_deployments(root, kit)
         return 2
@@ -896,22 +943,12 @@ def main() -> int:
     return handler(root, kit, deployment, args)
 
 
-def validate_json(root: Path, kit: RuntimeContext, args: argparse.Namespace, handler: Callable[..., int]) -> int:
-    """validate --json: one JSON document on stdout, also when the deployment is invalid."""
-    try:
-        if not args.deployment:
-            raise OpenADKitError("deployment name required")
-        deployment = get_deployment(root, kit, deployment_name(root, kit, args.deployment))
-        return handler(root, kit, deployment, args)
-    except OpenADKitError as error:
-        print(json.dumps({"schemaVersion": 1, "deployment": args.deployment, "valid": False, "error": str(error)}))
-        print(f"error: {error}", file=sys.stderr)
-        return 1
-
-
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
+    except UsageError as error:
+        print(f"error: {error}", file=sys.stderr)
+        raise SystemExit(2) from None
     except OpenADKitError as error:
         print(f"error: {error}", file=sys.stderr)
         raise SystemExit(1) from None
