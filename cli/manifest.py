@@ -559,7 +559,7 @@ def parse_deployment_refs(value: Any, kind: str) -> dict[str, DeploymentRef]:
             if not SHA256_RE.fullmatch(checksum):
                 raise OpenADKitError(f"deployments.{name}.checksum is invalid")
         elif checksum is not None:
-            raise OpenADKitError("repository deployments must not declare checksums")
+            raise OpenADKitError("a source checkout's deployments must not declare checksums")
         refs[name] = DeploymentRef(path=path, checksum=checksum)
     return refs
 
@@ -599,7 +599,7 @@ def parse_autoware(value: Any, kind: str) -> dict[str, str] | None:
             raise OpenADKitError("release bundles must declare autoware")
         return None
     if kind != "release":
-        raise OpenADKitError("repository bundles must not declare autoware")
+        raise OpenADKitError("a source checkout's openadkit.json must not declare autoware")
     if not isinstance(value, dict):
         raise OpenADKitError("autoware must be an object")
     reject_unknown(value, {"version", "ref", "lockSha256", "backports"}, "autoware")

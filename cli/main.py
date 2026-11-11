@@ -296,7 +296,7 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
             json.dumps(
                 {
                     "schemaVersion": 1,
-                    "bundle": kit.kind,
+                    "kind": kit.kind,
                     "version": version,
                     "commit": commit,
                     "extends": kit.extends,
@@ -315,13 +315,13 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
     elif kit.kind == "release":
         autoware = f" · Autoware {kit.autoware['version']}" if kit.autoware else ""
         print(f"Open AD Kit {kit.version or 'unknown'}{autoware}")
-        print("bundle: release")
+        print("from: release bundle")
         if kit.autoware:
             print(autoware_line(kit.autoware))
     else:
         print("Open AD Kit development")
         print(f"commit: {commit or 'unknown'}")
-        print("bundle: repository")
+        print("from: source checkout")
     return 0
 
 
@@ -402,7 +402,7 @@ def deployment_argument(parser: argparse.ArgumentParser) -> None:
 def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) -> None:
     """The deployment and how to run it; fetch takes only the distro."""
     deployment_argument(parser)
-    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: bundle default)")
+    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: this Open AD Kit's default)")
     if not run:
         return
     parser.add_argument(
@@ -456,7 +456,7 @@ def build_arguments(parser: argparse.ArgumentParser) -> None:
         "workspace", nargs="?", metavar="PATH",
         help="workspace with a src/ directory (default: the kit's overlay_ws)",
     )
-    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: bundle default)")
+    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: this Open AD Kit's default)")
 
 
 def new_arguments(parser: argparse.ArgumentParser) -> None:
@@ -773,8 +773,8 @@ COMMANDS = {
     "upgrade": Command("install", "upgrade an installed release to the latest stable version"),
     "setup": Command("install", "install Ubuntu host dependencies"),
     "uninstall": Command("install", "remove the installed release and its launcher"),
-    "list": Command("catalog", "list curated deployments", list_command, json_argument),
-    "version": Command("catalog", "show repository or release version", version_command, json_argument),
+    "list": Command("catalog", "list the deployments you can run", list_command, json_argument),
+    "version": Command("catalog", "show the Open AD Kit version", version_command, json_argument),
     "validate": Command(
         "deployment", "validate a deployment without starting it", validate_command, validate_arguments
     ),

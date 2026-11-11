@@ -438,7 +438,7 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
 
 
 def load_kit(root: Path) -> RuntimeContext:
-    value = load_json(ensure_safe_existing(root, "openadkit.json", "bundle manifest"))
+    value = load_json(ensure_safe_existing(root, "openadkit.json", "kit manifest"))
     if value.get("schemaVersion") != SCHEMA_VERSION:
         raise OpenADKitError(
             f"unsupported openadkit.json schemaVersion {value.get('schemaVersion')!r} "
@@ -446,9 +446,9 @@ def load_kit(root: Path) -> RuntimeContext:
         )
     if value.get("kind") == "kit":
         return _load_integrator_kit(root, value)
-    reject_unknown(value, ALLOWED_KIT_KEYS, "bundle")
+    reject_unknown(value, ALLOWED_KIT_KEYS, "kit manifest")
     if value.get("kind") not in ("repository", "release"):
-        raise OpenADKitError("invalid Open AD Kit bundle manifest")
+        raise OpenADKitError("openadkit.json kind must be repository, release or kit")
     default_ros_distro = require_string(
         value.get("defaultRosDistro", "humble"), "defaultRosDistro"
     )
@@ -461,7 +461,7 @@ def load_kit(root: Path) -> RuntimeContext:
             value.get("imageRepository"), "imageRepository"
         )
         if "images" in value:
-            raise OpenADKitError("repository bundles must not declare release images")
+            raise OpenADKitError("a source checkout's openadkit.json must not declare release images")
     else:
         if "imageRepository" in value:
             raise OpenADKitError("release bundles must not declare imageRepository")
