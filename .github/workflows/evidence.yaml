@@ -333,13 +333,16 @@ jobs:
       - name: Summarize the cells
         env:
           EVIDENCE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Data, not script text: a verify command may hold any character.
+          SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
+          EXPECTED_CELLS: ${{ needs.prepare.outputs.cells }}
         run: |
           set -euo pipefail
           python3 .github/scripts/evidence/summary.py \
             --cells-dir evidence-cells/cells \
             --build-metadata build-metadata/build-metadata.json \
-            --source-sha "${{ needs.prepare.outputs.source_sha }}" \
-            --expected-cells '${{ needs.prepare.outputs.cells }}' \
+            --source-sha "${SOURCE_SHA}" \
+            --expected-cells "${EXPECTED_CELLS}" \
             --output-dir evidence-summary
 
       - name: Upload the summary
