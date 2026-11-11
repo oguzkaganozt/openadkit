@@ -61,8 +61,12 @@ runs:
     - name: Install jq and vcs2l
       if: inputs.setup-autoware == 'true'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y jq pipx
+        # The hosted runner images ship jq and pipx. apt runs only where one is
+        # missing, so an outage of the Ubuntu mirror cannot fail the build here.
+        if ! command -v jq >/dev/null || ! command -v pipx >/dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y jq pipx
+        fi
         pipx install "vcs2l==1.1.7"
       shell: bash
 
