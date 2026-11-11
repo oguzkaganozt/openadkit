@@ -2125,32 +2125,10 @@ blueprint and Red Hat's AutoSD blueprint build on it.</p>
 </div>
 </div>
 <h2 id="support-matrix">Support Matrix<a class="headerlink" href="#support-matrix" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Tier</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Committed</strong></td>
-<td>Gated by every release: it builds and passes its checks, or the release does not ship</td>
-</tr>
-<tr>
-<td><strong>Experimental</strong></td>
-<td>Works and is tested where its page says so, but may change in a minor release</td>
-</tr>
-<tr>
-<td><strong>Best-effort</strong></td>
-<td>Ships in the release without CI evidence</td>
-</tr>
-<tr>
-<td><strong>Unsupported</strong></td>
-<td>Not built or tested in this repository</td>
-</tr>
-</tbody>
-</table>
+<p>A <strong>supported</strong> path is built and shipped by every release and covered by
+<a href="../releases/compatibility/">Compatibility</a>; the notes say where CI evidence
+does not reach it. An <strong>experimental</strong> one works but may change in a minor
+release. An <strong>unsupported</strong> one is not built or tested here.</p>
 <p>A path that fails its build or validation gate is dropped or marked here, not
 documented as if it worked. Host requirements and boards are on the
 <a href="hardware/">Hardware</a> page.</p>
@@ -2165,23 +2143,23 @@ documented as if it worked. Host requirements and boards are on the
 <tbody>
 <tr>
 <td>Ubuntu 22.04 and 24.04 + Docker Compose deployments</td>
-<td><strong>Committed</strong></td>
+<td><strong>Supported</strong></td>
 <td>Compose validated in CI; CARLA Simulation runs on 22.04 only</td>
 </tr>
 <tr>
 <td>Component images, amd64 + arm64</td>
-<td><strong>Committed</strong></td>
+<td><strong>Supported</strong></td>
 <td>Built and scanned for both; the evidence cells run on amd64. <code>sensing-perception-cuda</code> and <code>planning-cuda</code> are amd64-only; only the amd64 <code>simulator</code> carries the CARLA client</td>
 </tr>
 <tr>
 <td>Jazzy images</td>
-<td><strong>Committed</strong></td>
+<td><strong>Supported</strong></td>
 <td>A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default</td>
 </tr>
 <tr>
 <td>CARLA Simulation</td>
-<td><strong>Best-effort</strong></td>
-<td>Humble, amd64, NVIDIA GPU; exempt from CI evidence</td>
+<td><strong>Supported</strong></td>
+<td>Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand</td>
 </tr>
 <tr>
 <td>AutoSD with Podman and Quadlet</td>
