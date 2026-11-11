@@ -19,25 +19,32 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
    data paths, images, mounts and validation use the same result.
 2. **Development tooling.** A devcontainer and a debugging guide for the
    development loop.
-3. **Comparable regression results.** A fixed scenario set whose latency,
+3. **The base from a kit.** Run a kit's unmodified base deployment from the
+   kit, with the release it pins, to tell the kit's changes from the base.
+4. **Two levels of base.** A kit on a deployment that has a base itself, such
+   as Safety Island Simulation.
+5. **Comparable regression results.** A fixed scenario set whose latency,
    resource use and driving metrics are compared with a baseline.
-4. **Platform evidence.** Native arm64 evidence cells and GPU logging simulation
+6. **Platform evidence.** Native arm64 evidence cells, a readiness check and
+   an evidence cell for Logging Simulation on CPU, and GPU logging simulation
    coverage.
-5. **Autoware upgrades.** Measure clean common-image builds on a 4-vCPU runner
+7. **Autoware upgrades.** Measure clean common-image builds on a 4-vCPU runner
    before the next Autoware version change.
-6. **Image SBOMs.** A software bill of materials for each container image.
-7. **Autoware main canary.** A weekly, non-blocking build against Autoware
+8. **Image SBOMs.** A software bill of materials for each container image.
+9. **Autoware main canary.** A weekly, non-blocking build against Autoware
    `main`, kept out of releases and PR checks.
-8. **Upstream build fixes.** Propose upstream the dependency fixes that the
-   image boundaries need.
-9. **Build once, promote.** Build and test a pull request in the merge queue,
-   on the commit `main` will get, and copy its images to `main` by digest
-   instead of building them again; that build then covers arm64 too.
-   Build-tagged images then stay in `openadkit-ci`, and `openadkit` keeps
-   releases, latest aliases and the moving tags.
-10. **Faster main builds.** Components wait only for their own common images,
+10. **Upstream build fixes.** Propose upstream the dependency fixes that the
+    image boundaries need.
+11. **Build once, promote.** Build and test a pull request in the merge queue,
+    on the commit `main` will get, and copy its images to `main` by digest
+    instead of building them again; that build then covers arm64 too.
+    Build-tagged images then stay in `openadkit-ci`, and `openadkit` keeps
+    releases, latest aliases and the moving tags.
+12. **Faster main builds.** Components wait only for their own common images,
     and the evidence does not wait for the CUDA and arm64 images it never runs.
-11. **CES 2027 demo.** Hardware integration and partner evidence for the
+13. **ROS snapshot key.** The snapshot signing key in the images expires on
+    2027-06-01; replace it with the extended key before then.
+14. **CES 2027 demo.** Hardware integration and partner evidence for the
     demonstrated setup; tracked in
     [#169](https://github.com/autowarefoundation/openadkit/issues/169).
 
@@ -48,13 +55,19 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
   [Autoware System Designer](https://github.com/autowarefoundation/autoware_system_designer).
 - **Path to a vehicle.** A vehicle-interface contract and reference hardware, a
   validation ladder from SIL to full-scale vehicles, and offline OCI delivery.
-- **Visualizer.** KasmVNC in place of TigerVNC, noVNC and Openbox; Lichtblick
-  with `foxglove_bridge` for analysis and bag playback.
+- **Visualizer.** KasmVNC in place of TigerVNC, noVNC and Openbox, at the next
+  major version; Lichtblick with `foxglove_bridge` for analysis and bag
+  playback.
 - **rmw_zenoh.** Replace `zenoh-bridge-ros2dds` for split-host on Jazzy if an
   evaluation succeeds.
 - **Per-image trimming.** Packages that no catalog deployment runs and that
   bring heavy dependencies, such as PyTorch for control's smart MPC,
-  calibration tools and DNN packages in CPU images, at the next major version.
+  calibration tools and DNN packages in CPU images, in a minor release whose
+  notes list them.
+- **One layering mechanism.** GPU modes, deployments on a base and split-host
+  nodes each add differences to a stack by rules of their own; one mechanism
+  could replace the three. It would come beside them in a minor release, and
+  the old ones would go only at a major version.
 - **Safety Island on CARLA.** A kit with the Safety Island's closed loop over
   CAN, backed by its own runtime evidence.
 

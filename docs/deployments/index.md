@@ -7,7 +7,7 @@ start with Planning Simulation.
 |------------|---------|-----|
 | [Planning Simulation](planning-simulation/index.md) | Plan and follow a route on a demo map | Optional |
 | [Scenario Simulation](scenario-simulation/index.md) | Run predefined traffic scenarios | No |
-| [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception, and localization | Recommended |
+| [Logging Simulation](logging-simulation/index.md) | Replay recorded sensor data through sensing, perception, and localization | Optional |
 | [CARLA Simulation](carla-simulation/index.md) | Drive a CARLA vehicle in closed loop | Required |
 | [Split-host simulation](split-host.md) | Run Autoware on one host and the simulator on another over Zenoh | CARLA only |
 | [Safety Island Simulation](https://github.com/autowarefoundation/openadkit/tree/main/deployments/safety-island-simulation) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller instead of Autoware's trajectory follower | No |

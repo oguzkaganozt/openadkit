@@ -45,8 +45,9 @@ What a kit made with `openadkit new` builds on:
 - `extends` pinning a release, and `base` naming one of its deployments.
 - The Compose variables `OPENADKIT_BASE_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
   `OPENADKIT_OVERLAY_WS`.
-- Each base deployment's Compose entrypoints, service names, settings in
-  `settings.env`, data destination variables (such as `MAP_PATH`) and verify step.
+- Each base deployment's Compose entrypoints, service names, data destination
+  variables (such as `MAP_PATH`), verify step and the settings listed under
+  [Settings and Paths](#settings-and-paths).
 - Config overrides under `config/` and the overlay workspace in `overlay_ws/`,
   which the images' entrypoint applies and sources on every start.
 - `externalImages` that replace a component image or add new ones.
@@ -60,6 +61,11 @@ See [Create a Kit](../deployments/create-a-kit.md) and the
   `OPENADKIT_OUTPUT_DIR`.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.
+- These settings of a deployment's `settings.env` and of the host settings
+  file: the data destination variables, `VEHICLE_MODEL`, `SENSOR_MODEL`,
+  `VEHICLE_ID`, `CYCLONEDDS_NETWORK_INTERFACE`, and the visualizer's
+  `REMOTE_DISPLAY`, `REMOTE_PASSWORD`, `RVIZ_CONFIG`, `RVIZ_GPU`,
+  `WEBSOCKIFY_BIND`, `NOVNC_CERT` and `NOVNC_KEY`.
 
 See [CLI & Maintenance](../getting-started/cli.md).
 
@@ -70,10 +76,12 @@ See [CLI & Maintenance](../getting-started/cli.md).
   [Container Images & Versioning](../getting-started/container-images.md).
 - The image labels `org.opencontainers.image.autoware-base-version` and
   `org.opencontainers.image.ros-snapshot`.
-- The Autoware packages each image provides, with RViz plugins in the visualizer
-  image only. They change only with the pinned Autoware release: when Autoware removes a package, the minor release that
-  moves to that Autoware release says so. Open AD Kit does not remove a package
-  from an image within a major version.
+- The Autoware packages that the catalog deployments run and that each image's
+  launch files in [Components](../components/index.md) need, with RViz plugins
+  in the visualizer image only. They change only with the pinned Autoware
+  release: when Autoware removes a package, the minor release that moves to
+  that Autoware release says so. An image may lose any other package in a minor
+  release, whose notes list it.
 
 ### Releases
 
@@ -91,10 +99,16 @@ release:
   bridge. See [Split-host simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
   generates. See [AutoSD](../platforms/autosd/index.md).
+- **The Diffusion Planner:** `planning-simulation --gpu`. With Autoware 2.0.0
+  its verify step fails on the sample route. See
+  [Planning Simulation](../deployments/planning-simulation/index.md).
 
 ## Not Covered
 
 - Human-readable output: messages, tables and their wording.
 - The output of `openadkit config`, which is Docker Compose's resolved model.
 - The CI workflows and everything under `.github/`.
+- The other settings in `settings.env`. Most are arguments of Autoware's launch
+  files and follow the pinned Autoware release; `READINESS_CHECKS` holds the
+  arguments of the readiness check.
 - Environment variables, files and image internals that this page does not list.

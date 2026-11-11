@@ -42,7 +42,7 @@ The CLI downloads required data, pulls missing images, starts the services, and 
 | [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Run Autoware in closed loop with CARLA | Required |
 | [`safety-island-simulation`](deployments/safety-island-simulation) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No |
 
-Use `./openadkit list` to inspect the deployment catalog. CARLA requires Humble, amd64, and an NVIDIA GPU. [Split-host simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (`--node` over Zenoh) is experimental.
+Use `openadkit list` to inspect the deployment catalog. CARLA requires Humble, amd64, and an NVIDIA GPU. [Split-host simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (`--node` over Zenoh) is experimental.
 
 ## Documentation
 

@@ -27,7 +27,7 @@ openadkit validate <deployment> --data
 openadkit fetch <deployment> --force
 ```
 
-`validate --data` reports each resource as `ok`, `missing`, or `incomplete`;
+`validate --data` reports each resource as `ok`, `missing`, `incomplete`, or `outdated`;
 add `--gpu` to it for Logging Simulation's CenterPoint models (CARLA always
 runs in GPU mode).
 `fetch` always includes GPU data. `--force` only replaces data the CLI
@@ -56,12 +56,9 @@ check `openadkit logs --follow`.
 
 ### noVNC says "failed to connect"
 
-Open the page over `http://`. Releases up to v2.0.0-rc.7 served noVNC over
-HTTPS with a certificate generated at each start: the browser loaded the page
-from its cache, never asked about the new certificate, and the WebSocket to it
-failed (the visualizer log shows `SSLV3_ALERT_CERTIFICATE_UNKNOWN`). The
-visualizer now serves plain HTTP unless you give it a certificate
-(`NOVNC_CERT`, `NOVNC_KEY`).
+Open the page over `http://`. The visualizer serves plain HTTP unless you give
+it a certificate (`NOVNC_CERT`, `NOVNC_KEY`); with one, open it over
+`https://`.
 
 ### Port 6080 already in use
 

@@ -24,7 +24,9 @@ openadkit run carla-simulation
 ```
 
 `run` downloads and verifies the Town01 map, then starts CARLA and the Autoware
-stack. CARLA renders offscreen by default.
+stack. CARLA renders offscreen by default. `run` returns once CARLA accepts
+connections and the services stay up; this deployment declares no readiness
+check of Autoware itself and is not verified in CI.
 
 To run Autoware and CARLA on separate hosts, see
 [Split-host simulation](../split-host.md).

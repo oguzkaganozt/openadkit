@@ -39,8 +39,8 @@ documented as if it worked. Individual boards are listed on the
 | Path | Tier | Notes |
 |------|------|-------|
 | Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Committed** | Compose validated in CI; CARLA runs on 22.04 only |
-| Component images, amd64 + arm64 | **Committed** | `sensing-perception-cuda` is amd64-only; only the amd64 `simulator` carries the CARLA client |
-| Jazzy images | **Best-effort** | Published where the builds pass; Humble is the default |
+| Component images, amd64 + arm64 | **Committed** | `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
+| Jazzy images | **Committed** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
 | CARLA deployment | **Best-effort** | Humble, amd64, NVIDIA GPU; not verified in CI |
 | AutoSD with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
 | EWAOL | **Unsupported** | No assets in this repository |
