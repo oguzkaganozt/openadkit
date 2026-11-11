@@ -74,12 +74,34 @@ jobs:
         shell: bash
 
       - name: Delete the pull request's CI images
+        id: delete
+        # GitHub can refuse to delete a version, as it did the last one left
+        # in the package; the next step checks what matters.
+        continue-on-error: true
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           package: openadkit-ci
           use-regex: true
           delete-tags: ${{ steps.tags.outputs.tags }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that none of the pull request's tags is left
+        if: steps.delete.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAGS: ${{ steps.tags.outputs.tags }}
+        run: |
+          set -euo pipefail
+          owner=users
+          [ "$(gh api "users/${GITHUB_REPOSITORY_OWNER}" --jq .type)" != Organization ] || owner=orgs
+          left=$(gh api --paginate "${owner}/${GITHUB_REPOSITORY_OWNER}/packages/container/openadkit-ci/versions?per_page=100" \
+            --jq '.[].metadata.container.tags[]' | grep -E "${TAGS}" || true)
+          if [ -n "${left}" ]; then
+            echo "::error::Tags of the pull request are left: $(paste -sd ' ' <<<"${left}")"
+            exit 1
+          fi
+          echo "::warning::None of the pull request's tags is left; the weekly run retries the version GitHub refused."
+        shell: bash
 
   retention:
     if: github.event_name != 'pull_request'
@@ -131,6 +153,10 @@ jobs:
         shell: bash
 
       - name: Delete CI images older than 14 days
+        id: ci-images
+        # As for a pull request's images: a refused version must not stop the
+        # other packages' cleanup; the next step checks what matters.
+        continue-on-error: true
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           package: openadkit-ci
@@ -139,6 +165,25 @@ jobs:
           older-than: 14 days
           dry-run: ${{ env.DRY_RUN }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that no CI image older than 14 days is tagged
+        if: steps.ci-images.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          owner=users
+          [ "$(gh api "users/${GITHUB_REPOSITORY_OWNER}" --jq .type)" != Organization ] || owner=orgs
+          # The cleanup action ages a version by updated_at.
+          cutoff=$(date -u -d '14 days ago' +%FT%TZ)
+          left=$(gh api --paginate "${owner}/${GITHUB_REPOSITORY_OWNER}/packages/container/openadkit-ci/versions?per_page=100" \
+            --jq ".[] | select(.updated_at < \"${cutoff}\") | .metadata.container.tags[]")
+          if [ -n "${left}" ]; then
+            echo "::error::CI images older than 14 days are left: $(paste -sd ' ' <<<"${left}")"
+            exit 1
+          fi
+          echo "::warning::No CI image older than 14 days is tagged; the next run retries the version GitHub refused."
+        shell: bash
 
       - name: Delete branch builds older than 90 days
         uses: dataaxiom/ghcr-cleanup-action@v1
