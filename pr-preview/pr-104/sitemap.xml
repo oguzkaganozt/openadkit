@@ -25,10 +25,6 @@
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/openadkit/deployments/split-host/</loc>
-         <lastmod>2026-11-11</lastmod>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
@@ -46,6 +42,10 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/</loc>
+         <lastmod>2026-11-11</lastmod>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/openadkit/deployments/split-host/</loc>
          <lastmod>2026-11-11</lastmod>
     </url>
     <url>
