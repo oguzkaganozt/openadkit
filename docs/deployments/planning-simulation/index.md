@@ -31,6 +31,8 @@ With `--gpu`, the planning service runs the `planning-cuda` image with
 Planner v5.0 model from Hugging Face to
 `~/autoware_data/ml_models/diffusion_planner/v5.0`. The first start builds a
 TensorRT engine from the model there, so it takes longer than later starts.
+The planner used about 0.8 GB of GPU memory in a measured run, engine build
+included; RViz renders on the CPU.
 
 Control and the rest of the stack are the same in both modes: control follows
 `/planning/trajectory`, whichever planner makes it. See

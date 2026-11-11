@@ -10,7 +10,7 @@ For deployments, simulation and development:
 |----------|---------|-------------|
 | CPU | 8 cores | 16 cores |
 | RAM | 16 GB | 32 GB |
-| GPU | None | NVIDIA with 4 GB+ VRAM for Logging Simulation's GPU mode; 16 GB for CARLA Simulation |
+| GPU | None | NVIDIA with 2 GB+ VRAM for Planning Simulation's GPU mode, 4 GB+ for Logging Simulation's; 16 GB for CARLA Simulation |
 | Storage | 50 GB | 100 GB+ SSD |
 
 Images are published for **amd64** and **arm64**. The GPU modes and CARLA
