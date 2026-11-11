@@ -63,8 +63,9 @@ validates the same kit made from the checkout.
 
 `registry-cleanup.yaml` deletes a pull request's CI images when it closes, CI
 images after 14 days, branch builds after 90 days (the age a release may still
-promote) and overwritten build caches; release tags, latest aliases and the
-moving `<target>-<arch>-<distro>` tags stay. Its weekly run only lists until
+promote), the compile bases of builds older than that, the caches of images and
+branches that no longer exist, and overwritten caches; release tags, latest
+aliases and the moving `<target>-<arch>-<distro>` tags stay. Its weekly run only lists until
 the repository variable `REGISTRY_CLEANUP` is `delete`. `GITHUB_TOKEN` deletes
 only in packages that give the repository the **Admin** role under the
 package's *Manage Actions access*: set it on `openadkit`, `openadkit-buildcache`

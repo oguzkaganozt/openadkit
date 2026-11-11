@@ -9,8 +9,11 @@ name: registry-cleanup
 #     build younger than 90 days (validate_release.sh), so older ones go;
 #     release tags (-vX.Y.Z), latest aliases (<target>-<distro>) and the
 #     moving <target>-<arch>-<distro> tags, with their platform images, stay.
-#   - openadkit-buildcache: compile bases per build after 90 days, and the
-#     cache exports each build overwrites after 14 days.
+#   - openadkit-buildcache: compile bases of builds older than 90 days, the
+#     caches of images and branches that no longer exist, and the cache
+#     exports each build overwrites after 14 days. Its ages go by build, not
+#     by version date: an unchanged compile base or cache keeps its digest and
+#     first date while later builds tag it again.
 # The scheduled run only lists what it would delete until the repository
 # variable REGISTRY_CLEANUP is "delete"; a dispatch lists unless asked to delete.
 # GITHUB_TOKEN deletes only in packages that give this repository the Admin
@@ -83,8 +86,36 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     permissions:
+      actions: read
+      contents: read
       packages: write
     steps:
+      - name: Check out the image inventory
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/image-inventory.json
+          sparse-checkout-cone-mode: false
+
+      - name: Name what the build cache still uses
+        # Compile bases of the builds from the last 90 days, and the cache of
+        # each inventory image on each branch (build.py's cache_ref).
+        id: buildcache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          runs=$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow build-all-images.yaml \
+            --created ">=$(date -u -d '90 days ago' +%F)" --limit 1000 --json databaseId \
+            --jq '[.[].databaseId | tostring] | join("|")')
+          targets=$(jq -r '[.images[].target, "universe-common-build"] | join("|")' .github/image-inventory.json)
+          distros=$(jq -r '.ros_distros | join("|")' .github/image-inventory.json)
+          # Each branch's cache scope, as resolve_build_inputs.sh spells it.
+          scopes=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/branches" --jq '.[].name' \
+            | tr -c 'A-Za-z0-9_.\n-' '-' | sed 's/\./\\./g' | paste -sd '|')
+          echo "recent_builds=^.*-(${runs:-0})-[0-9]+\$" >> "$GITHUB_OUTPUT"
+          echo "caches=^(${targets})-(amd64|arm64)-(${distros})-(${scopes})\$" >> "$GITHUB_OUTPUT"
+        shell: bash
+
       - name: Delete CI images older than 14 days
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
@@ -110,13 +141,23 @@ jobs:
           dry-run: ${{ env.DRY_RUN }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete compile bases older than 90 days
+      - name: Delete compile bases of builds older than 90 days
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           package: openadkit-buildcache
           use-regex: true
           delete-tags: ${{ env.BUILD_TAGS }}
-          older-than: 90 days
+          exclude-tags: ${{ steps.buildcache.outputs.recent_builds }}
+          dry-run: ${{ env.DRY_RUN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete caches of removed images and branches
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: openadkit-buildcache
+          use-regex: true
+          delete-tags: '^.*$'
+          exclude-tags: ${{ steps.buildcache.outputs.caches }}|${{ env.BUILD_TAGS }}
           dry-run: ${{ env.DRY_RUN }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
