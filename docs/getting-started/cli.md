@@ -122,6 +122,8 @@ includes the CenterPoint models.
   `clean` also take a deployment's directory, such as `openadkit run ./my-kit`.
   An argument with a `/` or a leading `.` is a directory, and the kit around it
   is used wherever you run the command.
+- **Version:** `openadkit version` prints the installed release and the
+  Autoware release it pins; in a source checkout, the commit.
 - **Scripting:** `list`, `version` and `validate` accept `--json`.
   `validate --json` prints one JSON document also when the deployment is
   invalid (`"valid": false` with the `"error"`).

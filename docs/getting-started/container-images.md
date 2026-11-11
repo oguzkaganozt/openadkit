@@ -5,8 +5,8 @@ This page is the reference for image tags, versions, and what "supported" means.
 
 ## Tag Reference
 
-A release promotes an existing CI build of `main` instead of rebuilding it, so
-the images tested in CI are the images that ship.
+A release promotes an existing CI build instead of rebuilding it, so the
+images tested in CI are the images that ship.
 
 | Tag | Example | Created | Moves? |
 |-----|---------|---------|--------|
