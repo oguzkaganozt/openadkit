@@ -1,8 +1,7 @@
 # Create a Kit
 
-Start your own kit with `openadkit new`. It makes a kit that extends this Open
-AD Kit and one of its deployments without copying them, so the kit keeps only
-your differences:
+`openadkit new` makes a kit that extends this Open AD Kit and one of its
+deployments without copying them, so the kit holds only your differences:
 
 ```bash
 openadkit new my-kit                       # on top of planning-simulation
@@ -57,17 +56,22 @@ openadkit stop
 ```
 
 Inside a kit with one deployment the commands need no name. From elsewhere,
-name it by its directory: `openadkit run ./my-kit`.
+name it by its directory: `openadkit run ./my-kit`. A kit on a source checkout
+needs `DEVEL_IMAGE` for `build`; see
+[Overlay Workspace](integrator-guide.md#3-overlay-workspace).
 
-A source checkout pins no devel image: set `DEVEL_IMAGE` to the matching
-`universe-common-devel` digest from that build's metadata before `build`. Add
-`--ros-distro jazzy` to `build`, `validate` and `run` for Jazzy. Static
-validation renders the Compose model; it is not runtime or ABI evidence. CI
-makes a kit with `openadkit new` and exercises every extension point on Humble
-and Jazzy: a value, a parameter override, a C++ package, a pinned image and a
-service with a healthcheck, then Planning Simulation's drive-to-goal check.
+Add `--ros-distro jazzy` to `build`, `validate` and `run` for Jazzy.
+`validate` renders the Compose model without starting anything; it is not
+runtime or ABI evidence, so finish with `run --verify`.
 
-Keep parameter and package changes in `config/` and `overlay_ws/` rather than
-mounting over `/opt/autoware` or replacing base service commands. See the
-[Integrator Guide](integrator-guide.md) for configuration order, pinned image
-replacement and contract warnings.
+Every release tests a kit made this way: the
+[example kit](../releases/evidence.md#cells-and-levels) exercises each
+extension point on Humble and Jazzy.
+
+## Where Changes Go
+
+Keep parameter changes in `config/autoware/` and packages in `overlay_ws/`
+rather than mounting over `/opt/autoware` or replacing a base service's
+command. The [Integrator Guide](integrator-guide.md) is the reference for the
+settings order, config overrides, the overlay workspace, extra services and
+image replacement.

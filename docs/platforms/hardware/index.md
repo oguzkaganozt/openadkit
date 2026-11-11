@@ -1,39 +1,32 @@
 # Hardware
 
-Requirements and tested hardware for Open AD Kit. Both **amd64** and **arm64**
-are supported.
+What a host needs to run Open AD Kit, and the boards with their own support.
 
-## Workstation or Cloud Instance
+## Host Requirements
 
-For deployments, simulation, and development:
+For deployments, simulation and development:
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
 | CPU | 8 cores | 16 cores |
 | RAM | 16 GB | 32 GB |
-| GPU | None | NVIDIA with 4 GB+ VRAM (for perception) |
+| GPU | None | NVIDIA with 4 GB+ VRAM for Logging Simulation's GPU mode; 16 GB for CARLA Simulation |
 | Storage | 50 GB | 100 GB+ SSD |
 
-The CUDA perception image is amd64-only and does not fall back to CPU. Hosts
-without an NVIDIA GPU, and all arm64 hosts, use the CPU perception image.
+Images are published for **amd64** and **arm64**. The GPU modes and CARLA
+Simulation are amd64-only: the CUDA images do not fall back to CPU, so hosts
+without an NVIDIA GPU, and all arm64 hosts, run the CPU images.
 
-## Edge Deployment
+On a host below the recommended size Autoware may not keep up in real time;
+Scenario Simulation can then run slower than real time with
+[`GLOBAL_REAL_TIME_FACTOR`](../../deployments/scenario-simulation/index.md#configure).
 
-Running the full Autoware stack in real time on a vehicle computer needs more.
-These figures come from the verified ADLINK AADP-AVA platform:
+## Boards
 
-| Resource | Specification |
-|----------|---------------|
-| CPU | 40-core Arm Neoverse N1 or equivalent |
-| RAM | 32 GB |
-| Architecture | arm64 |
+| Board | Architecture | Support |
+|-------|--------------|---------|
+| R-Car X5H | arm64 | AutoSD 10 image in [openadkit-rcar-x5h](https://github.com/autowarefoundation/openadkit-rcar-x5h), its own repository; board tests are manual |
 
-## Tested Hardware
-
-| Platform | Architecture | Status | Notes |
-|----------|--------------|--------|-------|
-| ADLINK AADP-AVA | arm64 (Ampere Altra) | <span class="oak-badge oak-badge--verified">Verified</span> | Primary edge platform |
-| AWS EC2 G5.4XLarge | amd64 | <span class="oak-badge oak-badge--verified">Verified</span> | GPU cloud instance for simulation |
-| NVIDIA Jetson Orin | arm64 | <span class="oak-badge oak-badge--testing">Tests Ongoing</span> | JetPack 6 validation in progress |
-| R-Car X5H | arm64 | <span class="oak-badge oak-badge--testing">Tests Ongoing</span> | AutoSD 10 bring-up in [its own repository](https://github.com/autowarefoundation/openadkit-rcar-x5h); board tests manual |
-| ADLINK ADM-AL30 | arm64 | <span class="oak-badge oak-badge--testing">Tests Ongoing</span> | No validation results recorded yet |
+No board is part of the release evidence: the
+[evidence cells](../../releases/evidence.md) run on hosted amd64 runners, and
+native arm64 cells are on the [roadmap](../../roadmap.md).

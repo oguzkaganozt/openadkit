@@ -1,32 +1,20 @@
 # Open AD Kit Deployments
 
-This directory contains deployment configurations for Open AD Kit.
+The deployments the CLI and the release bundle ship. The
+[documentation site](https://autowarefoundation.github.io/openadkit/deployments/)
+is the canonical reference for running, configuring and troubleshooting them.
 
-## Quick Links
+| Directory | Deployment |
+| --- | --- |
+| [`planning-simulation/`](./planning-simulation) | Plan and follow a route on a sample map with the built-in simulator; `--gpu` plans with the Diffusion Planner |
+| [`scenario-simulation/`](./scenario-simulation) | Run predefined traffic scenarios in Scenario Simulator |
+| [`logging-simulation/`](./logging-simulation) | Replay recorded sensor data through sensing, perception and localization |
+| [`carla-simulation/`](./carla-simulation) | Drive in closed loop with the CARLA simulator (Humble, amd64, NVIDIA GPU) |
+| [`safety-island-simulation/`](./safety-island-simulation) | Planning Simulation driven by the Autoware Safety Island controller (amd64) |
+| `shared/` | What the deployments share: `services/*.yaml`, `runtime.env`, `cyclonedds.xml`, `compose.zenoh.yaml`, launch files, config and checks |
 
-For **complete documentation**, operational steps, and troubleshooting, see the [Open AD Kit Documentation Site](https://autowarefoundation.github.io/openadkit/deployments/).
-
-## Available Deployments
-
-CLI and release bundle:
-
-- [Planning Simulation](./planning-simulation) — Planning stack with a sample map
-- [Scenario Simulation](./scenario-simulation) — Predefined scenario validation with TIER IV Scenario Simulator
-- [Logging Simulation](./logging-simulation) — End-to-end stack with rosbag replay
-- [CARLA Simulation](./carla-simulation) — Closed-loop planning with CARLA (`./openadkit run carla-simulation`)
-- [Safety Island Simulation](./safety-island-simulation) — Planning Simulation driven by the Autoware Safety Island controller
-
-Split-host (`--node` over Zenoh) is experimental. See the
-[split-host guide](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
-
-## Directory Layout
-
-```text
-deployments/
-├── shared/                   # services/*.yaml + runtime.env + compose.zenoh.yaml
-├── planning-simulation/      # complete deployment settings.env
-├── scenario-simulation/      # complete deployment settings.env
-├── logging-simulation/       # complete deployment settings.env
-├── carla-simulation/         # CLI deployment (Humble, amd64, GPU)
-└── safety-island-simulation/     # planning-simulation plus the Safety Island
-```
+Each deployment directory holds its deployment manifest (`deployment.json`),
+its settings (`settings.env`, and `settings.gpu.env` for a GPU mode) and its
+Compose files. Scenario and CARLA Simulation also declare
+[split-host](https://autowarefoundation.github.io/openadkit/deployments/split-host/)
+nodes (`--node` over Zenoh, experimental).

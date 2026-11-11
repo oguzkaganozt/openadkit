@@ -5,9 +5,8 @@ This page is the reference for image tags, versions, and what "supported" means.
 
 ## Tag Reference
 
-Releases are promoted from existing CI builds rather than rebuilt, so the images
-tested in CI are the images that ship. Every tag below points at a promoted
-image digest.
+A release promotes an existing CI build of `main` instead of rebuilding it, so
+the images tested in CI are the images that ship.
 
 | Tag | Example | Created | Moves? |
 |-----|---------|---------|--------|
@@ -15,8 +14,6 @@ image digest.
 | **Latest alias** | `planning-humble` | Stable releases | Yes |
 | **Pre-release** | `planning-humble-v2.0.0-rc.1` | Pre-releases | No |
 | **CI build** | `planning-humble-123456789-1` | Every CI build (`<run_id>-<run_attempt>`) | No |
-
-Releases promote a CI build of `main` (see [Versioning](#versioning)).
 
 Pre-releases never move the latest aliases. No alias leaves out the
 distro, so an image never switches ROS distro under the same tag.
@@ -49,7 +46,7 @@ Releases come from `main`, which pins one Autoware release in
 `openadkit version`. The release also pins the ROS 2 distros and every image
 digest, and its images carry `org.opencontainers.image.autoware-base-version`.
 A fix that is upstream but not yet in an Autoware release can be
-[backported](../releases/evidence.md#backporting-an-autoware-fix); the release
+[backported](../development/release-process.md#backporting-an-autoware-fix); the release
 notes list it, and the Autoware version stays the tag's. A `release/X.Y` branch
 is created from a release tag only to fix an older version.
 
@@ -58,15 +55,15 @@ is created from a release tag only to fix an older version.
 | Distro | Status |
 |--------|--------|
 | **Humble** | Default |
-| **Jazzy** | Published where required builds, scans and runtime evidence pass |
+| **Jazzy** | Supported |
 
-A release bundle carries pinned images for both distros; choose one with
-`--ros-distro`. A distro is supported only while it is supported upstream.
-Non-exempt evidence cells for each declared distro must also pass the
-[release evidence gate](../releases/evidence.md). The initial default is Humble;
-changing it requires a reviewed manifest change and passing evidence, not an
-automatic release-time fallback. Image builds alone do not prove runtime behavior
-on every architecture.
+A release bundle pins images for both distros; choose one with `--ros-distro`.
+A release needs the evidence cells of both distros to pass its
+[gate](../releases/evidence.md), and a distro is supported only while it is
+supported upstream. Changing the default takes a reviewed manifest change and
+passing evidence; a release never falls back to another distro by itself.
+Evidence runs on amd64, so an image build alone does not prove runtime behavior
+on arm64.
 
 ### ROS Package Snapshot
 
@@ -91,11 +88,11 @@ are not pinned, so security updates keep flowing into new builds.
 - **Platforms**: support is tiered (committed, experimental, best-effort,
   unsupported). See [Supported Platforms](../platforms/index.md).
 - **No certification claims**: Open AD Kit makes no safety-certification,
-   functional-safety, or production-readiness claims.
+  functional-safety or production-readiness claim.
 
 Community help and version coverage are described in
 [SUPPORT.md](https://github.com/autowarefoundation/openadkit/blob/main/.github/SUPPORT.md);
 report security vulnerabilities through the
 [private reporting policy](https://github.com/autowarefoundation/openadkit/blob/main/.github/SECURITY.md).
 
-Maintainers: see the [Release Process](../development/build-from-source.md#release-process).
+Maintainers: see the [Release Process](../development/release-process.md).

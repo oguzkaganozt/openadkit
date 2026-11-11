@@ -17,14 +17,14 @@ community-based; there is no response-time or service-level guarantee.
 For a bug report, include `openadkit version --json`, the deployment, ROS
 distro, host architecture, Docker/Compose versions, reproduction steps, and
 relevant logs. Remove credentials and personal or sensitive data first.
-For an integrator kit, also include the pinned base version and the result of
+For a kit, also include the pinned base version and the result of
 `openadkit validate <deployment> --json`.
 
 ## Supported versions and configurations
 
 The latest stable release receives fixes through a new patch or minor release.
-Older releases are not maintained separately. Until the first stable release,
-source checkouts and release candidates are development previews.
+Older releases are not maintained separately. Source checkouts and release
+candidates are development previews.
 
 Release evidence covers specific deployment, ROS distro, node topology and
 platform cells, not every hardware or environment combination. The hosted

@@ -11,7 +11,8 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
    restart and upgrade check on a release candidate. Before it, review the
    registry cleanup's first list-only run and set `REGISTRY_CLEANUP=delete`;
    after it, delete the `openadkit-common` package, which no build uses since
-   every image went to `openadkit`.
+   every image went to `openadkit`, and remove the pre-release note
+   (`docs/includes/first-release-note.md` and the line in `README.md`).
 
 ## Next: v2.x, in priority order
 

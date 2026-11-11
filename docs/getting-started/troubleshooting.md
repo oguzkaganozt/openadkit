@@ -9,6 +9,13 @@
 Your user must be in the `docker` group. Log out and back in after
 `openadkit setup`, or run `newgrp docker`. Do not run `openadkit` with `sudo`.
 
+### Docker Compose is too old
+
+`openadkit setup` stops when Docker is installed but Docker Compose 5.0 or
+newer is missing. Install Docker's `docker-compose-plugin`
+([instructions](https://docs.docker.com/compose/install/linux/)) and rerun
+setup. Ubuntu's own `docker-compose-v2` package is too old.
+
 ### A deployment fails to start
 
 1. Check that Docker is running: `docker info`.
@@ -27,11 +34,12 @@ openadkit validate <deployment> --data
 openadkit fetch <deployment> --force
 ```
 
-`validate --data` reports each resource as `ok`, `missing`, `incomplete`, or `outdated`;
-add `--gpu` to it for Logging Simulation's CenterPoint models (CARLA always
-runs in GPU mode).
-`fetch` always includes GPU data. `--force` only replaces data the CLI
-installed; remove data you placed yourself, then run `openadkit fetch <deployment>`.
+`validate --data` reports each resource as `ok`, `missing`, `incomplete` or
+`outdated`; add `--gpu` to include the data of a GPU mode, such as Logging
+Simulation's CenterPoint models. `fetch` always includes it. `--force` only
+replaces data the CLI installed; remove data you placed yourself, then run
+`openadkit fetch <deployment>`. See
+[Downloaded Data](cli.md#downloaded-data).
 
 ## GPU
 
@@ -62,8 +70,9 @@ it a certificate (`NOVNC_CERT`, `NOVNC_KEY`); with one, open it over
 
 ### Port 6080 already in use
 
-Port 6080 serves the visualizer. Stop the service that holds the port. The CLI deployments use host
-networking, so adding a `ports:` mapping to `docker-compose.yaml` has no effect.
+Port 6080 serves the visualizer. Stop the service that holds the port. The
+deployments use host networking, so a `ports:` mapping in `docker-compose.yaml`
+has no effect.
 
 ### Point clouds arrive at a lower rate than they are published
 
@@ -81,7 +90,8 @@ nstat -az UdpRcvbufErrors     # a growing count means drops
 
 DDS stays on loopback by default. To reach other hosts, set
 `CYCLONEDDS_NETWORK_INTERFACE` to the exact LAN or VPN interface name in your
-[host settings file](cli.md) (`~/.config/openadkit/<deployment>.env`):
+[host settings file](cli.md#configuration)
+(`~/.config/openadkit/<deployment>.env`):
 
 ```bash
 CYCLONEDDS_NETWORK_INTERFACE=eth0

@@ -1,10 +1,10 @@
 # Verify a Release
 
-Verify downloaded files before executing the installer. Use a recent GitHub
-CLI with `gh attestation` and `jq`. Older previews may not have these
-attestations or metadata fields.
+Verify downloaded files before executing the installer. The full check needs
+a recent GitHub CLI with `gh attestation`, and `jq`; releases before v2.0.0
+may lack these attestations and metadata fields.
 
-## Download and verify release artifacts
+## Provenance and Checksums
 
 Replace the example version with the release you intend to use:
 
@@ -41,6 +41,27 @@ version, promoted commit, default distro, passing cells and CI exemptions.
 The metadata's `.evidence` must match the plan's `.evidence` exactly, and its
 `url` links the evidence run the release gate accepted.
 
-After verification, install the downloaded launcher or use the documented
-[installation flow](../getting-started/index.md). Evidence is bounded to the
-tested cells; it is not a vehicle-safety or security certification.
+After verification, install with the downloaded `openadkit` or follow the
+[Quickstart](../getting-started/index.md). Evidence is bounded to the tested
+cells; it is not a vehicle-safety or security certification.
+
+## Checksum Only
+
+Without the GitHub CLI you can still check the bundle against the release
+metadata. This proves the bundle is the one the release names, not where it
+was built:
+
+```bash
+VERSION=$(curl -fsSL \
+  https://api.github.com/repos/autowarefoundation/openadkit/releases/latest \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')
+curl -fLO "https://github.com/autowarefoundation/openadkit/releases/download/${VERSION}/openadkit-${VERSION}.tar.gz"
+curl -fLO "https://github.com/autowarefoundation/openadkit/releases/download/${VERSION}/release-metadata.json"
+EXPECTED=$(python3 -c 'import json; print(json.load(open("release-metadata.json"))["bundles"][0]["sha256"])')
+printf '%s  %s\n' "$EXPECTED" "openadkit-${VERSION}.tar.gz" | sha256sum --check -
+tar -xzf "openadkit-${VERSION}.tar.gz"
+cd "openadkit-${VERSION}"
+```
+
+The extracted directory is a complete runtime; run it with `./openadkit`. The
+installer makes this same check before it installs a bundle.

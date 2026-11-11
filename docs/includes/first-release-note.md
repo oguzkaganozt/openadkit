@@ -1,6 +1,3 @@
-!!! tip "Release bundles"
-    Each stable GitHub Release will publish a versionless `openadkit` installer and
-    one `openadkit-vX.Y.Z.tar.gz` containing the runtime entry point and the
-    curated deployments (planning, logging, scenario, CARLA, and Safety Island). Split-host
-    nodes ship as experimental. Images and sample data
-    are pulled on demand. Until the first release exists, use a source checkout.
+!!! note "v2.0.0 is not published yet"
+    Until the first stable release there is no release bundle to install: run
+    Open AD Kit from a source checkout instead.

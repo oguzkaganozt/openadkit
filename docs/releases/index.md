@@ -1,24 +1,25 @@
 # Releases
 
-**No stable release has been published yet.** Until the first release, run Open
-AD Kit from a [source checkout](../getting-started/index.md).
+--8<-- "includes/first-release-note.md"
 
 [GitHub Releases](https://github.com/autowarefoundation/openadkit/releases) is
-the canonical source for published versions, release notes, and provenance
-metadata. [Compatibility](compatibility.md) lists what a version promises. Each stable release publishes:
+the canonical source for published versions, release notes and provenance
+metadata. Each stable release publishes:
 
 - a versionless `openadkit` installer
-- the versioned `openadkit-vX.Y.Z.tar.gz` bundle
-- the pinned Autoware meta-release, ROS 2 distro(s), and image tags and digests
-- a BOM, the passing runtime evidence summary, explicit CI exemptions and default distro
+- the versioned `openadkit-vX.Y.Z.tar.gz` bundle: the CLI and the deployments
+- `release-plan.json` and `release-metadata.json`: the pinned Autoware release,
+  ROS 2 distros, image tags and digests, the BOM, the passing evidence summary
+  and the CI exemptions
 - build provenance for the installer, bundle, plan and metadata
 
-The notes open with the release's highlights and install command, list the
-merged pull requests by type, and summarize the runtime evidence.
-Installed releases move to the latest stable version with `openadkit upgrade`.
-Tag naming is documented in
-[Container Images & Versioning](../getting-started/container-images.md).
-See [Evidence Policy](evidence.md) for the blocking gate and verification report, and
-[Verify a Release](verification.md) before executing downloaded artifacts.
+The release notes open with the highlights and the install command, list the
+merged pull requests by type, and summarize the evidence. An installed release
+moves to the latest stable version with `openadkit upgrade`.
 
-Planned work and its priority order are on the [Roadmap](../roadmap.md).
+- [Compatibility](compatibility.md) — what a version number promises
+- [Evidence Policy](evidence.md) — what a build must pass to be released
+- [Verify a Release](verification.md) — check the files before you run them
+- [Container Images & Versioning](../getting-started/container-images.md) —
+  image tags and what to pin
+- [Roadmap](../roadmap.md) — planned work, in priority order

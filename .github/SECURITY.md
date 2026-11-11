@@ -27,8 +27,8 @@ Enabling the reporting form alone does not establish an incident-response team.
 ## Supported versions
 
 The latest stable release receives security fixes in a new release. Older
-releases are not patched separately. Until the first stable release, source
-checkouts and release candidates are development previews. See [SUPPORT.md](SUPPORT.md).
+releases are not patched separately. Source checkouts and
+release candidates are development previews. See [SUPPORT.md](SUPPORT.md).
 
 Vulnerabilities in Autoware, ROS, simulators or other upstream dependencies
 should also be coordinated with their maintainers. Report the affected Open

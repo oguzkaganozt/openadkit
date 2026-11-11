@@ -1,14 +1,36 @@
-# Run the Evidence Workflow
+# Evidence Workflow
 
-The reusable `.github/workflows/evidence.yaml` verifies a specific Open AD Kit
-build and publishes the run's summary. It runs automatically after a
-successful `build-all-images` run on `main` or a `release/X.Y` branch, which is
-the run a release of that build needs.
+`.github/workflows/evidence.yaml` runs the
+[evidence cells](../releases/evidence.md#cells-and-levels) against one build and
+publishes the run's summary. It runs after every successful `build-all-images`
+run on `main` or a `release/X.Y` branch, which is the run a release of that
+build needs.
 
-## Reuse it in the build-owning repository
+## Testing a Pull Request
 
-A caller workflow in the same repository (or a fork hosting the same build and
-evidence workflows) can call it without duplicating the runner:
+A pull request that changes an image's inputs builds the affected images,
+amd64 only, for both distros. A pull request from this repository pushes them
+to the CI package `openadkit-ci`, completes the build there with its base
+branch's other images, copied by digest, and runs the cells on that build
+before merge. A fork's pull request cannot push; its images are checked at the
+build and scan only, and run in the cells after merge.
+
+A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against an existing build:
+
+- A pull request that touches `deployments/`, `cli/` or the evidence checks
+  runs them against its base branch's latest successful build.
+- A dispatch of `evidence.yaml` with `source_ref` tests that branch or commit;
+  `build_tag` defaults to the dispatched branch's latest successful build.
+
+The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. A pull request's run is not release evidence: the gate
+accepts only a run on the release branch that tested the build's own commit.
+
+## Reuse It for an Existing Build
+
+A caller workflow in the same repository (or in a fork that hosts the same
+build and evidence workflows) can call it without duplicating the runner:
 
 {% raw %}
 
@@ -39,33 +61,29 @@ This runs containers on the caller's runners. A fork's evidence runs belong to
 that fork; only runs on the branch that built the release, in the releasing
 repository, can be release evidence.
 
-The current reusable interface takes **only `build_tag`**. Metadata and source
-come from the caller's build-owning repository. It stages that exact source's
-reference deployments and the example kit, which the staged CLI's `openadkit new`
-makes with the fixture in `.github/scripts/evidence/kit` on top.
-It does **not** take an arbitrary external kit repository, revision or scenario
-as input. Do not copy this example into an unrelated integrator repository and
-claim it verifies that kit; external kit intake needs a dedicated, pinned,
-trusted-builder implementation before such a claim is valid.
+The reusable interface takes **only `build_tag`**. It does not take an external
+kit repository, revision or scenario as input, so do not copy this example into
+an unrelated repository and claim it verifies that kit: external kits need a
+dedicated, pinned, trusted-builder implementation first.
 
-## Inputs, outputs and boundaries
+## Inputs, Outputs and Boundaries
 
-`build_tag` has the form `<run_id>-<run_attempt>`. The matching
-`build-metadata-<build_tag>` artifact must be available in the repository.
-The workflow checks out its `openadkit_sha` and stages runtime image digests
-from the same metadata, never latest aliases. It stages and verifies the
-kit with the same step that assembles release bundles, so the cells run the
-tree a release of that build ships, plus the example kit.
+- **Input:** `build_tag` has the form `<run_id>-<run_attempt>`. The matching
+  `build-metadata-<build_tag>` artifact must be available in the repository.
+- **What it tests:** the workflow checks out the build's `openadkit_sha` and
+  takes the image digests from the same metadata, never latest aliases. It
+  stages the kit with the same step that assembles release bundles, so the
+  cells run the tree a release of that build ships, plus the example kit. The
+  staged CLI's `openadkit new` makes that kit, with the fixture in
+  `.github/scripts/evidence/kit` on top; its workspace builds against the
+  build's `universe-common-devel` digest for each distro.
+- **How it runs:** hosted runners execute the L0-L3 cells, retry a failed cell
+  once, and aggregate every expected cell; a missing cell fails the run.
+- **Output:** per-cell diagnostics and the `evidence-summary-<build_tag>`
+  artifact, which the [release gate](../releases/evidence.md) reads.
 
-The example workspace builds against that build's matching distro-specific
-`universe-common-devel` digest. Source/config checksums omit `build`, `install`
-and `log` products. Hosted runners execute L0-L3 cells, retry a failed cell once,
-and aggregate all expected cells, including missing-cell failures.
-
-The workflow uploads per-cell diagnostics and the
-`evidence-summary-<build_tag>` artifact. The release gate reads that summary; see the [release policy](../releases/evidence.md).
-
-Runner cells use `schemaVersion: 1`, and the summary (`schemaVersion: 3`)
-carries them as written. Readers accept only these versioned payloads: a cell
-without `schemaVersion: 1` and `metrics` is rejected. Summary readers should use
-`metrics` rather than top-level timings.
+Cells use `schemaVersion: 1`, and the summary (`schemaVersion: 3`) carries them
+as written. Readers accept only these versioned payloads: a cell without
+`schemaVersion: 1` and `metrics` is rejected. Read timings from `metrics`
+rather than from top-level fields. Source and config checksums leave out the
+`build`, `install` and `log` products of a workspace.

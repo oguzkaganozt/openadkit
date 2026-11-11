@@ -1,6 +1,6 @@
 # Supported Platforms
 
-[Deployments](../deployments/index.md) run on Ubuntu with Docker Compose for
+[Deployments](../deployments/index.md) run on Ubuntu with Docker Compose, for
 development and simulation. **Platforms** are edge targets on automotive
 operating systems such as AutoSD.
 
@@ -32,16 +32,23 @@ blueprint and Red Hat's AutoSD blueprint build on it.
 
 ## Support Matrix
 
+| Tier | Meaning |
+|------|---------|
+| **Committed** | Gated by every release: it builds and passes its checks, or the release does not ship |
+| **Experimental** | Works and is tested where its page says so, but may change in a minor release |
+| **Best-effort** | Ships in the release without CI evidence |
+| **Unsupported** | Not built or tested in this repository |
+
 A path that fails its build or validation gate is dropped or marked here, not
-documented as if it worked. Individual boards are listed on the
+documented as if it worked. Host requirements and boards are on the
 [Hardware](hardware/index.md) page.
 
 | Path | Tier | Notes |
 |------|------|-------|
-| Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Committed** | Compose validated in CI; CARLA runs on 22.04 only |
-| Component images, amd64 + arm64 | **Committed** | `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
+| Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Committed** | Compose validated in CI; CARLA Simulation runs on 22.04 only |
+| Component images, amd64 + arm64 | **Committed** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
 | Jazzy images | **Committed** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
-| CARLA deployment | **Best-effort** | Humble, amd64, NVIDIA GPU; not verified in CI |
+| CARLA Simulation | **Best-effort** | Humble, amd64, NVIDIA GPU; exempt from CI evidence |
 | AutoSD with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
 | EWAOL | **Unsupported** | No assets in this repository |
 

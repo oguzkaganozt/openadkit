@@ -11,13 +11,15 @@
 
 > The deployment layer for the [Autoware](https://github.com/autowarefoundation/autoware) ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.
 
-Open AD Kit packages Autoware into focused component images and ready-to-run containerized deployments, and integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) with the deployed stack. It includes a CLI, deployment assets, and build and release automation for running autonomous driving and ADAS systems consistently across hosts. Today it ships simulation deployments; vehicle integration is on the [roadmap](https://autowarefoundation.github.io/openadkit/roadmap/).
+Open AD Kit packages Autoware into focused component images and ready-to-run deployments, and integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) with the deployed stack. Its CLI, deployment assets, and build and release automation run autonomous driving and ADAS systems the same way on every host. Today it ships simulation deployments; vehicle integration is on the [roadmap](https://autowarefoundation.github.io/openadkit/roadmap/).
 
 Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle.
 
 ## Quick Start
 
-Run the CPU-based planning simulation on Ubuntu 22.04 or 24.04. No GPU is required.
+Run Planning Simulation on Ubuntu 22.04 or 24.04. No GPU is required.
+
+> **v2.0.0 is not published yet.** Until it is, clone this repository and run the commands below as `./openadkit` from its root, without the `install` step.
 
 ```bash
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
@@ -28,30 +30,32 @@ newgrp docker
 openadkit run planning-simulation
 ```
 
-The installer verifies the release bundle and puts `openadkit` in `~/.local/bin`. When the stack is ready, `openadkit status` prints the visualizer address; open it and sign in with the password `openadkit`.
+The installer verifies the release bundle and puts `openadkit` in `~/.local/bin`. `run` downloads the sample map, pulls the images, starts the services and returns once the stack is ready. It prints the visualizer address; open it and sign in with the password `openadkit`.
 
-The CLI downloads required data, pulls missing images, starts the services, and verifies readiness. To work from a source checkout instead, clone this repository and run `./openadkit` from its root. See the [guided quick start](https://autowarefoundation.github.io/openadkit/getting-started/) for installation options, runtime controls, and troubleshooting.
+The [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/) walks through each step and the installation options.
 
 ## Deployments
 
 | Deployment | Purpose | GPU |
 |---|---|---|
-| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route with the built-in simulator; `--gpu` plans with the Diffusion Planner | Optional |
-| [`scenario-simulation`](https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/) | Run predefined traffic scenarios | No |
-| [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data through sensing and perception | Optional |
-| [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Run Autoware in closed loop with CARLA | Required |
-| [`safety-island-simulation`](deployments/safety-island-simulation) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No |
+| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map with the built-in simulator; `--gpu` plans with the Diffusion Planner | Optional |
+| [`scenario-simulation`](https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/) | Run predefined traffic scenarios in Scenario Simulator | No |
+| [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data through sensing, perception and localization | Optional |
+| [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Drive in closed loop with the CARLA simulator | Required |
+| [`safety-island-simulation`](https://autowarefoundation.github.io/openadkit/deployments/safety-island-simulation/) | Planning Simulation driven by the [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) controller | No |
 
-Use `openadkit list` to inspect the deployment catalog. CARLA requires Humble, amd64, and an NVIDIA GPU. [Split-host simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (`--node` over Zenoh) is experimental.
+`openadkit list` prints this catalog. CARLA requires Humble, amd64 and an NVIDIA GPU; Safety Island Simulation requires amd64. [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (`--node` over Zenoh) is experimental.
 
 ## Documentation
 
 The [documentation site](https://autowarefoundation.github.io/openadkit/) covers:
 
 - [Architecture and components](https://autowarefoundation.github.io/openadkit/overview/)
-- [Deployments and custom stacks](https://autowarefoundation.github.io/openadkit/deployments/)
+- [Deployments](https://autowarefoundation.github.io/openadkit/deployments/)
+- [Your own kit](https://autowarefoundation.github.io/openadkit/deployments/create-a-kit/)
 - [Supported platforms](https://autowarefoundation.github.io/openadkit/platforms/)
 - [Container images and versioning](https://autowarefoundation.github.io/openadkit/getting-started/container-images/)
+- [Compatibility](https://autowarefoundation.github.io/openadkit/releases/compatibility/)
 - [Building from source](https://autowarefoundation.github.io/openadkit/development/build-from-source/)
 
 ## Contributing

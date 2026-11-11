@@ -12,7 +12,7 @@ build graph. The [image reference](#image-reference) lists tags and platforms.
 
 The runtime images hold what Autoware runs. They leave out what only a
 compiler reads, such as headers and static libraries, and only the visualizer
-carries RViz and its plugins. Kits compile their overlay workspaces in the
+carries RViz and its plugins. A kit compiles its overlay workspace in the
 `universe-common-devel` image, which keeps both.
 
 ## Component Images
@@ -93,8 +93,8 @@ and topics for:
 - emergency stop and engage/disengage commands
 - scenario simulation auto-engage and route integration
 
-Launch: `tier4_autoware_api_component.launch.xml`. It is the standard external
-entry point for the modular simulation deployments.
+Launch: `tier4_autoware_api_component.launch.xml`. It is the external entry
+point of every deployment.
 
 ### Simulator {: #simulator }
 
@@ -117,25 +117,27 @@ its `carla-interface` service.
 
 ### Visualizer {: #visualizer }
 
-Browser-accessible RViz2 through noVNC: RViz2 with Autoware plugins, Openbox,
+RViz in the browser through noVNC: RViz with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
 loopback-only, and so does noVNC by default; reach it remotely through an SSH
-tunnel. To serve HTTPS, mount your own certificate into the visualizer from an
-[integrator kit](../deployments/integrator-guide.md) or a Compose override (the
-release mounts none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it
-stays the same across starts, so a browser exception for it holds.
+tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
+[kit](../deployments/integrator-guide.md#4-extra-services) (the release mounts
+none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it stays the same
+across starts, so a browser exception for it holds.
+
+Set these in the [host settings file](../getting-started/cli.md#configuration):
 
 | Variable | Default | Values | Description |
 |----------|---------|--------|-------------|
-| `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz2 configuration inside the container; the default is the copy with config overrides applied |
-| `REMOTE_DISPLAY` | `true` | `true`, `false` | Use browser-based RViz2; `false` opens RViz2 on the desktop, using the session's `DISPLAY` and `XAUTHORITY` |
-| `REMOTE_PASSWORD` | — | String | Required when `REMOTE_DISPLAY=true` |
+| `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz configuration inside the container; the default is the copy with config overrides applied |
+| `REMOTE_DISPLAY` | `true` | `true`, `false` | RViz in the browser; `false` opens RViz on your own desktop instead, using the session's `DISPLAY` and `XAUTHORITY` |
+| `REMOTE_PASSWORD` | `openadkit` | String | noVNC password, required when `REMOTE_DISPLAY=true`. The deployments set this default; the image itself has none |
 | `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address; bridge networking uses `0.0.0.0` with a host loopback port mapping |
 | `USE_SIM_TIME` | `false` | `true`, `false` | Use the ROS simulation clock |
 | `RVIZ_GPU` | `auto` | `auto`, `on`, `off` | Automatic, forced, or disabled VirtualGL acceleration |
 | `NOVNC_CERT`, `NOVNC_KEY` | unset | Paths | Certificate and key inside the container; set both to serve HTTPS only |
 
-For access and remote use, see the
+To open it, see the
 [Quickstart](../getting-started/index.md#open-the-visualizer).
 
 ### CARLA Interface {: #carla-interface }
@@ -151,8 +153,8 @@ commands to CARLA and CARLA sensor data to ROS 2 messages:
 
 Launch: `autoware_carla_interface.launch.xml`. CARLA publishes its Python
 client for x86_64 only, so only the amd64 simulator image has it (Humble and
-Jazzy); the [CARLA Simulation](../deployments/carla-simulation/index.md)
-deployment is Humble-only and needs an NVIDIA GPU.
+Jazzy); [CARLA Simulation](../deployments/carla-simulation/index.md) is
+Humble-only and needs an NVIDIA GPU.
 
 ## Image Reference
 

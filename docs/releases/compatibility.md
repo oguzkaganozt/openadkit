@@ -96,7 +96,7 @@ These work and are tested where the docs say so, but may change in a minor
 release:
 
 - **Split-host nodes:** `--node`, `nodes` in `deployment.json` and the Zenoh
-  bridge. See [Split-host simulation](../deployments/split-host.md).
+  bridge. See [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
   generates. See [AutoSD](../platforms/autosd/index.md).
 - **The Diffusion Planner:** `planning-simulation --gpu`. With Autoware 2.0.0
