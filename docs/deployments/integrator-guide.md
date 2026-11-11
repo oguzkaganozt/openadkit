@@ -11,7 +11,10 @@ Set `kind` to `kit` and `extends` to a published schema-v2 release tag in your
 root `openadkit.json`. The CLI locates that version under
 `~/.local/share/openadkit/openadkit-<tag>` and delegates to its launcher. A
 missing version is downloaded and verified on first use, like a build tool's
-wrapper does; your active `openadkit` stays as it is.
+wrapper does; your active `openadkit` stays as it is. Only the commands that
+act on a kit do this: `validate`, `config`, `fetch`, `run`, `build` and `clean`.
+`list`, `version`, every `--help` and Tab completion read the kit with the CLI
+you called, so a directory you only look at starts no program and no download.
 `OPENADKIT_INSTALL_DIR` overrides the install root for both.
 
 A relative or absolute source path is also accepted for development. Only one

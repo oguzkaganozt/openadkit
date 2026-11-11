@@ -41,8 +41,8 @@ The deployment's name is its key in `openadkit.json`, here `my-kit`;
 `openadkit new` from an installed release writes its version, such as
 `"extends": "v2.0.0"`; the kit then runs with that release's own launcher.
 From a source checkout it writes the checkout's path. To move to another
-release, change `extends`; the next command in the kit downloads that release
-if it is missing.
+release, change `extends`; the next command that acts on the kit, such as
+`validate` or `run`, downloads that release if it is missing.
 
 ## Build, Validate, Run, Stop
 

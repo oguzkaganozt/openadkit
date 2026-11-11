@@ -1853,6 +1853,45 @@ def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
         assert record.read_text().strip() == " ".join(args)
 
 
+@pytest.mark.parametrize("pinned", ["path", "version"])
+def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned):
+    root, _ = runtime_tree(tmp_path)
+    acted = tmp_path / "acted"
+    if pinned == "path":
+        # Another Open AD Kit, whose launcher a command that acts runs.
+        other = tmp_path / "other"
+        shutil.copytree(root, other)
+        executable(other / "openadkit", f'#!/usr/bin/env bash\ntouch "{acted}"\n')
+        kit = integrator_kit(tmp_path, root, extends=str(other))
+    else:
+        kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+        executable(tmp_path / "bin/curl", f'#!/usr/bin/env bash\ntouch "{acted}"\nexit 22\n')
+    fake_docker(tmp_path)
+    for args in (["list"], ["list", "--json"], ["version"], ["run", "--help"], ["validate", "custom", "--help"]):
+        result = run_cli(root, *args, directory=kit)
+        assert not acted.exists(), args
+        assert pinned == "version" or result.returncode == 0, result.stderr
+    # Tab asks list for the names; a release that is not installed offers none.
+    names = complete(root, ["openadkit", "run", ""], directory=kit)
+    assert names == ({"custom"} if pinned == "path" else set())
+    assert not acted.exists()
+    missing = run_cli(root, "list", directory=kit)
+    assert pinned == "path" or "openadkit validate, downloads it" in missing.stdout + missing.stderr
+    # A command that acts hands over to the pinned launcher, or downloads the release.
+    run_cli(root, "validate", "custom", directory=kit)
+    assert acted.exists()
+
+
+def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = integrator_kit(tmp_path, root, extends=str(tmp_path / "nowhere"))
+    result = run_cli(root, "validate", "custom", "--json", directory=kit)
+    assert result.returncode == 1
+    document = json.loads(result.stdout)
+    assert document["valid"] is False and document["deployment"] == "custom"
+    assert "extends does not point to an Open AD Kit" in document["error"]
+
+
 @pytest.mark.parametrize("gpu", [False, True])
 def test_only_a_gpu_run_uses_the_gpu_component_images(gpu):
     # The CUDA builds are amd64-only: a CPU run, also on arm64, must not need them.
