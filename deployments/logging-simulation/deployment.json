@@ -6,7 +6,6 @@
   "compose": {
     "files": ["docker-compose.yaml"],
     "gpuFiles": ["docker-compose.gpu.yaml"],
-    "profiles": ["rosbag"],
     "resetServices": ["map-check", "rosbag"],
     "waitTimeout": 300
   },

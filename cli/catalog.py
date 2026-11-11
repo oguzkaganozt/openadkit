@@ -365,7 +365,6 @@ def _load_kit_deployment(
         "description": manifest["description"],
         "compose": {
             **compose,
-            "profiles": list(base.compose["profiles"]),
             "resetServices": list(dict.fromkeys(base.compose["resetServices"] + compose["resetServices"])),
         },
         "nodes": {},

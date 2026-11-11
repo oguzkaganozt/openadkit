@@ -5,7 +5,6 @@
   "compose": {
     "files": ["docker-compose.yaml"],
     "gpuFiles": ["docker-compose.gpu.yaml"],
-    "profiles": [],
     "resetServices": ["map-check"],
     "waitTimeout": 600
   },

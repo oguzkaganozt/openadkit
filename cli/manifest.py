@@ -67,7 +67,6 @@ ALLOWED_VERIFY_KEYS = {"service", "command"}
 ALLOWED_COMPOSE_KEYS = {
     "files",
     "gpuFiles",
-    "profiles",
     "resetServices",
     "waitTimeout",
 }
@@ -319,7 +318,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
     reject_unknown(value, allowed, "compose")
     compose: dict[str, Any] = {
         field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("gpuFiles", "profiles", "resetServices")
+        for field in ("gpuFiles", "resetServices")
     }
     compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
     if not compose["files"]:

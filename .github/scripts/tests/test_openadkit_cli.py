@@ -69,7 +69,7 @@ def manifest(*, data=None, gpu=False, nodes=False):
     document = {
         "schemaVersion": 2, "description": "Test deployment",
         "compose": {"files": ["docker-compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
-                    "profiles": [], "resetServices": [], "waitTimeout": 1},
+                    "resetServices": [], "waitTimeout": 1},
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],

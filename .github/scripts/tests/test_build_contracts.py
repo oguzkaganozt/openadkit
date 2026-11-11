@@ -176,9 +176,9 @@ def compose_context(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(("name", "node", "present", "absent"), [
-    ("scenario-simulation", None, {"scenario_simulator", "map", "mrm-state-relay", "visualizer"}, {"zenoh-bridge"}),
-    ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario_simulator", "visualizer"}),
-    ("scenario-simulation", "scenario", {"scenario_simulator", "zenoh-bridge", "visualizer"},
+    ("scenario-simulation", None, {"scenario-simulator", "map", "mrm-state-relay", "visualizer"}, {"zenoh-bridge"}),
+    ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario-simulator", "visualizer"}),
+    ("scenario-simulation", "scenario", {"scenario-simulator", "zenoh-bridge", "visualizer"},
      {"map", "vehicle", "mrm-state-relay"}),
     ("carla-simulation", None, {"carla", "carla-interface", "map", "visualizer"}, {"zenoh-bridge"}),
     ("carla-simulation", "autoware", {"map", "zenoh-bridge"}, {"carla", "carla-interface", "visualizer"}),
@@ -201,7 +201,7 @@ def test_real_compose_preserves_single_and_split_graphs(compose_context, name, n
     if node in ("scenario", "carla"):
         assert set(services) == present
     if node == "scenario":
-        assert "pid" not in services["scenario_simulator"]
+        assert "pid" not in services["scenario-simulator"]
     if name == "carla-simulation" and node == "autoware":
         assert "carla-interface" not in services["vehicle"].get("depends_on", {})
     # The visualizer joins no PID namespace, and only the single-host graph waits on Autoware.

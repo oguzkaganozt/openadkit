@@ -1,7 +1,7 @@
 # Scenario simulation — single-host graph.
 #
 # Assembles the shared Autoware and scenario service files and restores the
-# single-host wiring: scenario_simulator waits for Autoware, including the
+# single-host wiring: scenario-simulator waits for Autoware, including the
 # local /map/pointcloud_map topic, and joins the map PID namespace.
 # Split-host runs use --node autoware / --node scenario, where the CLI
 # selects a compose.<node>.yaml entrypoint with an explicit bridge. This file never
@@ -11,7 +11,7 @@ include:
   - services.scenario.yaml
 
 services:
-  scenario_simulator:
+  scenario-simulator:
     pid: service:map
     environment:
       - WAIT_FOR_POINTCLOUD_MAP=1

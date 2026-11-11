@@ -82,8 +82,6 @@ def compose_command(deployment: Deployment, selection: Selection) -> list[str]:
         command.extend(("--env-file", str(env_file)))
     for compose_file in deployment.compose_files(selection.gpu, selection.node):
         command.extend(("--file", str(compose_file)))
-    for profile in deployment.compose["profiles"]:
-        command.extend(("--profile", profile))
     return command
 
 
