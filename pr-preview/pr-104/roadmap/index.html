@@ -2195,21 +2195,19 @@
 
 <h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">#</a></h1>
 <p>Last reviewed: 2026-11-09, before v2.0.0.</p>
-<p>What Open AD Kit plans next. Finished work leaves this page and appears in the
-<a href="https://github.com/autowarefoundation/openadkit/releases">release notes</a>.</p>
+<p>What Open AD Kit plans next, as outcomes its users will notice. Finished work
+leaves this page and appears in the
+<a href="https://github.com/autowarefoundation/openadkit/releases">release notes</a>.
+Maintenance and CI work is tracked in
+<a href="https://github.com/autowarefoundation/openadkit/issues">GitHub Issues</a>, not
+here.</p>
 <h2 id="now-v200">Now: v2.0.0<a class="headerlink" href="#now-v200" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Release.</strong> A full build and evidence run, then a clean-host install, kit,
-   restart and upgrade check on a release candidate. Before it, review the
-   registry cleanup's first list-only run and set <code>REGISTRY_CLEANUP=delete</code>;
-   after it, delete the <code>openadkit-common</code> package, which no build uses since
-   every image went to <code>openadkit</code>, and remove the pre-release note
-   (<code>docs/includes/first-release-note.md</code> and the line in <code>README.md</code>).</li>
+<li><strong>The first stable release.</strong> A full build and evidence run, then a
+   clean-host install, kit, restart and upgrade check on a release candidate.</li>
 </ol>
 <h2 id="next-v2x-in-priority-order">Next: v2.x, in priority order<a class="headerlink" href="#next-v2x-in-priority-order" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>One resolved configuration.</strong> Resolve settings and the Compose model once;
-   data paths, images, mounts and validation use the same result.</li>
 <li><strong>Development tooling.</strong> A devcontainer and a debugging guide for the
    development loop.</li>
 <li><strong>The base from a kit.</strong> Run a kit's unmodified base deployment from the
@@ -2221,25 +2219,10 @@
 <li><strong>Platform evidence.</strong> Native arm64 evidence cells, a readiness check and
    an evidence cell for Logging Simulation on CPU, and GPU logging simulation
    coverage.</li>
-<li><strong>Autoware upgrades.</strong> Measure clean common-image builds on a 4-vCPU runner
-   before the next Autoware version change.</li>
 <li><strong>Image SBOMs.</strong> A software bill of materials for each container image.</li>
-<li><strong>Autoware main canary.</strong> A weekly, non-blocking build against Autoware
-   <code>main</code>, kept out of releases and PR checks.</li>
-<li><strong>Upstream build fixes.</strong> Propose upstream the dependency fixes that the
-    image boundaries need.</li>
-<li><strong>Build once, promote.</strong> Build and test a pull request in the merge queue,
-    on the commit <code>main</code> will get, and copy its images to <code>main</code> by digest
-    instead of building them again; that build then covers arm64 too.
-    Build-tagged images then stay in <code>openadkit-ci</code>, and <code>openadkit</code> keeps
-    releases, latest aliases and the moving tags.</li>
-<li><strong>Faster main builds.</strong> Components wait only for their own common images,
-    and the evidence does not wait for the CUDA and arm64 images it never runs.</li>
-<li><strong>ROS snapshot key.</strong> The snapshot signing key in the images expires on
-    2027-06-01; replace it with the extended key before then.</li>
 <li><strong>CES 2027 demo.</strong> Hardware integration and partner evidence for the
-    demonstrated setup; tracked in
-    <a href="https://github.com/autowarefoundation/openadkit/issues/169">#169</a>.</li>
+   demonstrated setup; tracked in
+   <a href="https://github.com/autowarefoundation/openadkit/issues/169">#169</a>.</li>
 </ol>
 <h2 id="later-direction-not-commitment">Later: direction, not commitment<a class="headerlink" href="#later-direction-not-commitment" title="Permanent link">#</a></h2>
 <ul>
@@ -2248,6 +2231,9 @@
   <a href="https://github.com/autowarefoundation/autoware_system_designer">Autoware System Designer</a>.</li>
 <li><strong>Path to a vehicle.</strong> A vehicle-interface contract and reference hardware, a
   validation ladder from SIL to full-scale vehicles, and offline OCI delivery.</li>
+<li><strong>EWAOL.</strong> Decide whether the SOAFEE reference implementation, now kept by
+  the SOAFEE SIG, becomes a target with a deployment validated on it, or
+  leaves the <a href="../platforms/#support-matrix">support matrix</a>.</li>
 <li><strong>Visualizer.</strong> KasmVNC in place of TigerVNC, noVNC and Openbox, at the next
   major version; Lichtblick with <code>foxglove_bridge</code> for analysis and bag
   playback.</li>
@@ -2273,6 +2259,8 @@ NCAP certification claim. Safety Island owns its safety boundary; Open AD Kit
 integrates it.</p>
 <h2 id="keeping-this-page-current">Keeping This Page Current<a class="headerlink" href="#keeping-this-page-current" title="Permanent link">#</a></h2>
 <ul>
+<li>An item is an outcome a user will notice. Maintenance, CI and release chores
+  go to an issue instead.</li>
 <li>The pull request that finishes an item removes it.</li>
 <li>Each minor or major release reviews the page: items move from Next to Now,
   Later is pruned, and the review line above names the release. Release
