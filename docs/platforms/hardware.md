@@ -29,4 +29,4 @@ Scenario Simulation can then run slower than real time with
 
 No board is part of the release evidence: the
 [evidence cells](../releases/evidence.md) run on hosted amd64 runners, and
-native arm64 cells are [planned](https://github.com/autowarefoundation/openadkit/issues/186).
+native arm64 cells are planned.
