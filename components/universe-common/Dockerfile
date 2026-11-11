@@ -80,6 +80,7 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     mkdir -p /opt/openadkit && \
     printf '%s\n' \
         /tmp/autoware/src/universe/autoware_universe/common \
+        /tmp/autoware/src/*/*/*/autoware_cuda_dependency_meta \
         /tmp/autoware/src/universe/autoware_universe/evaluator \
         /tmp/autoware/src/universe/external/eagleye \
         /tmp/autoware/src/universe/external/glog \

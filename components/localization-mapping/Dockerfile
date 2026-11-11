@@ -36,7 +36,6 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
         /tmp/autoware/src/universe/autoware_universe/map \
         /tmp/autoware/src/universe/autoware_universe/sensing/autoware_pcl_extensions \
         /tmp/autoware/src/universe/autoware_universe/sensing/autoware_pointcloud_preprocessor \
-        /tmp/autoware/src/universe/autoware_universe/system/autoware_default_adapi_helpers/autoware_automatic_pose_initializer \
       > /opt/openadkit/colcon-base-paths && \
     colcon_base_paths=$(tr '\n' ' ' < /opt/openadkit/colcon-base-paths) && \
     . "/opt/ros/${ROS_DISTRO}/setup.sh" && \
