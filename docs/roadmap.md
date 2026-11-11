@@ -8,7 +8,10 @@ What Open AD Kit plans next. Finished work leaves this page and appears in the
 ## Now: v2.0.0
 
 1. **Release.** A full build and evidence run, then a clean-host install, kit,
-   restart and upgrade check on a release candidate.
+   restart and upgrade check on a release candidate. Before it, review the
+   registry cleanup's first list-only run and set `REGISTRY_CLEANUP=delete`;
+   after it, delete the `openadkit-common` package, which no build uses since
+   every image went to `openadkit`.
 
 ## Next: v2.x, in priority order
 
