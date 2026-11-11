@@ -16,8 +16,6 @@
         <link rel="prev" href="../evidence-workflow/">
       
       
-        <link rel="next" href="../../roadmap/">
-      
       
         
       
@@ -411,25 +409,6 @@
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../roadmap/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Roadmap
-
-      </a>
-    </li>
   
 
       
@@ -1788,33 +1767,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../roadmap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Roadmap
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -1937,10 +1889,6 @@ number promises.</p>
 <li><strong>Highlights</strong> for a minor or major release are in
   <code>.github/release-highlights/vX.Y.Z.md</code>. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.</li>
-<li><strong>The <a href="../../roadmap/">roadmap</a> is reviewed</strong> for a minor or major release:
-  finished items are gone, the release's items are under Now, and its
-  <code>Last reviewed</code> line names the release. Validation checks that line for the
-  release and its candidates.</li>
 </ul>
 <h2 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h2>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
@@ -1952,7 +1900,7 @@ how an older line is validated. Its jobs run in order:</p>
 <ol>
 <li><strong>validate</strong>: runs the release gates in
    <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh"><code>validate_release.sh</code></a>
-   (version format, roadmap review, build provenance and age, scan results,
+   (version format, build provenance and age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
    digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
    tagged if a gate fails.</li>
@@ -2044,22 +1992,6 @@ the pinned release as a patch instead of waiting for the next Autoware release:<
             </div>
           </a>
         
-        
-          
-          <a href="../../roadmap/" class="md-footer__link md-footer__link--next" aria-label="Next: Roadmap">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Roadmap
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
         
       </nav>
     
