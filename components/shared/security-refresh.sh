@@ -25,7 +25,10 @@ apt_ubuntu=(
     -o "Dir::State::Lists=${lists}"
 )
 
-apt-get "${apt_ubuntu[@]}" update
+# Error-Mode=any: by default update exits 0 when it cannot reach the archive,
+# and the upgrade below then finds nothing: the image would ship without the
+# refresh, and nothing would say so.
+apt-get "${apt_ubuntu[@]}" -o APT::Update::Error-Mode=any update
 DEBIAN_FRONTEND=noninteractive apt-get "${apt_ubuntu[@]}" upgrade -y \
     --with-new-pkgs --no-install-recommends \
     -o Dpkg::Options::=--force-confold
