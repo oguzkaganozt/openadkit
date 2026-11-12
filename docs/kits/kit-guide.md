@@ -35,7 +35,7 @@ Each kit deployment names a `base` deployment of the pinned release in its
 - **Downloads and one-shot services** are inherited. A kit can add
   downloads with distinct destination variables, and one-shot services of its
   own.
-- **Split-host nodes are not inherited:** a kit deployment runs on one host.
+- **Split-host roles are not inherited:** a kit deployment runs on one host.
 
 A kit made by `openadkit new my-kit` has one deployment, also named `my-kit`.
 Its manifests, Compose file and differences live in one directory
@@ -173,7 +173,7 @@ workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 
-To replace one side of a base that runs as split-host nodes, include only the
+To replace one side of a base that runs as split-host roles, include only the
 other side's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends

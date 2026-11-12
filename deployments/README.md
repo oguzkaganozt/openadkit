@@ -17,4 +17,4 @@ Each deployment directory holds its deployment manifest (`deployment.json`),
 its settings (`settings.env`, and `settings.gpu.env` for a GPU mode) and its
 Compose files. Scenario and CARLA Simulation also declare
 [split-host](https://autowarefoundation.github.io/openadkit/deployments/split-host/)
-nodes (`--node` over Zenoh, experimental).
+roles (`--role` over Zenoh, experimental).

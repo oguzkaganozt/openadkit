@@ -76,11 +76,11 @@ def compose_command(deployment: Deployment, selection: Selection) -> list[str]:
         "docker",
         "compose",
         "--project-name",
-        deployment.project_name(selection.node),
+        deployment.project_name(selection.role),
     ]
     for env_file in deployment.env_files(selection.gpu):
         command.extend(("--env-file", str(env_file)))
-    for compose_file in deployment.compose_files(selection.gpu, selection.node):
+    for compose_file in deployment.compose_files(selection.gpu, selection.role):
         command.extend(("--file", str(compose_file)))
     return command
 
@@ -151,53 +151,53 @@ def other_projects(deployment: Deployment) -> list[str]:
     """
     live = live_project_files()
     own = set()
-    for node in (None, *deployment.nodes):
-        name = deployment.project_name(node)
+    for role in (None, *deployment.roles):
+        name = deployment.project_name(role)
         if name not in live:
             continue
-        entry = deployment.compose_files(False, node)[0].resolve()
+        entry = deployment.compose_files(False, role)[0].resolve()
         if not live[name] or Path(live[name][0]).resolve() == entry:
             own.add(name)
     return sorted(set(live) - own)
 
 
-def live_nodes(deployment: Deployment) -> list[str | None]:
-    """The live projects of one deployment, by node: None is the single-host project."""
+def live_roles(deployment: Deployment) -> list[str | None]:
+    """The live projects of one deployment, by role: None is the single-host project."""
     live = live_projects()
-    nodes: list[str | None] = []
+    roles: list[str | None] = []
     if deployment.project_name() in live:
-        nodes.append(None)
-    nodes.extend(
-        node for node in sorted(deployment.nodes) if deployment.project_name(node) in live
+        roles.append(None)
+    roles.extend(
+        role for role in sorted(deployment.roles) if deployment.project_name(role) in live
     )
-    return nodes
+    return roles
 
 
-def node_label(node: str | None) -> str:
-    return "single-host" if node is None else f"node {node}"
+def role_label(role: str | None) -> str:
+    return "single-host" if role is None else f"role {role}"
 
 
 def live_state_conflict(deployment: Deployment, selection: Selection) -> str | None:
-    """Nodes of one deployment may share a host; single-host and nodes may not."""
-    live = live_nodes(deployment)
+    """Roles of one deployment may share a host; single-host and roles may not."""
+    live = live_roles(deployment)
     clashing: list[str | None]
-    if selection.node is None:
-        clashing = [node for node in live if node is not None]
+    if selection.role is None:
+        clashing = [role for role in live if role is not None]
     else:
         clashing = [None] if None in live else []
     if not clashing:
         return None
-    running = ", ".join(node_label(node) for node in clashing)
+    running = ", ".join(role_label(role) for role in clashing)
     return (
         f"{deployment.name} is already running as {running}; "
         "stop it with openadkit stop "
-        f"before starting {node_label(selection.node)}"
+        f"before starting {role_label(selection.role)}"
     )
 
 
 def require_stopped(deployment: Deployment) -> None:
     """Refuse destructive cleanup while any project of this deployment is live."""
-    if live_nodes(deployment):
+    if live_roles(deployment):
         raise OpenADKitError(f"{deployment.name} is running; stop it before deleting data: openadkit stop")
 
 
@@ -243,9 +243,9 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
     # oneShotServices entry still fails fast. A kit inherits its base's one-shot services
     # but may leave their side of the base out (one service layer of it).
     inherited = set(deployment.base.one_shot_services()) if deployment.base else set()
-    unknown = sorted(set(deployment.one_shot_services(selection.node)) - configured - inherited)
-    # A node may leave the verify service to another node; the whole graph must have it.
-    if deployment.verify and selection.node is None and deployment.verify["service"] not in configured:
+    unknown = sorted(set(deployment.one_shot_services(selection.role)) - configured - inherited)
+    # A role may leave the verify service to another role; the whole graph must have it.
+    if deployment.verify and selection.role is None and deployment.verify["service"] not in configured:
         unknown.append(deployment.verify["service"])
     if unknown:
         raise OpenADKitError(
@@ -290,7 +290,7 @@ def run_report(
     return {
         "schemaVersion": 1,
         "deployment": deployment.name,
-        "node": selection.node,
+        "role": selection.role,
         "rosDistro": selection.ros_distro,
         "gpu": selection.gpu,
         "version": kit.version or (kit.base.version if kit.base else None),
@@ -380,7 +380,7 @@ def failed_services(
     for line in result.stdout.splitlines():
         container, service, restarts, state, exit_code, health = line.split()
         # One-shot services may finish, as map-check does, but not fail.
-        if service in deployment.one_shot_services(selection.node):
+        if service in deployment.one_shot_services(selection.role):
             if state == "exited" and exit_code != "0":
                 failed.add(service)
             continue
@@ -433,7 +433,7 @@ def start(
         pull = ["pull", "--policy", pull_policy]
         run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
 
-    for service in deployment.one_shot_services(selection.node):
+    for service in deployment.one_shot_services(selection.role):
         if service not in services:
             continue
         run_compose(deployment, selection, ["rm", "--stop", "--force", service], show=True)
@@ -525,7 +525,7 @@ def verify(deployment: Deployment, selection: Selection, services: set[str], rep
     assert spec is not None
     service = spec["service"]
     if service not in services:
-        print(f"verify: {service} does not run on this node; nothing to verify here")
+        print(f"verify: {service} does not run on this role; nothing to verify here")
         return 0
     # The step's own output follows on the same terminal.
     print(f"verify: {' '.join(spec['command']) if 'command' in spec else f'waiting for {service} to finish'}", flush=True)

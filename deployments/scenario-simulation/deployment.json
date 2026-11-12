@@ -11,7 +11,7 @@
   "verify": {
     "service": "scenario-simulator"
   },
-  "nodes": {
+  "roles": {
     "autoware": {
       "rosDomainId": 1,
       "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],

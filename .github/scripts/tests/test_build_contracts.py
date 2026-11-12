@@ -177,7 +177,7 @@ def compose_context(tmp_path, monkeypatch):
     return catalog.load_kit(ROOT)
 
 
-@pytest.mark.parametrize(("name", "node", "present", "absent"), [
+@pytest.mark.parametrize(("name", "role", "present", "absent"), [
     ("scenario-simulation", None, {"scenario-simulator", "map", "mrm-state-relay", "visualizer"}, {"zenoh-bridge"}),
     ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario-simulator", "visualizer"}),
     ("scenario-simulation", "scenario", {"scenario-simulator", "zenoh-bridge", "visualizer"},
@@ -187,29 +187,29 @@ def compose_context(tmp_path, monkeypatch):
     ("carla-simulation", "carla", {"carla", "carla-interface", "carla-map-loader", "zenoh-bridge", "visualizer"},
      {"map", "vehicle"}),
 ])
-def test_real_compose_preserves_single_and_split_graphs(compose_context, name, node, present, absent):
+def test_real_compose_preserves_single_and_split_graphs(compose_context, name, role, present, absent):
     deployment = catalog.get_deployment(ROOT, compose_context, name)
-    selection = settings.resolve(deployment, compose_context, "humble", False, node=node)
+    selection = settings.resolve(deployment, compose_context, "humble", False, role=role)
     result = compose.run_compose(deployment, selection, ["config", "--format", "json"])
     services = json.loads(result.stdout)["services"]
     assert present <= services.keys() and not absent & services.keys()
-    if node:
+    if role:
         bridge = services["zenoh-bridge"]
         assert "container_name" not in bridge
-        assert bridge["environment"]["ROS_DOMAIN_ID"] == str(deployment.nodes[node]["rosDomainId"])
+        assert bridge["environment"]["ROS_DOMAIN_ID"] == str(deployment.roles[role]["rosDomainId"])
         mounts = {item["target"]: item["source"] for item in bridge["volumes"]}
         assert mounts["/config/zenoh.json5"] == str(deployment.directory / "config/zenoh.json5")
         assert mounts["/etc/cyclonedds/cyclonedds.xml"] == str(ROOT / "deployments/shared/cyclonedds.xml")
-    if node in ("scenario", "carla"):
+    if role in ("scenario", "carla"):
         assert set(services) == present
-    if node == "scenario":
+    if role == "scenario":
         assert "pid" not in services["scenario-simulator"]
-    if name == "carla-simulation" and node == "autoware":
+    if name == "carla-simulation" and role == "autoware":
         assert "carla-interface" not in services["vehicle"].get("depends_on", {})
     # The visualizer joins no PID namespace, and only the single-host graph waits on Autoware.
     if "visualizer" in services:
         assert "pid" not in services["visualizer"]
-        assert ("map" in services["visualizer"].get("depends_on", {})) is (node is None)
+        assert ("map" in services["visualizer"].get("depends_on", {})) is (role is None)
 
 
 def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):

@@ -365,9 +365,9 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
 
 
 def print_run_next_steps(
-    deployment, services: set[str], node: str | None, output: str | None, *, tls: bool = False
+    deployment, services: set[str], role: str | None, output: str | None, *, tls: bool = False
 ) -> None:
-    target = deployment.name if node is None else f"{deployment.name} --node {node}"
+    target = deployment.name if role is None else f"{deployment.name} --role {role}"
     print(f"running: {target}")
     if "visualizer" in services:
         print(live.visualizer_address(tls))
@@ -380,8 +380,8 @@ def print_run_next_steps(
     print("stop with: openadkit stop")
 
 
-NODE_HELP = "node from this deployment's manifest (omit for single host; experimental)"
-LIVE_NODE_HELP = "node to act on when several nodes run on this host (experimental)"
+ROLE_HELP = "role from this deployment's manifest (omit for single host; experimental)"
+LIVE_ROLE_HELP = "role to act on when several roles run on this host (experimental)"
 VERBOSE_HELP = "print the docker commands it runs, status queries aside (or set OPENADKIT_VERBOSE=1)"
 
 
@@ -406,7 +406,7 @@ def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) ->
         "--gpu", action="store_true",
         help="run in GPU mode, for a deployment with an optional one (one that requires a GPU always uses it)",
     )
-    parser.add_argument("--node", metavar="NODE", help=NODE_HELP)
+    parser.add_argument("--role", metavar="ROLE", help=ROLE_HELP)
     parser.add_argument(
         "--ws", metavar="PATH",
         help="mount this built workspace as the overlay, for a deployment without its own",
@@ -553,7 +553,7 @@ def select(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespac
     compose.ensure_runtime_user()
     return settings.resolve(
         deployment, kit, args.ros_distro, getattr(args, "gpu", False),
-        node=getattr(args, "node", None), data_only=args.command == "fetch",
+        role=getattr(args, "role", None), data_only=args.command == "fetch",
     )
 
 
@@ -577,14 +577,14 @@ def validate_command(root: Path, kit: Kit, deployment: Deployment, args: argpars
             "base": deployment.base.name if deployment.base else None,
             "rosDistro": selection.ros_distro,
             "gpu": selection.gpu,
-            "node": selection.node,
+            "role": selection.role,
             "dataValid": None if results is None else all(item["status"] == "ok" for item in results),
             "data": [{"name": item["name"], "status": item["status"]} for item in results or []],
         }))
     else:
-        node = f", node {selection.node}" if selection.node else ""
+        role = f", role {selection.role}" if selection.role else ""
         gpu = "with GPU" if selection.gpu else "without GPU"
-        print(f"{deployment.name} is valid (ROS 2 {selection.ros_distro.capitalize()}, {gpu}{node})")
+        print(f"{deployment.name} is valid (ROS 2 {selection.ros_distro.capitalize()}, {gpu}{role})")
         for item in results or []:
             print(f"  data {item['name']}: {item['status']} ({item['destination']})")
     if results is not None and any(item["status"] != "ok" for item in results):
@@ -627,7 +627,7 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     compose.check_daemon(selection)
     # Deployments share host networking, fixed container names and the
     # default DDS domain, so only one runs at a time. Rerunning the same
-    # project updates it in place; other nodes of it may share this host.
+    # project updates it in place; other roles of it may share this host.
     others = compose.other_projects(deployment)
     if others:
         raise OpenADKitError(
@@ -641,12 +641,12 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
     skipped = services & ({"visualizer"} if args.no_visualizer else set())
-    compose.write_run_state(deployment.project_name(selection.node), {
+    compose.write_run_state(deployment.project_name(selection.role), {
         "schemaVersion": 1,
         "cli": str(root_path()),
         "kit": str(root) if kit.kind == "kit" else None,
         "deployment": deployment.name,
-        "node": selection.node,
+        "role": selection.role,
         "rosDistro": selection.ros_distro,
         "gpu": selection.gpu,
         "workspace": str(Path(args.ws).expanduser().resolve()) if args.ws else None,
@@ -657,7 +657,7 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     report = compose.run_report(deployment, selection, kit, model, started)
     compose.write_run_report(deployment, report)
     print_run_next_steps(
-        deployment, services - skipped, selection.node, selection.environment.get("OUTPUT_HOST_PATH"),
+        deployment, services - skipped, selection.role, selection.environment.get("OUTPUT_HOST_PATH"),
         tls=bool(selection.environment.get("NOVNC_CERT")),
     )
     if args.verify:
@@ -696,9 +696,9 @@ def clean_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.N
 
 
 def status_command(args: argparse.Namespace) -> int:
-    projects = live.running_projects(args.node)
+    projects = live.running_projects(args.role)
     if not projects:
-        print("nothing is running" if args.node is None else f"node {args.node} is not running here")
+        print("nothing is running" if args.role is None else f"role {args.role} is not running here")
         return 0
     for project in projects:
         if len(projects) > 1:
@@ -711,7 +711,7 @@ def status_command(args: argparse.Namespace) -> int:
 
 
 def logs_command(args: argparse.Namespace) -> int:
-    live.logs(live.running_project(args.node), args.follow, args.services)
+    live.logs(live.running_project(args.role), args.follow, args.services)
     return 0
 
 
@@ -720,7 +720,7 @@ def restart_command(args: argparse.Namespace) -> int:
     with the current settings, config and overlay workspace; from any directory."""
     if args.services and args.all_services:
         raise UsageError("name the services to restart, or pass --all")
-    project = live.running_project(args.node)
+    project = live.running_project(args.role)
     state = compose.read_run_state(project)
     if state is None:
         raise OpenADKitError(
@@ -732,7 +732,7 @@ def restart_command(args: argparse.Namespace) -> int:
     deployment = get_deployment(root, kit, state["deployment"])
     if state["workspace"]:
         deployment.use_workspace(Path(state["workspace"]))
-    selection = settings.resolve(deployment, kit, state["rosDistro"], state["gpu"], node=state["node"])
+    selection = settings.resolve(deployment, kit, state["rosDistro"], state["gpu"], role=state["role"])
     skipped = set(state["skipped"])
     running = set(live.running_services(project))
     if args.all_services:
@@ -753,7 +753,7 @@ def restart_command(args: argparse.Namespace) -> int:
 
 
 def shell_command(args: argparse.Namespace) -> int:
-    live.shell(live.running_project(args.node), args.service, args.command_args)
+    live.shell(live.running_project(args.role), args.service, args.command_args)
     return 0
 
 
@@ -761,7 +761,7 @@ def record_command(args: argparse.Namespace) -> int:
     if bool(args.topics) == args.all_topics:
         raise UsageError("name the topics to record, or pass --all")
     output = Path(args.output).expanduser().resolve() if args.output else None
-    bag = live.record(live.running_project(args.node), args.topics, output)
+    bag = live.record(live.running_project(args.role), args.topics, output)
     print(f"recorded: {bag}")
     return 0
 
@@ -854,7 +854,7 @@ def build_parser() -> OpenADKitParser:
         if command.group == "deployment":
             subparser.help_inventory = "catalog"
         if command.group == "live":
-            subparser.add_argument("--node", metavar="NODE", help=LIVE_NODE_HELP)
+            subparser.add_argument("--role", metavar="ROLE", help=LIVE_ROLE_HELP)
         if command.group != "install":
             subparser.add_argument("--verbose", action="store_true", help=VERBOSE_HELP)
     return parser

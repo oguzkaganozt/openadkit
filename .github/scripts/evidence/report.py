@@ -16,7 +16,7 @@ def fmt(value):
 def render(current, summary=True):
     """The cells table, after the result and passing count unless the caller
     states those itself. A cell's name already holds its deployment, distro,
-    node and platform."""
+    role and platform."""
     cells = report_cells(current)
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
     lines = [

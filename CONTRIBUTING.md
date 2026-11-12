@@ -84,13 +84,13 @@ python3 .github/scripts/check_site_links.py
 
 The `.github/scripts/tests/` suite is risk-focused, not exhaustive. Keep regression
 coverage for managed-data deletion/replacement, checksums and unsafe archives,
-failed install/upgrade recovery, immutable image pins, split-node isolation, and
+failed install/upgrade recovery, immutable image pins, split-role isolation, and
 the `PASSED` evidence release gate. Share release inputs through
 `release_fixtures.py`; do not import one test module from another.
 
 Help wording, exhaustive schema-error and option combinations, terminal signals,
 upgrade-check/rollback UX, one-shot services, bind-mount preparation, post-start
-crash/timeout diagnostics, and all GPU/node data combinations are deliberately
+crash/timeout diagnostics, and all GPU/role data combinations are deliberately
 not covered. Release draft recreation and every alias/retry variant are also
 outside this focused suite. Data-transfer tests use
 local files rather than a network server. Docker lifecycle calls use stubs; real
@@ -117,7 +117,7 @@ containers via `env_file:` and is not passed on the command line.
 The release bundle ships the same commands. Put local overrides in the host
 settings file, `~/.config/openadkit/<name>.env`.
 
-To test a split-host (`--node`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
+To test a split-host (`--role`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
 
 ## Releasing
 

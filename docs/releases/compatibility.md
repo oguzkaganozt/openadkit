@@ -95,7 +95,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
 These work and are tested where the docs say so, but may change in a minor
 release:
 
-- **Split-host nodes:** `--node`, `nodes` in `deployment.json` and the Zenoh
+- **Split-host roles:** `--role`, `roles` in `deployment.json` and the Zenoh
   bridge. See [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
   generates. See [AutoSD](../platforms/autosd.md).

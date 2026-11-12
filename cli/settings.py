@@ -85,8 +85,8 @@ class Selection:
 
     ros_distro: str
     gpu: bool
-    node: str | None
-    # What the CLI sets: distro, host user, mounts, images, node network.
+    role: str | None
+    # What the CLI sets: distro, host user, mounts, images, role network.
     injections: dict[str, str]
     # Every env-file setting and injection, as Compose interpolates them.
     environment: dict[str, str]
@@ -162,7 +162,7 @@ def _require_host_support(deployment: Deployment, distro: str, architecture: str
     return gpu
 
 
-def _injections(deployment: Deployment, distro: str, node: str | None) -> dict[str, str]:
+def _injections(deployment: Deployment, distro: str, role: str | None) -> dict[str, str]:
     """What the CLI sets for every command, images aside."""
     # settings.env defaults OUTPUT_HOST_PATH to this directory.
     injections = {
@@ -172,11 +172,11 @@ def _injections(deployment: Deployment, distro: str, node: str | None) -> dict[s
         **deployment.kit_environment,
         **_overlay_mounts(deployment),
     }
-    if node is not None:
-        # runtime.env reads this, so each node joins its own DDS domain and
-        # two nodes on one host stay isolated until the Zenoh bridge links them.
-        injections["OPENADKIT_ROS_DOMAIN_ID"] = str(deployment.nodes[node]["rosDomainId"])
-        # Only the Zenoh bridge and its allowlist link nodes: DDS stays on
+    if role is not None:
+        # runtime.env reads this, so each role joins its own DDS domain and
+        # two roles on one host stay isolated until the Zenoh bridge links them.
+        injections["OPENADKIT_ROS_DOMAIN_ID"] = str(deployment.roles[role]["rosDomainId"])
+        # Only the Zenoh bridge and its allowlist link roles: DDS stays on
         # loopback even when the host settings name a LAN interface.
         injections["CYCLONEDDS_NETWORK_INTERFACE"] = "lo"
     return injections
@@ -220,7 +220,7 @@ def resolve(
     ros_distro: str | None = None,
     gpu: bool = False,
     *,
-    node: str | None = None,
+    role: str | None = None,
     data_only: bool = False,
 ) -> Selection:
     """How to run the deployment on this host, with every setting resolved.
@@ -229,18 +229,18 @@ def resolve(
     included: it skips the host requirements and the images, so a host or
     distro the deployment does not run on can still fetch or clean its data.
     """
-    if node is not None and node not in deployment.nodes:
-        valid = ", ".join(sorted(deployment.nodes)) if deployment.nodes else "none"
-        raise OpenADKitError(f"{deployment.name} has no node {node}\navailable nodes: {valid}")
+    if role is not None and role not in deployment.roles:
+        valid = ", ".join(sorted(deployment.roles)) if deployment.roles else "none"
+        raise OpenADKitError(f"{deployment.name} has no role {role}\navailable roles: {valid}")
     distro = ros_distro or kit.default_ros_distro
-    injections = _injections(deployment, distro, node)
+    injections = _injections(deployment, distro, role)
     if data_only:
         environment = _resolved(deployment, False, injections)
         gpu_environment = None
         if any(resource.get("gpu") for resource in deployment.data):
             same_files = deployment.env_files(True) == deployment.env_files(False)
             gpu_environment = environment if same_files else _resolved(deployment, True, injections)
-        return Selection(distro, False, node, injections, environment, gpu_environment)
+        return Selection(distro, False, role, injections, environment, gpu_environment)
 
     architecture = host_architecture()
     gpu = _require_host_support(deployment, distro, architecture, gpu)
@@ -258,11 +258,11 @@ def resolve(
     # Compose interpolation. Shell values only fill requiredEnv gaps such
     # as CI dummy ZENOH_LISTEN exports; they cannot hide MAP_PATH.
     present = {**os.environ, **environment}
-    required = deployment.nodes[node]["requiredEnv"] if node is not None else []
+    required = deployment.roles[role]["requiredEnv"] if role is not None else []
     missing = [name for name in required if not present.get(name)]
     if missing:
         raise OpenADKitError(
             f"required environment variable(s) are missing: {', '.join(missing)}\n"
             f"set them in {deployment.site_config}"
         )
-    return Selection(distro, gpu, node, injections, environment)
+    return Selection(distro, gpu, role, injections, environment)

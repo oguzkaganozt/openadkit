@@ -220,7 +220,7 @@ class Deployment:
         self.manifest = manifest
         self.name: str = manifest["name"]
         self.compose: dict[str, Any] = manifest["compose"]
-        self.nodes: dict[str, dict[str, Any]] = manifest["nodes"]
+        self.roles: dict[str, dict[str, Any]] = manifest["roles"]
         self.requirements: dict[str, Any] = manifest["requirements"]
         self.data: list[dict[str, Any]] = manifest["data"]
         self.shared: list[str] = manifest["shared"]
@@ -246,12 +246,12 @@ class Deployment:
             "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
         } if base else {}
 
-    def project_name(self, node: str | None = None) -> str:
-        """Each node is its own Compose project, so nodes never share state.
+    def project_name(self, role: str | None = None) -> str:
+        """Each role is its own Compose project, so roles never share state.
 
-        Names never contain "_", so it separates the node unambiguously.
+        Names never contain "_", so it separates the role unambiguously.
         """
-        return self.project if node is None else f"{self.project}_{node}"
+        return self.project if role is None else f"{self.project}_{role}"
 
     @property
     def site_config(self) -> Path:
@@ -293,9 +293,9 @@ class Deployment:
             result.append(site)
         return result
 
-    def compose_files(self, gpu: bool, node: str | None = None) -> list[Path]:
+    def compose_files(self, gpu: bool, role: str | None = None) -> list[Path]:
         """Only explicitly selected files; each entrypoint owns its whole graph."""
-        names = self.compose["files"] if node is None else self.nodes[node]["files"]
+        names = self.compose["files"] if role is None else self.roles[role]["files"]
         files = [
             ensure_safe_existing(self.directory, name, "Compose file") for name in names
         ]
@@ -306,15 +306,15 @@ class Deployment:
             )
         return files
 
-    def one_shot_services(self, node: str | None = None) -> list[str]:
-        if node is None:
+    def one_shot_services(self, role: str | None = None) -> list[str]:
+        if role is None:
             return list(self.compose["oneShotServices"])
-        return list(self.nodes[node]["oneShotServices"])
+        return list(self.roles[role]["oneShotServices"])
 
 
 def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
     manifest = validate_deployment_manifest(root, directory, name)
-    compose, nodes = manifest["compose"], manifest["nodes"]
+    compose, roles = manifest["compose"], manifest["roles"]
     deployment = Deployment(root, directory, manifest)
     deployment.compose_files(False)
     if compose["gpuFiles"]:
@@ -322,10 +322,10 @@ def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
         ensure_safe_existing(
             directory, "settings.gpu.env", "GPU settings file"
         )
-    for node_name in nodes:
-        deployment.compose_files(False, node_name)
+    for role_name in roles:
+        deployment.compose_files(False, role_name)
         if compose["gpuFiles"]:
-            deployment.compose_files(True, node_name)
+            deployment.compose_files(True, role_name)
     deployment.env_files()
     return deployment
 
@@ -364,7 +364,7 @@ def _load_kit_deployment(
             **compose,
             "oneShotServices": list(dict.fromkeys(base.compose["oneShotServices"] + compose["oneShotServices"])),
         },
-        "nodes": {},
+        "roles": {},
         "requirements": requirements,
         "data": base_data + own_data,
         "shared": [],

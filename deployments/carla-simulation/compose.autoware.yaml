@@ -1,7 +1,7 @@
 # Autoware-side services for CARLA simulation.
 #
 # Shared by the single-host entry point (compose.yaml, which restores
-# the carla-interface edges) and the `--node autoware` view (this file plus
+# the carla-interface edges) and the `--role autoware` view (this file plus
 # compose.zenoh.yaml). No service here depends on a CARLA service: the
 # sim-local edges are added back only by the default entry file. A kit that
 # brings its own simulator includes this file, and

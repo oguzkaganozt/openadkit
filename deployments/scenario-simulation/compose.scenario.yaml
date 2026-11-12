@@ -2,9 +2,9 @@
 # visualizer, which split-host runs on this host rather than the edge.
 #
 # Shared by the single-host entry point (compose.yaml, which adds
-# pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--node scenario`
+# pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--role scenario`
 # view (this file plus compose.zenoh.yaml). Autoware edges and pid: service:map
-# live in the default entry point, not here: the node view has no Autoware
+# live in the default entry point, not here: the role view has no Autoware
 # services and no map.
 include:
   - ../shared/services/visualizer.yaml

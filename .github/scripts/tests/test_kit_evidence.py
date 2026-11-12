@@ -15,7 +15,7 @@ import validation_matrix  # noqa: E402
 
 
 def identities(cells):
-    return [{key: cell[key] for key in ("deployment", "distro", "platform", "node", "kit") if key in cell} for cell in cells]
+    return [{key: cell[key] for key in ("deployment", "distro", "platform", "role", "kit") if key in cell} for cell in cells]
 
 
 def test_example_evidence_cells_follow_the_base_distros():

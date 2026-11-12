@@ -65,7 +65,7 @@ def run_cli(root, *args, directory=None, **env):
                    bin_dir=root.parent / "bin", cwd=directory or root, **env)
 
 
-def manifest(*, data=None, gpu=False, nodes=False):
+def manifest(*, data=None, gpu=False, roles=False):
     document = {
         "schemaVersion": 2, "description": "Test deployment",
         "compose": {"files": ["compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
@@ -74,10 +74,10 @@ def manifest(*, data=None, gpu=False, nodes=False):
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],
     }
-    if nodes:
-        document["nodes"] = {
+    if roles:
+        document["roles"] = {
             name: {"rosDomainId": domain, "files": [f"compose.{name}.yaml"],
-                   "oneShotServices": [], "requiredEnv": ["NODE_TOKEN"] if domain == 2 else []}
+                   "oneShotServices": [], "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
             for name, domain in (("primary", 1), ("secondary", 2))
         }
     return document
@@ -94,7 +94,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     (directory / "deployment.json").write_text(json.dumps(document))
     (directory / "settings.env").write_text(config)
     files = document["compose"]["files"] + document["compose"]["gpuFiles"]
-    files += [file for node in document.get("nodes", {}).values() for file in node["files"]]
+    files += [file for role in document.get("roles", {}).values() for file in role["files"]]
     for file in files:
         (directory / file).write_text("services:\n  app:\n    image: busybox:1.36.1\n")
     if document["compose"]["gpuFiles"]:
@@ -594,30 +594,30 @@ def test_run_preflight_does_not_touch_data_or_start_containers(tmp_path, options
     assert not (tmp_path / "home/data").exists()
 
 
-@pytest.mark.parametrize("node", [None, "secondary"])
-def test_a_split_node_keeps_dds_on_loopback(tmp_path, node):
+@pytest.mark.parametrize("role", [None, "secondary"])
+def test_a_split_role_keeps_dds_on_loopback(tmp_path, role):
     # A LAN interface in the host settings would put DDS on the network and
     # around the Zenoh allowlist; only a single-host run may opt in to that.
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=node is not None))
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=role is not None))
     site = root.parent / "home/.config/openadkit/example.env"
     site.parent.mkdir(parents=True, exist_ok=True)
     site.write_text("CYCLONEDDS_NETWORK_INTERFACE=eth0\n")
     calls = fake_docker(tmp_path)
-    args = ["--node", node] if node else []
-    result = run_cli(root, "run", "example", *args, "--pull", "never", NODE_TOKEN="token")
+    args = ["--role", role] if role else []
+    result = run_cli(root, "run", "example", *args, "--pull", "never", ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     up = next(row for row in recorded(calls) if "up" in row["args"])
-    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if node else None)
+    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if role else None)
 
 
-def test_split_node_run_discovery_and_safe_stop(tmp_path):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+def test_split_role_run_discovery_and_safe_stop(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     calls = fake_docker(tmp_path)
-    blocked = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never")
-    assert blocked.returncode != 0 and "NODE_TOKEN" in blocked.stderr
+    blocked = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never")
+    assert blocked.returncode != 0 and "ROLE_TOKEN" in blocked.stderr
     # Only the settings were read; nothing started.
     assert all("--environment" in row["args"] for row in recorded(calls))
-    result = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never", NODE_TOKEN="token")
+    result = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never", ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     rows = recorded(calls)
     up = next(row for row in rows if "up" in row["args"])
@@ -661,7 +661,7 @@ def test_every_run_records_what_it_started(tmp_path):
     record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
     # The fake model has no services; its digest still identifies it.
     assert record["images"] == {} and record["modelSha256"] == hashlib.sha256(b'{"services": {}}\n').hexdigest()
-    assert record["node"] is None and record["gpu"] is False and "verify" not in record
+    assert record["role"] is None and record["gpu"] is False and "verify" not in record
     # What the services mount from the host is identified by its content.
     assert set(record["configSha256"]) == {"base", "deployment"}
     override = root / "deployments/example/config/autoware/pkg/params.yaml"
@@ -691,12 +691,12 @@ def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     captured = []
     monkeypatch.setattr(cli_compose, "run_compose", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
     monkeypatch.setattr(cli_compose, "docker", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
-    selection = cli_settings.Selection(ros_distro="humble", gpu=False, node=None, injections={}, environment={})
+    selection = cli_settings.Selection(ros_distro="humble", gpu=False, role=None, injections={}, environment={})
     record = {"deployment": "example"}
     assert cli_compose.verify(deployment, selection, {"scenario"}, record) == 3
     assert captured == [["docker", "wait", "c1"]]
     assert record["verify"]["exitCode"] == 3 and record["verify"]["result"] == "FAILED"
-    # A node without the service has nothing to verify.
+    # A role without the service has nothing to verify.
     assert cli_compose.verify(deployment, selection, {"other"}, {}) == 0
 
 
@@ -754,12 +754,12 @@ def test_run_prints_https_only_for_a_site_certificate(tmp_path):
 
 
 @pytest.mark.parametrize(("projects", "args", "message"), [
-    (["openadkit-example_primary"], [], "already running as node primary"),
-    (["openadkit-example"], ["--node", "primary"], "already running as single-host"),
+    (["openadkit-example_primary"], [], "already running as role primary"),
+    (["openadkit-example"], ["--role", "primary"], "already running as single-host"),
     (["openadkit-other"], [], "already running"),
 ])
 def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, args, message):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     edit_kit(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
     calls = fake_docker(tmp_path, projects=projects)
     result = run_cli(root, "run", "example", "--pull", "never", *args)
@@ -782,29 +782,29 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
 @pytest.mark.parametrize(("project", "allowed"), [("openadkit-example_primary", True),
                                                 ("openadkit-example_secondary", True),
                                                 ("openadkit-example_foreign", False)])
-def test_exclusivity_only_allows_declared_nodes_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+def test_exclusivity_only_allows_declared_roles_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: {project: []})
     assert cli_compose.other_projects(deployment) == ([] if allowed else [project])
 
 
-@pytest.mark.parametrize("started_from", ["own", "elsewhere", "other-node"])
+@pytest.mark.parametrize("started_from", ["own", "elsewhere", "other-role"])
 def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_path, monkeypatch, started_from):
-    root, directory = runtime_tree(tmp_path, document=manifest(nodes=True))
+    root, directory = runtime_tree(tmp_path, document=manifest(roles=True))
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
     # single-host or primary project.
     entry = {"own": directory / "compose.yaml", "elsewhere": tmp_path / "other-kit/compose.yaml",
-             "other-node": directory / "compose.secondary.yaml"}[started_from]
+             "other-role": directory / "compose.secondary.yaml"}[started_from]
     live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
         "compose.yaml", "compose.primary.yaml")]}
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: live)
     # run must not replace another stack in place; stop still reaches it by name.
     assert cli_compose.other_projects(deployment) == ([] if started_from == "own" else sorted(live))
-    assert cli_compose.live_nodes(deployment) == [None, "primary"]
+    assert cli_compose.live_roles(deployment) == [None, "primary"]
 
 
 @NEEDS_COMPOSE
@@ -813,29 +813,29 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("MY_TOKEN", "secret")
-    monkeypatch.delenv("NODE_TOKEN", raising=False)
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
-    site_config(root, "NODE_TOKEN=${MY_TOKEN}\n")
+    monkeypatch.delenv("ROLE_TOKEN", raising=False)
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
+    site_config(root, "ROLE_TOKEN=${MY_TOKEN}\n")
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
-    selection = cli_settings.resolve(deployment, kit, "humble", node="secondary")
-    assert selection.environment["NODE_TOKEN"] == "secret"
+    selection = cli_settings.resolve(deployment, kit, "humble", role="secondary")
+    assert selection.environment["ROLE_TOKEN"] == "secret"
 
 
-def test_a_node_is_never_read_from_a_deployment_name(monkeypatch):
-    # planning-simulation running single-host is not node "simulation" of anything.
+def test_a_role_is_never_read_from_a_deployment_name(monkeypatch):
+    # planning-simulation running single-host is not role "simulation" of anything.
     monkeypatch.setattr(cli_live, "live_projects", lambda: {"openadkit-planning-simulation", "openadkit-split_simulation"})
     assert cli_live.running_projects("simulation") == ["openadkit-split_simulation"]
 
 
-def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+def test_several_live_roles_stop_together_but_take_one_target_otherwise(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     calls = fake_docker(tmp_path, projects=["openadkit-example_primary", "openadkit-example_secondary"])
     result = run_cli(root, "logs")
-    assert result.returncode != 0 and "choose one with --node" in result.stderr
-    assert run_cli(root, "logs", "--node", "primary").returncode == 0
+    assert result.returncode != 0 and "choose one with --role" in result.stderr
+    assert run_cli(root, "logs", "--role", "primary").returncode == 0
     assert recorded(calls)[-1]["args"][:4] == ["compose", "--project-name", "openadkit-example_primary", "logs"]
-    assert run_cli(root, "stop", "--node", "secondary").returncode == 0
+    assert run_cli(root, "stop", "--role", "secondary").returncode == 0
     assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]] == ["openadkit-example_secondary"]
     assert run_cli(root, "stop").returncode == 0
     assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]][1:] == [
@@ -843,18 +843,18 @@ def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path
 
 
 @pytest.mark.parametrize("unsafe", ["missing", "symlink", "escape"])
-def test_required_node_files_are_checked_before_compose(tmp_path, unsafe):
-    document = manifest(nodes=True)
-    document["nodes"]["primary"]["requiredFiles"] = ["../outside" if unsafe == "escape" else "allowlist.json"]
+def test_required_role_files_are_checked_before_compose(tmp_path, unsafe):
+    document = manifest(roles=True)
+    document["roles"]["primary"]["requiredFiles"] = ["../outside" if unsafe == "escape" else "allowlist.json"]
     root, directory = runtime_tree(tmp_path, document=document)
     if unsafe == "symlink":
         outside = tmp_path / "outside"
         outside.write_text("{}")
         (directory / "allowlist.json").symlink_to(outside)
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "validate", "example", "--node", "primary")
+    result = run_cli(root, "validate", "example", "--role", "primary")
     assert result.returncode != 0
-    assert {"missing": "missing required node file", "symlink": "symlinked required node file",
+    assert {"missing": "missing required role file", "symlink": "symlinked required role file",
             "escape": "safe relative path"}[unsafe] in result.stderr
     assert recorded(calls) == []
 
@@ -1065,7 +1065,7 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
                "gone vehicle 0 dead 0 none\n")
     monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"one_shot_services": staticmethod(lambda node: {"init", "rosbag"})})()
+    deployment = type("Deployment", (), {"one_shot_services": staticmethod(lambda role: {"init", "rosbag"})})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == [
         "map", "planning", "rosbag", "system", "vehicle"]
@@ -1309,7 +1309,7 @@ class SettingsDeployment:
     """The parts of a Deployment that settings resolution reads."""
 
     def __init__(self, directory, files, gpu_files, data):
-        self.name, self.directory, self.data, self.nodes = "example", directory, data, {}
+        self.name, self.directory, self.data, self.roles = "example", directory, data, {}
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
 

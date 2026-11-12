@@ -38,7 +38,7 @@ _openadkit() {
         --output | --destination | --ws)
             mapfile -t COMPREPLY < <(compgen -d -- "${cur}")
             return ;;
-        --node)
+        --role)
             return ;;
         --version)
             [[ ${command} == install ]] && return ;;
@@ -51,17 +51,17 @@ _openadkit() {
         setup) options="--gpu --verify --help" ;;
         uninstall) options="--all --help" ;;
         list | version) options="--json --verbose --help" ;;
-        validate) options="--ros-distro --gpu --node --ws --data --json --verbose --help" ;;
-        config) options="--ros-distro --gpu --node --ws --verbose --help" ;;
+        validate) options="--ros-distro --gpu --role --ws --data --json --verbose --help" ;;
+        config) options="--ros-distro --gpu --role --ws --verbose --help" ;;
         fetch) options="--ros-distro --force --verbose --help" ;;
-        run) options="--ros-distro --gpu --node --ws --pull --no-visualizer --verify --verbose --help" ;;
+        run) options="--ros-distro --gpu --role --ws --pull --no-visualizer --verify --verbose --help" ;;
         build) options="--ros-distro --verbose --help" ;;
         new) options="--base --verbose --help" ;;
         clean) options="--yes --verbose --help" ;;
-        status | stop | shell) options="--node --verbose --help" ;;
-        restart) options="--node --all --verbose --help" ;;
-        logs) options="--node --follow --verbose --help" ;;
-        record) options="--node --all --output --verbose --help" ;;
+        status | stop | shell) options="--role --verbose --help" ;;
+        restart) options="--role --all --verbose --help" ;;
+        logs) options="--role --follow --verbose --help" ;;
+        record) options="--role --all --output --verbose --help" ;;
     esac
     if [[ ${cur} == -* ]]; then
         mapfile -t COMPREPLY < <(compgen -W "${options}" -- "${cur}")
@@ -85,7 +85,7 @@ _openadkit() {
     for ((index = 2; index < COMP_CWORD; index++)); do
         word=${COMP_WORDS[index]}
         case ${word} in
-            --ros-distro | --node | --pull | --output | --ws) ((index++)) ;;
+            --ros-distro | --role | --pull | --output | --ws) ((index++)) ;;
             -*) ;;
             *) return ;;
         esac

@@ -224,11 +224,11 @@ def selected_resources(deployment: Deployment, selection: Selection) -> list[dic
         for resource in deployment.data
         if want_gpu or not resource.get("gpu", False)
     ]
-    if selection.node is not None:
+    if selection.role is not None:
         resources = [
             resource
             for resource in resources
-            if not resource.get("nodes") or selection.node in resource["nodes"]
+            if not resource.get("roles") or selection.role in resource["roles"]
         ]
     return resources
 

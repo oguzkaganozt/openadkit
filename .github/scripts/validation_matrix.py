@@ -2,10 +2,10 @@
 """Manifest-derived views of a kit shared by lint, release planning and evidence.
 
 A validation cell is one `./openadkit validate` invocation: a deployment, ROS
-distro, GPU mode, and optional split-host node. An evidence cell is the complete
+distro, GPU mode, and optional split-host role. An evidence cell is the complete
 plan of one runtime evidence run, which run_cell.sh executes as given. The kit
 inventory is what a release bundle ships. Lint, the release planner and the
-evidence workflow all read these views, so a new deployment or node is walked
+evidence workflow all read these views, so a new deployment or role is walked
 everywhere without editing a hardcoded list.
 """
 
@@ -78,7 +78,7 @@ def validation_cells(
     source_root: Path,
     kit: Any | None = None,
 ) -> list[dict[str, Any]]:
-    """Return sorted validation cells for every deployment and each of its nodes."""
+    """Return sorted validation cells for every deployment and each of its roles."""
     kit = kit if kit is not None else runtime.load_kit(source_root)
     if not kit.deployments:
         fail("release source has no deployments")
@@ -88,17 +88,17 @@ def validation_cells(
     for name in sorted(kit.deployments):
         deployment = runtime.get_deployment(source_root, kit, name)
         gpu = deployment.requirements["gpu"]
-        nodes = [""] + sorted(deployment.nodes)
+        roles = [""] + sorted(deployment.roles)
         for distro in deployment.requirements["rosDistros"]:
             distros.add(distro)
-            for node in nodes:
+            for role in roles:
                 if gpu in ("none", "optional"):
                     rows.append(
                         {
                             "deployment": name,
                             "gpu": False,
                             "rosDistro": distro,
-                            "node": node,
+                            "role": role,
                         }
                     )
                 if gpu in ("required", "optional"):
@@ -107,7 +107,7 @@ def validation_cells(
                             "deployment": name,
                             "gpu": True,
                             "rosDistro": distro,
-                            "node": node,
+                            "role": role,
                         }
                     )
     if not distros:
@@ -119,7 +119,7 @@ def validation_cells(
             row["deployment"],
             row["rosDistro"],
             row["gpu"],
-            row["node"],
+            row["role"],
         )
     )
     return rows
@@ -132,8 +132,8 @@ def evidence_cells(
     platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
 ) -> list[dict[str, str]]:
     """Cells the evidence workflow runs: every distro and architecture of every
-    deployment that is not exempt, plus one cell running all nodes where a
-    deployment declares nodes. Each cell carries its identity and everything
+    deployment that is not exempt, plus one cell running all roles where a
+    deployment declares roles. Each cell carries its identity and everything
     run_cell.sh checks."""
     kit = kit if kit is not None else runtime.load_kit(source_root)
     cells: list[dict[str, str]] = []
@@ -148,17 +148,17 @@ def evidence_cells(
         for distro, platform in ((distro, platform) for distro in deployment.requirements["rosDistros"]
                                  for platform in supported):
             identities = [{"deployment": name, "distro": distro, "platform": platform}]
-            if deployment.nodes:
-                identities.append({"deployment": name, "distro": distro, "platform": platform, "node": "split"})
+            if deployment.roles:
+                identities.append({"deployment": name, "distro": distro, "platform": platform, "role": "split"})
             for identity in identities:
                 cells.append(identity | {
                     "name": evidence_cell_name(identity),
                     # Started in manifest order and stopped in reverse.
-                    "nodes": " ".join(deployment.nodes) if "node" in identity else "",
+                    "roles": " ".join(deployment.roles) if "role" in identity else "",
                     "verify": json.dumps(deployment.verify),
                 })
         if name in PLATFORM_CELLS:
-            for row in [row for row in cells if row["deployment"] == name and "node" not in row]:
+            for row in [row for row in cells if row["deployment"] == name and "role" not in row]:
                 cell = row | PLATFORM_CELLS[name]
                 if cell["platform"] == "linux/arm64":
                     cell["runner"] += ARM64_RUNNER_SUFFIX
@@ -166,7 +166,7 @@ def evidence_cells(
     # One plain cell per distro also checks the launch arguments of every
     # deployment, the exempt ones included (evidence/launch_arguments.py).
     for distro in sorted({cell["distro"] for cell in cells}):
-        plain = next(cell for cell in cells if cell["distro"] == distro and not cell.keys() & {"node", "backend"})
+        plain = next(cell for cell in cells if cell["distro"] == distro and not cell.keys() & {"role", "backend"})
         plain["launch_arguments"] = "all"
     return cells
 
@@ -204,7 +204,7 @@ def example_kit_cells(
     cells = []
     for name, base in EXAMPLE_KITS.items():
         for cell in base_cells:
-            if cell["deployment"] == base and not cell.get("node") and not cell.get("backend"):
+            if cell["deployment"] == base and not cell.get("role") and not cell.get("backend"):
                 # The base's cell already checks the launch arguments.
                 kit_cell = {key: value for key, value in cell.items() if key != "launch_arguments"}
                 kit_cell |= {"deployment": name, "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
@@ -214,7 +214,7 @@ def example_kit_cells(
 
 def evidence_cell_name(cell: dict[str, Any]) -> str:
     """The evidence cell identity, shared by the workflow matrix and the summary."""
-    variant = cell.get("node") or cell.get("backend") or ""
+    variant = cell.get("role") or cell.get("backend") or ""
     suffix = f"-{variant}" if variant else ""
     platform = cell["platform"].replace("/", "-")
     return f"{cell['deployment']}-{cell['distro']}{suffix}-{platform}"
@@ -306,7 +306,7 @@ def main() -> int:
             cell["deployment"],
             cell["rosDistro"],
             "true" if cell["gpu"] else "false",
-            cell["node"],
+            cell["role"],
         )
         print("\t".join(fields))
     return 0

@@ -44,7 +44,7 @@ returns once the deployment is ready.
   small host. CI evidence runs this way.
 - **One deployment runs at a time**, including deployments from other kits,
   even one with the same name. `run` refuses while another is running; stop it
-  first with `openadkit stop`. The nodes of one
+  first with `openadkit stop`. The roles of one
   [split-host](../deployments/split-host.md) deployment can run together.
 
 Every run writes `results/run.json` in the deployment's output directory: the
@@ -67,7 +67,7 @@ openadkit stop
 ```
 
 These act on the deployment running on this host, from any directory, so they
-take no deployment name. With several nodes of a split-host deployment on one
+take no deployment name. With several roles of a split-host deployment on one
 host, see [Lifecycle Notes](../deployments/split-host.md#lifecycle-notes).
 
 ### Status
@@ -125,7 +125,7 @@ selection as `run`: `openadkit validate logging-simulation --gpu --data`
 includes the CenterPoint models.
 
 `config` prints a deployment's resolved Compose model as JSON, with `validate`'s
-`--ros-distro`, `--gpu`, `--node` and `--ws`;
+`--ros-distro`, `--gpu`, `--role` and `--ws`;
 [AutoSD](../platforms/autosd.md) builds on it.
 
 ## Configuration

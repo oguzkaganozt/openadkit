@@ -1,4 +1,4 @@
-"""Node lifecycle wiring without Docker/ROS runtime claims."""
+"""Role lifecycle wiring without Docker/ROS runtime claims."""
 import json
 import os
 import subprocess
@@ -13,7 +13,7 @@ import validation_matrix
 RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
 
 
-def matrix_cell(deployment, node="", launch_arguments=False):
+def matrix_cell(deployment, role="", launch_arguments=False):
     """The real evidence-matrix row the workflow hands to the runner.
 
     Without the launch-argument check, which starts the images, unless a test asks for it.
@@ -21,7 +21,7 @@ def matrix_cell(deployment, node="", launch_arguments=False):
     runtime = validation_matrix.load_runtime(ROOT)
     cells = validation_matrix.evidence_cells(runtime, ROOT) + validation_matrix.example_kit_cells(runtime, ROOT)
     cell = next(cell for cell in cells if cell["deployment"] == deployment and cell["distro"] == "humble"
-                and cell.get("node", "") == node)
+                and cell.get("role", "") == role)
     return cell if launch_arguments else {key: value for key, value in cell.items() if key != "launch_arguments"}
 
 
@@ -32,12 +32,12 @@ def manifest(deployment):
 def test_evidence_cells_carry_the_manifest_plan():
     split = matrix_cell("scenario-simulation", "split")
     scenario = manifest("scenario-simulation")
-    assert split["nodes"].split() == list(scenario["nodes"]) and json.loads(split["verify"]) == scenario["verify"]
+    assert split["roles"].split() == list(scenario["roles"]) and json.loads(split["verify"]) == scenario["verify"]
     drive = manifest("planning-simulation")["verify"]
     # A deployment with a base runs the base's verify step on top of its own layer.
     for name in ("example-kit", "safety-island-simulation", "planning-simulation"):
         assert json.loads(matrix_cell(name)["verify"]) == drive
-    assert matrix_cell("planning-simulation")["nodes"] == ""
+    assert matrix_cell("planning-simulation")["roles"] == ""
     for cell in (split, matrix_cell("example-kit"), matrix_cell("safety-island-simulation")):
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
 
@@ -47,7 +47,7 @@ def test_one_plain_cell_per_distro_checks_the_launch_arguments():
     cells = validation_matrix.evidence_cells(runtime, ROOT)
     checking = [cell for cell in cells if cell.get("launch_arguments") == "all"]
     assert sorted(cell["distro"] for cell in checking) == sorted({cell["distro"] for cell in cells})
-    assert not any(cell.get("node") or cell.get("backend") for cell in checking)
+    assert not any(cell.get("role") or cell.get("backend") for cell in checking)
     assert not any("launch_arguments" in cell for cell in validation_matrix.example_kit_cells(runtime, ROOT))
 
 
@@ -122,7 +122,7 @@ def test_quadlet_cell_runs_the_drive_to_goal_check_on_a_runner_with_quadlet():
     for cell in cells:
         runner = "ubuntu-24.04-arm" if cell["platform"] == "linux/arm64" else "ubuntu-24.04"
         assert cell["backend"] == "quadlet" and cell["runner"] == runner
-        assert json.loads(cell["verify"]) == manifest("planning-simulation")["verify"] and cell["nodes"] == ""
+        assert json.loads(cell["verify"]) == manifest("planning-simulation")["verify"] and cell["roles"] == ""
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
 
 
@@ -140,10 +140,10 @@ def test_unexempt_deployment_without_a_verify_step_fails_enumeration(monkeypatch
         validation_matrix.evidence_cells(runtime, ROOT)
 
 
-@pytest.mark.parametrize(("node", "failure"), [
+@pytest.mark.parametrize(("role", "failure"), [
     ("", ""), ("", "verify"), ("", "run"), ("autoware", "validate"), ("split", "validate"), ("split", "run"),
 ])
-def test_cell_lifecycle_keeps_node_order_failures_and_cleanup(tmp_path, node, failure):
+def test_cell_lifecycle_keeps_role_order_failures_and_cleanup(tmp_path, role, failure):
     cli = tmp_path / "bin/openadkit"
     executable(cli, '''#!/usr/bin/env python3
 import json, os, sys
@@ -164,28 +164,28 @@ sys.exit(1 if args[0] == os.environ['FAILURE'] or (args[0] == 'run' and os.envir
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli),
                         "CALLS": str(calls), "FAILURE": failure, "BUILD_TAG": "123-1", "SOURCE_SHA": "b" * 40}
-    nodes = "autoware scenario" if node == "split" else ""
-    cell = matrix_cell("planning-simulation") | {"node": node, "nodes": nodes}
+    roles = "autoware scenario" if role == "split" else ""
+    cell = matrix_cell("planning-simulation") | {"role": role, "roles": roles}
     result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
                             cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
     assert (result.returncode == 0) is (not failure), result.stderr
     report = json.loads((out / "cell.json").read_text())
     assert report["result"] == ("FAILED" if failure else "PASSED")
-    if not node:
+    if not role:
         # One host runs the verify step with the stack; its report sets L1 and L2.
         levels = report["levels"]
         assert (levels["L1"]["ok"], levels["L2"]["ok"]) == {"": (True, True), "verify": (True, False), "run": (False, None)}[failure]
         if failure != "run":
             assert (report["metrics"]["ready_s"], report["metrics"]["arrival_s"]) == (1, 2)
-    assert report["build_tag"] == "123-1" and report["node"] == node and report["name"] == cell["name"]
+    assert report["build_tag"] == "123-1" and report["role"] == role and report["name"] == cell["name"]
     recorded = [json.loads(line) for line in calls.read_text().splitlines()]
     def target(args):
-        return args[args.index("--node") + 1] if "--node" in args else ""
-    nodes = ["autoware", "scenario"] if node == "split" else [node]
+        return args[args.index("--role") + 1] if "--role" in args else ""
+    roles = ["autoware", "scenario"] if role == "split" else [role]
     for operation in ("validate", "run", "stop"):
-        expected = [] if operation == "run" and failure == "validate" else list(reversed(nodes)) if operation == "stop" else nodes
+        expected = [] if operation == "run" and failure == "validate" else list(reversed(roles)) if operation == "stop" else roles
         assert [target(args) for args, _, _ in recorded if args[0] == operation] == expected
-    if node == "split":
+    if role == "split":
         for operation in ("validate", "run"):
             if operation == "run" and failure == "validate":
                 continue
@@ -249,7 +249,7 @@ import catalog, settings
 args = sys.argv[1:]
 if args[0] == 'validate':
     root = Path({str(ROOT)!r}); kit = catalog.load_kit(root)
-    settings.resolve(catalog.get_deployment(root, kit, args[1]), kit, 'humble', False, node=args[args.index('--node') + 1])
+    settings.resolve(catalog.get_deployment(root, kit, args[1]), kit, 'humble', False, role=args[args.index('--role') + 1])
     print(json.dumps({{'deployment': args[1]}}))
 sys.exit(1 if args[0] == 'run' else 0)
 ''')
@@ -308,7 +308,7 @@ destination = Path(sys.argv[sys.argv.index('--dir') + 1])
 
 RUN = "[scenario_test_runner.py-1] Run sample_{i}.xosc (1 of 1)\n"
 # The interpreter colors "Passed"; a colored verdict must still count.
-PASSED = "[openscenario_interpreter_node-3] [INFO] [simulation.openscenario_interpreter]: \x1b[32mPassed\x1b[0m\n"
+PASSED = "[openscenario_interpreter_role-3] [INFO] [simulation.openscenario_interpreter]: \x1b[32mPassed\x1b[0m\n"
 
 
 @pytest.mark.parametrize(("cases", "log", "ok"), [

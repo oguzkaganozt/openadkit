@@ -3,7 +3,7 @@
 # the edge.
 #
 # Shared by the single-host entry point (compose.yaml) and the
-# `--node carla` view (this file plus compose.zenoh.yaml). All cross-service
+# `--role carla` view (this file plus compose.zenoh.yaml). All cross-service
 # edges here are sim-local
 # (carla-interface waits on CARLA and the map loader), so they stay in this
 # file; the visualizer's edges to Autoware are in compose.yaml. CARLA

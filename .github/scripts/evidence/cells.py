@@ -14,7 +14,7 @@ def normalize_cell(cell: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"unsupported evidence cell schemaVersion: {version!r}")
     if not isinstance(cell.get("metrics"), dict):
         raise ValueError(f"{cell.get('name')}: missing cell metrics")
-    return {**cell, "node": cell.get("node") or None, "kit": cell.get("kit") or None}
+    return {**cell, "role": cell.get("role") or None, "kit": cell.get("kit") or None}
 
 
 def report_cells(summary: dict[str, Any]) -> list[dict[str, Any]]:

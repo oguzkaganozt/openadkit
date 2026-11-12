@@ -21,7 +21,7 @@ def load(path: Path):
 
 
 def expected_cell_names(matrix):
-    """Cell names as the evidence workflow composes them (deployment-distro[-node]-linux-<arch>)."""
+    """Cell names as the evidence workflow composes them (deployment-distro[-role]-linux-<arch>)."""
     if isinstance(matrix, dict):
         matrix = matrix["include"]
     return [evidence_cell_name(entry) for entry in matrix]

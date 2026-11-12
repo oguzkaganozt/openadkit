@@ -9,7 +9,7 @@
     "oneShotServices": ["map-check", "carla-map-loader"],
     "waitTimeout": 480
   },
-  "nodes": {
+  "roles": {
     "autoware": {
       "rosDomainId": 1,
       "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
@@ -55,7 +55,7 @@
         "pointcloud_map.pcd",
         "map_projector_info.yaml"
       ],
-      "nodes": ["autoware"]
+      "roles": ["autoware"]
     }
   ]
 }

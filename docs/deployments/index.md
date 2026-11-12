@@ -18,7 +18,7 @@ check. Evidence runs on every architecture the deployment supports. See the
 [Evidence Policy](../releases/evidence.md).
 
 Scenario and CARLA Simulation can also run as
-[split-host](split-host.md) nodes, with Autoware on one host and the simulator
+[split-host](split-host.md) roles, with Autoware on one host and the simulator
 on another over Zenoh (experimental).
 
 ## Running a Deployment

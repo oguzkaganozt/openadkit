@@ -98,7 +98,7 @@ DDS stays on loopback by default. To reach other hosts, set
 CYCLONEDDS_NETWORK_INTERFACE=eth0
 ```
 
-This applies to single-host runs; a split-host node always keeps DDS on
+This applies to single-host runs; a split-host role always keeps DDS on
 loopback and reaches the other host through its Zenoh bridge.
 `ROS_DOMAIN_ID` separates traffic but provides no authentication or encryption.
 
