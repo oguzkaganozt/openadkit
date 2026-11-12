@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from catalog import Deployment, Kit, state_root
+from catalog import Catalog, Deployment, state_root
 from manifest import OpenADKitError
 
 # Compose settings the CLI passes itself; a shell export must not change them.
@@ -85,8 +85,8 @@ class Selection:
 
     ros_distro: str
     gpu: bool
-    node: str | None
-    # What the CLI sets: distro, host user, mounts, images, node network.
+    role: str | None
+    # What the CLI sets: distro, host user, mounts, images, role network.
     injections: dict[str, str]
     # Every env-file setting and injection, as Compose interpolates them.
     environment: dict[str, str]
@@ -100,7 +100,7 @@ def configuration_environment(deployment: Deployment, gpu: bool = False) -> dict
 
     Compose interpolation uses the same file order. A shell export of
     MAP_PATH would otherwise install data somewhere other than the mount.
-    Host overrides belong in the site configuration, which is loaded last.
+    Host overrides belong in the host settings file, which is loaded last.
     """
     return dict(_env_file_settings(tuple(deployment.env_files(gpu))))
 
@@ -117,7 +117,7 @@ def _compose_environment(deployment: Deployment, gpu: bool, injections: dict[str
     """Environment Compose uses to interpolate the deployment.
 
     Compose prefers the process environment over ``--env-file``, so a shell
-    export would otherwise hide ``settings.gpu.env`` and the site configuration.
+    export would otherwise hide ``settings.gpu.env`` and the host settings file.
     Drop shell values for names the env files define and let Compose read
     the files itself, so quoting and ``$VAR`` expansion follow Compose rules.
     CLI injections (distro and component images) still win.
@@ -162,7 +162,7 @@ def _require_host_support(deployment: Deployment, distro: str, architecture: str
     return gpu
 
 
-def _injections(deployment: Deployment, distro: str, node: str | None) -> dict[str, str]:
+def _injections(deployment: Deployment, distro: str, role: str | None) -> dict[str, str]:
     """What the CLI sets for every command, images aside."""
     # settings.env defaults OUTPUT_HOST_PATH to this directory.
     injections = {
@@ -172,11 +172,11 @@ def _injections(deployment: Deployment, distro: str, node: str | None) -> dict[s
         **deployment.kit_environment,
         **_overlay_mounts(deployment),
     }
-    if node is not None:
-        # runtime.env reads this, so each node joins its own DDS domain and
-        # two nodes on one host stay isolated until the Zenoh bridge links them.
-        injections["OPENADKIT_ROS_DOMAIN_ID"] = str(deployment.nodes[node]["rosDomainId"])
-        # Only the Zenoh bridge and its allowlist link nodes: DDS stays on
+    if role is not None:
+        # runtime.env reads this, so each role joins its own DDS domain and
+        # two roles on one host stay isolated until the Zenoh bridge links them.
+        injections["OPENADKIT_ROS_DOMAIN_ID"] = str(deployment.roles[role]["rosDomainId"])
+        # Only the Zenoh bridge and its allowlist link roles: DDS stays on
         # loopback even when the host settings name a LAN interface.
         injections["CYCLONEDDS_NETWORK_INTERFACE"] = "lo"
     return injections
@@ -216,11 +216,11 @@ def _resolved(deployment: Deployment, gpu: bool, injections: dict[str, str]) -> 
 
 def resolve(
     deployment: Deployment,
-    kit: Kit,
+    catalog: Catalog,
     ros_distro: str | None = None,
     gpu: bool = False,
     *,
-    node: str | None = None,
+    role: str | None = None,
     data_only: bool = False,
 ) -> Selection:
     """How to run the deployment on this host, with every setting resolved.
@@ -229,25 +229,25 @@ def resolve(
     included: it skips the host requirements and the images, so a host or
     distro the deployment does not run on can still fetch or clean its data.
     """
-    if node is not None and node not in deployment.nodes:
-        valid = ", ".join(sorted(deployment.nodes)) if deployment.nodes else "none"
-        raise OpenADKitError(f"{deployment.name} has no node {node}\navailable nodes: {valid}")
-    distro = ros_distro or kit.default_ros_distro
-    injections = _injections(deployment, distro, node)
+    if role is not None and role not in deployment.roles:
+        valid = ", ".join(sorted(deployment.roles)) if deployment.roles else "none"
+        raise OpenADKitError(f"{deployment.name} has no role {role}\navailable roles: {valid}")
+    distro = ros_distro or catalog.default_ros_distro
+    injections = _injections(deployment, distro, role)
     if data_only:
         environment = _resolved(deployment, False, injections)
         gpu_environment = None
         if any(resource.get("gpu") for resource in deployment.data):
             same_files = deployment.env_files(True) == deployment.env_files(False)
             gpu_environment = environment if same_files else _resolved(deployment, True, injections)
-        return Selection(distro, False, node, injections, environment, gpu_environment)
+        return Selection(distro, False, role, injections, environment, gpu_environment)
 
     architecture = host_architecture()
     gpu = _require_host_support(deployment, distro, architecture, gpu)
-    images = kit.component_environment(distro, architecture, gpu)
-    images.update(kit.external_image_environment(distro))
+    images = catalog.component_environment(distro, architecture, gpu)
+    images.update(catalog.external_image_environment(distro))
     file_settings = configuration_environment(deployment, gpu)
-    if not kit.pinned:
+    if not catalog.pinned:
         # A source checkout may set its own images in the env files; Compose
         # reads those itself, ${VAR} and all.
         images = {name: image for name, image in images.items() if name not in file_settings}
@@ -258,11 +258,11 @@ def resolve(
     # Compose interpolation. Shell values only fill requiredEnv gaps such
     # as CI dummy ZENOH_LISTEN exports; they cannot hide MAP_PATH.
     present = {**os.environ, **environment}
-    required = deployment.nodes[node]["requiredEnv"] if node is not None else []
+    required = deployment.roles[role]["requiredEnv"] if role is not None else []
     missing = [name for name in required if not present.get(name)]
     if missing:
         raise OpenADKitError(
             f"required environment variable(s) are missing: {', '.join(missing)}\n"
-            f"set them in {deployment.site_config}"
+            f"set them in {deployment.host_settings}"
         )
-    return Selection(distro, gpu, node, injections, environment)
+    return Selection(distro, gpu, role, injections, environment)

@@ -4,24 +4,24 @@
   "evidence": {"exempt": "Needs an NVIDIA GPU; the CI runners have none."},
   "shared": ["shared"],
   "compose": {
-    "files": ["docker-compose.yaml"],
+    "files": ["compose.yaml"],
     "gpuFiles": [],
-    "resetServices": ["map-check", "carla-map-loader"],
+    "oneShotServices": ["map-check", "carla-map-loader"],
     "waitTimeout": 480
   },
-  "nodes": {
+  "roles": {
     "autoware": {
       "rosDomainId": 1,
       "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
-      "resetServices": ["map-check"],
+      "oneShotServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "carla": {
       "rosDomainId": 2,
       "files": ["compose.carla.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
-      "resetServices": ["carla-map-loader"],
+      "oneShotServices": ["carla-map-loader"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
   },
@@ -55,7 +55,7 @@
         "pointcloud_map.pcd",
         "map_projector_info.yaml"
       ],
-      "nodes": ["autoware"]
+      "roles": ["autoware"]
     }
   ]
 }

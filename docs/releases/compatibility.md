@@ -34,18 +34,18 @@ This page lists what that promise covers. Within one major version:
 
 ### Manifests
 
-- The kit manifest `openadkit.json` and the deployment manifest
-  `deployment.json` at `schemaVersion: 2`: their fields and what they mean.
-  A deployment is named by its key in the kit manifest.
+- `openadkit.json` (the release manifest, or a kit's kit manifest) and the
+  deployment manifest `deployment.json` at `schemaVersion: 2`: their fields
+  and what they mean. A deployment is named by its key in `openadkit.json`.
 
 ### Kits
 
 What a kit made with `openadkit new` builds on:
 
 - `extends` pinning a release, and `base` naming one of its deployments.
-- The Compose variables `OPENADKIT_BASE_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
+- The Compose variables `OPENADKIT_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
   `OPENADKIT_OVERLAY_WS`.
-- Each base deployment's Compose entrypoints, service names, data destination
+- Each base deployment's Compose files, service names, data destination
   variables (such as `MAP_PATH`), verify step and the settings listed under
   [Settings and Paths](#settings-and-paths).
 - Config overrides under `config/` and the overlay workspace in `overlay_ws/`,
@@ -57,7 +57,7 @@ See [Create a Kit](../kits/create-a-kit.md) and the
 
 ### Settings and Paths
 
-- `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_CONFIG_DIR` and
+- `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_SETTINGS_DIR` and
   `OPENADKIT_OUTPUT_DIR`.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.
@@ -95,7 +95,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
 These work and are tested where the docs say so, but may change in a minor
 release:
 
-- **Split-host nodes:** `--node`, `nodes` in `deployment.json` and the Zenoh
+- **Split-host roles:** `--role`, `roles` in `deployment.json` and the Zenoh
   bridge. See [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
   generates. See [AutoSD](../platforms/autosd.md).

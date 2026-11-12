@@ -1,10 +1,10 @@
 # Scenario-host services for scenario simulation: the scenario runner and the
 # visualizer, which split-host runs on this host rather than the edge.
 #
-# Shared by the single-host entry point (docker-compose.yaml, which adds
-# pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--node scenario`
+# Shared by the single-host entry point (compose.yaml, which adds
+# pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--role scenario`
 # view (this file plus compose.zenoh.yaml). Autoware edges and pid: service:map
-# live in the default entry point, not here: the node view has no Autoware
+# live in the default entry point, not here: the role view has no Autoware
 # services and no map.
 include:
   - ../shared/services/visualizer.yaml
@@ -52,7 +52,7 @@ services:
     volumes:
       - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ${OUTPUT_HOST_PATH}:${OUTPUT_DIRECTORY}
-      - ${SCENARIO_HOST_DIR}:/scenarios:ro
+      - ${SCENARIO_HOST_PATH}:/scenarios:ro
       - ${MAP_PATH}:/autoware_map:ro
     command:
       - bash

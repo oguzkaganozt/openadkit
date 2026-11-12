@@ -1,6 +1,6 @@
 # Create a Kit
 
-`openadkit new` makes a kit that extends this Open AD Kit and one of its
+`openadkit new` makes a kit that extends this release and one of its
 deployments without copying them, so the kit holds only your differences:
 
 ```bash
@@ -14,7 +14,7 @@ openadkit new my-kit --base scenario-simulation
 my-kit/
 ├── openadkit.json
 ├── deployment.json
-├── docker-compose.yaml
+├── compose.yaml
 ├── settings.env
 ├── config/autoware/
 └── overlay_ws/src/
@@ -24,12 +24,12 @@ my-kit/
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment. Compose reads
-  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS
+  `compose.yaml` unless `compose.files` names others. Architecture, ROS
   distro, GPU, downloads and the verify step are inherited; `requirements` may
   narrow the first three.
-- `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
-  add your services below it. `OPENADKIT_BASE_ROOT` names the release's root for
-  shared assets.
+- `compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml`;
+  add your services below it. `OPENADKIT_ROOT` names the release's root, for
+  its shared assets.
 - `settings.env` holds only the values you change, such as `VEHICLE_ID`.
 - `config/autoware/` holds parameter overrides for Autoware packages.
 - `overlay_ws/src/` holds your ROS packages.
@@ -51,7 +51,7 @@ release, change `extends`; the next command that acts on the kit, such as
 cd my-kit
 openadkit build                 # overlay_ws, in the release's devel image
 openadkit validate
-openadkit run --verify          # start, wait until ready, run the base's end-to-end check
+openadkit run --verify          # start, wait until ready, run the base's verify step
 openadkit stop
 ```
 

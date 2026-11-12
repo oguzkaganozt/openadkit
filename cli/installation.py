@@ -120,12 +120,12 @@ def active_release(root: Path, command: str) -> str:
     if not metadata.is_file():
         raise OpenADKitError("Open AD Kit is not installed. Run: openadkit install")
     try:
-        kit = json.loads(metadata.read_text(encoding="utf-8"))
-        if not isinstance(kit, dict):
+        manifest = json.loads(metadata.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
             raise ValueError("JSON root must be an object")
     except (OSError, ValueError) as error:
         raise OpenADKitError(f"could not read the installed release metadata: {error}") from error
-    kind, version = kit.get("kind", "unknown"), kit.get("version", "")
+    kind, version = manifest.get("kind", "unknown"), manifest.get("version", "")
     if kind == "source":
         raise OpenADKitError({
             "upgrade": "upgrade is for release installs; update a source checkout with git pull or git checkout",
@@ -246,11 +246,11 @@ def is_installed_release(directory: Path) -> bool:
     if metadata.is_symlink() or not metadata.is_file():
         return False
     try:
-        kit = json.loads(metadata.read_text(encoding="utf-8"))
+        manifest = json.loads(metadata.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
-    return (isinstance(kit, dict) and kit.get("kind") == "release"
-            and directory.name == f"openadkit-{kit.get('version')}")
+    return (isinstance(manifest, dict) and manifest.get("kind") == "release"
+            and directory.name == f"openadkit-{manifest.get('version')}")
 
 
 def uninstall(root: Path, arguments: Sequence[str]) -> int:

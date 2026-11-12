@@ -25,8 +25,8 @@ def test_summary_result(results, expected, result, missing):
 @pytest.mark.parametrize("include", [False, True])
 def test_expected_names_match_workflow_matrix(include):
     matrix = [{"deployment": "planning-simulation", "distro": "humble", "platform": "linux/amd64"},
-              {"deployment": "scenario-simulation", "distro": "jazzy", "platform": "linux/arm64", "node": "split"},
-              {"deployment": "scenario-simulation", "distro": "humble", "platform": "linux/amd64", "node": None}]
+              {"deployment": "scenario-simulation", "distro": "jazzy", "platform": "linux/arm64", "role": "split"},
+              {"deployment": "scenario-simulation", "distro": "humble", "platform": "linux/amd64", "role": None}]
     assert summary.expected_cell_names({"include": matrix} if include else matrix) == [
         "planning-simulation-humble-linux-amd64", "scenario-simulation-jazzy-split-linux-arm64",
         "scenario-simulation-humble-linux-amd64",

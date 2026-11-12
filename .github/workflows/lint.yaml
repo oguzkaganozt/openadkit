@@ -10,7 +10,7 @@ on:
       - 'openadkit'
       - 'cli/**'
       - 'pyproject.toml'
-      - '.github/scripts/evidence/kit/**'
+      - '.github/scripts/evidence/example-kit/**'
       - 'deployments/safety-island-simulation/**'
       - '**/*.sh'
       - '**/*.json'
@@ -25,8 +25,7 @@ on:
       - '**/*.md'
       - '**/Dockerfile*'
       - '**/*.dockerfile'
-      - '**/docker-compose*.yaml'
-      - '**/docker-compose*.yml'
+      - '**/compose*.yaml'
       - '**/*.env'
       - 'deployments/**/*.yaml'
       - 'deployments/**/*.yml'
@@ -114,21 +113,21 @@ jobs:
 
       - name: Validate Docker Compose files
         # The cell list comes from the deployment manifests through the same
-        # enumerator release_plan.py uses; node cells carry a --node argument.
-        # Dummy Zenoh endpoints satisfy node requirement checks only.
+        # enumerator release_plan.py uses; role cells carry a --role argument.
+        # Dummy Zenoh endpoints satisfy role requirement checks only.
         run: |
           set -euo pipefail
           export REMOTE_PASSWORD="${REMOTE_PASSWORD:-ci-validate}"
           export ZENOH_LISTEN="tcp/127.0.0.1:7447"
           export ZENOH_PEER="tcp/127.0.0.1:7447"
           matrix=$(python3 .github/scripts/validation_matrix.py --source-root .)
-          while IFS=$'\t' read -r deployment ros_distro gpu node; do
+          while IFS=$'\t' read -r deployment ros_distro gpu role; do
             validate_args=(./openadkit validate "${deployment}" --ros-distro "${ros_distro}")
             if [ "${gpu}" = true ]; then
               validate_args+=(--gpu)
             fi
-            if [ -n "${node}" ]; then
-              validate_args+=(--node "${node}")
+            if [ -n "${role}" ]; then
+              validate_args+=(--role "${role}")
             fi
             "${validate_args[@]}"
           done <<< "${matrix}"

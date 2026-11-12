@@ -171,7 +171,7 @@ jobs:
       - name: List evidence cells
         # Every deployment and distro the manifests declare, minus the
         # deployments with an evidence exemption. Each row is a complete cell
-        # plan: identity, nodes and the checks run_cell.sh executes.
+        # plan: identity, roles and the checks run_cell.sh executes.
         # A pull request runs the amd64 cells only: the images it builds are
         # amd64, and it gets its answer sooner. A build of the branch runs
         # every architecture.

@@ -131,7 +131,7 @@ def ensure_no_symlink_components(path: Path) -> None:
         if current.is_symlink() and current.lstat().st_uid not in (0, os.getuid()):
             raise OpenADKitError(
                 f"data path goes through another user's symlink: {current}; "
-                "set the real path in the deployment's site configuration"
+                "set the real path in the deployment's host settings file"
             )
         if current.exists() and not current.is_dir():
             raise OpenADKitError(f"data path component is not a directory: {current}")
@@ -224,11 +224,11 @@ def selected_resources(deployment: Deployment, selection: Selection) -> list[dic
         for resource in deployment.data
         if want_gpu or not resource.get("gpu", False)
     ]
-    if selection.node is not None:
+    if selection.role is not None:
         resources = [
             resource
             for resource in resources
-            if not resource.get("nodes") or selection.node in resource["nodes"]
+            if not resource.get("roles") or selection.role in resource["roles"]
         ]
     return resources
 

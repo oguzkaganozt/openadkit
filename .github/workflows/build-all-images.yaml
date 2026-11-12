@@ -338,7 +338,7 @@ jobs:
           BUILD_TAG: ${{ needs.prepare.outputs.build_tag }}
         run: |
           set -euo pipefail
-          for workflow in scan.yaml evidence.yaml; do
+          for workflow in scan-images.yaml evidence.yaml; do
             gh workflow run "${workflow}" --repo "${GITHUB_REPOSITORY}" --ref "${GITHUB_REF_NAME}" -f build_tag="${BUILD_TAG}"
           done
         shell: bash

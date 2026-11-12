@@ -32,7 +32,7 @@ PIN = f"registry.example/image@sha256:{'a' * 64}"
 OTHER_PIN = f"registry.example/custom@sha256:{'b' * 64}"
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 ISOLATED_ENV = (
-    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_CONFIG_DIR", "OPENADKIT_STATE_DIR",
+    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_SETTINGS_DIR", "OPENADKIT_STATE_DIR",
     "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "OPENADKIT_INSTALL_DIR", "COMPOSE_FILE", "XDG_DATA_HOME",
 )
 
@@ -65,19 +65,19 @@ def run_cli(root, *args, directory=None, **env):
                    bin_dir=root.parent / "bin", cwd=directory or root, **env)
 
 
-def manifest(*, data=None, gpu=False, nodes=False):
+def manifest(*, data=None, gpu=False, roles=False):
     document = {
         "schemaVersion": 2, "description": "Test deployment",
-        "compose": {"files": ["docker-compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
-                    "resetServices": [], "waitTimeout": 1},
+        "compose": {"files": ["compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
+                    "oneShotServices": [], "waitTimeout": 1},
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],
     }
-    if nodes:
-        document["nodes"] = {
+    if roles:
+        document["roles"] = {
             name: {"rosDomainId": domain, "files": [f"compose.{name}.yaml"],
-                   "resetServices": [], "requiredEnv": ["NODE_TOKEN"] if domain == 2 else []}
+                   "oneShotServices": [], "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
             for name, domain in (("primary", 1), ("secondary", 2))
         }
     return document
@@ -94,7 +94,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     (directory / "deployment.json").write_text(json.dumps(document))
     (directory / "settings.env").write_text(config)
     files = document["compose"]["files"] + document["compose"]["gpuFiles"]
-    files += [file for node in document.get("nodes", {}).values() for file in node["files"]]
+    files += [file for role in document.get("roles", {}).values() for file in role["files"]]
     for file in files:
         (directory / file).write_text("services:\n  app:\n    image: busybox:1.36.1\n")
     if document["compose"]["gpuFiles"]:
@@ -116,7 +116,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     return root, directory
 
 
-def edit_kit(root, change):
+def edit_manifest(root, change):
     path = root / "openadkit.json"
     document = json.loads(path.read_text())
     change(document)
@@ -211,7 +211,7 @@ def recorded(calls):
     return [json.loads(line) for line in calls.read_text().splitlines()] if calls.exists() else []
 
 
-def site_config(root, text, name="example"):
+def host_settings(root, text, name="example"):
     path = root.parent / f"home/.config/openadkit/{name}.env"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -229,8 +229,8 @@ def extending_kit(tmp_path, root, *, extends=None, external_images=None):
         "schemaVersion": 2, "description": "Kit deployment", "base": "example",
     }))
     (directory / "settings.env").write_text("VALUE=kit\n")
-    (directory / "docker-compose.yaml").write_text(
-        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml\n"
+    (directory / "compose.yaml").write_text(
+        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml\n"
         "services:\n  acme:\n    image: busybox:1.36.1\n"
     )
     return kit
@@ -409,7 +409,7 @@ def test_version_pairs_the_release_with_its_autoware_also_in_a_kit(tmp_path):
     output = run_cli(root, "version", directory=kit).stdout
     assert f"autoware: 1.8.0 ({'a' * 40})" in output.splitlines()
     # A line's backported fixes show with the Autoware they patch.
-    edit_kit(root, lambda doc: doc["autoware"].update(backports=[
+    edit_manifest(root, lambda doc: doc["autoware"].update(backports=[
         {"repository": "universe/autoware_universe", "subject": "fix", "upstream": "https://example.com/pull/1"}]))
     assert f"autoware: 1.8.0 ({'a' * 40}, 1 backported fix)" in run_cli(root, "version").stdout.splitlines()
 
@@ -542,7 +542,7 @@ def test_uninstall_refuses_unsafe_state(tmp_path, unsafe):
 def test_image_and_env_priority_reaches_compose(tmp_path, release):
     root, directory = runtime_tree(tmp_path, release=release, document=manifest(gpu=True),
                                    config="API_IMAGE=base\nVALUE=base\n")
-    site_config(root, f"API_IMAGE={OTHER_PIN}\nVALUE=site\n")
+    host_settings(root, f"API_IMAGE={OTHER_PIN}\nVALUE=site\n")
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example", "--gpu", API_IMAGE="shell", VALUE="shell")
     assert result.returncode == 0, result.stderr
@@ -558,7 +558,7 @@ def test_image_and_env_priority_reaches_compose(tmp_path, release):
 @pytest.mark.parametrize("problem", ["mutable", "missing"])
 def test_release_image_failures_prevent_compose(tmp_path, problem):
     root, _ = runtime_tree(tmp_path, release=True)
-    edit_kit(root, lambda kit: kit["images"]["humble"].update(api="registry.example/api:latest")
+    edit_manifest(root, lambda kit: kit["images"]["humble"].update(api="registry.example/api:latest")
              if problem == "mutable" else kit["images"]["humble"].pop("api"))
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example")
@@ -594,37 +594,37 @@ def test_run_preflight_does_not_touch_data_or_start_containers(tmp_path, options
     assert not (tmp_path / "home/data").exists()
 
 
-@pytest.mark.parametrize("node", [None, "secondary"])
-def test_a_split_node_keeps_dds_on_loopback(tmp_path, node):
+@pytest.mark.parametrize("role", [None, "secondary"])
+def test_a_split_role_keeps_dds_on_loopback(tmp_path, role):
     # A LAN interface in the host settings would put DDS on the network and
     # around the Zenoh allowlist; only a single-host run may opt in to that.
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=node is not None))
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=role is not None))
     site = root.parent / "home/.config/openadkit/example.env"
     site.parent.mkdir(parents=True, exist_ok=True)
     site.write_text("CYCLONEDDS_NETWORK_INTERFACE=eth0\n")
     calls = fake_docker(tmp_path)
-    args = ["--node", node] if node else []
-    result = run_cli(root, "run", "example", *args, "--pull", "never", NODE_TOKEN="token")
+    args = ["--role", role] if role else []
+    result = run_cli(root, "run", "example", *args, "--pull", "never", ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     up = next(row for row in recorded(calls) if "up" in row["args"])
-    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if node else None)
+    assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if role else None)
 
 
-def test_split_node_run_discovery_and_safe_stop(tmp_path):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+def test_split_role_run_discovery_and_safe_stop(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     calls = fake_docker(tmp_path)
-    blocked = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never")
-    assert blocked.returncode != 0 and "NODE_TOKEN" in blocked.stderr
+    blocked = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never")
+    assert blocked.returncode != 0 and "ROLE_TOKEN" in blocked.stderr
     # Only the settings were read; nothing started.
     assert all("--environment" in row["args"] for row in recorded(calls))
-    result = run_cli(root, "run", "example", "--node", "secondary", "--pull", "never", NODE_TOKEN="token")
+    result = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never", ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     rows = recorded(calls)
     up = next(row for row in rows if "up" in row["args"])
     assert "openadkit-example_secondary" in up["args"]
     assert up["env"]["OPENADKIT_ROS_DOMAIN_ID"] == "2"
     assert str(root / "deployments/example/compose.secondary.yaml") in up["args"]
-    assert not any("zenoh" in arg or arg.endswith("docker-compose.yaml") for arg in up["args"])
+    assert not any("zenoh" in arg or arg.endswith("compose.yaml") for arg in up["args"])
     calls.write_text("")
     # stop finds the stack from Docker, from any directory.
     result = run_cli(root, "stop", directory=tmp_path)
@@ -661,7 +661,7 @@ def test_every_run_records_what_it_started(tmp_path):
     record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
     # The fake model has no services; its digest still identifies it.
     assert record["images"] == {} and record["modelSha256"] == hashlib.sha256(b'{"services": {}}\n').hexdigest()
-    assert record["node"] is None and record["gpu"] is False and "verify" not in record
+    assert record["role"] is None and record["gpu"] is False and "verify" not in record
     # What the services mount from the host is identified by its content.
     assert set(record["configSha256"]) == {"base", "deployment"}
     override = root / "deployments/example/config/autoware/pkg/params.yaml"
@@ -685,18 +685,18 @@ def test_run_verify_needs_a_verify_step(tmp_path):
 def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     document = manifest() | {"verify": {"service": "scenario"}}
     root, _ = runtime_tree(tmp_path, document=document)
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setenv("OPENADKIT_OUTPUT_DIR", str(tmp_path / "output"))
     captured = []
     monkeypatch.setattr(cli_compose, "run_compose", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
     monkeypatch.setattr(cli_compose, "docker", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
-    selection = cli_settings.Selection(ros_distro="humble", gpu=False, node=None, injections={}, environment={})
+    selection = cli_settings.Selection(ros_distro="humble", gpu=False, role=None, injections={}, environment={})
     record = {"deployment": "example"}
     assert cli_compose.verify(deployment, selection, {"scenario"}, record) == 3
     assert captured == [["docker", "wait", "c1"]]
     assert record["verify"]["exitCode"] == 3 and record["verify"]["result"] == "FAILED"
-    # A node without the service has nothing to verify.
+    # A role without the service has nothing to verify.
     assert cli_compose.verify(deployment, selection, {"other"}, {}) == 0
 
 
@@ -704,7 +704,7 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
     verify = {"service": "app", "command": ["python3", "drive_to_goal.py"]}
     root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": verify})
     kit_root = extending_kit(tmp_path, root)
-    kit = cli_catalog.load_kit(kit_root)
+    kit = cli_catalog.load_catalog(kit_root)
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == verify
     path = kit_root / "deployments/custom/deployment.json"
     path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "acme"}}))
@@ -719,7 +719,7 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
 def test_invalid_verify_steps_are_rejected(tmp_path, verify, message):
     root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": verify})
     with pytest.raises(cli_manifest.OpenADKitError, match=re.escape(message)):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example")
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
 
 
 def test_a_verify_service_must_be_in_the_compose_graph(tmp_path):
@@ -747,20 +747,20 @@ def test_run_can_leave_out_the_visualizer(tmp_path, headless):
 def test_run_prints_https_only_for_a_site_certificate(tmp_path):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path, services=("app", "visualizer"))
-    site_config(root, "NOVNC_CERT=/certs/novnc.crt\nNOVNC_KEY=/certs/novnc.key\n")
+    host_settings(root, "NOVNC_CERT=/certs/novnc.crt\nNOVNC_KEY=/certs/novnc.key\n")
     result = run_cli(root, "run", "example")
     assert result.returncode == 0, result.stderr
     assert "visualizer: https://localhost:6080/vnc.html" in result.stdout
 
 
 @pytest.mark.parametrize(("projects", "args", "message"), [
-    (["openadkit-example_primary"], [], "already running as node primary"),
-    (["openadkit-example"], ["--node", "primary"], "already running as single-host"),
+    (["openadkit-example_primary"], [], "already running as role primary"),
+    (["openadkit-example"], ["--role", "primary"], "already running as single-host"),
     (["openadkit-other"], [], "already running"),
 ])
 def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, args, message):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
-    edit_kit(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
+    edit_manifest(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
     calls = fake_docker(tmp_path, projects=projects)
     result = run_cli(root, "run", "example", "--pull", "never", *args)
     assert result.returncode != 0 and message in result.stderr
@@ -782,29 +782,29 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
 @pytest.mark.parametrize(("project", "allowed"), [("openadkit-example_primary", True),
                                                 ("openadkit-example_secondary", True),
                                                 ("openadkit-example_foreign", False)])
-def test_exclusivity_only_allows_declared_nodes_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
-    kit = cli_catalog.load_kit(root)
+def test_exclusivity_only_allows_declared_roles_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: {project: []})
     assert cli_compose.other_projects(deployment) == ([] if allowed else [project])
 
 
-@pytest.mark.parametrize("started_from", ["own", "elsewhere", "other-node"])
+@pytest.mark.parametrize("started_from", ["own", "elsewhere", "other-role"])
 def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_path, monkeypatch, started_from):
-    root, directory = runtime_tree(tmp_path, document=manifest(nodes=True))
-    kit = cli_catalog.load_kit(root)
+    root, directory = runtime_tree(tmp_path, document=manifest(roles=True))
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
     # single-host or primary project.
-    entry = {"own": directory / "docker-compose.yaml", "elsewhere": tmp_path / "other-kit/docker-compose.yaml",
-             "other-node": directory / "compose.secondary.yaml"}[started_from]
+    entry = {"own": directory / "compose.yaml", "elsewhere": tmp_path / "other-kit/compose.yaml",
+             "other-role": directory / "compose.secondary.yaml"}[started_from]
     live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
-        "docker-compose.yaml", "compose.primary.yaml")]}
+        "compose.yaml", "compose.primary.yaml")]}
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: live)
     # run must not replace another stack in place; stop still reaches it by name.
     assert cli_compose.other_projects(deployment) == ([] if started_from == "own" else sorted(live))
-    assert cli_compose.live_nodes(deployment) == [None, "primary"]
+    assert cli_compose.live_roles(deployment) == [None, "primary"]
 
 
 @NEEDS_COMPOSE
@@ -813,29 +813,29 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("MY_TOKEN", "secret")
-    monkeypatch.delenv("NODE_TOKEN", raising=False)
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
-    site_config(root, "NODE_TOKEN=${MY_TOKEN}\n")
-    kit = cli_catalog.load_kit(root)
+    monkeypatch.delenv("ROLE_TOKEN", raising=False)
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
+    host_settings(root, "ROLE_TOKEN=${MY_TOKEN}\n")
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
-    selection = cli_settings.resolve(deployment, kit, "humble", node="secondary")
-    assert selection.environment["NODE_TOKEN"] == "secret"
+    selection = cli_settings.resolve(deployment, kit, "humble", role="secondary")
+    assert selection.environment["ROLE_TOKEN"] == "secret"
 
 
-def test_a_node_is_never_read_from_a_deployment_name(monkeypatch):
-    # planning-simulation running single-host is not node "simulation" of anything.
+def test_a_role_is_never_read_from_a_deployment_name(monkeypatch):
+    # planning-simulation running single-host is not role "simulation" of anything.
     monkeypatch.setattr(cli_live, "live_projects", lambda: {"openadkit-planning-simulation", "openadkit-split_simulation"})
     assert cli_live.running_projects("simulation") == ["openadkit-split_simulation"]
 
 
-def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path):
-    root, _ = runtime_tree(tmp_path, document=manifest(nodes=True))
+def test_several_live_roles_stop_together_but_take_one_target_otherwise(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     calls = fake_docker(tmp_path, projects=["openadkit-example_primary", "openadkit-example_secondary"])
     result = run_cli(root, "logs")
-    assert result.returncode != 0 and "choose one with --node" in result.stderr
-    assert run_cli(root, "logs", "--node", "primary").returncode == 0
+    assert result.returncode != 0 and "choose one with --role" in result.stderr
+    assert run_cli(root, "logs", "--role", "primary").returncode == 0
     assert recorded(calls)[-1]["args"][:4] == ["compose", "--project-name", "openadkit-example_primary", "logs"]
-    assert run_cli(root, "stop", "--node", "secondary").returncode == 0
+    assert run_cli(root, "stop", "--role", "secondary").returncode == 0
     assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]] == ["openadkit-example_secondary"]
     assert run_cli(root, "stop").returncode == 0
     assert [row["args"][2] for row in recorded(calls) if "down" in row["args"]][1:] == [
@@ -843,18 +843,18 @@ def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path
 
 
 @pytest.mark.parametrize("unsafe", ["missing", "symlink", "escape"])
-def test_required_node_files_are_checked_before_compose(tmp_path, unsafe):
-    document = manifest(nodes=True)
-    document["nodes"]["primary"]["requiredFiles"] = ["../outside" if unsafe == "escape" else "allowlist.json"]
+def test_required_role_files_are_checked_before_compose(tmp_path, unsafe):
+    document = manifest(roles=True)
+    document["roles"]["primary"]["requiredFiles"] = ["../outside" if unsafe == "escape" else "allowlist.json"]
     root, directory = runtime_tree(tmp_path, document=document)
     if unsafe == "symlink":
         outside = tmp_path / "outside"
         outside.write_text("{}")
         (directory / "allowlist.json").symlink_to(outside)
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "validate", "example", "--node", "primary")
+    result = run_cli(root, "validate", "example", "--role", "primary")
     assert result.returncode != 0
-    assert {"missing": "missing required node file", "symlink": "symlinked required node file",
+    assert {"missing": "missing required role file", "symlink": "symlinked required role file",
             "escape": "safe relative path"}[unsafe] in result.stderr
     assert recorded(calls) == []
 
@@ -1057,7 +1057,7 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
 
 def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
-    # Reset services may exit, but not fail: "init" finished, "rosbag" crashed.
+    # One-shot services may exit, but not fail: "init" finished, "rosbag" crashed.
     # A long-running service that exits cleanly is gone too: on-failure does not restart it.
     # A healthcheck that fails after up, and a dead container, fail too.
     inspect = ("kept api 1 running 0 healthy\ncrashed planning 1 running 0 none\nreset init 3 exited 0 none\n"
@@ -1065,7 +1065,7 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
                "gone vehicle 0 dead 0 none\n")
     monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
+    deployment = type("Deployment", (), {"one_shot_services": staticmethod(lambda role: {"init", "rosbag"})})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == [
         "map", "planning", "rosbag", "system", "vehicle"]
@@ -1309,7 +1309,7 @@ class SettingsDeployment:
     """The parts of a Deployment that settings resolution reads."""
 
     def __init__(self, directory, files, gpu_files, data):
-        self.name, self.directory, self.data, self.nodes = "example", directory, data, {}
+        self.name, self.directory, self.data, self.roles = "example", directory, data, {}
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
 
@@ -1327,7 +1327,7 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
     deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
-    kit = cli_catalog.Kit("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    kit = cli_catalog.Catalog("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
@@ -1348,7 +1348,7 @@ def test_a_source_checkout_image_setting_resolves_as_compose_resolves_it(tmp_pat
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("REGISTRY", "registry.example/mine")
     root, directory = runtime_tree(tmp_path, config="API_IMAGE=${REGISTRY}/api:dev\n")
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     selection = cli_settings.resolve(deployment, kit, "humble")
     assert "API_IMAGE" not in selection.injections
@@ -1363,7 +1363,7 @@ def test_a_run_without_gpu_resolves_its_settings_once(tmp_path, monkeypatch):
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     root, _ = runtime_tree(tmp_path, document=manifest(gpu=True))
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     passes = []
     real = cli_settings.compose_environment
@@ -1511,17 +1511,17 @@ def test_fetch_checks_every_destination_before_download(tmp_path):
 @pytest.mark.parametrize("base_refs", [{"ref": PIN}, {"distros": {"humble": PIN, "jazzy": PIN}}])
 def test_kit_external_image_fallback_and_wildcard_override(tmp_path, base_refs):
     root, _ = runtime_tree(tmp_path)
-    edit_kit(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
+    edit_manifest(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
     kit = extending_kit(tmp_path, root, external_images={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
-    context = cli_catalog.load_kit(kit)
+    context = cli_catalog.load_catalog(kit)
     assert context.external_image_environment("humble")["EXTERNAL_IMAGE"] == OTHER_PIN
     assert context.external_image_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
-    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
-    assert cli_catalog.load_kit(kit).external_image_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
+    edit_manifest(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
+    assert cli_catalog.load_catalog(kit).external_image_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
     # Every distro is `ref`, never a "*" distro.
-    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
+    edit_manifest(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
     with pytest.raises(cli_manifest.OpenADKitError, match="invalid ROS distro"):
-        cli_catalog.load_kit(kit)
+        cli_catalog.load_catalog(kit)
 
 
 @pytest.mark.parametrize("text", ["[]", "{"])
@@ -1540,18 +1540,18 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
         monkeypatch.delenv(name, raising=False)
     root, base = runtime_tree(tmp_path, release=release,
                               document=manifest(gpu=True, data=[files_resource(tmp_path)]), config="VALUE=base\nMAP_PATH=$HOME/data/map\n")
-    edit_kit(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
+    edit_manifest(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
     kit = extending_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
         path.mkdir()
-    site_config(root, "VALUE=site\n", name="custom")
-    context = cli_catalog.load_kit(kit)
+    host_settings(root, "VALUE=site\n", name="custom")
+    context = cli_catalog.load_catalog(kit)
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"
     selection = cli_settings.resolve(deployment, context, "humble", True)
-    assert deployment.compose_files(True) == [directory / "docker-compose.yaml", base / "gpu.yaml"]
+    assert deployment.compose_files(True) == [directory / "compose.yaml", base / "gpu.yaml"]
     assert selection.environment["VALUE"] == "site" and selection.environment["BASE_GPU"] == "1"
     assert selection.injections["API_IMAGE"] == OTHER_PIN
     assert selection.injections["OPENADKIT_BASE_DEPLOYMENT"] == str(base)
@@ -1567,22 +1567,22 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     assert (bom["images"] is not None) is release
 
 
-def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_path):
+def test_kit_may_leave_out_the_base_side_its_inherited_one_shot_services_belong_to(tmp_path):
     document = manifest()
-    document["compose"]["resetServices"] = ["loader"]
+    document["compose"]["oneShotServices"] = ["loader"]
     root, _ = runtime_tree(tmp_path, document=document)
     kit = extending_kit(tmp_path, root)
     calls = fake_docker(tmp_path, services=("app", "acme"))
-    # The base itself must still define its oneshots.
+    # The base itself must still define its one-shot services.
     result = run_cli(root, "validate", "example")
     assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
     assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
     assert run_cli(root, "run", "custom", "--pull", "never", directory=kit).returncode == 0
     assert not any("rm" in row["args"] for row in recorded(calls))
-    # A kit's own oneshot is checked like a base's.
+    # A kit's own one-shot service is checked like a base's.
     path = kit / "deployments/custom/deployment.json"
     document = json.loads(path.read_text())
-    document["compose"] = {"resetServices": ["probe"]}
+    document["compose"] = {"oneShotServices": ["probe"]}
     path.write_text(json.dumps(document))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
@@ -1605,12 +1605,12 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     assert manifest["extends"] == ("v1.2.3" if installed else str(root.resolve()))
     assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
     deployment = json.loads((kit / "deployment.json").read_text())
-    # The name lives once, in openadkit.json; Compose files default to docker-compose.yaml.
+    # The name lives once, in openadkit.json; Compose files default to compose.yaml.
     assert deployment == {"schemaVersion": 2, "description": "example with this kit's layer on top", "base": "example"}
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
-        loaded = cli_catalog.load_kit(kit)
+        loaded = cli_catalog.load_catalog(kit)
         assert loaded.kind == "kit" and set(loaded.deployments) == {"my-kit"}
         assert cli_catalog.get_deployment(kit, loaded, "my-kit").base.name == "example"
 
@@ -1647,7 +1647,7 @@ def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
     assert run_cli(root, "validate").returncode == 2
     second = kit / "deployments/second"
     shutil.copytree(kit / "deployments/custom", second)
-    edit_kit(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
+    edit_manifest(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
     result = run_cli(root, "validate", directory=kit)
     assert result.returncode == 2 and "deployment name required" in result.stderr
 
@@ -1683,7 +1683,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
 
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     # In a kit, build takes its workspace; it builds where the services mount it.
     result = run_cli(root, "build", directory=kit)
     assert result.returncode == 0, result.stderr
@@ -1695,7 +1695,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
 
     # After a base upgrade the install is stale until rebuilt.
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 0 and f"openadkit build {workspace}" in result.stderr
     result = run_cli(root, "build", directory=kit, DEVEL_IMAGE="local/devel:test")
@@ -1735,7 +1735,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
 def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     kit = extending_kit(tmp_path, root)
     (kit / "overlay_ws/src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
@@ -1757,7 +1757,7 @@ def overlay_workspace(root, name, monkeypatch, tmp_path, workspace=None):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     for variable in ISOLATED_ENV:
         monkeypatch.delenv(variable, raising=False)
-    context = cli_catalog.load_kit(root)
+    context = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, context, name)
     if workspace is not None:
         deployment.use_workspace(workspace)
@@ -1780,36 +1780,25 @@ def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypat
     for item in directory.iterdir():
         shutil.move(str(item), kit)
     shutil.rmtree(kit / "deployments")
-    edit_kit(kit, lambda document: document["deployments"].update(custom={"path": "."}))
+    edit_manifest(kit, lambda document: document["deployments"].update(custom={"path": "."}))
     # The deployment is the kit root, so the root is named after it.
     kit = kit.rename(tmp_path / "custom")
     (kit / "overlay_ws").mkdir()
     assert overlay_workspace(kit, "custom", monkeypatch, tmp_path) == str(kit / "overlay_ws")
 
 
-def on_top(root, name="on-top", base="example"):
-    """A catalog deployment on another of the same catalog."""
-    directory = root / "deployments" / name
+def test_only_a_kit_deployment_names_a_base(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    directory = root / "deployments/on-top"
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "On top", "base": base,
-        "compose": {"files": ["docker-compose.yaml"]},
+        "schemaVersion": 2, "description": "On top", "base": "example",
+        "compose": {"files": ["compose.yaml"]},
     }))
-    (directory / "docker-compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
-    edit_kit(root, lambda document: document["deployments"].update({name: {"path": f"deployments/{name}"}}))
-    return directory
-
-
-def test_a_catalog_deployment_can_build_on_another(tmp_path):
-    root, base = runtime_tree(tmp_path)
-    directory = on_top(root)
-    kit = cli_catalog.load_kit(root)
-    deployment = cli_catalog.get_deployment(root, kit, "on-top")
-    assert deployment.base.directory == base and deployment.requirements == deployment.base.requirements
-    assert deployment.overlay_paths["OPENADKIT_OVERLAY_WS"] == directory / "overlay_ws"
-    on_top(root, "on-on-top", base="on-top")
-    with pytest.raises(cli_manifest.OpenADKitError, match="base deployment on-top has a base of its own"):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-on-top")
+    (directory / "compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
+    edit_manifest(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))
+    with pytest.raises(cli_manifest.OpenADKitError, match="unknown manifest field\\(s\\): base"):
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "on-top")
 
 
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
@@ -1817,12 +1806,12 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
     document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
     document["requirements"]["gpuArchitectures"] = ["amd64"]
     root, _ = runtime_tree(tmp_path, document=document)
-    directory = on_top(root)
+    kit_root = extending_kit(tmp_path, root)
 
     def on_top_with(requirements):
-        path = directory / "deployment.json"
+        path = kit_root / "deployments/custom/deployment.json"
         path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
-        return cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
+        return cli_catalog.get_deployment(kit_root, cli_catalog.load_catalog(kit_root), "custom")
 
     # Only what it names changes; without a GPU mode the GPU-only data goes too.
     deployment = on_top_with({"architectures": ["amd64"], "gpu": "none"})
@@ -1849,22 +1838,10 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
 
 
 def test_safety_island_simulation_runs_where_its_release_does():
-    kit = cli_catalog.load_kit(ROOT)
+    kit = cli_catalog.load_catalog(ROOT)
     deployment = cli_catalog.get_deployment(ROOT, kit, "safety-island-simulation")
     assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
     assert not any(item.get("gpu") for item in deployment.data)
-
-
-def test_a_released_deployment_is_intact_only_with_its_base(tmp_path):
-    root, base = runtime_tree(tmp_path, release=True)
-    directory = on_top(root)
-    edit_kit(root, lambda document: document["deployments"]["on-top"].update(
-        checksum=cli_catalog.deployment_checksum(directory)))
-    kit = cli_catalog.load_kit(root)
-    deployment = cli_catalog.get_deployment(root, kit, "on-top")
-    assert cli_catalog.deployment_integrity(root, deployment, kit) == "intact"
-    (base / "settings.env").write_text("MAP_PATH=/elsewhere\n")
-    assert cli_catalog.deployment_integrity(root, deployment, kit) == "modified"
 
 
 def test_base_deployment_keeps_its_own_overlay(tmp_path, monkeypatch):
@@ -2009,7 +1986,7 @@ def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
 @pytest.mark.parametrize("gpu", [False, True])
 def test_only_a_gpu_run_uses_the_gpu_component_images(gpu):
     # The CUDA builds are amd64-only: a CPU run, also on arm64, must not need them.
-    kit = cli_catalog.load_kit(ROOT)
+    kit = cli_catalog.load_catalog(ROOT)
     environment = kit.component_environment("humble", "arm64", gpu)
     gpu_images = {name for name in COMPONENT_IMAGES if name.endswith("_GPU_IMAGE")}
     assert gpu_images >= {"SENSING_PERCEPTION_GPU_IMAGE", "PLANNING_GPU_IMAGE"}
@@ -2022,9 +1999,9 @@ def test_a_deployment_is_named_by_its_kit_manifest_key_alone(tmp_path):
     document = json.loads((directory / "deployment.json").read_text())
     # A renamed directory keeps working: only the kit manifest's key names it.
     renamed = directory.rename(directory.parent / "elsewhere")
-    edit_kit(root, lambda kit: kit["deployments"].update(example={"path": "deployments/elsewhere"}))
-    assert cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example").name == "example"
+    edit_manifest(root, lambda kit: kit["deployments"].update(example={"path": "deployments/elsewhere"}))
+    assert cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example").name == "example"
     # The file does not repeat the name.
     (renamed / "deployment.json").write_text(json.dumps(document | {"name": "example"}))
     with pytest.raises(cli_manifest.OpenADKitError, match="name"):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example")
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")

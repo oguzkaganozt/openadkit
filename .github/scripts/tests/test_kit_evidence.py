@@ -15,7 +15,7 @@ import validation_matrix  # noqa: E402
 
 
 def identities(cells):
-    return [{key: cell[key] for key in ("deployment", "distro", "platform", "node", "kit") if key in cell} for cell in cells]
+    return [{key: cell[key] for key in ("deployment", "distro", "platform", "role", "kit") if key in cell} for cell in cells]
 
 
 def test_example_evidence_cells_follow_the_base_distros():
@@ -33,7 +33,7 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     for file in ("openadkit", "openadkit.json", "components/docker-bake.hcl"):
         (source / file).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / file, source / file)
-    workspace = source / ".github/scripts/evidence/kit/overlay_ws"
+    workspace = source / ".github/scripts/evidence/example-kit/overlay_ws"
     for product in ("build", "install", "log"):
         (workspace / product).mkdir()
         (workspace / product / "host-product").write_text("not evidence")
@@ -45,7 +45,7 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     assert result.returncode == 0, result.stderr
     runtime = validation_matrix.load_runtime(staged)
     example = staged / "kits/example-kit"
-    kit = runtime.load_kit(example)
+    kit = runtime.load_catalog(example)
     assert set(kit.deployments) == {"example-kit"} and kit.deployments["example-kit"].path == "."
     # The staged release is not installed, so the kit extends it by its path.
     manifest = json.loads((example / "openadkit.json").read_text())

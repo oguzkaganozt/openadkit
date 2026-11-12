@@ -75,7 +75,7 @@ holds the CLI and the deployments; images and sample data are pulled on demand.
 ## 2. Set Up the Host {: #set-up-the-host }
 
 ```bash
-openadkit setup --verify
+openadkit setup --check
 ```
 
 Run setup as your normal user; it asks for `sudo` only for host changes. It

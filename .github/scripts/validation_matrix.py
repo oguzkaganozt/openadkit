@@ -2,10 +2,10 @@
 """Manifest-derived views of a kit shared by lint, release planning and evidence.
 
 A validation cell is one `./openadkit validate` invocation: a deployment, ROS
-distro, GPU mode, and optional split-host node. An evidence cell is the complete
+distro, GPU mode, and optional split-host role. An evidence cell is the complete
 plan of one runtime evidence run, which run_cell.sh executes as given. The kit
 inventory is what a release bundle ships. Lint, the release planner and the
-evidence workflow all read these views, so a new deployment or node is walked
+evidence workflow all read these views, so a new deployment or role is walked
 everywhere without editing a hardcoded list.
 """
 
@@ -26,7 +26,7 @@ from typing import Any, NoReturn
 # architecture its deployment supports.
 EVIDENCE_PLATFORMS = ("linux/amd64", "linux/arm64")
 # Readiness (L1) is each deployment's healthchecks, which `openadkit run` waits
-# for, and the end-to-end check (L2) its manifest's verify step. A cell passes
+# for, and the end-to-end level (L2) its manifest's verify step. A cell passes
 # only with L2, so every deployment that is not exempt declares one.
 # Cells beyond Compose on Docker, for each distro: the backend run_cell.sh starts
 # the stack with, on the runner it needs. quadlet runs platforms/autosd under
@@ -42,7 +42,7 @@ ARM64_RUNNER_SUFFIX = "-arm"
 # and a pinned external image).
 EXAMPLE_KITS = {"example-kit": "planning-simulation"}
 EXAMPLE_KIT_DIRECTORY = "kits"
-EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/kit"
+EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/example-kit"
 # Host build products of an overlay workspace; never kit content.
 COLCON_PRODUCTS = ("build", "install", "log")
 
@@ -76,29 +76,29 @@ def load_runtime(source_root: Path) -> ModuleType:
 def validation_cells(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> list[dict[str, Any]]:
-    """Return sorted validation cells for every deployment and each of its nodes."""
-    kit = kit if kit is not None else runtime.load_kit(source_root)
-    if not kit.deployments:
+    """Return sorted validation cells for every deployment and each of its roles."""
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
+    if not catalog.deployments:
         fail("release source has no deployments")
 
     rows: list[dict[str, Any]] = []
     distros: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         gpu = deployment.requirements["gpu"]
-        nodes = [""] + sorted(deployment.nodes)
+        roles = [""] + sorted(deployment.roles)
         for distro in deployment.requirements["rosDistros"]:
             distros.add(distro)
-            for node in nodes:
+            for role in roles:
                 if gpu in ("none", "optional"):
                     rows.append(
                         {
                             "deployment": name,
                             "gpu": False,
                             "rosDistro": distro,
-                            "node": node,
+                            "role": role,
                         }
                     )
                 if gpu in ("required", "optional"):
@@ -107,7 +107,7 @@ def validation_cells(
                             "deployment": name,
                             "gpu": True,
                             "rosDistro": distro,
-                            "node": node,
+                            "role": role,
                         }
                     )
     if not distros:
@@ -119,7 +119,7 @@ def validation_cells(
             row["deployment"],
             row["rosDistro"],
             row["gpu"],
-            row["node"],
+            row["role"],
         )
     )
     return rows
@@ -128,17 +128,17 @@ def validation_cells(
 def evidence_cells(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
     platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
 ) -> list[dict[str, str]]:
     """Cells the evidence workflow runs: every distro and architecture of every
-    deployment that is not exempt, plus one cell running all nodes where a
-    deployment declares nodes. Each cell carries its identity and everything
+    deployment that is not exempt, plus one cell running all roles where a
+    deployment declares roles. Each cell carries its identity and everything
     run_cell.sh checks."""
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     cells: list[dict[str, str]] = []
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         if deployment.evidence_exemption:
             continue
         if deployment.verify is None:
@@ -148,17 +148,17 @@ def evidence_cells(
         for distro, platform in ((distro, platform) for distro in deployment.requirements["rosDistros"]
                                  for platform in supported):
             identities = [{"deployment": name, "distro": distro, "platform": platform}]
-            if deployment.nodes:
-                identities.append({"deployment": name, "distro": distro, "platform": platform, "node": "split"})
+            if deployment.roles:
+                identities.append({"deployment": name, "distro": distro, "platform": platform, "role": "split"})
             for identity in identities:
                 cells.append(identity | {
                     "name": evidence_cell_name(identity),
                     # Started in manifest order and stopped in reverse.
-                    "nodes": " ".join(deployment.nodes) if "node" in identity else "",
+                    "roles": " ".join(deployment.roles) if "role" in identity else "",
                     "verify": json.dumps(deployment.verify),
                 })
         if name in PLATFORM_CELLS:
-            for row in [row for row in cells if row["deployment"] == name and "node" not in row]:
+            for row in [row for row in cells if row["deployment"] == name and "role" not in row]:
                 cell = row | PLATFORM_CELLS[name]
                 if cell["platform"] == "linux/arm64":
                     cell["runner"] += ARM64_RUNNER_SUFFIX
@@ -166,7 +166,7 @@ def evidence_cells(
     # One plain cell per distro also checks the launch arguments of every
     # deployment, the exempt ones included (evidence/launch_arguments.py).
     for distro in sorted({cell["distro"] for cell in cells}):
-        plain = next(cell for cell in cells if cell["distro"] == distro and not cell.keys() & {"node", "backend"})
+        plain = next(cell for cell in cells if cell["distro"] == distro and not cell.keys() & {"role", "backend"})
         plain["launch_arguments"] = "all"
     return cells
 
@@ -204,7 +204,7 @@ def example_kit_cells(
     cells = []
     for name, base in EXAMPLE_KITS.items():
         for cell in base_cells:
-            if cell["deployment"] == base and not cell.get("node") and not cell.get("backend"):
+            if cell["deployment"] == base and not cell.get("role") and not cell.get("backend"):
                 # The base's cell already checks the launch arguments.
                 kit_cell = {key: value for key, value in cell.items() if key != "launch_arguments"}
                 kit_cell |= {"deployment": name, "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
@@ -214,29 +214,29 @@ def example_kit_cells(
 
 def evidence_cell_name(cell: dict[str, Any]) -> str:
     """The evidence cell identity, shared by the workflow matrix and the summary."""
-    variant = cell.get("node") or cell.get("backend") or ""
+    variant = cell.get("role") or cell.get("backend") or ""
     suffix = f"-{variant}" if variant else ""
     platform = cell["platform"].replace("/", "-")
     return f"{cell['deployment']}-{cell['distro']}{suffix}-{platform}"
 
 
-def kit_inventory(
+def catalog_inventory(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> dict[str, dict[str, Any]]:
     """What a kit ships: deployment paths and checksums, and shared asset checksums.
 
     The release plan and bundle staging and verification read this one view,
     so packaging and the evidence kit cannot disagree about a kit's contents.
     """
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     deployments: dict[str, dict[str, str]] = {}
     shared: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         deployments[name] = {
-            "path": kit.deployments[name].path,
+            "path": catalog.deployments[name].path,
             "checksum": runtime.deployment_checksum(deployment.directory),
         }
         shared.update(deployment.shared)
@@ -252,12 +252,12 @@ def kit_inventory(
 def evidence_exemptions(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> list[dict[str, str]]:
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     exempt = []
-    for name in sorted(kit.deployments):
-        reason = runtime.get_deployment(source_root, kit, name).evidence_exemption
+    for name in sorted(catalog.deployments):
+        reason = runtime.get_deployment(source_root, catalog, name).evidence_exemption
         if reason:
             exempt.append({"deployment": name, "reason": reason})
     return exempt
@@ -306,7 +306,7 @@ def main() -> int:
             cell["deployment"],
             cell["rosDistro"],
             "true" if cell["gpu"] else "false",
-            cell["node"],
+            cell["role"],
         )
         print("\t".join(fields))
     return 0

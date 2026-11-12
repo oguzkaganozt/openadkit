@@ -10,7 +10,7 @@ data and behavior contracts; local actions own repeated execution recipes.
 | CI image tags, Bake execution and ccache restore/save/prune | `actions/build-image/` |
 | Source lock import, Buildx and registry login | `actions/setup-build-env/` |
 | Image metadata capture, inventory coverage, scan rows and artifact validation | `scripts/images.py` |
-| Validation and evidence cell plans (nodes, checks) and the kit inventory | `scripts/validation_matrix.py` |
+| Validation and evidence cell plans (roles, checks) and the kit inventory | `scripts/validation_matrix.py` |
 | Executing one evidence cell: validate/start/cleanup and the L0–L3 checks it names | `scripts/evidence/run_cell.sh` |
 | Cell payloads, the run summary and its report | `scripts/evidence/` |
 | External release checks and sequencing | `scripts/validate_release.sh` |
@@ -47,17 +47,17 @@ Release packaging and evidence staging assemble the kit through one
 evidence adds only the example kits. The bundle, the release plan and the
 evidence subjects all read one kit inventory.
 
-Each evidence matrix row is the complete cell plan: identity, the node list in
+Each evidence matrix row is the complete cell plan: identity, the role list in
 manifest order and the deployment's verify step. L1 is `openadkit run`, which
 waits for the deployment's healthchecks; L2 is `run --verify`; L3 is the example
 kit's `checks/dev_loop.sh`. `run_cell.sh` executes the row with a common
 validate/start/cleanup lifecycle; it does not derive policy from deployment
 names. Scenario isolation and drive-to-goal checks stay distinct. Hosted split
-evidence is two nodes on one runner, not proof of two physical hosts.
+evidence is two roles on one runner, not proof of two physical hosts.
 
 The integrator example is made in CI, not kept in `deployments/`: the staged
 CLI's `openadkit new example-kit` makes it under `kits/`, and the fixture in
-`.github/scripts/evidence/kit/` adds every extension point on top. Lint
+`.github/scripts/evidence/example-kit/` adds every extension point on top. Lint
 validates the same kit made from the checkout.
 
 `registry-cleanup.yaml` deletes a pull request's CI images when it closes, CI

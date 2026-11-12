@@ -256,7 +256,7 @@ main() {
   checkout_release_source
   validate_manifest_consistency
   download_build_metadata
-  select_latest_artifact "scan-metadata-${BUILD_TAG}" .github/workflows/scan.yaml \
+  select_latest_artifact "scan-metadata-${BUILD_TAG}" .github/workflows/scan-images.yaml \
     scan-metadata.json scan_is_full scan_passed release-input/scan
   validate_metadata
   validate_release_rules

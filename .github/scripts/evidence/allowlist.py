@@ -2,7 +2,7 @@
 
 Autoware renames topics between releases; the Zenoh bridge would then stop
 carrying the old name without any error. Each allowlist entry is a full-name
-regular expression and must match at least one topic of either node's graph.
+regular expression and must match at least one topic of either role's graph.
 """
 import argparse
 import re
@@ -27,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True, help="the deployment's config/zenoh.json5")
     parser.add_argument("--topics", type=Path, action="append", required=True,
-                        help="a node's `ros2 topic list` output; repeat for each node")
+                        help="a role's `ros2 topic list` output; repeat for each role")
     args = parser.parse_args()
     topics = {line.strip() for path in args.topics for line in path.read_text().splitlines() if line.strip()}
     entries = allowed_topics(args.config.read_text(encoding="utf-8"))

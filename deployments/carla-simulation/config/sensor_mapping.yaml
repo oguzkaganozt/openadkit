@@ -1,6 +1,6 @@
 # Sensor mapping for the CARLA e2e sample.
 # Overrides the autoware_carla_interface package default via the
-# `sensor_mapping_file` launch argument (see docker-compose.yaml).
+# `sensor_mapping_file` launch argument (see compose.yaml).
 # Identical to the package default except cameras are not enabled
 # (see `enabled_sensors` at the bottom of this file).
 

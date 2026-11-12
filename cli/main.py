@@ -19,14 +19,13 @@ import data
 import live
 import settings
 from catalog import (
+    Catalog,
     Deployment,
-    Kit,
     available_deployments,
-    declares_base,
     deployment_integrity,
     get_deployment,
     install_root,
-    load_kit,
+    load_catalog,
     resolve_extends,
     root_path,
 )
@@ -40,7 +39,7 @@ class UsageError(OpenADKitError):
     """A command line that cannot run as given; exits 2 like the parser's own errors."""
 
 
-def find_extending_kit(start: Path) -> Path | None:
+def find_kit(start: Path) -> Path | None:
     """The extending kit (kind "kit") around the working directory, if any.
 
     Like git, the nearest openadkit.json wins; it is a kit only when its kind
@@ -64,30 +63,28 @@ def read_extends(kit_root: Path) -> str:
     return require_string(load_json(kit_root / "openadkit.json").get("extends"), "extends")
 
 
-def create_kit(root: Path, kit: Kit, name: str, base: str, destination: Path) -> Path:
+def create_kit(root: Path, catalog: Catalog, name: str, base: str, destination: Path) -> Path:
     """A kit named name in destination, on top of base, from cli/templates/kit.
 
     An installed release is extended by its version, so the kit follows that
     install; anything else by its path, relative when the kit is inside it.
     """
-    if kit.kind == "kit":
+    if catalog.kind == "kit":
         raise OpenADKitError("run openadkit new outside a kit: a kit extends an Open AD Kit, not another kit")
     if not NAME_RE.fullmatch(name):
         raise OpenADKitError(f"invalid kit name {name}: use lowercase letters, digits and -")
-    if base not in kit.deployments:
-        raise OpenADKitError(f"{base} is not a deployment of this Open AD Kit; available: {available_deployments(kit)}")
-    if declares_base(root, kit, base):
-        raise OpenADKitError(f"{base} builds on another deployment; a kit builds on one without a base")
+    if base not in catalog.deployments:
+        raise OpenADKitError(f"{base} is not a deployment of this Open AD Kit; available: {available_deployments(catalog)}")
     target = destination.resolve() / name
     if target.exists() or target.is_symlink():
         raise OpenADKitError(f"{target} already exists")
-    if kit.kind == "release" and (install_root() / f"openadkit-{kit.version}").resolve() == root.resolve():
-        extends = str(kit.version)
+    if catalog.kind == "release" and (install_root() / f"openadkit-{catalog.version}").resolve() == root.resolve():
+        extends = str(catalog.version)
     elif target.is_relative_to(root.resolve()):
         extends = os.path.relpath(root.resolve(), target)
     else:
         extends = str(root.resolve())
-    values = {"name": name, "base": base, "extends": extends, "version": kit.version or "(a source checkout)"}
+    values = {"name": name, "base": base, "extends": extends, "version": catalog.version or "(a source checkout)"}
     for source in sorted(KIT_TEMPLATE.rglob("*")):
         output = target / source.relative_to(KIT_TEMPLATE)
         if source.is_dir():
@@ -109,7 +106,7 @@ def hand_over(start: Path) -> Path | None:
     Otherwise the pinned release's own launcher takes over the command: only
     its CLI is guaranteed to understand that release's manifests and options.
     """
-    kit_root = find_extending_kit(start)
+    kit_root = find_kit(start)
     if kit_root is None:
         return None
     extends = read_extends(kit_root)
@@ -148,15 +145,15 @@ def install_pinned_release(version: str) -> None:
         raise OpenADKitError(f"could not install Open AD Kit {version}, which this kit extends")
 
 
-def load_kit_around(start: Path, *, act: bool = True) -> tuple[Path, Kit]:
+def load_catalog_around(start: Path, *, act: bool = True) -> tuple[Path, Catalog]:
     """The kit around start, or this CLI's own Open AD Kit.
 
     A command that acts on a kit runs with the CLI of the release the kit pins.
     Reading one (act=False) only reads its manifests with this CLI: it starts
     no other program and downloads nothing.
     """
-    root = (hand_over(start) if act else find_extending_kit(start)) or root_path()
-    return root, load_kit(root)
+    root = (hand_over(start) if act else find_kit(start)) or root_path()
+    return root, load_catalog(root)
 
 
 class OpenADKitParser(argparse.ArgumentParser):
@@ -174,11 +171,11 @@ class OpenADKitParser(argparse.ArgumentParser):
         if self.help_inventory != "catalog":
             return
         try:
-            root, kit = load_kit_around(Path.cwd(), act=False)
+            root, catalog = load_catalog_around(Path.cwd(), act=False)
         except OpenADKitError:
             return
         print(file=file)
-        list_deployments(root, kit)
+        list_deployments(root, catalog)
 
 
 def _print_table(headers: tuple[str, ...], rows: Sequence[tuple[str, ...]]) -> None:
@@ -200,9 +197,9 @@ def _print_table(headers: tuple[str, ...], rows: Sequence[tuple[str, ...]]) -> N
 
 
 def list_deployments(
-    root, kit, names: list[str] | None = None, *, json_output: bool = False
+    root, catalog, names: list[str] | None = None, *, json_output: bool = False
 ) -> int:
-    selected = list(kit.deployments if names is None else names)
+    selected = list(catalog.deployments if names is None else names)
     if not selected:
         if json_output:
             print(json.dumps({"schemaVersion": 1, "deployments": []}))
@@ -212,11 +209,11 @@ def list_deployments(
     entries: list[dict[str, object]] = []
     for name in selected:
         try:
-            deployment = get_deployment(root, kit, name)
+            deployment = get_deployment(root, catalog, name)
             entries.append(
                 {
                     "name": name,
-                    "integrity": deployment_integrity(root, deployment, kit),
+                    "integrity": deployment_integrity(root, deployment, catalog),
                     "gpu": deployment.requirements["gpu"],
                     "description": deployment.manifest["description"],
                 }
@@ -256,11 +253,11 @@ def is_path(argument: str) -> bool:
     return "/" in argument or argument.startswith(".")
 
 
-def deployment_name(root: Path, kit: Kit, argument: str) -> str:
+def deployment_name(root: Path, catalog: Catalog, argument: str) -> str:
     if not is_path(argument):
         return argument
     directory = Path(argument).expanduser().resolve()
-    for name, reference in kit.deployments.items():
+    for name, reference in catalog.deployments.items():
         if (root / reference.path).resolve() == directory:
             return name
     raise OpenADKitError(f"{argument} is not a deployment of {root}")
@@ -278,9 +275,9 @@ def autoware_line(autoware: dict[str, Any]) -> str:
     return f"autoware: {autoware['version']} ({autoware['ref']}{fixes})"
 
 
-def show_version(root, kit, *, json_output: bool = False) -> int:
-    if kit.kind == "release":
-        version = kit.version
+def show_version(root, catalog, *, json_output: bool = False) -> int:
+    if catalog.kind == "release":
+        version = catalog.version
         commit = None
     else:
         result = subprocess.run(
@@ -296,28 +293,28 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
             json.dumps(
                 {
                     "schemaVersion": 1,
-                    "kind": kit.kind,
+                    "kind": catalog.kind,
                     "version": version,
                     "commit": commit,
-                    "extends": kit.extends,
-                    "bom": kit.bom(),
+                    "extends": catalog.extends,
+                    "bom": catalog.bom(),
                 }
             )
         )
         return 0
-    if kit.extends is not None:
+    if catalog.extends is not None:
         print(f"kit: {root}")
         # A pinned release, or a source checkout named by its path.
-        pinned = f"{kit.extends} ({kit.base_root})" if VERSION_RE.fullmatch(kit.extends) else f"at {kit.base_root}"
+        pinned = f"{catalog.extends} ({catalog.extended_root})" if VERSION_RE.fullmatch(catalog.extends) else f"at {catalog.extended_root}"
         print(f"extends: Open AD Kit {pinned}")
-        if kit.autoware:
-            print(autoware_line(kit.autoware))
-    elif kit.kind == "release":
-        autoware = f" · Autoware {kit.autoware['version']}" if kit.autoware else ""
-        print(f"Open AD Kit {kit.version or 'unknown'}{autoware}")
+        if catalog.autoware:
+            print(autoware_line(catalog.autoware))
+    elif catalog.kind == "release":
+        autoware = f" · Autoware {catalog.autoware['version']}" if catalog.autoware else ""
+        print(f"Open AD Kit {catalog.version or 'unknown'}{autoware}")
         print("from: release bundle")
-        if kit.autoware:
-            print(autoware_line(kit.autoware))
+        if catalog.autoware:
+            print(autoware_line(catalog.autoware))
     else:
         print("Open AD Kit development")
         print(f"commit: {commit or 'unknown'}")
@@ -325,8 +322,8 @@ def show_version(root, kit, *, json_output: bool = False) -> int:
     return 0
 
 
-def warn_if_modified(root, deployment, kit) -> None:
-    if deployment_integrity(root, deployment, kit) == "modified":
+def warn_if_modified(root, deployment, catalog) -> None:
+    if deployment_integrity(root, deployment, catalog) == "modified":
         print(
             f"warning: {deployment.name} has been modified from this release",
             file=sys.stderr,
@@ -368,23 +365,23 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
 
 
 def print_run_next_steps(
-    deployment, services: set[str], node: str | None, output: str | None, *, tls: bool = False
+    deployment, services: set[str], role: str | None, output: str | None, *, tls: bool = False
 ) -> None:
-    target = deployment.name if node is None else f"{deployment.name} --node {node}"
+    target = deployment.name if role is None else f"{deployment.name} --role {role}"
     print(f"running: {target}")
     if "visualizer" in services:
         print(live.visualizer_address(tls))
         print(
             "password: REMOTE_PASSWORD (default openadkit; override in "
-            f"{deployment.site_config})"
+            f"{deployment.host_settings})"
         )
     if output:
         print(f"output: {output}")
     print("stop with: openadkit stop")
 
 
-NODE_HELP = "node from this deployment's manifest (omit for single host; experimental)"
-LIVE_NODE_HELP = "node to act on when several nodes run on this host (experimental)"
+ROLE_HELP = "role from this deployment's manifest (omit for single host; experimental)"
+LIVE_ROLE_HELP = "role to act on when several roles run on this host (experimental)"
 VERBOSE_HELP = "print the docker commands it runs, status queries aside (or set OPENADKIT_VERBOSE=1)"
 
 
@@ -409,7 +406,7 @@ def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) ->
         "--gpu", action="store_true",
         help="run in GPU mode, for a deployment with an optional one (one that requires a GPU always uses it)",
     )
-    parser.add_argument("--node", metavar="NODE", help=NODE_HELP)
+    parser.add_argument("--role", metavar="ROLE", help=ROLE_HELP)
     parser.add_argument(
         "--ws", metavar="PATH",
         help="mount this built workspace as the overlay, for a deployment without its own",
@@ -440,7 +437,7 @@ def run_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--verify", action="store_true",
-        help="once ready, run the deployment's verify step (the CI end-to-end check) and exit with its result",
+        help="once ready, run the deployment's verify step and exit with its result",
     )
 
 
@@ -505,22 +502,22 @@ def record_arguments(parser: argparse.ArgumentParser) -> None:
 # Catalog commands: list, version, new and build.
 
 
-def list_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
-    return list_deployments(root, kit, json_output=args.json_output)
+def list_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
+    return list_deployments(root, catalog, json_output=args.json_output)
 
 
-def version_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
-    return show_version(root, kit, json_output=args.json_output)
+def version_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
+    return show_version(root, catalog, json_output=args.json_output)
 
 
-def new_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
-    target = create_kit(root, kit, args.name, args.base, Path.cwd())
+def new_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
+    target = create_kit(root, catalog, args.name, args.base, Path.cwd())
     print(f"created: {target}")
     print(f"next: cd {args.name} && openadkit validate && openadkit run")
     return 0
 
 
-def build_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
+def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
     if os.geteuid() == 0 and os.environ.get("SUDO_USER"):
         raise OpenADKitError(
             "run build without sudo: the build would leave root-owned files"
@@ -528,14 +525,14 @@ def build_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
         )
     if args.workspace:
         workspace = Path(args.workspace).expanduser().resolve()
-    elif kit.kind == "kit":
+    elif catalog.kind == "kit":
         workspace = root / "overlay_ws"
     else:
         raise UsageError("name the workspace to build: openadkit build PATH")
     if not (workspace / "src").is_dir():
         raise OpenADKitError(f"{workspace} has no src/ to build")
-    ros_distro = args.ros_distro or kit.default_ros_distro
-    image = os.environ.get("DEVEL_IMAGE") or kit.devel_image(ros_distro)
+    ros_distro = args.ros_distro or catalog.default_ros_distro
+    image = os.environ.get("DEVEL_IMAGE") or catalog.devel_image(ros_distro)
     if not image:
         raise OpenADKitError(
             f"this Open AD Kit pins no {ros_distro} devel image; set DEVEL_IMAGE to the "
@@ -548,29 +545,29 @@ def build_command(root: Path, kit: Kit, args: argparse.Namespace) -> int:
 # Deployment commands: validate, config, fetch, run and clean.
 
 
-def select(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> Selection:
+def select(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> Selection:
     """The deployment as this command runs it."""
-    warn_if_modified(root, deployment, kit)
+    warn_if_modified(root, deployment, catalog)
     if getattr(args, "ws", None):
         deployment.use_workspace(Path(args.ws).expanduser().resolve())
     compose.ensure_runtime_user()
     return settings.resolve(
-        deployment, kit, args.ros_distro, getattr(args, "gpu", False),
-        node=getattr(args, "node", None), data_only=args.command == "fetch",
+        deployment, catalog, args.ros_distro, getattr(args, "gpu", False),
+        role=getattr(args, "role", None), data_only=args.command == "fetch",
     )
 
 
-def check_deployment(deployment: Deployment, kit: Kit, selection: Selection) -> set[str]:
+def check_deployment(deployment: Deployment, catalog: Catalog, selection: Selection) -> set[str]:
     """What validate and run check before starting anything; the services Compose would start."""
     data.validate_destinations(deployment, selection)
     services = compose.render(deployment, selection)
-    compose.check_overlay_build(deployment, selection, kit.devel_image(selection.ros_distro))
+    compose.check_overlay_build(deployment, selection, catalog.devel_image(selection.ros_distro))
     return services
 
 
-def validate_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> int:
-    selection = select(root, kit, deployment, args)
-    check_deployment(deployment, kit, selection)
+def validate_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
+    selection = select(root, catalog, deployment, args)
+    check_deployment(deployment, catalog, selection)
     results = data.check_installed_data(deployment, selection) if args.data else None
     if args.json_output:
         print(json.dumps({
@@ -580,14 +577,14 @@ def validate_command(root: Path, kit: Kit, deployment: Deployment, args: argpars
             "base": deployment.base.name if deployment.base else None,
             "rosDistro": selection.ros_distro,
             "gpu": selection.gpu,
-            "node": selection.node,
+            "role": selection.role,
             "dataValid": None if results is None else all(item["status"] == "ok" for item in results),
             "data": [{"name": item["name"], "status": item["status"]} for item in results or []],
         }))
     else:
-        node = f", node {selection.node}" if selection.node else ""
+        role = f", role {selection.role}" if selection.role else ""
         gpu = "with GPU" if selection.gpu else "without GPU"
-        print(f"{deployment.name} is valid (ROS 2 {selection.ros_distro.capitalize()}, {gpu}{node})")
+        print(f"{deployment.name} is valid (ROS 2 {selection.ros_distro.capitalize()}, {gpu}{role})")
         for item in results or []:
             print(f"  data {item['name']}: {item['status']} ({item['destination']})")
     if results is not None and any(item["status"] != "ok" for item in results):
@@ -596,8 +593,8 @@ def validate_command(root: Path, kit: Kit, deployment: Deployment, args: argpars
     return 0
 
 
-def config_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> int:
-    selection = select(root, kit, deployment, args)
+def config_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
+    selection = select(root, catalog, deployment, args)
     print(compose.run_compose(deployment, selection, ["config", "--format", "json"]).stdout, end="")
     return 0
 
@@ -610,8 +607,8 @@ def protect_outdated_data(deployment: Deployment, selection) -> None:
     )
 
 
-def fetch_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> int:
-    selection = select(root, kit, deployment, args)
+def fetch_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
+    selection = select(root, catalog, deployment, args)
     if args.force:
         # Replacing data a live container mounts deletes it under that container.
         compose.require_stopped(deployment)
@@ -622,15 +619,15 @@ def fetch_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.N
     return 0
 
 
-def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> int:
-    selection = select(root, kit, deployment, args)
-    services = check_deployment(deployment, kit, selection)
+def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
+    selection = select(root, catalog, deployment, args)
+    services = check_deployment(deployment, catalog, selection)
     if args.verify and deployment.verify is None:
         raise OpenADKitError(f"{deployment.name} declares no verify step")
     compose.check_daemon(selection)
     # Deployments share host networking, fixed container names and the
     # default DDS domain, so only one runs at a time. Rerunning the same
-    # project updates it in place; other nodes of it may share this host.
+    # project updates it in place; other roles of it may share this host.
     others = compose.other_projects(deployment)
     if others:
         raise OpenADKitError(
@@ -644,12 +641,12 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
     skipped = services & ({"visualizer"} if args.no_visualizer else set())
-    compose.write_run_state(deployment.project_name(selection.node), {
+    compose.write_run_state(deployment.project_name(selection.role), {
         "schemaVersion": 1,
         "cli": str(root_path()),
-        "kit": str(root) if kit.kind == "kit" else None,
+        "kit": str(root) if catalog.kind == "kit" else None,
         "deployment": deployment.name,
-        "node": selection.node,
+        "role": selection.role,
         "rosDistro": selection.ros_distro,
         "gpu": selection.gpu,
         "workspace": str(Path(args.ws).expanduser().resolve()) if args.ws else None,
@@ -657,10 +654,10 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     })
     started = time.monotonic()
     compose.start(deployment, selection, args.pull, services, skipped)
-    report = compose.run_report(deployment, selection, kit, model, started)
+    report = compose.run_report(deployment, selection, catalog, model, started)
     compose.write_run_report(deployment, report)
     print_run_next_steps(
-        deployment, services - skipped, selection.node, selection.environment.get("OUTPUT_HOST_PATH"),
+        deployment, services - skipped, selection.role, selection.environment.get("OUTPUT_HOST_PATH"),
         tls=bool(selection.environment.get("NOVNC_CERT")),
     )
     if args.verify:
@@ -668,11 +665,30 @@ def run_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Nam
     return 0
 
 
-def clean_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.Namespace) -> int:
+def sharing_deployments(root: Path, catalog: Catalog, deployment: Deployment) -> dict[str, list[str]]:
+    """The catalog deployments that declare the same data, by resource name.
+
+    They install it to the same place unless a host's settings move one, so
+    deleting it for one deletes it for all of them.
+    """
+    owner, owner_root = (catalog, root) if catalog.extended is None else (catalog.extended, catalog.extended_root)
+    assert owner_root is not None
+    digests = {resource["name"]: data.source_digest(resource) for resource in deployment.data}
+    sharing: dict[str, list[str]] = {}
+    for name in sorted(owner.deployments):
+        if owner is catalog and name == deployment.name:
+            continue
+        for resource in get_deployment(owner_root, owner, name).data:
+            if digests.get(resource["name"]) == data.source_digest(resource):
+                sharing.setdefault(resource["name"], []).append(name)
+    return sharing
+
+
+def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
     if not deployment.data:
         print("no data resources declared")
         return 0
-    selection = settings.resolve(deployment, kit, data_only=True)
+    selection = settings.resolve(deployment, catalog, data_only=True)
     installed = data.check_installed_data(deployment, selection)
     compose.require_stopped(deployment)
     compose.require_data_unused(item["destination"] for item in installed)
@@ -680,10 +696,10 @@ def clean_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.N
     if not present:
         print(f"no data of {deployment.name} is installed")
         return 0
-    inherited = {resource["name"] for resource in deployment.base.data} if deployment.base else set()
+    sharing = sharing_deployments(root, catalog, deployment)
     print("delete:")
     for destination, name in present.items():
-        shared = f" (also used by {deployment.base.name})" if deployment.base and name in inherited else ""
+        shared = f" (also used by {', '.join(sharing[name])})" if name in sharing else ""
         print(f"  {destination}{shared}")
     if not args.yes:
         if not sys.stdin.isatty():
@@ -699,9 +715,9 @@ def clean_command(root: Path, kit: Kit, deployment: Deployment, args: argparse.N
 
 
 def status_command(args: argparse.Namespace) -> int:
-    projects = live.running_projects(args.node)
+    projects = live.running_projects(args.role)
     if not projects:
-        print("nothing is running" if args.node is None else f"node {args.node} is not running here")
+        print("nothing is running" if args.role is None else f"role {args.role} is not running here")
         return 0
     for project in projects:
         if len(projects) > 1:
@@ -714,7 +730,7 @@ def status_command(args: argparse.Namespace) -> int:
 
 
 def logs_command(args: argparse.Namespace) -> int:
-    live.logs(live.running_project(args.node), args.follow, args.services)
+    live.logs(live.running_project(args.role), args.follow, args.services)
     return 0
 
 
@@ -723,7 +739,7 @@ def restart_command(args: argparse.Namespace) -> int:
     with the current settings, config and overlay workspace; from any directory."""
     if args.services and args.all_services:
         raise UsageError("name the services to restart, or pass --all")
-    project = live.running_project(args.node)
+    project = live.running_project(args.role)
     state = compose.read_run_state(project)
     if state is None:
         raise OpenADKitError(
@@ -731,11 +747,11 @@ def restart_command(args: argparse.Namespace) -> int:
         )
     # The CLI that ran the deployment recreates it: it resolves the kit the same way.
     run_with(Path(state["cli"]))
-    root, kit = load_kit_around(Path(state["kit"]) if state["kit"] else root_path())
-    deployment = get_deployment(root, kit, state["deployment"])
+    root, catalog = load_catalog_around(Path(state["kit"]) if state["kit"] else root_path())
+    deployment = get_deployment(root, catalog, state["deployment"])
     if state["workspace"]:
         deployment.use_workspace(Path(state["workspace"]))
-    selection = settings.resolve(deployment, kit, state["rosDistro"], state["gpu"], node=state["node"])
+    selection = settings.resolve(deployment, catalog, state["rosDistro"], state["gpu"], role=state["role"])
     skipped = set(state["skipped"])
     running = set(live.running_services(project))
     if args.all_services:
@@ -756,7 +772,7 @@ def restart_command(args: argparse.Namespace) -> int:
 
 
 def shell_command(args: argparse.Namespace) -> int:
-    live.shell(live.running_project(args.node), args.service, args.command_args)
+    live.shell(live.running_project(args.role), args.service, args.command_args)
     return 0
 
 
@@ -764,7 +780,7 @@ def record_command(args: argparse.Namespace) -> int:
     if bool(args.topics) == args.all_topics:
         raise UsageError("name the topics to record, or pass --all")
     output = Path(args.output).expanduser().resolve() if args.output else None
-    bag = live.record(live.running_project(args.node), args.topics, output)
+    bag = live.record(live.running_project(args.role), args.topics, output)
     print(f"recorded: {bag}")
     return 0
 
@@ -825,7 +841,7 @@ ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "cle
 INSTALL_USAGE = {
     "install": "openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]",
     "upgrade": "openadkit upgrade [--check]",
-    "setup": "openadkit setup [--gpu] [--verify]",
+    "setup": "openadkit setup [--gpu] [--check]",
     "uninstall": "openadkit uninstall [--all]",
 }
 
@@ -839,7 +855,7 @@ def build_parser() -> OpenADKitParser:
             "examples:\n"
             "  openadkit install --version vX.Y.Z\n"
             "  openadkit upgrade\n"
-            "  openadkit setup --verify\n"
+            "  openadkit setup --check\n"
             "  openadkit list\n"
             "  openadkit run planning-simulation\n"
             "  openadkit run logging-simulation --gpu\n"
@@ -857,7 +873,7 @@ def build_parser() -> OpenADKitParser:
         if command.group == "deployment":
             subparser.help_inventory = "catalog"
         if command.group == "live":
-            subparser.add_argument("--node", metavar="NODE", help=LIVE_NODE_HELP)
+            subparser.add_argument("--role", metavar="ROLE", help=LIVE_ROLE_HELP)
         if command.group != "install":
             subparser.add_argument("--verbose", action="store_true", help=VERBOSE_HELP)
     return parser
@@ -938,20 +954,20 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
     # A deployment or workspace named by its directory belongs to the kit around it.
     target = getattr(args, "deployment", None) or getattr(args, "workspace", None)
     start = Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd()
-    root, kit = load_kit_around(start, act=args.command in ACTING_COMMANDS)
+    root, catalog = load_catalog_around(start, act=args.command in ACTING_COMMANDS)
     if command.group == "catalog":
-        return handler(root, kit, args)
-    if not args.deployment and kit.kind == "kit" and len(kit.deployments) == 1:
+        return handler(root, catalog, args)
+    if not args.deployment and catalog.kind == "kit" and len(catalog.deployments) == 1:
         # A kit made by `openadkit new` is one deployment; naming it again adds nothing.
-        args.deployment = next(iter(kit.deployments))
+        args.deployment = next(iter(catalog.deployments))
     if not args.deployment:
         if getattr(args, "json_output", False):
             raise OpenADKitError("deployment name required")
         require_deployment_name(args.command)
-        list_deployments(root, kit)
+        list_deployments(root, catalog)
         return 2
-    deployment = get_deployment(root, kit, deployment_name(root, kit, args.deployment))
-    return handler(root, kit, deployment, args)
+    deployment = get_deployment(root, catalog, deployment_name(root, catalog, args.deployment))
+    return handler(root, catalog, deployment, args)
 
 
 if __name__ == "__main__":

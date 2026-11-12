@@ -41,7 +41,7 @@ jobs:
         # cannot pass solely because GitHub's preinstalled Docker works.
         run: |
           env CI=true OPENADKIT_CI_FORCE_DOCKER_INSTALL=true \
-            ./openadkit setup --verify
+            ./openadkit setup --check
 
       - name: Validate repository Compose configs
         run: |

@@ -43,7 +43,7 @@ ALLOWED_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "external
 ALLOWED_KIT_DEPLOYMENT_KEYS = {
     "schemaVersion", "description", "base", "compose", "requirements", "data", "verify",
 }
-ALLOWED_KIT_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
+ALLOWED_KIT_COMPOSE_KEYS = {"files", "oneShotServices", "waitTimeout"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
 VERSION_RE = re.compile(
@@ -58,7 +58,7 @@ ALLOWED_BASE_DEPLOYMENT_KEYS = {
     "requirements",
     "data",
     "shared",
-    "nodes",
+    "roles",
     "evidence",
     "verify",
 }
@@ -68,12 +68,12 @@ ALLOWED_VERIFY_KEYS = {"service", "command"}
 ALLOWED_BASE_COMPOSE_KEYS = {
     "files",
     "gpuFiles",
-    "resetServices",
+    "oneShotServices",
     "waitTimeout",
 }
-ALLOWED_NODE_KEYS = {
+ALLOWED_ROLE_KEYS = {
     "files",
-    "resetServices",
+    "oneShotServices",
     "requiredEnv",
     "requiredFiles",
     "rosDomainId",
@@ -97,7 +97,7 @@ ALLOWED_DATA_KEYS = {
     "generatedFiles",
     "requiredFiles",
     "gpu",
-    "nodes",
+    "roles",
 }
 ALLOWED_DATA_FILE_KEYS = {"path", "url", "source", "sha256"}
 
@@ -200,7 +200,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dict[str, Any]]:
+def validate_data(data: Any, roles: dict[str, Any], directory: Path) -> list[dict[str, Any]]:
     if not isinstance(data, list):
         raise OpenADKitError("data must be an array")
     names: set[str] = set()
@@ -229,15 +229,15 @@ def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dic
         destinations.add(resource["destinationEnv"])
         if "gpu" in resource and not isinstance(resource["gpu"], bool):
             raise OpenADKitError(f"{where}.gpu must be a boolean")
-        if "nodes" in resource:
-            resource["nodes"] = require_string_list(
-                resource["nodes"], f"{where}.nodes", nonempty=True
+        if "roles" in resource:
+            resource["roles"] = require_string_list(
+                resource["roles"], f"{where}.roles", nonempty=True
             )
-            unknown_nodes = sorted(set(resource["nodes"]) - set(nodes))
-            if unknown_nodes:
+            unknown_roles = sorted(set(resource["roles"]) - set(roles))
+            if unknown_roles:
                 raise OpenADKitError(
-                    f"{where}.nodes contains undeclared node(s): "
-                    + ", ".join(unknown_nodes)
+                    f"{where}.roles contains undeclared role(s): "
+                    + ", ".join(unknown_roles)
                 )
         resource["requiredFiles"] = require_string_list(
             resource.get("requiredFiles", []), f"{where}.requiredFiles"
@@ -306,12 +306,12 @@ def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dic
 
 
 # Compose's own default file name, used when a deployment names no files.
-DEFAULT_COMPOSE_FILES = ["docker-compose.yaml"]
+DEFAULT_COMPOSE_FILES = ["compose.yaml"]
 
 
 def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[str, Any]:
     """A deployment's compose section, with what it leaves out empty and
-    docker-compose.yaml as its files by default."""
+    compose.yaml as its files by default."""
     if value is None:
         value = {}
     if not isinstance(value, dict):
@@ -319,7 +319,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
     reject_unknown(value, allowed, "compose")
     compose: dict[str, Any] = {
         field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("gpuFiles", "resetServices")
+        for field in ("gpuFiles", "oneShotServices")
     }
     compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
     if not compose["files"]:
@@ -330,7 +330,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
 
 def read_deployment_manifest(directory: Path, allowed_keys: set[str], name: str) -> dict[str, Any]:
     """The part every deployment manifest shares: location and schema. The
-    name is the deployment's key in the kit manifest; the file does not repeat it."""
+    name is the deployment's key in openadkit.json; the file does not repeat it."""
     if directory.is_symlink() or not directory.is_dir():
         raise OpenADKitError(f"unsafe deployment directory: {directory}")
     manifest = load_json(
@@ -458,40 +458,40 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
 
     manifest["compose"] = validate_compose(manifest.get("compose"), ALLOWED_BASE_COMPOSE_KEYS, 300)
 
-    nodes = manifest.get("nodes", {})
-    if not isinstance(nodes, dict):
-        raise OpenADKitError("nodes must be an object")
+    roles = manifest.get("roles", {})
+    if not isinstance(roles, dict):
+        raise OpenADKitError("roles must be an object")
     domain_ids: set[int] = set()
-    for node_name, node in nodes.items():
-        where = f"nodes.{node_name}"
-        if not NAME_RE.fullmatch(node_name):
-            raise OpenADKitError(f"invalid node name: {node_name}")
-        if not isinstance(node, dict):
+    for role_name, role in roles.items():
+        where = f"roles.{role_name}"
+        if not NAME_RE.fullmatch(role_name):
+            raise OpenADKitError(f"invalid role name: {role_name}")
+        if not isinstance(role, dict):
             raise OpenADKitError(f"{where} must be an object")
-        reject_unknown(node, ALLOWED_NODE_KEYS, where)
-        node["files"] = require_string_list(
-            node.get("files"), f"{where}.files", nonempty=True
+        reject_unknown(role, ALLOWED_ROLE_KEYS, where)
+        role["files"] = require_string_list(
+            role.get("files"), f"{where}.files", nonempty=True
         )
-        node["resetServices"] = require_string_list(
-            node.get("resetServices", []), f"{where}.resetServices"
+        role["oneShotServices"] = require_string_list(
+            role.get("oneShotServices", []), f"{where}.oneShotServices"
         )
-        node["requiredEnv"] = require_string_list(
-            node.get("requiredEnv", []), f"{where}.requiredEnv"
+        role["requiredEnv"] = require_string_list(
+            role.get("requiredEnv", []), f"{where}.requiredEnv"
         )
-        node["requiredFiles"] = require_string_list(
-            node.get("requiredFiles", []), f"{where}.requiredFiles"
+        role["requiredFiles"] = require_string_list(
+            role.get("requiredFiles", []), f"{where}.requiredFiles"
         )
-        for file_name in node["requiredFiles"]:
-            ensure_safe_existing(directory, file_name, "required node file")
-        invalid_node_env = [
-            item for item in node["requiredEnv"] if not ENV_NAME_RE.fullmatch(item)
+        for file_name in role["requiredFiles"]:
+            ensure_safe_existing(directory, file_name, "required role file")
+        invalid_role_env = [
+            item for item in role["requiredEnv"] if not ENV_NAME_RE.fullmatch(item)
         ]
-        if invalid_node_env:
+        if invalid_role_env:
             raise OpenADKitError(
                 f"{where}.requiredEnv contains invalid environment names: "
-                + ", ".join(invalid_node_env)
+                + ", ".join(invalid_role_env)
             )
-        domain_id = node.get("rosDomainId")
+        domain_id = role.get("rosDomainId")
         if (
             not isinstance(domain_id, int)
             or isinstance(domain_id, bool)
@@ -501,11 +501,11 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
                 f"{where}.rosDomainId must be an integer from 0 to {MAX_ROS_DOMAIN_ID}"
             )
         if domain_id in domain_ids:
-            raise OpenADKitError(f"{where}.rosDomainId {domain_id} is used by another node")
+            raise OpenADKitError(f"{where}.rosDomainId {domain_id} is used by another role")
         domain_ids.add(domain_id)
-        for file_name in node["files"]:
+        for file_name in role["files"]:
             ensure_safe_existing(directory, file_name, "Compose file")
-    manifest["nodes"] = nodes
+    manifest["roles"] = roles
 
     evidence = manifest.get("evidence", {})
     if not isinstance(evidence, dict):
@@ -516,7 +516,7 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
     manifest["evidence"] = evidence
     manifest["verify"] = validate_verify(manifest.get("verify"))
 
-    data = validate_data(manifest.get("data", []), nodes, directory)
+    data = validate_data(manifest.get("data", []), roles, directory)
     manifest["data"] = data
     return manifest
 

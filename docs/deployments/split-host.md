@@ -1,47 +1,47 @@
 # Split-host Simulation
 
 !!! warning "Experimental"
-    Split-host nodes may change in a minor release. See
+    Split-host roles may change in a minor release. See
     [Compatibility](../releases/compatibility.md#experimental).
 
 Run the Autoware stack on one lab machine and the simulator on another, bridged
-over Zenoh. A deployment keeps its name and declares its **nodes** in
-`deployment.json`; each machine starts one node with `--node`:
+over Zenoh. A deployment keeps its name and declares its **roles** in
+`deployment.json`; each machine starts one role with `--role`:
 
-- `scenario-simulation`: `--node autoware` on one host, `--node scenario` on
+- `scenario-simulation`: `--role autoware` on one host, `--role scenario` on
   the other.
-- `carla-simulation`: `--node autoware` on one GPU host, `--node carla` on
+- `carla-simulation`: `--role autoware` on one GPU host, `--role carla` on
   the other.
 
-Without `--node`, the deployment runs on one host as usual.
+Without `--role`, the deployment runs on one host as usual.
 
 ## How It Works
 
-Each node runs two Compose files, named in the manifest: `compose.<node>.yaml`
-holds the node's services, and `compose.zenoh.yaml` adds the Zenoh bridge with
+Each role runs two Compose files, named in the manifest: `compose.<role>.yaml`
+holds the role's services, and `compose.zenoh.yaml` adds the Zenoh bridge with
 the deployment's `config/zenoh.json5` allowlist. The CLI only selects the
-node's files and passes its `rosDomainId` as
+role's files and passes its `rosDomainId` as
 `OPENADKIT_ROS_DOMAIN_ID`; it adds no service of its own. The allowlist is one
-of the node's `requiredFiles`, so a missing or symlinked file fails validation
+of the role's `requiredFiles`, so a missing or symlinked file fails validation
 before any container starts.
 
-Each node is isolated: its own Compose project
-(`openadkit-<deployment>_<node>`), container names and ROS domain. The nodes
+Each role is isolated: its own Compose project
+(`openadkit-<deployment>_<role>`), container names and ROS domain. The roles
 see each other only through the Zenoh bridge, so both can also run on **one
 machine** for testing, as long as each listens on its own port (see
 [below](#configure-the-bridge-endpoints)).
 
-DDS stays on loopback (`CYCLONEDDS_NETWORK_INTERFACE=lo`) in the node's
-containers and in the bridge; a node ignores another interface in the host
+DDS stays on loopback (`CYCLONEDDS_NETWORK_INTERFACE=lo`) in the role's
+containers and in the bridge; a role ignores another interface in the host
 settings file. Only the ROS traffic on the deployment's
 [allowlist](#allowlist) crosses Zenoh: simulation time, vehicle status and
 commands, transforms, AD API calls, the enabled sensors and what the visualizer
 shows. Map blobs and camera images are not routed.
 
 !!! warning "Evidence scope"
-    - **In CI:** both node views of each deployment validate, and Scenario
-      Simulation's split evidence cell runs its two nodes on one hosted runner.
-      The sample scenario passes over Zenoh, and the scenario node's ROS domain
+    - **In CI:** both role views of each deployment validate, and Scenario
+      Simulation's split evidence cell runs its two roles on one hosted runner.
+      The sample scenario passes over Zenoh, and the scenario role's ROS domain
       sees only the bridged topics, no Autoware nodes. CARLA is exempt from CI
       evidence.
     - **By hand, on a lab pair:** sample scenarios pass, and a CARLA goal
@@ -76,20 +76,20 @@ host's LAN IP, not `0.0.0.0`:
 
 | Host | Variables |
 | --- | --- |
-| Autoware (`--node autoware`) | `ZENOH_LISTEN=tcp/<autoware-host-ip>:7447` |
-| Simulator (`--node scenario` or `--node carla`) | `ZENOH_LISTEN=tcp/<sim-host-ip>:7447` and `ZENOH_PEER=tcp/<autoware-host-ip>:7447` |
+| Autoware (`--role autoware`) | `ZENOH_LISTEN=tcp/<autoware-host-ip>:7447` |
+| Simulator (`--role scenario` or `--role carla`) | `ZENOH_LISTEN=tcp/<sim-host-ip>:7447` and `ZENOH_PEER=tcp/<autoware-host-ip>:7447` |
 
-The Autoware node only listens and starts first. `validate` and `run` on the
-connecting node fail fast when `ZENOH_PEER` is unset; `stop`, `status` and
+The Autoware role only listens and starts first. `validate` and `run` on the
+connecting role fail fast when `ZENOH_PEER` is unset; `stop`, `status` and
 `logs` never need either variable.
 
-To run both nodes on one machine, pass the endpoints per command instead, with
-a separate port for each node:
+To run both roles on one machine, pass the endpoints per command instead, with
+a separate port for each role:
 
 ```bash
-ZENOH_LISTEN=tcp/127.0.0.1:7447 openadkit run scenario-simulation --node autoware
+ZENOH_LISTEN=tcp/127.0.0.1:7447 openadkit run scenario-simulation --role autoware
 ZENOH_LISTEN=tcp/127.0.0.1:7448 ZENOH_PEER=tcp/127.0.0.1:7447 \
-  openadkit run scenario-simulation --node scenario
+  openadkit run scenario-simulation --role scenario
 ```
 
 ## Scenario Simulation
@@ -97,8 +97,8 @@ ZENOH_LISTEN=tcp/127.0.0.1:7448 ZENOH_PEER=tcp/127.0.0.1:7447 \
 Start Autoware first, then the scenario host:
 
 ```bash
-openadkit run scenario-simulation --node autoware   # Autoware host
-openadkit run scenario-simulation --node scenario   # scenario host
+openadkit run scenario-simulation --role autoware   # Autoware host
+openadkit run scenario-simulation --role scenario   # scenario host
 ```
 
 The runner waits up to `SCENARIO_READY_TIMEOUT` for Autoware over Zenoh before
@@ -111,8 +111,8 @@ too, so RViz takes no CPU or GPU from Autoware on the edge.
 Both hosts need an NVIDIA GPU. Start Autoware first, then the CARLA host:
 
 ```bash
-openadkit run carla-simulation --node autoware   # Autoware host
-openadkit run carla-simulation --node carla      # CARLA host
+openadkit run carla-simulation --role autoware   # Autoware host
+openadkit run carla-simulation --role carla      # CARLA host
 ```
 
 CARLA RPC (`127.0.0.1:2000`) and map loading stay local to the CARLA host.
@@ -126,7 +126,7 @@ the raw LiDAR already originates.
 
 Each deployment ships its Zenoh allowlist in
 `deployments/<deployment>/config/zenoh.json5`, mounted into the bridge of
-every node. Entries are full-name regular expressions, not globs. Both hosts
+every role. Entries are full-name regular expressions, not globs. Both hosts
 use the same file, since either side can own an endpoint. Review the list
 before routing anything new.
 
@@ -156,19 +156,19 @@ WAN and VPN links are best-effort and are not the supported setup.
 ## Lifecycle Notes
 
 - `status`, `logs`, `restart`, `shell`, `record` and `stop` find the running
-  node from its Compose project, so you normally omit `--node`. When several
-  nodes of one deployment run on the same machine, `status` and `stop` act on
-  all of them; pass `--node` to choose one for the other commands.
-- Running a node that is already up updates it in place. Starting the
-  single-host deployment while a node is running, or a node while the
+  role from its Compose project, so you normally omit `--role`. When several
+  roles of one deployment run on the same machine, `status` and `stop` act on
+  all of them; pass `--role` to choose one for the other commands.
+- Running a role that is already up updates it in place. Starting the
+  single-host deployment while a role is running, or a role while the
   single-host deployment is running, is refused: stop it first.
-- With `--verbose`, the printed Compose command shows the node's files, env
+- With `--verbose`, the printed Compose command shows the role's files, env
   files and project name.
 - The visualizer is loopback-only on the simulator host (`WEBSOCKIFY_BIND`);
   reach it from another desk through an SSH tunnel.
 - Do not restart a single bridge or interface container while the split is
   running: route churn can leave a bridged topic half-connected. Stop and
-  start the node instead (see [Troubleshooting](#troubleshooting)).
+  start the role instead (see [Troubleshooting](#troubleshooting)).
 
 ## Troubleshooting
 
@@ -182,6 +182,6 @@ available", a bridged vehicle-status topic has stopped flowing:
 - **Cause:** restarting a single bridge or interface container in a running
   split can leave Zenoh routes half-created (a route is removed and not
   recreated), so the topic no longer crosses.
-- **Remedy:** stop the deployment on both hosts and start the nodes again
-  (`openadkit stop`, then `openadkit run <deployment> --node ...`). A clean
+- **Remedy:** stop the deployment on both hosts and start the roles again
+  (`openadkit stop`, then `openadkit run <deployment> --role ...`). A clean
   restart restores the routes.

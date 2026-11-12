@@ -3,9 +3,9 @@
   "description": "Recorded sensor data replayed through sensing, perception and localization",
   "shared": ["shared"],
   "compose": {
-    "files": ["docker-compose.yaml"],
-    "gpuFiles": ["docker-compose.gpu.yaml"],
-    "resetServices": ["map-check", "rosbag"],
+    "files": ["compose.yaml"],
+    "gpuFiles": ["compose.gpu.yaml"],
+    "oneShotServices": ["map-check", "rosbag"],
     "waitTimeout": 300
   },
   "verify": {

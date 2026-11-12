@@ -1,5 +1,5 @@
-# The Zenoh bridge of a split-host node, with this deployment's allowlist.
-# The CLI adds this file to a node's own compose.<node>.yaml (deployment.json);
+# The Zenoh bridge of a split-host role, with this deployment's allowlist.
+# The CLI adds this file to a role's own compose.<role>.yaml (deployment.json);
 # the single-host graph never includes it.
 include:
   - ../shared/compose.zenoh.yaml

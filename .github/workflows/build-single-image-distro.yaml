@@ -260,7 +260,7 @@ jobs:
           image-repo: ${{ inputs.push && format('ghcr.io/{0}/openadkit-ci', github.repository_owner) || '' }}
 
       - name: Scan ${{ matrix.target }} for HIGH and CRITICAL vulnerabilities
-        # The release gate's policy (scan.yaml), so a finding stops the pull
+        # The release gate's policy (scan-images.yaml), so a finding stops the pull
         # request instead of main's next release.
         if: github.event_name == 'pull_request'
         uses: aquasecurity/trivy-action@v0.36.0

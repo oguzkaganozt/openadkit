@@ -1,13 +1,13 @@
-# Perception simulation — what the planning stack sees without sensors: dummy
+# Simulated perception — what the planning stack sees without sensors: dummy
 # objects (or the scenario runner's), tracked and predicted as on the vehicle,
 # plus the occupancy grid map. Upstream launches it next to the simulator.
 services:
-  perception-simulation:
+  simulated-perception:
     extends:
       file: base.yaml
       service: autoware
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}
-    container_name: autoware-perception-simulation
+    container_name: autoware-simulated-perception
     pid: service:map
     volumes:
       - ../launch/component.launch.py:/openadkit/launch/component.launch.py:ro

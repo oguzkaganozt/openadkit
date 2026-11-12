@@ -167,17 +167,17 @@ def compose_context(tmp_path, monkeypatch):
     # and without it Docker falls back to the runner's older plugin.
     monkeypatch.setenv("DOCKER_CONFIG", os.environ.get("DOCKER_CONFIG") or str(Path.home() / ".docker"))
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("OPENADKIT_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setenv("OPENADKIT_SETTINGS_DIR", str(tmp_path / "config"))
     monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("ZENOH_LISTEN", "tcp/127.0.0.1:7447")
     monkeypatch.setenv("ZENOH_PEER", "tcp/127.0.0.1:7447")
     monkeypatch.setenv("REMOTE_PASSWORD", "ci-validate")
     monkeypatch.delenv("OPENADKIT_KIT", raising=False)
     monkeypatch.delenv("OPENADKIT_DELEGATED", raising=False)
-    return catalog.load_kit(ROOT)
+    return catalog.load_catalog(ROOT)
 
 
-@pytest.mark.parametrize(("name", "node", "present", "absent"), [
+@pytest.mark.parametrize(("name", "role", "present", "absent"), [
     ("scenario-simulation", None, {"scenario-simulator", "map", "mrm-state-relay", "visualizer"}, {"zenoh-bridge"}),
     ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario-simulator", "visualizer"}),
     ("scenario-simulation", "scenario", {"scenario-simulator", "zenoh-bridge", "visualizer"},
@@ -187,29 +187,52 @@ def compose_context(tmp_path, monkeypatch):
     ("carla-simulation", "carla", {"carla", "carla-interface", "carla-map-loader", "zenoh-bridge", "visualizer"},
      {"map", "vehicle"}),
 ])
-def test_real_compose_preserves_single_and_split_graphs(compose_context, name, node, present, absent):
+def test_real_compose_preserves_single_and_split_graphs(compose_context, name, role, present, absent):
     deployment = catalog.get_deployment(ROOT, compose_context, name)
-    selection = settings.resolve(deployment, compose_context, "humble", False, node=node)
+    selection = settings.resolve(deployment, compose_context, "humble", False, role=role)
     result = compose.run_compose(deployment, selection, ["config", "--format", "json"])
     services = json.loads(result.stdout)["services"]
     assert present <= services.keys() and not absent & services.keys()
-    if node:
+    if role:
         bridge = services["zenoh-bridge"]
         assert "container_name" not in bridge
-        assert bridge["environment"]["ROS_DOMAIN_ID"] == str(deployment.nodes[node]["rosDomainId"])
+        assert bridge["environment"]["ROS_DOMAIN_ID"] == str(deployment.roles[role]["rosDomainId"])
         mounts = {item["target"]: item["source"] for item in bridge["volumes"]}
         assert mounts["/config/zenoh.json5"] == str(deployment.directory / "config/zenoh.json5")
         assert mounts["/etc/cyclonedds/cyclonedds.xml"] == str(ROOT / "deployments/shared/cyclonedds.xml")
-    if node in ("scenario", "carla"):
+    if role in ("scenario", "carla"):
         assert set(services) == present
-    if node == "scenario":
+    if role == "scenario":
         assert "pid" not in services["scenario-simulator"]
-    if name == "carla-simulation" and node == "autoware":
+    if name == "carla-simulation" and role == "autoware":
         assert "carla-interface" not in services["vehicle"].get("depends_on", {})
     # The visualizer joins no PID namespace, and only the single-host graph waits on Autoware.
     if "visualizer" in services:
         assert "pid" not in services["visualizer"]
-        assert ("map" in services["visualizer"].get("depends_on", {})) is (node is None)
+        assert ("map" in services["visualizer"].get("depends_on", {})) is (role is None)
+
+
+def test_safety_island_simulation_keeps_planning_simulations_stack():
+    """Safety Island Simulation repeats Planning Simulation's services, settings
+    and map in its own files, so the copies must not drift apart."""
+    planning, island = ROOT / "deployments/planning-simulation", ROOT / "deployments/safety-island-simulation"
+    stack = (planning / "compose.yaml").read_text(encoding="utf-8")
+    assert stack[stack.index("include:"):].rstrip() in (island / "compose.yaml").read_text(encoding="utf-8")
+
+    def values(path):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        return dict(line.split("=", 1) for line in lines if line and not line.startswith("#"))
+
+    own = {"SAFETY_ISLAND_PATH", "SYSTEM_DIAGNOSTICS_GRAPH"}
+    # The Diffusion Planner model belongs to the GPU mode, which this deployment does not have.
+    expected = {name: value for name, value in values(planning / "settings.env").items() if name != "DIFFUSION_PLANNER_DATA_PATH"}
+    assert {name: value for name, value in values(island / "settings.env").items() if name not in own} == expected
+
+    base, standalone = (json.loads((path / "deployment.json").read_text(encoding="utf-8")) for path in (planning, island))
+    assert standalone["verify"] == base["verify"]
+    assert standalone["compose"]["oneShotServices"] == base["compose"]["oneShotServices"]
+    assert standalone["compose"]["waitTimeout"] == base["compose"]["waitTimeout"]
+    assert [item for item in base["data"] if not item.get("gpu")] == standalone["data"][:1]
 
 
 def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
@@ -217,7 +240,7 @@ def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
     [kit] = validation_matrix.make_example_kits(ROOT, tmp_path)
     assert json.loads((kit / "openadkit.json").read_text())["extends"] == str(ROOT)
     directory = kit
-    # Documented site settings, used by the shared services and runtime.env.
+    # Documented host settings, used by the shared services and runtime.env.
     (directory / "settings.env").write_text(
         "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
     )
@@ -238,10 +261,10 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
     }))
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "Own simulator",
-        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
-    (directory / "docker-compose.yaml").write_text(
+    (directory / "compose.yaml").write_text(
         "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml\n"
         "services:\n"
         "  carla:\n    image: busybox:1.36.1\n    command: [\"sleep\", \"${TOWN}\"]\n"
@@ -266,10 +289,10 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "Drive by hand",
-        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
-    (directory / "docker-compose.yaml").write_text(
+    (directory / "compose.yaml").write_text(
         "include:\n  - ../shared/world.yaml\n"
         "services:\n  manual:\n    image: busybox:1.36.1\n"
         "    environment:\n      DISPLAY: ${DISPLAY:?run from a desktop session}\n"

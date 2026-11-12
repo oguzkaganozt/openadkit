@@ -7,7 +7,7 @@ set -uo pipefail
 #   L1: ./openadkit run, which returns once the deployment's healthchecks pass
 #   L2: the deployment's verify step (./openadkit run --verify): the drive to
 #       the goal, or the scenario samples, plus a domain-isolation check when the
-#       cell runs several nodes on one host.
+#       cell runs several roles on one host.
 #   L3: for a kit with checks/dev_loop.sh, the development loop on the running
 #       stack: change its package, build, restart, and see the change.
 #
@@ -28,7 +28,7 @@ field() { jq -r --arg key "$1" '.[$key] // ""' <<<"${cell}"; }
 cell_name=$(field name)
 deployment=$(field deployment)
 distro=$(field distro)
-node=$(field node)
+role=$(field role)
 kit=$(field kit)
 backend=$(field backend)
 platform=$(field platform)
@@ -36,8 +36,8 @@ verify=$(field verify)
 # A verify step without a command waits for its service: the scenario run.
 scenario=false
 [ -n "${verify}" ] && ! jq -e 'has("command")' <<<"${verify}" >/dev/null && scenario=true
-read -ra nodes <<<"$(field nodes)"
-[ "${#nodes[@]}" -gt 0 ] || nodes=("${node}")
+read -ra roles <<<"$(field roles)"
+[ "${#roles[@]}" -gt 0 ] || roles=("${role}")
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # The cell's platform comes from the matrix; the host must be that machine,
@@ -59,34 +59,34 @@ export OPENADKIT_OUTPUT_DIR="${out}/output"
 # Cell logs show every docker command the CLI runs.
 export OPENADKIT_VERBOSE=1
 export OPENADKIT_STATE_DIR="${out}/state"
-# Read no host settings either: a site file, or an inherited kit selection,
+# Read no host settings either: a host settings file, or an inherited kit selection,
 # would change the deployment, its data, or its DDS settings under the cell.
-export OPENADKIT_CONFIG_DIR="${out}/config"
+export OPENADKIT_SETTINGS_DIR="${out}/config"
 unset OPENADKIT_KIT OPENADKIT_DELEGATED
-mkdir -p "${OPENADKIT_CONFIG_DIR}"
+mkdir -p "${OPENADKIT_SETTINGS_DIR}"
 scenario_output="${OPENADKIT_OUTPUT_DIR}/${deployment}/results"
 # A 4-vCPU runner cannot run Autoware main in real time: the ego drives late
 # and the samples take three times as long as on 16 vCPUs, past the wall-clock
 # timeout. Half speed gives Autoware the CPU a larger host has per simulated
 # second, so the cell checks the scenarios rather than the runner's size.
 if [ "${scenario}" = true ]; then
-    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
+    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
 fi
 # The same holds for a replayed recording: at a tenth of its speed sensing and
 # perception keep up, and the rosbag waits longer for a slow start.
 if [ "${deployment}" = logging-simulation ]; then
-    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
+    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
 fi
 
-# Several nodes on one host: each gets its own project, logs and Zenoh endpoint.
+# Several roles on one host: each gets its own project, logs and Zenoh endpoint.
 split=false
-[ "${#nodes[@]}" -gt 1 ] && split=true
+[ "${#roles[@]}" -gt 1 ] && split=true
 projects=()
 validation_files=()
-for target_node in "${nodes[@]}"; do
-    projects+=("openadkit-${deployment}${target_node:+_${target_node}}")
+for target_role in "${roles[@]}"; do
+    projects+=("openadkit-${deployment}${target_role:+_${target_role}}")
     suffix=""
-    [ "${split}" = true ] && suffix="-${target_node}"
+    [ "${split}" = true ] && suffix="-${target_role}"
     validation_files+=("${out}/validate${suffix}.json")
 done
 
@@ -97,17 +97,17 @@ api_container=autoware-api
 # The CLI's record of the run, written once the deployment is ready, with the
 # verify step's result.
 run_report="${OPENADKIT_OUTPUT_DIR}/${deployment}/results/run.json"
-# The first node listens on the base port; each later node listens on its own
+# The first role listens on the base port; each later role listens on its own
 # port and peers with the first.
 zenoh_port=7447
 
-node_cli() {
+role_cli() {
     local operation=$1 index=$2
     shift 2
-    local target_node=${nodes[index]} args=("${deployment}") environment=()
+    local target_role=${roles[index]} args=("${deployment}") environment=()
     # stop acts on what runs here; it takes no deployment name.
     [ "${operation}" = stop ] && args=()
-    [ -n "${target_node}" ] && args+=(--node "${target_node}")
+    [ -n "${target_role}" ] && args+=(--role "${target_role}")
     if [ "${split}" = true ] && { [ "${operation}" = run ] || [ "${operation}" = validate ]; }; then
         environment=("ZENOH_LISTEN=tcp/127.0.0.1:$((zenoh_port + index))")
         [ "${index}" -gt 0 ] && environment+=("ZENOH_PEER=tcp/127.0.0.1:${zenoh_port}")
@@ -169,8 +169,8 @@ cleanup() {
     kill "${sampler_pid:-}" 2>/dev/null
     wait "${sampler_pid:-}" 2>/dev/null
     [ "${backend}" = quadlet ] && sudo systemctl stop 'autoware-*' >/dev/null 2>&1
-    for ((i=${#nodes[@]}-1; i>=0; i--)); do
-        node_cli stop "${i}" >/dev/null 2>&1 || true
+    for ((i=${#roles[@]}-1; i>=0; i--)); do
+        role_cli stop "${i}" >/dev/null 2>&1 || true
     done
 }
 trap cleanup EXIT
@@ -180,8 +180,8 @@ sampler_pid=$!
 
 # --- L0: manifest and compose validation -------------------------------------
 l0_rc=0
-for i in "${!nodes[@]}"; do
-    node_cli validate "${i}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
+for i in "${!roles[@]}"; do
+    role_cli validate "${i}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
 done
 # One cell per distro also checks that the images' launch files read every
 # launch argument the catalog deployments pass.
@@ -196,7 +196,7 @@ fi
 
 # --- L1: start the stack; run returns once its healthchecks pass ------------
 # --- L2: the deployment's verify step ----------------------------------------
-# One host runs the whole graph with `run --verify`. Split nodes start
+# One host runs the whole graph with `run --verify`. Split roles start
 # without it: the bridge allowlist needs the scenario graph while it runs,
 # so the cell waits for the scenario itself. Quadlet units start under
 # systemd and run the same verify command with Podman.
@@ -229,17 +229,17 @@ if [ "${l0_rc}" -eq 0 ]; then
         fi
     elif [ "${split}" = true ]; then
         run_rc=0
-        for i in "${!nodes[@]}"; do
+        for i in "${!roles[@]}"; do
             # Nothing watches the visualizer here; its software-rendered RViz
             # would take CPU from Autoware on a 4-vCPU runner.
-            node_cli run "${i}" --ros-distro "${distro}" --no-visualizer >"${out}/run-${nodes[i]}.log" 2>&1 || run_rc=1
+            role_cli run "${i}" --ros-distro "${distro}" --no-visualizer >"${out}/run-${roles[i]}.log" 2>&1 || run_rc=1
         done
         ready_s=$(( $(date +%s) - run_start ))
         [ "${run_rc}" -eq 0 ] && l1_ok=true
     else
         verify_args=()
         [ -n "${verify}" ] && verify_args=(--verify)
-        node_cli run 0 --ros-distro "${distro}" --no-visualizer "${verify_args[@]}" >"${out}/run.log" 2>&1
+        role_cli run 0 --ros-distro "${distro}" --no-visualizer "${verify_args[@]}" >"${out}/run.log" 2>&1
         run_rc=$?
         if [ -f "${run_report}" ]; then
             cp "${run_report}" "${out}/run.json"
@@ -256,7 +256,7 @@ if [ "${l0_rc}" -eq 0 ]; then
 fi
 
 if [ "${l1_ok}" = true ] && [ "${split}" = true ] && [ "${scenario}" = true ]; then
-    # The scenario graph is up once its /clock reaches the Autoware node.
+    # The scenario graph is up once its /clock reaches the Autoware role.
     deadline=$(( $(date +%s) + 600 ))
     until in_api python3 /openadkit/checks/readiness.py --fresh /clock >>"${out}/clock.log" 2>&1; do
         [ "$(date +%s)" -lt "${deadline}" ] || { l1_ok=false; result=FAILED; break; }
@@ -281,7 +281,7 @@ if [ "${l1_ok}" = true ] && [ "${split}" = true ] && [ "${scenario}" = true ]; t
     fi
 fi
 
-# The scenario's own result, its metrics and, across split nodes, isolation.
+# The scenario's own result, its metrics and, across split roles, isolation.
 if [ "${l1_ok}" = true ] && [ "${scenario}" = true ]; then
     ss_rc=0
     if [ "${split}" = true ]; then
@@ -298,8 +298,8 @@ if [ "${l1_ok}" = true ] && [ "${scenario}" = true ]; then
     metrics_rc=$?
 
     if [ "${split}" = true ]; then
-        # Isolation: without the scenario node's bridge, domain 2 must
-        # not see the autoware node's /api topics.
+        # Isolation: without the scenario role's bridge, domain 2 must
+        # not see the autoware role's /api topics.
         bridge=$(
             docker ps -q \
                 --filter "label=com.docker.compose.project=openadkit-${deployment}_scenario" |
@@ -373,7 +373,7 @@ jq -n \
     --arg name "${cell_name}" \
     --arg deployment "${deployment}" \
     --arg distro "${distro}" \
-    --arg node "${node}" \
+    --arg role "${role}" \
     --arg platform "${platform}" \
     --arg result "${result}" \
     --arg build_tag "${BUILD_TAG:-unknown}" \
@@ -392,7 +392,7 @@ jq -n \
         name: $name,
         deployment: $deployment,
         distro: $distro,
-        node: $node,
+        role: $role,
         platform: $platform,
         result: $result,
         build_tag: $build_tag,

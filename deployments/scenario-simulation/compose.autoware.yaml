@@ -1,7 +1,7 @@
 # Autoware-side services for scenario simulation.
 #
-# Shared by the single-host entry point (docker-compose.yaml) and the
-# `--node autoware` view (this file plus compose.zenoh.yaml). The scenario
+# Shared by the single-host entry point (compose.yaml) and the
+# `--role autoware` view (this file plus compose.zenoh.yaml). The scenario
 # runner lives in compose.scenario.yaml.
 include:
   - ../shared/services/map-check.yaml
@@ -11,7 +11,7 @@ include:
   - ../shared/services/system.yaml
   - ../shared/services/control.yaml
   - ../shared/services/simulator.yaml
-  - ../shared/services/perception-simulation.yaml
+  - ../shared/services/simulated-perception.yaml
   - ../shared/services/api.yaml
 
 services:
@@ -50,7 +50,7 @@ services:
       vehicle:
         condition: service_started
 
-  perception-simulation:
+  simulated-perception:
     depends_on:
       - map
 

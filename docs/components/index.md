@@ -110,7 +110,7 @@ hardware:
 
 Launch: `tier4_simulator_component.launch.xml`, with the perception simulation
 (dummy objects, tracking, prediction and the occupancy grid map) in its own
-`perception-simulation` service from `planning_simulator/perception_simulation.launch.xml`.
+`simulated-perception` service from `planning_simulator/perception_simulation.launch.xml`.
 On amd64 it also carries the CARLA bridge and the CARLA Python client that the
 [CARLA Simulation](../deployments/carla-simulation.md) deployment runs in
 its `carla-interface` service.
@@ -125,7 +125,7 @@ tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
 none) and name its files in `NOVNC_CERT` and `NOVNC_KEY`; it stays the same
 across starts, so a browser exception for it holds.
 
-Set these in the [host settings file](../getting-started/cli.md#configuration):
+Set these in the [host settings file](../getting-started/cli.md#settings):
 
 | Variable | Default | Values | Description |
 |----------|---------|--------|-------------|
@@ -158,7 +158,7 @@ Humble-only and needs an NVIDIA GPU.
 
 ## Image Reference
 
-Generated from the image catalog (`.github/image-inventory.json`), so it always
+Generated from the image inventory (`.github/image-inventory.json`), so it always
 matches what CI builds. Tag names are explained in
 [Container Images & Versioning](../releases/container-images.md).
 

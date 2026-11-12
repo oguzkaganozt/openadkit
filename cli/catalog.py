@@ -63,9 +63,9 @@ def _user_root(override: str, xdg: str, fallback: str) -> Path:
     return Path(base) / "openadkit"
 
 
-def config_root() -> Path:
-    """Site settings: one ``<deployment>.env`` per deployment."""
-    return _user_root("OPENADKIT_CONFIG_DIR", "XDG_CONFIG_HOME", ".config")
+def settings_root() -> Path:
+    """Host settings: one ``<deployment>.env`` per deployment."""
+    return _user_root("OPENADKIT_SETTINGS_DIR", "XDG_CONFIG_HOME", ".config")
 
 
 def state_root() -> Path:
@@ -83,7 +83,7 @@ def root_path() -> Path:
     raw = os.environ.get("OPENADKIT_ROOT")
     if not raw:
         raise OpenADKitError(
-            "OPENADKIT_ROOT is not set; invoke the root ./openadkit entrypoint"
+            "OPENADKIT_ROOT is not set; run the ./openadkit launcher"
         )
     root = Path(raw)
     if root.is_symlink() or not root.is_dir():
@@ -100,7 +100,7 @@ def install_root() -> Path:
 
 
 @dataclass(frozen=True)
-class Kit:
+class Catalog:
     """A loaded openadkit.json: Open AD Kit itself (kind "source" or "release"),
     or a kit that extends it (kind "kit")."""
 
@@ -116,10 +116,10 @@ class Kit:
     external_images: dict[str, dict[str, Any]]
     # Release only: the Autoware version, commit and lock file it was built from.
     autoware: dict[str, str] | None = None
-    # An extending kit only: the pinned Open AD Kit it extends.
+    # A kit only: the Open AD Kit it extends, as written in the manifest and loaded.
     extends: str | None = None
-    base: Kit | None = None
-    base_root: Path | None = None
+    extended: Catalog | None = None
+    extended_root: Path | None = None
 
     @property
     def pinned(self) -> bool:
@@ -131,7 +131,7 @@ class Kit:
         return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
 
     def bom(self) -> dict[str, Any]:
-        """What this kit runs: Autoware, component images and external images."""
+        """What this catalog runs: Autoware, component images and external images."""
         return {
             "autoware": self.autoware,
             "images": self.images or None,
@@ -146,7 +146,7 @@ class Kit:
         """
         environment = {}
         for name, image in self.external_images.items():
-            # A resolved kit can have per-distro overrides and a base fallback.
+            # A kit can have per-distro overrides and a fallback from what it extends.
             reference = image.get("distros", {}).get(ros_distro) or image.get("ref")
             if reference:
                 environment[name] = reference
@@ -213,14 +213,14 @@ class Deployment:
         base: Deployment | None = None,
     ) -> None:
         self.root = root
-        # Kept for provenance and the inherited reset services.
+        # Kept for provenance and the inherited one-shot services.
         # Runtime layers below are resolved once; they never delegate to base.
         self.base = base
         self.directory = directory
         self.manifest = manifest
         self.name: str = manifest["name"]
         self.compose: dict[str, Any] = manifest["compose"]
-        self.nodes: dict[str, dict[str, Any]] = manifest["nodes"]
+        self.roles: dict[str, dict[str, Any]] = manifest["roles"]
         self.requirements: dict[str, Any] = manifest["requirements"]
         self.data: list[dict[str, Any]] = manifest["data"]
         self.shared: list[str] = manifest["shared"]
@@ -230,7 +230,7 @@ class Deployment:
         self.project = f"openadkit-{self.name}"
         own_layer = EnvironmentLayer(directory, base is None, bool(self.compose["gpuFiles"]))
         self.env_layers: tuple[EnvironmentLayer, ...] = (*(base.env_layers if base else ()), own_layer)
-        # Kit GPU patches follow its Compose entrypoint, as before.
+        # A kit's GPU files follow its entry Compose file.
         self.gpu_files: list[tuple[Path, str]] = [
             (directory, name) for name in self.compose["gpuFiles"]
         ] + (base.gpu_files if base else [])
@@ -239,24 +239,24 @@ class Deployment:
         self.overlay_paths: dict[str, Path | None] = {
             "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
-            "OPENADKIT_OVERLAY_WS": (root if base and base.root != root else directory) / "overlay_ws",
+            "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
         }
         self.kit_environment = {
-            "OPENADKIT_BASE_ROOT": str(base.root),
+            "OPENADKIT_ROOT": str(base.root),
             "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
         } if base else {}
 
-    def project_name(self, node: str | None = None) -> str:
-        """Each node is its own Compose project, so nodes never share state.
+    def project_name(self, role: str | None = None) -> str:
+        """Each role is its own Compose project, so roles never share state.
 
-        Names never contain "_", so it separates the node unambiguously.
+        Names never contain "_", so it separates the role unambiguously.
         """
-        return self.project if node is None else f"{self.project}_{node}"
+        return self.project if role is None else f"{self.project}_{role}"
 
     @property
-    def site_config(self) -> Path:
+    def host_settings(self) -> Path:
         """Host settings for this deployment; loaded last, kept across upgrades."""
-        return config_root() / f"{self.name}.env"
+        return settings_root() / f"{self.name}.env"
 
     @property
     def output_directory(self) -> Path:
@@ -284,18 +284,18 @@ class Deployment:
         return bool(self.gpu_files)
 
     def env_files(self, gpu: bool = False) -> list[Path]:
-        """Base env files, then this deployment's, then the host's site file."""
+        """Base env files, then this deployment's, then the host settings file."""
         result = [path for layer in self.env_layers for path in layer.files(gpu)]
-        site = self.site_config
-        if site.exists():
-            if not site.is_file():
-                raise OpenADKitError(f"site configuration is not a regular file: {site}")
-            result.append(site)
+        host_file = self.host_settings
+        if host_file.exists():
+            if not host_file.is_file():
+                raise OpenADKitError(f"host settings file is not a regular file: {host_file}")
+            result.append(host_file)
         return result
 
-    def compose_files(self, gpu: bool, node: str | None = None) -> list[Path]:
+    def compose_files(self, gpu: bool, role: str | None = None) -> list[Path]:
         """Only explicitly selected files; each entrypoint owns its whole graph."""
-        names = self.compose["files"] if node is None else self.nodes[node]["files"]
+        names = self.compose["files"] if role is None else self.roles[role]["files"]
         files = [
             ensure_safe_existing(self.directory, name, "Compose file") for name in names
         ]
@@ -306,15 +306,15 @@ class Deployment:
             )
         return files
 
-    def reset_services(self, node: str | None = None) -> list[str]:
-        if node is None:
-            return list(self.compose["resetServices"])
-        return list(self.nodes[node]["resetServices"])
+    def one_shot_services(self, role: str | None = None) -> list[str]:
+        if role is None:
+            return list(self.compose["oneShotServices"])
+        return list(self.roles[role]["oneShotServices"])
 
 
 def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
     manifest = validate_deployment_manifest(root, directory, name)
-    compose, nodes = manifest["compose"], manifest["nodes"]
+    compose, roles = manifest["compose"], manifest["roles"]
     deployment = Deployment(root, directory, manifest)
     deployment.compose_files(False)
     if compose["gpuFiles"]:
@@ -322,29 +322,27 @@ def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
         ensure_safe_existing(
             directory, "settings.gpu.env", "GPU settings file"
         )
-    for node_name in nodes:
-        deployment.compose_files(False, node_name)
+    for role_name in roles:
+        deployment.compose_files(False, role_name)
         if compose["gpuFiles"]:
-            deployment.compose_files(True, node_name)
+            deployment.compose_files(True, role_name)
     deployment.env_files()
     return deployment
 
 
 def _load_kit_deployment(
-    root: Path, directory: Path, base_kit: Kit, base_root: Path, name: str
+    root: Path, directory: Path, extended: Catalog, extended_root: Path, name: str
 ) -> Deployment:
     """A kit deployment: its own Compose file and values on top of a
-    base deployment from the pinned kit, whose requirements it keeps or narrows."""
+    base deployment of the Open AD Kit it extends, whose requirements it keeps or narrows."""
     manifest = read_deployment_manifest(directory, ALLOWED_KIT_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
-    if base_name not in base_kit.deployments:
+    if base_name not in extended.deployments:
         raise OpenADKitError(
-            f"base deployment {base_name} is not in the pinned kit; "
-            f"available: {available_deployments(base_kit)}"
+            f"unknown base deployment: {base_name}; "
+            f"available: {available_deployments(extended)}"
         )
-    if declares_base(base_root, base_kit, base_name):
-        raise OpenADKitError(f"base deployment {base_name} has a base of its own")
-    base = get_deployment(base_root, base_kit, base_name)
+    base = get_deployment(extended_root, extended, base_name)
 
     compose = validate_compose(manifest.get("compose"), ALLOWED_KIT_COMPOSE_KEYS, base.compose["waitTimeout"])
     requirements = narrow_requirements(base.requirements, manifest.get("requirements"))
@@ -364,9 +362,9 @@ def _load_kit_deployment(
         "description": manifest["description"],
         "compose": {
             **compose,
-            "resetServices": list(dict.fromkeys(base.compose["resetServices"] + compose["resetServices"])),
+            "oneShotServices": list(dict.fromkeys(base.compose["oneShotServices"] + compose["oneShotServices"])),
         },
-        "nodes": {},
+        "roles": {},
         "requirements": requirements,
         "data": base_data + own_data,
         "shared": [],
@@ -402,14 +400,14 @@ def resolve_extends(kit_root: Path, extends: str) -> Path:
     return candidate
 
 
-def _load_extending_kit(root: Path, value: dict[str, Any]) -> Kit:
-    reject_unknown(value, ALLOWED_KIT_KEYS, "kit")
+def _load_kit(root: Path, value: dict[str, Any]) -> Catalog:
+    reject_unknown(value, ALLOWED_KIT_KEYS, "kit manifest")
     extends = require_string(value.get("extends"), "extends")
-    base_root = resolve_extends(root, extends)
-    base = load_kit(base_root)
+    extended_root = resolve_extends(root, extends)
+    extended = load_catalog(extended_root)
     # A kit's external image may reuse a component image name to replace that component.
     own_images = parse_external_images(value.get("externalImages", {}), {})
-    external_images = dict(base.external_images)
+    external_images = dict(extended.external_images)
     for name, image in own_images.items():
         if name in external_images and "distros" in image:
             inherited = external_images[name]
@@ -419,33 +417,33 @@ def _load_extending_kit(root: Path, value: dict[str, Any]) -> Kit:
             }
         else:
             external_images[name] = image
-    return Kit(
+    return Catalog(
         kind="kit",
-        default_ros_distro=base.default_ros_distro,
+        default_ros_distro=extended.default_ros_distro,
         version=None,
-        image_repository=base.image_repository,
-        component_images=base.component_images,
-        images=base.images,
+        image_repository=extended.image_repository,
+        component_images=extended.component_images,
+        images=extended.images,
         deployments=parse_deployment_refs(value.get("deployments"), "kit"),
         shared={},
         external_images=external_images,
-        autoware=base.autoware,
+        autoware=extended.autoware,
         extends=extends,
-        base=base,
-        base_root=base_root,
+        extended=extended,
+        extended_root=extended_root,
     )
 
 
-def load_kit(root: Path) -> Kit:
-    value = load_json(ensure_safe_existing(root, "openadkit.json", "kit manifest"))
+def load_catalog(root: Path) -> Catalog:
+    value = load_json(ensure_safe_existing(root, "openadkit.json", "manifest"))
     if value.get("schemaVersion") != SCHEMA_VERSION:
         raise OpenADKitError(
             f"unsupported openadkit.json schemaVersion {value.get('schemaVersion')!r} "
             f"(expected {SCHEMA_VERSION})"
         )
     if value.get("kind") == "kit":
-        return _load_extending_kit(root, value)
-    reject_unknown(value, ALLOWED_BASE_KEYS, "kit manifest")
+        return _load_kit(root, value)
+    reject_unknown(value, ALLOWED_BASE_KEYS, "release manifest")
     if value.get("kind") not in ("source", "release"):
         raise OpenADKitError("openadkit.json kind must be source, release or kit")
     default_ros_distro = require_string(
@@ -486,7 +484,7 @@ def load_kit(root: Path) -> Kit:
         version = require_string(version, "version")
     elif kind == "release":
         raise OpenADKitError("release bundles must declare version")
-    return Kit(
+    return Catalog(
         kind=kind,
         default_ros_distro=default_ros_distro,
         version=version,
@@ -500,35 +498,26 @@ def load_kit(root: Path) -> Kit:
     )
 
 
-def available_deployments(kit: Kit) -> str:
-    return ", ".join(kit.deployments)
+def available_deployments(catalog: Catalog) -> str:
+    return ", ".join(catalog.deployments)
 
 
-def declares_base(root: Path, kit: Kit, name: str) -> bool:
-    directory = root.joinpath(*safe_relative(kit.deployments[name].path, "deployment path").parts)
-    manifest = directory / "deployment.json"
-    return manifest.is_file() and not manifest.is_symlink() and "base" in load_json(manifest)
-
-
-def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
-    available = available_deployments(kit)
+def get_deployment(root: Path, catalog: Catalog, name: str) -> Deployment:
+    available = available_deployments(catalog)
     if not NAME_RE.fullmatch(name):
         raise OpenADKitError(
             f"invalid deployment name: {name}\navailable: {available}"
         )
     try:
-        reference = kit.deployments[name]
+        reference = catalog.deployments[name]
     except KeyError as error:
         raise OpenADKitError(
             f"unknown deployment: {name}\navailable: {available}"
         ) from error
     directory = root.joinpath(*safe_relative(reference.path, "deployment path").parts)
-    if kit.base is not None:
-        assert kit.base_root is not None
-        deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root, name)
-    elif declares_base(root, kit, name):
-        # A deployment on another of the same catalog, as a kit's is on its pinned kit.
-        deployment = _load_kit_deployment(root, directory, kit, root, name)
+    if catalog.extended is not None:
+        assert catalog.extended_root is not None
+        deployment = _load_kit_deployment(root, directory, catalog.extended, catalog.extended_root, name)
     else:
         deployment = _load_base_deployment(root, directory, name)
     return deployment
@@ -564,18 +553,16 @@ def deployment_checksum(directory: Path, *, exclude_dirs: tuple[str, ...] = ()) 
 def deployment_integrity(
     root: Path,
     deployment: Deployment,
-    kit: Kit,
+    catalog: Catalog,
 ) -> str:
-    if kit.kind != "release":
+    if catalog.kind != "release":
         return "source"
-    expected = kit.deployments[deployment.name].checksum
+    expected = catalog.deployments[deployment.name].checksum
     if expected != deployment_checksum(deployment.directory):
         return "modified"
     if not all(
-        kit.shared.get(name) == deployment_checksum(root / "deployments" / name)
+        catalog.shared.get(name) == deployment_checksum(root / "deployments" / name)
         for name in deployment.shared
     ):
         return "modified"
-    if deployment.base is not None and deployment.base.root == root:
-        return deployment_integrity(root, deployment.base, kit)
     return "intact"

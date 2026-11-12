@@ -63,12 +63,12 @@ def format_autoware_state(state: dict[str, Any]) -> list[str]:
 
 # The running stack is found from Docker, not from a kit: any directory and
 # any release's CLI reach it. run allows one deployment per host, so the live
-# projects are all its own: its single-host project, or the nodes of it that
+# projects are all its own: its single-host project, or the roles of it that
 # run here.
-def running_projects(node: str | None = None) -> list[str]:
+def running_projects(role: str | None = None) -> list[str]:
     projects = sorted(live_projects())
-    if node is not None:
-        projects = [name for name in projects if name.endswith(f"_{node}")]
+    if role is not None:
+        projects = [name for name in projects if name.endswith(f"_{role}")]
     return projects
 
 
@@ -76,14 +76,14 @@ def display_name(project: str) -> str:
     return project[len(PROJECT_PREFIX):]
 
 
-def running_project(node: str | None) -> str:
+def running_project(role: str | None) -> str:
     """The one live project a command acts on."""
-    projects = running_projects(node)
+    projects = running_projects(role)
     if not projects:
-        raise OpenADKitError(f"node {node} is not running here" if node else "nothing is running")
+        raise OpenADKitError(f"role {role} is not running here" if role else "nothing is running")
     if len(projects) > 1:
         names = ", ".join(display_name(project) for project in projects)
-        raise OpenADKitError(f"{names} run here; choose one with --node")
+        raise OpenADKitError(f"{names} run here; choose one with --role")
     return projects[0]
 
 
@@ -100,7 +100,7 @@ def running_services(project: str) -> list[str]:
 
 
 def visualizer_address(tls: bool) -> str:
-    """Plain HTTP unless the site gives noVNC its own certificate."""
+    """Plain HTTP unless the host settings give noVNC its own certificate."""
     return f"visualizer: {'https' if tls else 'http'}://localhost:6080/vnc.html"
 
 
@@ -209,7 +209,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
 
 
 def deployment_name(project: str) -> str:
-    """The deployment a project runs: names never contain "_", which separates a node."""
+    """The deployment a project runs: names never contain "_", which separates a role."""
     state = read_run_state(project)
     return state["deployment"] if state else display_name(project).split("_", 1)[0]
 

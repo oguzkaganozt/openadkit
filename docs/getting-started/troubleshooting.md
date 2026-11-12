@@ -46,7 +46,7 @@ replaces data the CLI installed; remove data you placed yourself, then run
 
 ### NVIDIA Container Toolkit not detected
 
-- Install it with `openadkit setup --gpu --verify`.
+- Install it with `openadkit setup --gpu --check`.
 - Check the GPU: `nvidia-smi` and `nvidia-ctk --version`.
 - Restart Docker: `sudo systemctl restart docker`.
 
@@ -72,7 +72,7 @@ it a certificate (`NOVNC_CERT`, `NOVNC_KEY`); with one, open it over
 ### Port 6080 already in use
 
 Port 6080 serves the visualizer. Stop the service that holds the port. The
-deployments use host networking, so a `ports:` mapping in `docker-compose.yaml`
+deployments use host networking, so a `ports:` mapping in `compose.yaml`
 has no effect.
 
 ### Point clouds arrive at a lower rate than they are published
@@ -91,14 +91,14 @@ nstat -az UdpRcvbufErrors     # a growing count means drops
 
 DDS stays on loopback by default. To reach other hosts, set
 `CYCLONEDDS_NETWORK_INTERFACE` to the exact LAN or VPN interface name in your
-[host settings file](cli.md#configuration)
+[host settings file](cli.md#settings)
 (`~/.config/openadkit/<deployment>.env`):
 
 ```bash
 CYCLONEDDS_NETWORK_INTERFACE=eth0
 ```
 
-This applies to single-host runs; a split-host node always keeps DDS on
+This applies to single-host runs; a split-host role always keeps DDS on
 loopback and reaches the other host through its Zenoh bridge.
 `ROS_DOMAIN_ID` separates traffic but provides no authentication or encryption.
 

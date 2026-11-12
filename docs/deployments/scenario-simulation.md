@@ -35,14 +35,14 @@ Set these in the host settings file,
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `SCENARIO` | Scenario path inside the container | Bundled example |
-| `SCENARIO_HOST_DIR` | Host scenario directory, mounted at `/scenarios` | `./scenarios` |
+| `SCENARIO_HOST_PATH` | Host scenario directory, mounted at `/scenarios` | `./scenarios` |
 | `OUTPUT_HOST_PATH` | Host results directory | `~/openadkit-output/scenario-simulation/results` |
 | `SCENARIO_READY_TIMEOUT` | Seconds to wait for Autoware before running | `600` |
 | `GLOBAL_REAL_TIME_FACTOR` | Simulated seconds per wall-clock second; below `1` on a host that cannot run Autoware in real time | `1.0` |
 | `GLOBAL_TIMEOUT` | Wall-clock seconds each scenario may take; scale it with the factor | `180` |
 | `MAP_PATH` | Host map directory | `~/autoware_map/kashiwanoha_map` |
 
-A relative `SCENARIO_HOST_DIR` resolves from
+A relative `SCENARIO_HOST_PATH` resolves from
 `deployments/scenario-simulation/`. `MAP_PATH` must be absolute; use `$HOME`
 rather than `~`.
 
@@ -50,7 +50,7 @@ To run your own scenario, keep it outside the release. Create a directory, put
 the YAML there, and point the deployment at it in the host settings file:
 
 ```bash
-SCENARIO_HOST_DIR=$HOME/openadkit-scenarios
+SCENARIO_HOST_PATH=$HOME/openadkit-scenarios
 SCENARIO=/scenarios/my-scenario.yaml
 ```
 

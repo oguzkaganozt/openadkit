@@ -18,7 +18,7 @@ check. Evidence runs on every architecture the deployment supports. See the
 [Evidence Policy](../releases/evidence.md).
 
 Scenario and CARLA Simulation can also run as
-[split-host](split-host.md) nodes, with Autoware on one host and the simulator
+[split-host](split-host.md) roles, with Autoware on one host and the simulator
 on another over Zenoh (experimental).
 
 ## Running a Deployment
@@ -39,7 +39,7 @@ openadkit stop
   Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
   mode turns on by itself.
 - Put host settings in `~/.config/openadkit/<name>.env`; see
-  [Configuration](../getting-started/cli.md#configuration).
+  [Settings](../getting-started/cli.md#settings).
 
 [CLI & Maintenance](../getting-started/cli.md) covers the other commands.
 
