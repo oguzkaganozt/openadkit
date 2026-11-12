@@ -2037,7 +2037,7 @@ git<span class="w"> </span>clone<span class="w"> </span>https://github.com/autow
 <span class="nb">cd</span><span class="w"> </span>openadkit
 
 <span class="c1"># 2. Install host dependencies</span>
-./openadkit<span class="w"> </span>setup<span class="w"> </span>--check
+./openadkit<span class="w"> </span>setup
 </code></pre></div>
 <p>Activate the Docker group membership added by <code>openadkit setup</code> before running
 Docker without <code>sudo</code>. Either log out and back in, or run:</p>
@@ -2083,6 +2083,12 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
   with <code>--set &lt;target&gt;.tags=...</code>. To use other images, set the <code>*_IMAGE</code>
   variables in the host settings file, <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
 <li>For Jazzy, build with <code>ROS_DISTRO=jazzy</code> and run with <code>--ros-distro jazzy</code>.</li>
+<li>To build a <a href="../../kits/create-a-kit/">kit</a>'s overlay workspace against these
+  images, load the devel image too and name its local tag for
+  <code>openadkit build</code>, here on amd64 and Humble:<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w"> </span>--load<span class="w"> </span>universe-common-devel
+<span class="nb">export</span><span class="w"> </span><span class="nv">DEVEL_IMAGE</span><span class="o">=</span>ghcr.io/autowarefoundation/openadkit:universe-common-devel-amd64-humble
+</code></pre></div>
+</li>
 </ul>
 <p>Other useful targets:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w"> </span>-f<span class="w"> </span>components/docker-bake.hcl<span class="w">                                </span><span class="c1"># everything</span>

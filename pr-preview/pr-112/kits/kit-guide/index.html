@@ -2203,8 +2203,10 @@ openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w">
   CMake caches record the paths they were configured with.</li>
 <li><code>--install-base</code> and <code>--build-base</code> stay fixed: the services source
   <code>install/</code> where they mount the workspace.</li>
-<li>A source checkout pins no devel image: set <code>DEVEL_IMAGE</code> to the matching
-  <code>universe-common-devel</code> digest from the build's metadata.</li>
+<li>A source checkout pins no devel image: export <code>DEVEL_IMAGE</code> in your shell,
+  set to the <code>universe-common-devel</code> image of the build your runtime images
+  come from. For a local build that is its
+  <a href="../../development/build-from-source/#build-and-run-locally">local tag</a>.</li>
 </ul>
 <h4 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h4>
 <p>The workspace belongs to the kit: the one <code>overlay_ws</code> at the kit root serves

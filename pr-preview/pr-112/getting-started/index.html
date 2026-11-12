@@ -1959,12 +1959,20 @@ pass the same version to <code>install</code>:</p>
 <a href="../releases/verification/">Verify a Release</a>.</p>
 </details>
 <h2 id="set-up-the-host">2. Set Up the Host<a class="headerlink" href="#set-up-the-host" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>setup<span class="w"> </span>--check
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>setup
 </code></pre></div>
-<p>Run setup as your normal user; it asks for <code>sudo</code> only for host changes. It
-installs Docker when the host has none and never replaces an existing engine.
-Add <code>--gpu</code> for NVIDIA deployments: it also installs the NVIDIA Container
-Toolkit and the OpenGL/Vulkan libraries CARLA needs.</p>
+<p>Run setup as your normal user; it asks for <code>sudo</code> only for host changes:</p>
+<ul>
+<li>missing base packages such as <code>git</code> and <code>curl</code></li>
+<li>Docker, when the host has none; it never replaces an existing engine</li>
+<li>your user's membership of the <code>docker</code> group</li>
+<li>the kernel's UDP buffer limits, which DDS needs for sensor data
+  (<code>/etc/sysctl.d/99-openadkit-dds.conf</code>)</li>
+</ul>
+<p>It then runs a test container to confirm that Docker works; <code>--no-check</code> skips
+that on a host that cannot pull it. Add <code>--gpu</code> for NVIDIA deployments: it also
+installs the NVIDIA Container Toolkit and the OpenGL/Vulkan libraries CARLA
+needs, and tests the GPU in a container.</p>
 <p>Activate the Docker group membership added by <code>openadkit setup</code> before running
 Docker without <code>sudo</code>. Either log out and back in, or run:</p>
 <div class="highlight"><pre><span></span><code>newgrp<span class="w"> </span>docker

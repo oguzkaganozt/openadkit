@@ -2165,9 +2165,11 @@ This page lists what that promise covers. Within one major version:</p>
 <ul>
 <li>The versionless installer and its <code>install</code>, <code>upgrade</code>, <code>uninstall</code> and
   <code>setup</code> commands.</li>
-<li>The <code>openadkit-vX.Y.Z.tar.gz</code> bundle, and the fields of
-  <code>release-metadata.json</code>. A release may list more bundles there; the
-  installer takes the one named after the version.</li>
+<li>The <code>openadkit-vX.Y.Z.tar.gz</code> bundle.</li>
+<li>These fields of <code>release-metadata.json</code>, which the installer and
+  <a href="../verification/">Verify a Release</a> read: <code>openadkit_version</code>,
+  <code>autoware_base_version</code>, <code>bundles</code>, <code>evidence</code> and <code>bom</code>. A release may list
+  more bundles there; the installer takes the one named after the version.</li>
 </ul>
 <h2 id="experimental">Experimental<a class="headerlink" href="#experimental" title="Permanent link">#</a></h2>
 <p>These work and are tested where the docs say so, but may change in a minor
@@ -2186,6 +2188,8 @@ release:</p>
 <li>Human-readable output: messages, tables and their wording.</li>
 <li>The output of <code>openadkit config</code>, which is Docker Compose's resolved model.</li>
 <li>The CI workflows and everything under <code>.github/</code>.</li>
+<li>The other fields of <code>release-metadata.json</code>, which are CI's own build and
+  scan records.</li>
 <li>The other settings in <code>settings.env</code>. Most are arguments of Autoware's launch
   files and follow the pinned Autoware release; <code>READINESS_CHECKS</code> holds the
   arguments of the readiness check.</li>

@@ -2065,7 +2065,8 @@ openadkit<span class="w"> </span>restart<span class="w"> </span>my-node
 own filesystem. A backtrace then shows your source lines, such as
 <code>main (...) at /openadkit/overlay_ws/src/my_package/src/my_node.cpp:24</code>.</p>
 <p>The Autoware services share one process namespace, so <code>autoware-map</code> as the
-container reaches the processes of all of them.</p>
+container reaches the processes of all of them. The visualizer keeps its own
+namespace, so name its own container for it.</p>
 <h2 id="editor-support">Editor Support<a class="headerlink" href="#editor-support" title="Permanent link">#</a></h2>
 <p>An editor on the host does not see the Autoware and ROS headers, which exist
 only in the devel image, so it cannot complete or check your code against them.</p>

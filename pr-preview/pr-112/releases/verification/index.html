@@ -1920,11 +1920,10 @@ to the release workflow; it does <strong>not</strong> establish that runtime tes
 <span class="w">  </span><span class="s1">'.bundles[] | select(.name == $name) | .sha256 + "  " + .name'</span><span class="w"> </span>release-metadata.json<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>--check
 </code></pre></div>
-<p>Review the metadata: <code>.openadkit_version</code>, <code>.release_sha</code> and
-<code>.default_ros_distro</code> name the requested version, promoted commit and default
-distro, <code>.bom</code> the pinned Autoware release and image digests, and <code>.evidence</code>
-the passing cells, with the <code>url</code> of the evidence run the release gate
-accepted. <code>.evidence_exempt</code> lists the CI exemptions.</p>
+<p>Review the metadata: <code>.openadkit_version</code> names the requested version, <code>.bom</code>
+the pinned Autoware release and image digests, and <code>.evidence</code> the tested
+commit (<code>source_sha</code>), the passing cells, the CI exemptions (<code>exempt</code>) and the
+<code>url</code> of the evidence run the release gate accepted.</p>
 <p>After verification, install with the downloaded <code>openadkit</code> or follow the
 <a href="../../getting-started/">Quickstart</a>. Evidence is bounded to the tested
 cells; it is not a vehicle-safety or security certification.</p>

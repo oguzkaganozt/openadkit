@@ -1941,39 +1941,81 @@ compiler reads, such as headers and static libraries, and only the visualizer
 carries RViz and its plugins. A kit compiles its overlay workspace in the
 <code>universe-common-devel</code> image, which keeps both.</p>
 <h2 id="component-images">Component Images<a class="headerlink" href="#component-images" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Image</th>
+<th>Services</th>
+<th>Deployments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sensing-perception</code></td>
+<td><code>sensing</code>, <code>perception</code></td>
+<td>Logging; CARLA runs the CUDA variant</td>
+</tr>
+<tr>
+<td><code>localization-mapping</code></td>
+<td><code>map</code>, <code>localization</code></td>
+<td><code>map</code> in all; <code>localization</code> in Logging and CARLA</td>
+</tr>
+<tr>
+<td><code>planning</code></td>
+<td><code>planning</code></td>
+<td>Planning, Scenario, CARLA, Safety Island</td>
+</tr>
+<tr>
+<td><code>control</code></td>
+<td><code>control</code></td>
+<td>Planning, Scenario, CARLA, Safety Island</td>
+</tr>
+<tr>
+<td><code>vehicle-system</code></td>
+<td><code>vehicle</code>, <code>system</code></td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>api</code></td>
+<td><code>api</code></td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>simulator</code></td>
+<td><code>simulator</code>, <code>simulated-perception</code>, <code>carla-interface</code></td>
+<td>Planning, Scenario, Safety Island; <code>carla-interface</code> in CARLA</td>
+</tr>
+<tr>
+<td><code>visualizer</code></td>
+<td><code>visualizer</code></td>
+<td>All</td>
+</tr>
+</tbody>
+</table>
 <h3 id="sensing-perception">Sensing &amp; Perception<a class="headerlink" href="#sensing-perception" title="Permanent link">#</a></h3>
-<p>Sensor preprocessing and environment understanding in one image.</p>
+<p>Sensor preprocessing and object recognition, as two services from one image.</p>
 <ul>
-<li><strong>Sensing</strong> — LiDAR distortion correction, filtering, and point cloud
-  preprocessing; camera and radar preprocessing; GNSS/INS preprocessing; shared
-  point cloud container. Launch: <code>component_sensing.launch.xml</code></li>
-<li><strong>Perception</strong> — camera, LiDAR, and radar object detection and fusion;
-  multi-object tracking and trajectory prediction; traffic light recognition;
-  occupancy grid mapping. Launch: <code>component_perception.launch.xml</code></li>
-<li><strong>CUDA variant</strong> — <code>sensing-perception-cuda</code> accelerates point cloud
-  processing and neural-network inference on NVIDIA GPUs. It is amd64-only and
-  requires the NVIDIA Container Toolkit. Used by
+<li><strong><code>sensing</code></strong> — launch: <code>component_sensing.launch.xml</code></li>
+<li><strong><code>perception</code></strong> — launch: <code>component_perception.launch.xml</code></li>
+<li><strong>CUDA variant</strong> — <code>sensing-perception-cuda</code> builds the same packages with
+  CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
+  and requires the NVIDIA Container Toolkit. Used by
   <a href="../deployments/logging-simulation/">Logging Simulation</a> (<code>--gpu</code>) and
   <a href="../deployments/carla-simulation/">CARLA Simulation</a>.</li>
 </ul>
 <h3 id="localization-mapping">Localization &amp; Mapping<a class="headerlink" href="#localization-mapping" title="Permanent link">#</a></h3>
-<p>Serves HD maps and estimates the vehicle pose within them.</p>
+<p>Serves the Lanelet2 and point cloud maps and estimates the vehicle's pose on
+them, as two services from one image.</p>
 <ul>
-<li><strong>Localization</strong> — GNSS/RTK positioning and IMU dead reckoning; visual
-  odometry and LiDAR map matching; automatic pose initialization; EKF state
-  estimation. Launch: <code>component_localization.launch.xml</code></li>
-<li><strong>Mapping</strong> — Lanelet2 vector map and point cloud map serving; occupancy grid
-  and point cloud map construction; map coordinate transforms. Launch:
-  <code>component_map.launch.xml</code></li>
+<li><strong><code>map</code></strong> — launch: <code>component_map.launch.xml</code></li>
+<li><strong><code>localization</code></strong> — launch: <code>component_localization.launch.xml</code></li>
 </ul>
-<p>Planning and Scenario Simulation run only the <code>map</code> service; the simulator
-supplies map-to-odometry transforms. Logging and CARLA Simulation also run
-localization.</p>
+<p>Planning, Scenario and Safety Island Simulation run only <code>map</code>: the simulator
+stands in for localization. Logging and CARLA Simulation also run
+<code>localization</code>.</p>
 <h3 id="planning">Planning<a class="headerlink" href="#planning" title="Permanent link">#</a></h3>
-<p>Trajectory generation: route planning on Lanelet2 road networks; behavior
-planning for lanes, intersections, and obstacles; kinematically feasible motion
-planning; goal and parking maneuvers; the planning validator that publishes
-<code>/planning/trajectory</code>. Launch: <code>component_planning.launch.xml</code></p>
+<p>Plans the route and the trajectory, and publishes <code>/planning/trajectory</code>.
+Launch: <code>component_planning.launch.xml</code></p>
 <ul>
 <li><strong>CUDA variant</strong> — <code>planning-cuda</code> builds the same packages with CUDA and
   TensorRT, so <code>planning_setting:=diffusion_planner</code> runs Autoware 2.0's
@@ -1982,52 +2024,32 @@ planning; goal and parking maneuvers; the planning validator that publishes
   (<code>--gpu</code>).</li>
 </ul>
 <h3 id="control">Control<a class="headerlink" href="#control" title="Permanent link">#</a></h3>
-<p>Vehicle control from <code>/planning/trajectory</code>: lateral steering and longitudinal
-velocity control; PID and Model Predictive Control modes; vehicle-specific
-command conversion; emergency stop and heartbeat monitoring. Control reads only
-that trajectory, so it stays the same whichever planner produces it. Launch:
-<code>component_control.launch.xml</code></p>
+<p>Follows <code>/planning/trajectory</code> and publishes the control command. Control reads
+only that trajectory, so it stays the same whichever planner produces it.
+Launch: <code>component_control.launch.xml</code></p>
 <h3 id="vehicle-and-system">Vehicle &amp; System<a class="headerlink" href="#vehicle-and-system" title="Permanent link">#</a></h3>
-<p>Vehicle actuation and system diagnostics, run as separate containers from one
+<p>The vehicle interface and the system diagnostics, as two services from one
 image.</p>
 <ul>
-<li><strong>Vehicle</strong> — actuation and state reporting; steering, throttle, brake, gear,
-  and turn-signal conversion; vehicle dimensions, limits, and kinematic
-  parameters. Launch: <code>tier4_vehicle_launch/vehicle.launch.xml</code></li>
-<li><strong>System</strong> — health monitoring and heartbeat management; diagnostic
-  aggregation; Minimum Risk Maneuver handling; CPU, memory, and process
-  monitoring. Launch: <code>tier4_system_component.launch.xml</code></li>
+<li><strong><code>vehicle</code></strong> — launch: <code>tier4_vehicle_launch/vehicle.launch.xml</code></li>
+<li><strong><code>system</code></strong> — launch: <code>tier4_system_component.launch.xml</code></li>
 </ul>
 <h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">#</a></h3>
-<p>Packages the <a href="https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/">Autoware AD API</a>
-used by fleet managers, HMIs, and scenario runners. It provides ROS 2 services
-and topics for:</p>
-<ul>
-<li>vehicle position, velocity, engage status, and operation mode</li>
-<li>autonomous, manual, stop, local, and remote mode transitions</li>
-<li>route and goal setting</li>
-<li>emergency stop and engage/disengage commands</li>
-<li>scenario simulation auto-engage and route integration</li>
-</ul>
-<p>Launch: <code>tier4_autoware_api_component.launch.xml</code>. It is the external entry
-point of every deployment.</p>
+<p>Runs the <a href="https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/">Autoware AD API</a>,
+the external entry point of every deployment: clients initialize localization,
+set a route and change the operation mode through it. Launch:
+<code>tier4_autoware_api_component.launch.xml</code></p>
 <h3 id="simulator">Simulator<a class="headerlink" href="#simulator" title="Permanent link">#</a></h3>
-<p>Closed-loop vehicle and environment simulation without real sensors or vehicle
-hardware:</p>
+<p>The built-in simulator: a simulated vehicle and simulated perception in place
+of real sensors and vehicle hardware.</p>
 <ul>
-<li>configurable kinematic and dynamic vehicle models</li>
-<li>dummy perception, vehicle, door, and traffic-infrastructure interfaces</li>
-<li>Scenario Simulator v2 adapter and localization simulation mode</li>
-<li>simulated point cloud preprocessing, object tracking, shape estimation, and
-  map-based prediction</li>
-<li>occupancy and elevation map handling; vehicle command conversion</li>
+<li><strong><code>simulator</code></strong> — launch: <code>tier4_simulator_component.launch.xml</code></li>
+<li><strong><code>simulated-perception</code></strong> — dummy objects, tracking, prediction and the
+  occupancy grid map. Launch: <code>planning_simulator/perception_simulation.launch.xml</code></li>
 </ul>
-<p>Launch: <code>tier4_simulator_component.launch.xml</code>, with the perception simulation
-(dummy objects, tracking, prediction and the occupancy grid map) in its own
-<code>simulated-perception</code> service from <code>planning_simulator/perception_simulation.launch.xml</code>.
-On amd64 it also carries the CARLA bridge and the CARLA Python client that the
-<a href="../deployments/carla-simulation/">CARLA Simulation</a> deployment runs in
-its <code>carla-interface</code> service.</p>
+<p>On amd64 the image also carries the CARLA bridge and the CARLA Python client
+that <a href="../deployments/carla-simulation/">CARLA Simulation</a> runs in its
+<code>carla-interface</code> service.</p>
 <h3 id="visualizer">Visualizer<a class="headerlink" href="#visualizer" title="Permanent link">#</a></h3>
 <p>RViz in the browser through noVNC: RViz with Autoware plugins, Openbox,
 TigerVNC, and a noVNC server over plain HTTP. The VNC backend stays
@@ -2069,13 +2091,7 @@ across starts, so a browser exception for it holds.</p>
 <td><code>WEBSOCKIFY_BIND</code></td>
 <td><code>127.0.0.1</code></td>
 <td>IP address</td>
-<td>noVNC bind address; bridge networking uses <code>0.0.0.0</code> with a host loopback port mapping</td>
-</tr>
-<tr>
-<td><code>USE_SIM_TIME</code></td>
-<td><code>false</code></td>
-<td><code>true</code>, <code>false</code></td>
-<td>Use the ROS simulation clock</td>
+<td>noVNC bind address. <code>0.0.0.0</code> exposes noVNC on every interface of the host: put an authenticated reverse proxy in front of it</td>
 </tr>
 <tr>
 <td><code>RVIZ_GPU</code></td>
@@ -2095,18 +2111,12 @@ across starts, so a browser exception for it holds.</p>
 <a href="../getting-started/#open-the-visualizer">Quickstart</a>.</p>
 <h3 id="carla-interface">CARLA Interface<a class="headerlink" href="#carla-interface" title="Permanent link">#</a></h3>
 <p>The simulator image's <code>autoware_carla_interface</code> translates Autoware control
-commands to CARLA and CARLA sensor data to ROS 2 messages:</p>
-<ul>
-<li>CARLA world initialization and synchronous simulation</li>
-<li>ego vehicle spawning and sensor-kit configuration</li>
-<li>camera, LiDAR, IMU, and GNSS message translation</li>
-<li>vehicle command calibration and traffic light state publication</li>
-<li>lightweight sensor mappings for constrained hosts</li>
-</ul>
-<p>Launch: <code>autoware_carla_interface.launch.xml</code>. CARLA publishes its Python
-client for x86_64 only, so only the amd64 simulator image has it (Humble and
-Jazzy); <a href="../deployments/carla-simulation/">CARLA Simulation</a> is
-Humble-only and needs an NVIDIA GPU.</p>
+commands to CARLA and CARLA sensor data to ROS 2 messages. Launch:
+<code>autoware_carla_interface.launch.xml</code></p>
+<p>CARLA publishes its Python client for x86_64 only, so only the amd64 simulator
+image has it (Humble and Jazzy);
+<a href="../deployments/carla-simulation/">CARLA Simulation</a> is Humble-only and needs
+an NVIDIA GPU.</p>
 <h2 id="image-reference">Image Reference<a class="headerlink" href="#image-reference" title="Permanent link">#</a></h2>
 <p>Generated from the image inventory (<code>.github/image-inventory.json</code>), so it always
 matches what CI builds. Tag names are explained in
