@@ -144,6 +144,11 @@ override component images there; release images stay pinned. A kit adds its
 own files to this order; see the
 [Integrator Guide](../kits/integrator-guide.md#1-settings).
 
+Most settings are arguments of Autoware's launch files, such as
+`VEHICLE_MODEL`; the rest are host paths and options of Open AD Kit's own
+services. To change a node parameter instead, use a
+[config override](../kits/integrator-guide.md#2-config-overrides).
+
 | Directory | Default | Override |
 | --- | --- | --- |
 | Host settings | `~/.config/openadkit` | `OPENADKIT_CONFIG_DIR` (or `XDG_CONFIG_HOME`) |

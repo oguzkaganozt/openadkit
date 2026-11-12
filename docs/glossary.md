@@ -17,7 +17,7 @@ it.
 |------|---------|
 | [**Deployment**](deployments/index.md) | A named, ready-to-run stack for one task, such as Planning Simulation: a deployment manifest, settings and Compose files. |
 | **Deployment manifest** | `deployment.json`: what the CLI needs to run a deployment. Compose files, requirements, data downloads, one-shot services and the verify step. |
-| [**Settings**](getting-started/cli.md#configuration) | `KEY=value` variables a deployment runs with, such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings file. `run` and `restart` apply them. |
+| [**Settings**](getting-started/cli.md#configuration) | `KEY=value` variables a deployment runs with, mostly Autoware launch arguments and host paths such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings file. `run` and `restart` apply them. |
 | [**Node**](deployments/split-host.md) | One host's part of a split-host deployment, with its own services, Compose project, ROS domain and Zenoh endpoint. |
 
 ## Kits
