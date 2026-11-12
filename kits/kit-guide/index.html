@@ -2105,8 +2105,8 @@
 
 <h1 id="kit-guide">Kit Guide<a class="headerlink" href="#kit-guide" title="Permanent link">#</a></h1>
 <p>The reference for a kit: what it pins, each extension point, and how it is
-validated and upgraded. A kit owns its differences; Open AD Kit owns the base
-CLI, images and deployments. Start one with <code>openadkit new</code>
+validated and upgraded. A kit owns its differences; Open AD Kit owns the
+CLI, the images and the catalog. Start one with <code>openadkit new</code>
 (<a href="../create-a-kit/">Create a Kit</a>).</p>
 <h2 id="pin-the-release">Pin the Release<a class="headerlink" href="#pin-the-release" title="Permanent link">#</a></h2>
 <p>In the kit's <code>openadkit.json</code>, <code>kind</code> is <code>kit</code> and <code>extends</code> names a published
@@ -2133,10 +2133,10 @@ release tag or, for development, the path of a source checkout. Manifests use
   set to <code>none</code> or <code>required</code> where the base leaves it optional. It never
   widens them, since the kit runs the base's services. Without a GPU mode, the
   base's GPU-only downloads are left out.</li>
-<li><strong>Downloads and one-shot reset services</strong> are inherited. A kit can add
-  downloads with distinct destination variables, and reset services of its
+<li><strong>Downloads and one-shot services</strong> are inherited. A kit can add
+  downloads with distinct destination variables, and one-shot services of its
   own.</li>
-<li><strong>Split-host nodes are not inherited:</strong> a kit deployment runs on one host.</li>
+<li><strong>Split-host roles are not inherited:</strong> a kit deployment runs on one host.</li>
 </ul>
 <p>A kit made by <code>openadkit new my-kit</code> has one deployment, also named <code>my-kit</code>.
 Its manifests, Compose file and differences live in one directory
@@ -2155,7 +2155,7 @@ files in order (later files win):</p>
 <li><code>~/.config/openadkit/&lt;kit-deployment&gt;.env</code>, if present</li>
 </ol>
 <p>Shell exports do not override values set in these files. The CLI adds the ROS
-distro, the host UID and GID, the overlay mount paths, <code>OPENADKIT_BASE_ROOT</code>
+distro, the host UID and GID, the overlay mount paths, <code>OPENADKIT_ROOT</code>
 (the release's root) and <code>OPENADKIT_BASE_DEPLOYMENT</code> (the directory of the <code>base</code>
 deployment); a release's component and external images stay pinned. Inside the
 containers, the ROS and DDS defaults come from the base services'
@@ -2181,7 +2181,7 @@ hook logs them and writes <code>/tmp/openadkit/overlay-report.json</code> in eac
 Once the services are up, <code>run</code> collects those reports and warns about every
 override without a counterpart: a package no service has changes nothing, and a
 file or a parameter its package does not have is added. That is intended for a
-new file such as a diagnostics graph; after a base version change it usually
+new file such as a diagnostics graph; after a release change it usually
 means a renamed package, file or parameter. Every service gets the same layers,
 so a package installed in only some images is not reported.</p>
 <h3 id="3-overlay-workspace">3. Overlay Workspace<a class="headerlink" href="#3-overlay-workspace" title="Permanent link">#</a></h3>
@@ -2198,7 +2198,7 @@ openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w">
 <ul>
 <li>Packages build incrementally: a second build compiles only what changed.</li>
 <li>The CLI records the image and distro in <code>install/.openadkit-overlay.json</code>.
-  After a base upgrade or a distro change, <code>validate</code> and <code>run</code> warn until you
+  After a release upgrade or a distro change, <code>validate</code> and <code>run</code> warn until you
   rebuild, and that rebuild starts from a clean <code>build/</code> and <code>install/</code>, since
   CMake caches record the paths they were configured with.</li>
 <li><code>--install-base</code> and <code>--build-base</code> stay fixed: the services source
@@ -2208,7 +2208,7 @@ openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w">
 </ul>
 <h4 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h4>
 <p>The workspace belongs to the kit: the one <code>overlay_ws</code> at the kit root serves
-every deployment of the kit, since they all extend one base and its images.
+every deployment of the kit, since they all extend one release and its images.
 Every Autoware service mounts it, and the entrypoint hook sources
 <code>overlay_ws/install/local_setup.bash</code> on top of Autoware, so its packages are
 visible in every service. Whether your code runs depends on what starts it:</p>
@@ -2248,11 +2248,11 @@ base ROS domain and middleware, and give each one <code>init: true</code>
 workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image (<a href="#5-image-replacement">point 5</a>).</p>
-<p>To replace one side of a base that runs as split-host nodes, include only the
-other side's Compose file instead of the base's <code>docker-compose.yaml</code>. For
+<p>To replace one side of a base that runs as split-host roles, include only the
+other side's Compose file instead of the base's <code>compose.yaml</code>. For
 example, a kit that brings its own simulator to <code>carla-simulation</code> includes
 <code>${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml</code>: no service in it depends
-on a CARLA service. The base's <code>resetServices</code> that the kit's services leave
+on a CARLA service. The base's <code>oneShotServices</code> that the kit's services leave
 out are skipped; the kit's own must exist.</p>
 <h3 id="5-image-replacement">5. Image Replacement<a class="headerlink" href="#5-image-replacement" title="Permanent link">#</a></h3>
 <p>Declare the images your kit uses but does not build in its <code>externalImages</code>,
@@ -2365,7 +2365,7 @@ check <code>run</code>'s override warnings.</p>
   waits for the service to exit and takes its exit code.</li>
 </ul>
 <p>The example kit is what <code>openadkit new</code> makes, with a
-<a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit">fixture</a>
+<a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit">fixture</a>
 that uses every extension point on top. Its evidence cells run both checks on
 Humble and Jazzy, each with a workspace built against the matching devel
 digest, and every release needs them to pass. They show that the extension
@@ -2378,7 +2378,7 @@ does not yet accept external kits.</p>
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host settings, downloaded data and output directories
 are outside the base release, and <code>openadkit upgrade</code> does not change a kit's
-<code>extends</code>. See <a href="../../getting-started/cli/#configuration">Configuration</a> and
+<code>extends</code>. See <a href="../../getting-started/cli/#settings">Settings</a> and
 <a href="../../getting-started/cli/#downloaded-data">Downloaded Data</a>.</p>
 
 

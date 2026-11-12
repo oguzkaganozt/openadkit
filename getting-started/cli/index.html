@@ -828,10 +828,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Settings
       
     </span>
   </a>
@@ -2057,10 +2057,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Settings
       
     </span>
   </a>
@@ -2205,7 +2205,7 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <h2 id="run-a-deployment">Run a Deployment<a class="headerlink" href="#run-a-deployment" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>list<span class="w">                                    </span><span class="c1"># the deployments you can run</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
-openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--verify<span class="w">        </span><span class="c1"># then run its end-to-end check</span>
+openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--verify<span class="w">        </span><span class="c1"># then run its verify step</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--pull<span class="w"> </span>always<span class="w">   </span><span class="c1"># refresh the images first</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--no-visualizer
 </code></pre></div>
@@ -2225,7 +2225,7 @@ returns once the deployment is ready.</p>
   small host. CI evidence runs this way.</li>
 <li><strong>One deployment runs at a time</strong>, including deployments from other kits,
   even one with the same name. <code>run</code> refuses while another is running; stop it
-  first with <code>openadkit stop</code>. The nodes of one
+  first with <code>openadkit stop</code>. The roles of one
   <a href="../../deployments/split-host/">split-host</a> deployment can run together.</li>
 </ul>
 <p>Every run writes <code>results/run.json</code> in the deployment's output directory: the
@@ -2244,7 +2244,7 @@ openadkit<span class="w"> </span>record<span class="w"> </span>/tf<span class="w
 openadkit<span class="w"> </span>stop
 </code></pre></div>
 <p>These act on the deployment running on this host, from any directory, so they
-take no deployment name. With several nodes of a split-host deployment on one
+take no deployment name. With several roles of a split-host deployment on one
 host, see <a href="../../deployments/split-host/#lifecycle-notes">Lifecycle Notes</a>.</p>
 <h3 id="status">Status<a class="headerlink" href="#status" title="Permanent link">#</a></h3>
 <p>Below its services, <code>status</code> shows Autoware's state from the AD API and the
@@ -2287,9 +2287,9 @@ anything. <code>--data</code> also reports each data resource as <code>ok</code>
 selection as <code>run</code>: <code>openadkit validate logging-simulation --gpu --data</code>
 includes the CenterPoint models.</p>
 <p><code>config</code> prints a deployment's resolved Compose model as JSON, with <code>validate</code>'s
-<code>--ros-distro</code>, <code>--gpu</code>, <code>--node</code> and <code>--ws</code>;
+<code>--ros-distro</code>, <code>--gpu</code>, <code>--role</code> and <code>--ws</code>;
 <a href="../../platforms/autosd/">AutoSD</a> builds on it.</p>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
+<h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">#</a></h2>
 <p>A deployment reads its settings from environment files, in this order (later
 files win):</p>
 <ol>
@@ -2319,7 +2319,7 @@ services. To change a node parameter instead, use a
 <tr>
 <td>Host settings</td>
 <td><code>~/.config/openadkit</code></td>
-<td><code>OPENADKIT_CONFIG_DIR</code> (or <code>XDG_CONFIG_HOME</code>)</td>
+<td><code>OPENADKIT_SETTINGS_DIR</code> (or <code>XDG_CONFIG_HOME</code>)</td>
 </tr>
 <tr>
 <td>Results and recordings</td>
@@ -2348,8 +2348,8 @@ openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulatio
 <li><strong><code>fetch --force</code></strong> replaces the data even when it is complete, and is the
   way to repair incomplete data.</li>
 <li><strong><code>clean</code></strong> lists what it deletes and asks first; <code>--yes</code> skips the question,
-  as scripts need. It deletes all the data the deployment uses, so a kit or a
-  deployment on a base also deletes the base's data (the list says so). The
+  as scripts need. It deletes all the data the deployment uses, so a kit
+  deployment also deletes its base's data (the list says so). The
   next <code>run</code> or <code>fetch</code> downloads it again.</li>
 </ul>
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file, and
@@ -2361,7 +2361,7 @@ any live container mounts the data (including another kit or deployment). If
 data usage cannot be checked, they refuse as well.</p>
 <h2 id="your-own-kit">Your Own Kit<a class="headerlink" href="#your-own-kit" title="Permanent link">#</a></h2>
 <p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit on top of a
-deployment of this Open AD Kit (Planning Simulation by default) that holds
+catalog deployment (Planning Simulation by default) that holds
 only your differences. <code>openadkit build</code> builds the kit's overlay workspace in
 the release's devel image. See <a href="../../kits/create-a-kit/">Create a Kit</a>.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">#</a></h2>

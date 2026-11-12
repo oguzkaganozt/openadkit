@@ -1938,7 +1938,7 @@
 
 
 <h1 id="create-a-kit">Create a Kit<a class="headerlink" href="#create-a-kit" title="Permanent link">#</a></h1>
-<p><code>openadkit new</code> makes a kit that extends this Open AD Kit and one of its
+<p><code>openadkit new</code> makes a kit that extends this release and one of its
 deployments without copying them, so the kit holds only your differences:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w">                       </span><span class="c1"># on top of planning-simulation</span>
 openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w"> </span>--base<span class="w"> </span>scenario-simulation
@@ -1947,7 +1947,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 <div class="highlight"><pre><span></span><code>my-kit/
 ├── openadkit.json
 ├── deployment.json
-├── docker-compose.yaml
+├── compose.yaml
 ├── settings.env
 ├── config/autoware/
 └── overlay_ws/src/
@@ -1957,12 +1957,12 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
   (<code>externalImages</code>), and points the <code>my-kit</code> deployment at <code>"."</code>, this same
   directory.</li>
 <li><code>deployment.json</code> names the base deployment. Compose reads
-  <code>docker-compose.yaml</code> unless <code>compose.files</code> names others. Architecture, ROS
+  <code>compose.yaml</code> unless <code>compose.files</code> names others. Architecture, ROS
   distro, GPU, downloads and the verify step are inherited; <code>requirements</code> may
   narrow the first three.</li>
-<li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
-  add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the release's root for
-  shared assets.</li>
+<li><code>compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml</code>;
+  add your services below it. <code>OPENADKIT_ROOT</code> names the release's root, for
+  its shared assets.</li>
 <li><code>settings.env</code> holds only the values you change, such as <code>VEHICLE_ID</code>.</li>
 <li><code>config/autoware/</code> holds parameter overrides for Autoware packages.</li>
 <li><code>overlay_ws/src/</code> holds your ROS packages.</li>
@@ -1979,7 +1979,7 @@ release, change <code>extends</code>; the next command that acts on the kit, suc
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-kit
 openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># overlay_ws, in the release's devel image</span>
 openadkit<span class="w"> </span>validate
-openadkit<span class="w"> </span>run<span class="w"> </span>--verify<span class="w">          </span><span class="c1"># start, wait until ready, run the base's end-to-end check</span>
+openadkit<span class="w"> </span>run<span class="w"> </span>--verify<span class="w">          </span><span class="c1"># start, wait until ready, run the base's verify step</span>
 openadkit<span class="w"> </span>stop
 </code></pre></div>
 <p>Inside a kit with one deployment the commands need no name. From elsewhere,

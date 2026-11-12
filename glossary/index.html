@@ -648,10 +648,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deployments" class="md-nav__link">
+  <a href="#releases-and-deployments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deployments
+        Releases and Deployments
       
     </span>
   </a>
@@ -1891,10 +1891,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deployments" class="md-nav__link">
+  <a href="#releases-and-deployments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deployments
+        Releases and Deployments
       
     </span>
   </a>
@@ -1985,7 +1985,7 @@ it.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="deployments">Deployments<a class="headerlink" href="#deployments" title="Permanent link">#</a></h2>
+<h2 id="releases-and-deployments">Releases and Deployments<a class="headerlink" href="#releases-and-deployments" title="Permanent link">#</a></h2>
 <table>
 <thead>
 <tr>
@@ -1995,20 +1995,40 @@ it.</p>
 </thead>
 <tbody>
 <tr>
+<td><a href="../releases/"><strong>Release</strong></a></td>
+<td>One version of Open AD Kit, such as <code>v2.0.0</code>: the CLI, the pinned component images and the catalog.</td>
+</tr>
+<tr>
+<td><a href="../deployments/"><strong>Catalog</strong></a></td>
+<td>The deployments a release ships. <code>openadkit list</code> prints it.</td>
+</tr>
+<tr>
 <td><a href="../deployments/"><strong>Deployment</strong></a></td>
-<td>A named, ready-to-run stack for one task, such as Planning Simulation: a deployment manifest, settings and Compose files.</td>
+<td>A named, ready-to-run stack for one task, such as Planning Simulation: a deployment manifest, settings and Compose files. A <em>catalog deployment</em> is one of the release's; a <em>kit deployment</em> is one of a kit's.</td>
 </tr>
 <tr>
 <td><strong>Deployment manifest</strong></td>
 <td><code>deployment.json</code>: what the CLI needs to run a deployment. Compose files, requirements, data downloads, one-shot services and the verify step.</td>
 </tr>
 <tr>
-<td><a href="../getting-started/cli/#configuration"><strong>Settings</strong></a></td>
-<td><code>KEY=value</code> variables a deployment runs with, mostly Autoware launch arguments and host paths such as <code>MAP_PATH</code>: <code>settings.env</code>, then <code>settings.gpu.env</code> with <code>--gpu</code>, then the host settings file. <code>run</code> and <code>restart</code> apply them.</td>
+<td><strong>Release manifest</strong></td>
+<td><code>openadkit.json</code> of a release or a source checkout: its deployments and the images it pins.</td>
 </tr>
 <tr>
-<td><a href="../deployments/split-host/"><strong>Node</strong></a></td>
-<td>One host's part of a split-host deployment, with its own services, Compose project, ROS domain and Zenoh endpoint.</td>
+<td><a href="../getting-started/cli/#settings"><strong>Settings</strong></a></td>
+<td><code>KEY=value</code> variables a deployment runs with, mostly Autoware launch arguments and host paths such as <code>MAP_PATH</code>: <code>settings.env</code>, then <code>settings.gpu.env</code> with <code>--gpu</code>, then the host settings. <code>run</code> and <code>restart</code> apply them.</td>
+</tr>
+<tr>
+<td><a href="../getting-started/cli/#settings"><strong>Host settings</strong></a></td>
+<td>The settings of one host, in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>. They are loaded last and survive upgrades.</td>
+</tr>
+<tr>
+<td><strong>One-shot service</strong></td>
+<td>A service that does its work and exits, such as <code>map-check</code>. A deployment lists them in <code>oneShotServices</code>; they may finish but not fail.</td>
+</tr>
+<tr>
+<td><a href="../deployments/split-host/"><strong>Role</strong></a></td>
+<td>What one host does in a split-host deployment, such as <code>autoware</code> or <code>scenario</code>, with its own services, Compose project, ROS domain and Zenoh endpoint.</td>
 </tr>
 </tbody>
 </table>
@@ -2023,15 +2043,23 @@ it.</p>
 <tbody>
 <tr>
 <td><a href="../kits/create-a-kit/"><strong>Kit</strong></a></td>
-<td>A kit manifest and its deployments: the reference kit in this repository, or your differences on top of a pinned release.</td>
+<td>Your packages, parameters and services on top of a pinned release. <code>openadkit new</code> makes one. Open AD Kit itself is not a kit.</td>
 </tr>
 <tr>
 <td><a href="../kits/kit-guide/#pin-the-release"><strong>Kit manifest</strong></a></td>
-<td><code>openadkit.json</code>: what the kit extends, its deployments (each named by its key) and the images it pins.</td>
+<td><code>openadkit.json</code> of a kit: the release it extends, its deployments (each named by its key) and the images it pins.</td>
 </tr>
 <tr>
-<td><a href="../kits/kit-guide/#choose-a-base-deployment"><strong><code>extends</code> / <code>base</code></strong></a></td>
-<td>The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on.</td>
+<td><a href="../kits/kit-guide/#pin-the-release"><strong><code>extends</code></strong></a></td>
+<td>The release a kit pins.</td>
+</tr>
+<tr>
+<td><a href="../kits/kit-guide/#choose-a-base-deployment"><strong><code>base</code></strong></a></td>
+<td>The catalog deployment a kit deployment builds on. Only a kit deployment has one.</td>
+</tr>
+<tr>
+<td><a href="../kits/kit-guide/#extension-points"><strong>Extension point</strong></a></td>
+<td>One of the five ways a kit changes its base: settings, config overrides, the overlay workspace, extra services and image replacement.</td>
 </tr>
 <tr>
 <td><a href="../kits/kit-guide/#2-config-overrides"><strong>Config override</strong></a></td>
@@ -2040,6 +2068,10 @@ it.</p>
 <tr>
 <td><a href="../kits/kit-guide/#3-overlay-workspace"><strong>Overlay workspace</strong></a></td>
 <td>Your ROS packages in <code>overlay_ws/</code>, built in the release's devel image and sourced on top of Autoware.</td>
+</tr>
+<tr>
+<td><strong>Integrator</strong></td>
+<td>The person or organization that builds a kit.</td>
 </tr>
 <tr>
 <td><a href="../kits/reference-designs/"><strong>Reference Design</strong></a></td>

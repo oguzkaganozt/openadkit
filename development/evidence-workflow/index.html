@@ -1979,7 +1979,7 @@ dedicated, pinned, trusted-builder implementation first.</p>
   stages the kit with the same step that assembles release bundles, so the
   cells run the tree a release of that build ships, plus the example kit. The
   staged CLI's <code>openadkit new</code> makes that kit, with the fixture in
-  <code>.github/scripts/evidence/kit</code> on top; its workspace builds against the
+  <code>.github/scripts/evidence/example-kit</code> on top; its workspace builds against the
   build's <code>universe-common-devel</code> digest for each distro.</li>
 <li><strong>How it runs:</strong> hosted runners execute the L0-L3 cells, retry a failed cell
   once, and aggregate every expected cell; a missing cell fails the run.</li>

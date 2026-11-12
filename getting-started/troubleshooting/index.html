@@ -2284,7 +2284,7 @@ replaces data the CLI installed; remove data you placed yourself, then run
 <h2 id="gpu">GPU<a class="headerlink" href="#gpu" title="Permanent link">#</a></h2>
 <h3 id="nvidia-container-toolkit-not-detected">NVIDIA Container Toolkit not detected<a class="headerlink" href="#nvidia-container-toolkit-not-detected" title="Permanent link">#</a></h3>
 <ul>
-<li>Install it with <code>openadkit setup --gpu --verify</code>.</li>
+<li>Install it with <code>openadkit setup --gpu --check</code>.</li>
 <li>Check the GPU: <code>nvidia-smi</code> and <code>nvidia-ctk --version</code>.</li>
 <li>Restart Docker: <code>sudo systemctl restart docker</code>.</li>
 </ul>
@@ -2302,7 +2302,7 @@ it a certificate (<code>NOVNC_CERT</code>, <code>NOVNC_KEY</code>); with one, op
 <code>https://</code>.</p>
 <h3 id="port-6080-already-in-use">Port 6080 already in use<a class="headerlink" href="#port-6080-already-in-use" title="Permanent link">#</a></h3>
 <p>Port 6080 serves the visualizer. Stop the service that holds the port. The
-deployments use host networking, so a <code>ports:</code> mapping in <code>docker-compose.yaml</code>
+deployments use host networking, so a <code>ports:</code> mapping in <code>compose.yaml</code>
 has no effect.</p>
 <h3 id="point-clouds-arrive-at-a-lower-rate-than-they-are-published">Point clouds arrive at a lower rate than they are published<a class="headerlink" href="#point-clouds-arrive-at-a-lower-rate-than-they-are-published" title="Permanent link">#</a></h3>
 <p>Large messages need large UDP buffers between the containers.
@@ -2315,11 +2315,11 @@ nstat<span class="w"> </span>-az<span class="w"> </span>UdpRcvbufErrors<span cla
 <h3 id="ros-2-nodes-on-another-machine-cannot-see-the-stack">ROS 2 nodes on another machine cannot see the stack<a class="headerlink" href="#ros-2-nodes-on-another-machine-cannot-see-the-stack" title="Permanent link">#</a></h3>
 <p>DDS stays on loopback by default. To reach other hosts, set
 <code>CYCLONEDDS_NETWORK_INTERFACE</code> to the exact LAN or VPN interface name in your
-<a href="../cli/#configuration">host settings file</a>
+<a href="../cli/#settings">host settings file</a>
 (<code>~/.config/openadkit/&lt;deployment&gt;.env</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="nv">CYCLONEDDS_NETWORK_INTERFACE</span><span class="o">=</span>eth0
 </code></pre></div>
-<p>This applies to single-host runs; a split-host node always keeps DDS on
+<p>This applies to single-host runs; a split-host role always keeps DDS on
 loopback and reaches the other host through its Zenoh bridge.
 <code>ROS_DOMAIN_ID</code> separates traffic but provides no authentication or encryption.</p>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">#</a></h2>

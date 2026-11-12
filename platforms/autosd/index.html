@@ -2028,7 +2028,7 @@ SELinux enforcing and no outside network, and the ego arrived at its goal.</p>
 <code>catatonit</code> and systemd can run it:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>cp<span class="w"> </span>-a<span class="w"> </span>out/rootfs/.<span class="w"> </span>/
 sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
-sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>autoware-api<span class="w"> </span>autoware-control<span class="w"> </span>autoware-perception-simulation<span class="w"> </span><span class="se">\</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>autoware-api<span class="w"> </span>autoware-control<span class="w"> </span>autoware-simulated-perception<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>autoware-planning<span class="w"> </span>autoware-simulator<span class="w"> </span>autoware-system<span class="w"> </span>autoware-vehicle
 systemctl<span class="w"> </span>status<span class="w"> </span><span class="s1">'autoware-*'</span>
 journalctl<span class="w"> </span>-u<span class="w"> </span>autoware-control<span class="w"> </span>-f
