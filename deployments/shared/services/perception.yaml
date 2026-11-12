@@ -24,10 +24,7 @@ services:
       launch_pointcloud_container:=${LAUNCH_POINTCLOUD_CONTAINER_PERCEPTION}
       lidar_detection_model:=${LIDAR_DETECTION_MODEL}
       occupancy_grid_map_method:=${OCCUPANCY_GRID_MAP_METHOD}
-      perception_mode:=${PERCEPTION_MODE}
       pointcloud_container_name:=${POINTCLOUD_CONTAINER_NAME}
-      use_empty_dynamic_object_publisher:=${USE_EMPTY_DYNAMIC_OBJECT_PUBLISHER}
       use_sim_time:=${USE_SIM_TIME}
-      use_traffic_light_recognition:=${USE_TRAFFIC_LIGHT_RECOGNITION}
       vehicle_model:=${VEHICLE_MODEL}
     restart: on-failure

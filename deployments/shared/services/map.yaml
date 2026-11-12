@@ -37,5 +37,4 @@ services:
       map_path:=/autoware_map
       pointcloud_map_file:=${POINTCLOUD_MAP_FILE}
       use_sim_time:=${USE_SIM_TIME}
-      vehicle_model:=${VEHICLE_MODEL}
     restart: on-failure

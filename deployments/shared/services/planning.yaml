@@ -18,13 +18,11 @@ services:
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch autoware_launch component_planning.launch.xml
-      component_wise_launch:=true
       data_path:=/autoware_data/ml_models
       enable_all_modules_auto_mode:=${ENABLE_ALL_MODULES_AUTO_MODE}
       is_simulation:=${IS_SIMULATION_MODE}
       module_preset:=${PLANNING_MODULE_PRESET}
       planning_setting:=${PLANNING_SETTING:-rule_based}
-      pointcloud_container_name:=${POINTCLOUD_CONTAINER_NAME}
       use_sim_time:=${USE_SIM_TIME}
       vehicle_model:=${VEHICLE_MODEL}
     restart: on-failure

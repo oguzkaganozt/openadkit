@@ -19,7 +19,6 @@ services:
     command: >
       ros2 launch autoware_launch component_control.launch.xml
       check_external_emergency_heartbeat:=${CHECK_EXTERNAL_EMERGENCY_HEARTBEAT}
-      component_wise_launch:=true
       lateral_controller_mode:=${LATERAL_CONTROLLER_MODE}
       longitudinal_controller_mode:=${LONGITUDINAL_CONTROLLER_MODE}
       module_preset:=${CONTROL_MODULE_PRESET}
