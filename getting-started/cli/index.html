@@ -2243,6 +2243,10 @@ lives outside the release, so upgrades keep it. A source checkout can also
 override component images there; release images stay pinned. A kit adds its
 own files to this order; see the
 <a href="../../kits/integrator-guide/#1-settings">Integrator Guide</a>.</p>
+<p>Most settings are arguments of Autoware's launch files, such as
+<code>VEHICLE_MODEL</code>; the rest are host paths and options of Open AD Kit's own
+services. To change a node parameter instead, use a
+<a href="../../kits/integrator-guide/#2-config-overrides">config override</a>.</p>
 <table>
 <thead>
 <tr>
