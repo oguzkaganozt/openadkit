@@ -1218,7 +1218,7 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
         assert {"--no-deps", "--force-recreate", "--wait"} <= set(up)
         return up[up.index("--force-recreate") + 1:], result.stdout
 
-    # From any directory: the services with Open AD Kit config, as run started them.
+    # From any directory: the services that take config overrides, as run started them.
     services, output = recreated()
     assert services == ["acme", "planning"] and "kept running: carla" in output
     # A settings change recreates the services it changes, here one without config.

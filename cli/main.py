@@ -477,7 +477,7 @@ def logs_arguments(parser: argparse.ArgumentParser) -> None:
 def restart_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "services", nargs="*", metavar="SERVICE",
-        help="services to recreate (default: those with Open AD Kit config, and those whose settings changed)",
+        help="services to recreate (default: those that take config overrides or an overlay workspace, and those whose settings changed)",
     )
     parser.add_argument(
         "--all", action="store_true", dest="all_services",
@@ -736,7 +736,7 @@ def logs_command(args: argparse.Namespace) -> int:
 
 def restart_command(args: argparse.Namespace) -> int:
     """Recreate services of the running deployment, as run started them but
-    with the current settings, config and overlay workspace; from any directory."""
+    with the current settings, config overrides and overlay workspace; from any directory."""
     if args.services and args.all_services:
         raise UsageError("name the services to restart, or pass --all")
     project = live.running_project(args.role)
@@ -762,7 +762,7 @@ def restart_command(args: argparse.Namespace) -> int:
         # What a restart is for: changed config or workspaces, and changed settings.
         services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
     if not services:
-        raise OpenADKitError(f"{live.display_name(project)} has no service with Open AD Kit config to restart")
+        raise OpenADKitError(f"{live.display_name(project)} has no service that takes config overrides or an overlay workspace to restart")
     compose.recreate(deployment, selection, services)
     print(f"restarted: {', '.join(sorted(services))}")
     kept = sorted(running - services)
@@ -818,7 +818,7 @@ COMMANDS = {
     "status": Command("live", "show the running deployment", status_command),
     "logs": Command("live", "show the running deployment's logs", logs_command, logs_arguments),
     "restart": Command(
-        "live", "recreate services to apply changed settings, config and overlay workspaces", restart_command,
+        "live", "recreate services to apply changed settings, config overrides and overlay workspaces", restart_command,
         restart_arguments,
     ),
     "shell": Command(
