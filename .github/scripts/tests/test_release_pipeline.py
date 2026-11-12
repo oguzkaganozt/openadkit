@@ -206,7 +206,7 @@ def test_scan_gate_takes_the_newest_full_scan(tmp_path, runs, accepted):
                                     "digest": DIGEST, "platform": "linux/amd64",
                                     "image_ref": f"ghcr.io/example/openadkit@{DIGEST}"}]}
     result, selected = select_latest(
-        tmp_path, f"scan-metadata-{BUILD_TAG}", ".github/workflows/scan.yaml", "scan-metadata.json",
+        tmp_path, f"scan-metadata-{BUILD_TAG}", ".github/workflows/scan-images.yaml", "scan-metadata.json",
         [(conclusion, "release/9.8", scan(status)) for conclusion, status in runs],
         "scan_is_full", "scan_passed", "release-input/scan")
     assert (result.returncode == 0) is accepted, result.stderr

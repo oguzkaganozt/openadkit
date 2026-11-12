@@ -33,7 +33,7 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     for file in ("openadkit", "openadkit.json", "components/docker-bake.hcl"):
         (source / file).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / file, source / file)
-    workspace = source / ".github/scripts/evidence/kit/overlay_ws"
+    workspace = source / ".github/scripts/evidence/example-kit/overlay_ws"
     for product in ("build", "install", "log"):
         (workspace / product).mkdir()
         (workspace / product / "host-product").write_text("not evidence")

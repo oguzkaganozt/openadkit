@@ -57,7 +57,7 @@ evidence is two roles on one runner, not proof of two physical hosts.
 
 The integrator example is made in CI, not kept in `deployments/`: the staged
 CLI's `openadkit new example-kit` makes it under `kits/`, and the fixture in
-`.github/scripts/evidence/kit/` adds every extension point on top. Lint
+`.github/scripts/evidence/example-kit/` adds every extension point on top. Lint
 validates the same kit made from the checkout.
 
 `registry-cleanup.yaml` deletes a pull request's CI images when it closes, CI

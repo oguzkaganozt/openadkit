@@ -10,7 +10,7 @@ on:
       - 'openadkit'
       - 'cli/**'
       - 'pyproject.toml'
-      - '.github/scripts/evidence/kit/**'
+      - '.github/scripts/evidence/example-kit/**'
       - 'deployments/safety-island-simulation/**'
       - '**/*.sh'
       - '**/*.json'

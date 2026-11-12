@@ -252,7 +252,7 @@ Your kit's acceptance checks run where CI runs its own:
   waits for the service to exit and takes its exit code.
 
 The example kit is what `openadkit new` makes, with a
-[fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit)
+[fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit)
 that uses every extension point on top. Its evidence cells run both checks on
 Humble and Jazzy, each with a workspace built against the matching devel
 digest, and every release needs them to pass. They show that the extension

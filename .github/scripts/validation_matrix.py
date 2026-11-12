@@ -42,7 +42,7 @@ ARM64_RUNNER_SUFFIX = "-arm"
 # and a pinned external image).
 EXAMPLE_KITS = {"example-kit": "planning-simulation"}
 EXAMPLE_KIT_DIRECTORY = "kits"
-EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/kit"
+EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/example-kit"
 # Host build products of an overlay workspace; never kit content.
 COLCON_PRODUCTS = ("build", "install", "log")
 
