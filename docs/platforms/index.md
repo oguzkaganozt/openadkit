@@ -26,7 +26,7 @@ documented as if it worked. Host requirements and boards are on the
 | Path | Tier | Notes |
 |------|------|-------|
 | Ubuntu 22.04 and 24.04 + Docker Compose deployments | **Supported** | Compose validated in CI |
-| Component images, amd64 + arm64 | **Supported** | Built and scanned for both; the evidence cells run on amd64. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
+| Component images, amd64 + arm64 | **Supported** | Built, scanned and run in the evidence cells for both. `sensing-perception-cuda` and `planning-cuda` are amd64-only; only the amd64 `simulator` carries the CARLA client |
 | Jazzy images | **Supported** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
 | CARLA Simulation | **Supported** | Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand |
 | [AutoSD](autosd.md) with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |

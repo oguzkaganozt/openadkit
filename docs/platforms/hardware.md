@@ -28,5 +28,5 @@ Scenario Simulation can then run slower than real time with
 | R-Car X5H | arm64 | AutoSD 10 image in [openadkit-rcar-x5h](https://github.com/autowarefoundation/openadkit-rcar-x5h), its own repository; board tests are manual |
 
 No board is part of the release evidence: the
-[evidence cells](../releases/evidence.md) run on hosted amd64 runners, and
-native arm64 cells are planned.
+[evidence cells](../releases/evidence.md) run on hosted amd64 and arm64
+runners.

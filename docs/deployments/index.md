@@ -14,7 +14,7 @@ start with Planning Simulation.
 All run on Humble and Jazzy except CARLA Simulation, which is Humble-only, and
 the GPU modes are amd64-only. **CI evidence** says whether a release runs the
 deployment end to end before it ships; an exempt deployment ships without that
-check, and evidence runs on amd64 only. See the
+check. Evidence runs on every architecture the deployment supports. See the
 [Evidence Policy](../releases/evidence.md).
 
 Scenario and CARLA Simulation can also run as

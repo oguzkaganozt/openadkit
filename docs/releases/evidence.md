@@ -22,16 +22,18 @@ build to pass.
 
 ## Cells and Levels
 
-Evidence cells are enumerated from the deployment manifests, one per ROS distro
-and topology:
+Evidence cells are enumerated from the deployment manifests, one per ROS
+distro, architecture and topology:
 
-| Deployment | Distros | Topologies |
-|------------|---------|------------|
-| Planning Simulation | Humble, Jazzy | Single host; also under Podman and systemd with the [AutoSD](../platforms/autosd.md) units |
-| Scenario Simulation | Humble, Jazzy | Single host; two isolated nodes on one host |
-| Logging Simulation | Humble, Jazzy | Single host, in CPU mode |
-| Safety Island Simulation | Humble, Jazzy | Single host, with the pinned Safety Island release over `domain_bridge` |
-| `example-kit` | Humble, Jazzy | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages |
+| Deployment | Distros | Architectures | Topologies |
+|------------|---------|---------------|------------|
+| Planning Simulation | Humble, Jazzy | amd64, arm64 | Single host; also under Podman and systemd with the [AutoSD](../platforms/autosd.md) units |
+| Scenario Simulation | Humble, Jazzy | amd64, arm64 | Single host; two isolated nodes on one host |
+| Logging Simulation | Humble, Jazzy | amd64, arm64 | Single host, in CPU mode |
+| Safety Island Simulation | Humble, Jazzy | amd64 | Single host, with the pinned Safety Island release over `domain_bridge` |
+| `example-kit` | Humble, Jazzy | amd64, arm64 | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages |
+
+A cell runs on a hosted runner of its own architecture.
 
 Each cell runs these levels on a fresh stack, started with
 `openadkit run --no-visualizer`:
@@ -59,9 +61,9 @@ and blocks the release.
 
 ## What Evidence Does Not Cover
 
-- **Other platforms.** Every cell runs on a hosted `linux/amd64` runner. Images
-  are also built and scanned for arm64, but that is not arm64 runtime evidence,
-  nor two-machine LAN, GPU, HIL or vehicle evidence.
+- **Other platforms.** Every cell runs on a hosted `linux/amd64` or
+  `linux/arm64` runner. That is not two-machine LAN, GPU, board, HIL or vehicle
+  evidence.
 - **GPU modes.** The cells of Planning and Logging Simulation run their CPU
   modes. The GPU modes (`--gpu`: the Diffusion Planner on `planning-cuda`,
   CenterPoint on `sensing-perception-cuda`) validate in CI (L0) and are checked

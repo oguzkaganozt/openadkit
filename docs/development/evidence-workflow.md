@@ -15,6 +15,9 @@ branch's other images, copied by digest, and runs the cells on that build
 before merge. A fork's pull request cannot push; its images are checked at the
 build and scan only, and run in the cells after merge.
 
+A pull request runs the amd64 cells only. A build of the branch runs the cells
+of every architecture.
+
 A change that rebuilds no image, such as a deployment setting, the CLI or a
 check, runs the cells against an existing build:
 
