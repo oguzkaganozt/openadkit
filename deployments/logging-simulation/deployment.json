@@ -41,31 +41,31 @@
       "gpu": true,
       "files": [
         {
-          "path": "pts_voxel_encoder_centerpoint_tiny.onnx",
-          "url": "https://awf.ml.dev.web.auto/perception/models/centerpoint/v3/pts_voxel_encoder_centerpoint_tiny.onnx",
+          "path": "tiny/pts_voxel_encoder.onnx",
+          "url": "https://huggingface.co/AutowareFoundation/lidar_centerpoint/resolve/494c8171def40bd36cc2feb323e0a5acbfab132b/tiny/pts_voxel_encoder.onnx",
           "sha256": "2c53465715c1fd2e9dc5727ef3fca74f4cdf0538f74286b0946e219d0ca5693b"
         },
         {
-          "path": "pts_backbone_neck_head_centerpoint_tiny.onnx",
-          "url": "https://awf.ml.dev.web.auto/perception/models/centerpoint/v3/pts_backbone_neck_head_centerpoint_tiny.onnx",
+          "path": "tiny/pts_backbone_neck_head.onnx",
+          "url": "https://huggingface.co/AutowareFoundation/lidar_centerpoint/resolve/494c8171def40bd36cc2feb323e0a5acbfab132b/tiny/pts_backbone_neck_head.onnx",
           "sha256": "9bb0b634f3664bd098ce7d6a3d8a9fb7cc8d9b8252b27f302c71e43316bab551"
         },
         {
-          "path": "centerpoint_tiny_ml_package.param.yaml",
-          "url": "https://awf.ml.dev.web.auto/perception/models/centerpoint/v3/centerpoint_tiny_ml_package.param.yaml",
-          "sha256": "e0846b08fbd023d6a7c085f5389d0ccaef8ad9cd2c5e1eb7dbc6583618e38424"
+          "path": "tiny/ml_package.param.yaml",
+          "url": "https://huggingface.co/AutowareFoundation/lidar_centerpoint/resolve/494c8171def40bd36cc2feb323e0a5acbfab132b/tiny/ml_package.param.yaml",
+          "sha256": "d52a48d11f704b1ea7291fcb6219afecbd768602297bd1685f214f48b147877b"
         },
         {
-          "path": "detection_class_remapper.param.yaml",
-          "url": "https://awf.ml.dev.web.auto/perception/models/centerpoint/v3/detection_class_remapper.param.yaml",
+          "path": "tiny/detection_class_remapper.param.yaml",
+          "url": "https://huggingface.co/AutowareFoundation/lidar_centerpoint/resolve/494c8171def40bd36cc2feb323e0a5acbfab132b/tiny/detection_class_remapper.param.yaml",
           "sha256": "c711f8875ece9b527dfe31ffc75f8c0de2e77945ef67860a959a4e04c36772d5"
         }
       ],
       "requiredFiles": [
-        "pts_voxel_encoder_centerpoint_tiny.onnx",
-        "pts_backbone_neck_head_centerpoint_tiny.onnx",
-        "centerpoint_tiny_ml_package.param.yaml",
-        "detection_class_remapper.param.yaml"
+        "tiny/pts_voxel_encoder.onnx",
+        "tiny/pts_backbone_neck_head.onnx",
+        "tiny/ml_package.param.yaml",
+        "tiny/detection_class_remapper.param.yaml"
       ]
     }
   ]
