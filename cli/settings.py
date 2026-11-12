@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from catalog import Deployment, RuntimeContext, state_root
+from catalog import Deployment, Kit, state_root
 from manifest import OpenADKitError
 
 # Compose settings the CLI passes itself; a shell export must not change them.
@@ -216,7 +216,7 @@ def _resolved(deployment: Deployment, gpu: bool, injections: dict[str, str]) -> 
 
 def resolve(
     deployment: Deployment,
-    kit: RuntimeContext,
+    kit: Kit,
     ros_distro: str | None = None,
     gpu: bool = False,
     *,

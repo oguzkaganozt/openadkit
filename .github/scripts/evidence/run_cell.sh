@@ -96,7 +96,7 @@ engine=(docker)
 api_container=autoware-api
 # The CLI's record of the run, written once the deployment is ready, with the
 # verify step's result.
-run_record="${OPENADKIT_OUTPUT_DIR}/${deployment}/results/run.json"
+run_report="${OPENADKIT_OUTPUT_DIR}/${deployment}/results/run.json"
 # The first node listens on the base port; each later node listens on its own
 # port and peers with the first.
 zenoh_port=7447
@@ -241,13 +241,13 @@ if [ "${l0_rc}" -eq 0 ]; then
         [ -n "${verify}" ] && verify_args=(--verify)
         node_cli run 0 --ros-distro "${distro}" --no-visualizer "${verify_args[@]}" >"${out}/run.log" 2>&1
         run_rc=$?
-        if [ -f "${run_record}" ]; then
-            cp "${run_record}" "${out}/run.json"
+        if [ -f "${run_report}" ]; then
+            cp "${run_report}" "${out}/run.json"
             l1_ok=true
-            ready_s=$(jq '.readySeconds | floor' "${run_record}")
+            ready_s=$(jq '.readySeconds | floor' "${run_report}")
             if [ -n "${verify}" ]; then
-                arrival_s=$(jq '.verify.seconds // null | if . then floor else . end' "${run_record}")
-                if [ "$(jq -r '.verify.result // empty' "${run_record}")" = PASSED ]; then l2_ok=true; else l2_ok=false; fi
+                arrival_s=$(jq '.verify.seconds // null | if . then floor else . end' "${run_report}")
+                if [ "$(jq -r '.verify.result // empty' "${run_report}")" = PASSED ]; then l2_ok=true; else l2_ok=false; fi
             fi
         fi
         [ "${run_rc}" -eq 0 ] || [ -n "${verify}" ] || l1_ok=false

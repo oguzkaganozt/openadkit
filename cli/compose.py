@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
-from catalog import Deployment, RuntimeContext, deployment_checksum, state_root
+from catalog import Deployment, Kit, deployment_checksum, state_root
 from manifest import OpenADKitError
 from settings import Selection, compose_process_environment, docker_environment
 
@@ -140,11 +140,11 @@ def live_project_files() -> dict[str, list[str]]:
 
 
 def other_projects(deployment: Deployment) -> list[str]:
-    """Include foreign kits; only this deployment's exact views may coexist.
+    """Include foreign kits; only this deployment's own projects may coexist.
 
     A project is named after its deployment only, so another kit's deployment
-    of the same name has the same project name as one of these views. A view is this deployment's only
-    when it started from the view's own entry Compose file; otherwise `run`
+    of the same name has the same project name as one of these. A project is this deployment's only
+    when it started from its own entry Compose file; otherwise `run`
     would replace another stack in place. Compose that reports no files keeps
     the name as the only evidence. stop, status and logs still go by name, so
     a stack started from an older release stays reachable after an upgrade.
@@ -162,18 +162,18 @@ def other_projects(deployment: Deployment) -> list[str]:
 
 
 def live_nodes(deployment: Deployment) -> list[str | None]:
-    """Live views of one deployment: None is the single-host project."""
+    """The live projects of one deployment, by node: None is the single-host project."""
     live = live_projects()
-    views: list[str | None] = []
+    nodes: list[str | None] = []
     if deployment.project_name() in live:
-        views.append(None)
-    views.extend(
+        nodes.append(None)
+    nodes.extend(
         node for node in sorted(deployment.nodes) if deployment.project_name(node) in live
     )
-    return views
+    return nodes
 
 
-def view_label(node: str | None) -> str:
+def node_label(node: str | None) -> str:
     return "single-host" if node is None else f"node {node}"
 
 
@@ -187,16 +187,16 @@ def live_state_conflict(deployment: Deployment, selection: Selection) -> str | N
         clashing = [None] if None in live else []
     if not clashing:
         return None
-    running = ", ".join(view_label(node) for node in clashing)
+    running = ", ".join(node_label(node) for node in clashing)
     return (
         f"{deployment.name} is already running as {running}; "
         "stop it with openadkit stop "
-        f"before starting {view_label(selection.node)}"
+        f"before starting {node_label(selection.node)}"
     )
 
 
 def require_stopped(deployment: Deployment) -> None:
-    """Refuse destructive cleanup while any view of this deployment is live."""
+    """Refuse destructive cleanup while any project of this deployment is live."""
     if live_nodes(deployment):
         raise OpenADKitError(f"{deployment.name} is running; stop it before deleting data: openadkit stop")
 
@@ -275,8 +275,8 @@ def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
     return result.stdout
 
 
-def run_record(
-    deployment: Deployment, selection: Selection, kit: RuntimeContext, model: str, started: float,
+def run_report(
+    deployment: Deployment, selection: Selection, kit: Kit, model: str, started: float,
 ) -> dict[str, Any]:
     """What this run started: the version, the images, the resolved model's
     digest, and the content digests of what the services mount from the host.
@@ -307,11 +307,11 @@ def run_record(
     }
 
 
-def write_run_record(deployment: Deployment, record: dict[str, Any]) -> Path:
+def write_run_report(deployment: Deployment, report: dict[str, Any]) -> Path:
     results = deployment.output_directory / "results"
     results.mkdir(parents=True, exist_ok=True)
     path = results / "run.json"
-    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return path
 
 
@@ -514,12 +514,12 @@ def remove_run_state(project: str) -> None:
     run_state_path(project).unlink(missing_ok=True)
 
 
-def verify(deployment: Deployment, selection: Selection, services: set[str], record: dict[str, Any]) -> int:
+def verify(deployment: Deployment, selection: Selection, services: set[str], report: dict[str, Any]) -> int:
     """Run the deployment's verify step on the ready stack and return its exit code.
 
     A command runs in its service with ROS, Autoware and the overlays sourced;
     without one, the step is the service's own exit, as a scenario run's. The
-    result joins the run's record.
+    result joins the run's report.
     """
     spec = deployment.verify
     assert spec is not None
@@ -538,14 +538,14 @@ def verify(deployment: Deployment, selection: Selection, services: set[str], rec
         if not ids:
             raise OpenADKitError(f"{service} has no container to wait for")
         code = int(docker(["docker", "wait", ids[0]]).stdout.strip())
-    record["verify"] = {
+    report["verify"] = {
         "service": service,
         "seconds": round(time.monotonic() - begin, 1),
         "exitCode": code,
         "result": "PASSED" if code == 0 else "FAILED",
     }
-    path = write_run_record(deployment, record)
-    print(f"verify: {'passed' if code == 0 else f'failed (exit {code})'}; record: {path}")
+    path = write_run_report(deployment, report)
+    print(f"verify: {'passed' if code == 0 else f'failed (exit {code})'}; report: {path}")
     return code
 
 

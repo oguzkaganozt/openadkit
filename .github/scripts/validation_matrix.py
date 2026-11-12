@@ -78,7 +78,7 @@ def validation_cells(
     source_root: Path,
     kit: Any | None = None,
 ) -> list[dict[str, Any]]:
-    """Return sorted validation cells for every deployment and node view."""
+    """Return sorted validation cells for every deployment and each of its nodes."""
     kit = kit if kit is not None else runtime.load_kit(source_root)
     if not kit.deployments:
         fail("release source has no deployments")
@@ -88,10 +88,10 @@ def validation_cells(
     for name in sorted(kit.deployments):
         deployment = runtime.get_deployment(source_root, kit, name)
         gpu = deployment.requirements["gpu"]
-        views = [""] + sorted(deployment.nodes)
+        nodes = [""] + sorted(deployment.nodes)
         for distro in deployment.requirements["rosDistros"]:
             distros.add(distro)
-            for node in views:
+            for node in nodes:
                 if gpu in ("none", "optional"):
                     rows.append(
                         {

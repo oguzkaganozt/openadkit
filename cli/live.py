@@ -63,26 +63,26 @@ def format_autoware_state(state: dict[str, Any]) -> list[str]:
 
 # The running stack is found from Docker, not from a kit: any directory and
 # any release's CLI reach it. run allows one deployment per host, so the live
-# projects are its views, its single-host project or the nodes of it that
+# projects are all its own: its single-host project, or the nodes of it that
 # run here.
-def live_views(node: str | None = None) -> list[str]:
+def running_projects(node: str | None = None) -> list[str]:
     projects = sorted(live_projects())
     if node is not None:
         projects = [name for name in projects if name.endswith(f"_{node}")]
     return projects
 
 
-def view_name(project: str) -> str:
+def display_name(project: str) -> str:
     return project[len(PROJECT_PREFIX):]
 
 
-def live_view(node: str | None) -> str:
+def running_project(node: str | None) -> str:
     """The one live project a command acts on."""
-    projects = live_views(node)
+    projects = running_projects(node)
     if not projects:
         raise OpenADKitError(f"node {node} is not running here" if node else "nothing is running")
     if len(projects) > 1:
-        names = ", ".join(view_name(project) for project in projects)
+        names = ", ".join(display_name(project) for project in projects)
         raise OpenADKitError(f"{names} run here; choose one with --node")
     return projects[0]
 
@@ -154,14 +154,14 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     """
     ids = run_project(project, ["ps", "--quiet", "api"]).stdout.split()
     if not ids:
-        raise OpenADKitError(f"{view_name(project)} has no running api service to record from")
+        raise OpenADKitError(f"{display_name(project)} has no running api service to record from")
     inspected = docker(["docker", "inspect", ids[0]], check=False, trace=False)
     try:
         config = json.loads(inspected.stdout)[0]["Config"]
     except (ValueError, LookupError, TypeError) as error:
         raise OpenADKitError("could not inspect the api container") from error
     output = output or output_root() / deployment_name(project) / "recordings"
-    bag = output / f"{view_name(project)}-{time.strftime('%Y%m%d-%H%M%S')}"
+    bag = output / f"{display_name(project)}-{time.strftime('%Y%m%d-%H%M%S')}"
     output.mkdir(parents=True, exist_ok=True)
     # The container's own entrypoint, which a service may have overridden.
     entrypoint = config.get("Entrypoint") or []
@@ -211,7 +211,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
 def deployment_name(project: str) -> str:
     """The deployment a project runs: names never contain "_", which separates a node."""
     state = read_run_state(project)
-    return state["deployment"] if state else view_name(project).split("_", 1)[0]
+    return state["deployment"] if state else display_name(project).split("_", 1)[0]
 
 
 def stop(project: str) -> None:

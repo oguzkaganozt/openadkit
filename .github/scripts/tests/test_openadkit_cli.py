@@ -796,7 +796,7 @@ def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_p
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
-    # single-host or primary view.
+    # single-host or primary project.
     entry = {"own": directory / "docker-compose.yaml", "elsewhere": tmp_path / "other-kit/docker-compose.yaml",
              "other-node": directory / "compose.secondary.yaml"}[started_from]
     live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
@@ -825,7 +825,7 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
 def test_a_node_is_never_read_from_a_deployment_name(monkeypatch):
     # planning-simulation running single-host is not node "simulation" of anything.
     monkeypatch.setattr(cli_live, "live_projects", lambda: {"openadkit-planning-simulation", "openadkit-split_simulation"})
-    assert cli_live.live_views("simulation") == ["openadkit-split_simulation"]
+    assert cli_live.running_projects("simulation") == ["openadkit-split_simulation"]
 
 
 def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path):
@@ -1327,7 +1327,7 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
     deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
-    kit = cli_catalog.RuntimeContext("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    kit = cli_catalog.Kit("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
