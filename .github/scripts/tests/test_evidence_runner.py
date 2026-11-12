@@ -68,7 +68,10 @@ elif args[0] == "run" and "--verify" in args:
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
                         "OPENADKIT_CLI": str(tmp_path / "bin/openadkit")}
-    cell = matrix_cell("planning-simulation", launch_arguments=True)
+    runtime = validation_matrix.load_runtime(ROOT)
+    checking = next(cell for cell in validation_matrix.evidence_cells(runtime, ROOT)
+                    if cell.get("launch_arguments") and cell["distro"] == "humble")
+    cell = matrix_cell(checking["deployment"], launch_arguments=True)
     result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
                             cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30)
     record = json.loads((out / "cell.json").read_text())

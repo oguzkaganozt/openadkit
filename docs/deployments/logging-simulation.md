@@ -20,10 +20,11 @@ openadkit run logging-simulation --gpu   # GPU: CenterPoint on CUDA (amd64 only)
 models (to `~/autoware_data/lidar_centerpoint`). The rosbag starts playing once
 sensing subscribes to its LiDAR topic.
 
-`run` returns once the services have started and stay up. This deployment
-declares no readiness check of Autoware itself and is
-[exempt from CI evidence](../releases/evidence.md#ci-exemptions), so watch
-`openadkit status` and the visualizer for localization to initialize.
+`run` returns once the stack is ready: the services stay up and the AD API can
+initialize localization. `openadkit run logging-simulation --verify` then
+follows the replay: it passes once localization is initialized and the pose and
+the tracked objects keep arriving. Every release runs that check in CPU mode;
+the GPU mode is checked by hand on a GPU host.
 
 The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than

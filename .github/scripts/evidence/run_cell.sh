@@ -72,6 +72,11 @@ scenario_output="${OPENADKIT_OUTPUT_DIR}/${deployment}/results"
 if [ "${scenario}" = true ]; then
     printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
 fi
+# The same holds for a replayed recording: at a tenth of its speed sensing and
+# perception keep up, and the rosbag waits longer for a slow start.
+if [ "${deployment}" = logging-simulation ]; then
+    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
+fi
 
 # Several nodes on one host: each gets its own project, logs and Zenoh endpoint.
 split=false

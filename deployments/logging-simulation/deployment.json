@@ -1,13 +1,16 @@
 {
   "schemaVersion": 2,
   "description": "Recorded sensor data replayed through sensing, perception and localization",
-  "evidence": {"exempt": "Replays a sample rosbag through the full sensing and perception stack, which the hosted CI runners do not run yet."},
   "shared": ["shared"],
   "compose": {
     "files": ["docker-compose.yaml"],
     "gpuFiles": ["docker-compose.gpu.yaml"],
     "resetServices": ["map-check", "rosbag"],
     "waitTimeout": 300
+  },
+  "verify": {
+    "service": "api",
+    "command": ["python3", "/openadkit/checks/follow_replay.py"]
   },
   "requirements": {
     "architectures": ["amd64", "arm64"],
