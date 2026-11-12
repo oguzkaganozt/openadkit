@@ -53,7 +53,7 @@ What a kit made with `openadkit new` builds on:
 - `externalImages` that replace a component image or add new ones.
 
 See [Create a Kit](../kits/create-a-kit.md) and the
-[Integrator Guide](../kits/integrator-guide.md).
+[Kit Guide](../kits/kit-guide.md).
 
 ### Settings and Paths
 

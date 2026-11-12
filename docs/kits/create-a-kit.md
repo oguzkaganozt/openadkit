@@ -58,7 +58,7 @@ openadkit stop
 Inside a kit with one deployment the commands need no name. From elsewhere,
 name it by its directory: `openadkit run ./my-kit`. A kit on a source checkout
 needs `DEVEL_IMAGE` for `build`; see
-[Overlay Workspace](integrator-guide.md#3-overlay-workspace).
+[Overlay Workspace](kit-guide.md#3-overlay-workspace).
 
 Add `--ros-distro jazzy` to `build`, `validate` and `run` for Jazzy.
 `validate` renders the Compose model without starting anything; it is not
@@ -72,6 +72,6 @@ extension point on Humble and Jazzy.
 
 Keep parameter changes in `config/autoware/` and packages in `overlay_ws/`
 rather than mounting over `/opt/autoware` or replacing a base service's
-command. The [Integrator Guide](integrator-guide.md) is the reference for the
+command. The [Kit Guide](kit-guide.md) is the reference for the
 settings order, config overrides, the overlay workspace, extra services and
 image replacement.

@@ -18,7 +18,7 @@ fit.
 | Modules | The base deployment's services, your packages in `overlay_ws/` and your extra services |
 | Model versions | `data` in `deployment.json`: each download with its URL and SHA-256 |
 | Parameters | `config/autoware/` and `settings.env` |
-| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](integrator-guide.md#a-new-vehicle)) |
+| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](kit-guide.md#a-new-vehicle)) |
 | Evaluation and testing | The `verify` step, which `openadkit run --verify` runs |
 
 The Deployment Profile stays in the Reference Design's own documents: the
@@ -32,11 +32,11 @@ GPU.
    `openadkit new my-design --base scenario-simulation`
    ([Create a Kit](create-a-kit.md)).
 2. Add the stack through the kit's
-   [extension points](integrator-guide.md#extension-points): packages,
+   [extension points](kit-guide.md#extension-points): packages,
    parameters, models and extra services.
 3. Name a `verify` step of your own in `deployment.json` that checks what the
    Reference Design states, such as the rates of planning and control
-   ([Validation and Evidence](integrator-guide.md#validation-and-evidence)).
+   ([Validation and Evidence](kit-guide.md#validation-and-evidence)).
 4. Commit the kit directory to the Reference Design's repository. A reader
    reproduces the stack there with `openadkit build` and
    `openadkit run --verify`; the CLI downloads the release the kit pins on

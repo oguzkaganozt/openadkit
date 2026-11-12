@@ -47,5 +47,5 @@ openadkit stop
 
 Start a kit with `openadkit new` ([Create a Kit](../kits/create-a-kit.md)). It
 extends a deployment without copying it and keeps only your differences. The
-[Integrator Guide](../kits/integrator-guide.md) is the reference for every
+[Kit Guide](../kits/kit-guide.md) is the reference for every
 extension point.

@@ -1,4 +1,4 @@
-# Integrator Guide
+# Kit Guide
 
 The reference for a kit: what it pins, each extension point, and how it is
 validated and upgraded. A kit owns its differences; Open AD Kit owns the base
