@@ -163,7 +163,8 @@ deliberately to test this devel/runtime boundary, then publishes `/acme/probe`.
 
 Include the base's Compose file through `OPENADKIT_BASE_DEPLOYMENT`, then
 define your services under `services:`. Keep communicating ROS services on the
-base ROS domain and middleware.
+base ROS domain and middleware, and give each one `init: true`
+([Develop and Debug](develop-and-debug.md#the-development-loop)).
 
 An extra Open AD Kit runtime service loads the kit workspace by mounting
 `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the example kit's
