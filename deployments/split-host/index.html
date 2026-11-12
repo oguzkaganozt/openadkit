@@ -2034,10 +2034,10 @@ over Zenoh. A deployment keeps its name and declares its <strong>nodes</strong> 
 </ul>
 <p>Without <code>--node</code>, the deployment runs on one host as usual.</p>
 <h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
-<p>Each node has its own Compose entrypoint, <code>compose.&lt;node&gt;.yaml</code>, named in the
-manifest. It includes the node's services and <code>../shared/compose.zenoh.yaml</code>,
-and mounts the deployment's <code>config/zenoh.json5</code> allowlist. The CLI only
-selects the node's files and passes its <code>rosDomainId</code> as
+<p>Each node runs two Compose files, named in the manifest: <code>compose.&lt;node&gt;.yaml</code>
+holds the node's services, and <code>compose.zenoh.yaml</code> adds the Zenoh bridge with
+the deployment's <code>config/zenoh.json5</code> allowlist. The CLI only selects the
+node's files and passes its <code>rosDomainId</code> as
 <code>OPENADKIT_ROS_DOMAIN_ID</code>; it adds no service of its own. The allowlist is one
 of the node's <code>requiredFiles</code>, so a missing or symlinked file fails validation
 before any container starts.</p>
