@@ -48,7 +48,7 @@ _openadkit() {
     case ${command} in
         install) options="--version --destination --force --help" ;;
         upgrade) options="--check --help" ;;
-        setup) options="--gpu --check --help" ;;
+        setup) options="--gpu --no-check --help" ;;
         uninstall) options="--all --help" ;;
         list | version) options="--json --verbose --help" ;;
         validate) options="--ros-distro --gpu --role --ws --data --json --verbose --help" ;;

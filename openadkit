@@ -143,11 +143,11 @@ activate_release() {
 }
 
 announce_next_steps() {
-  local launcher_dir="${HOME}/.local/bin" next_command="openadkit setup --check"
+  local launcher_dir="${HOME}/.local/bin" next_command="openadkit setup"
   case ":${PATH}:" in
     *":${launcher_dir}:"*) ;;
     *)
-      next_command="${launcher_dir}/openadkit setup --check"
+      next_command="${launcher_dir}/openadkit setup"
       cat <<EOF
 Add ${launcher_dir} to PATH, then start a new shell:
   echo 'export PATH="${launcher_dir}:\$PATH"' >> ~/.bashrc
