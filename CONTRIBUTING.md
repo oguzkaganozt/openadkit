@@ -91,8 +91,8 @@ the `PASSED` evidence release gate. Share release inputs through
 Help wording, exhaustive schema-error and option combinations, terminal signals,
 upgrade-check/rollback UX, one-shot resets, bind-mount preparation, post-start
 crash/timeout diagnostics, and all GPU/node data combinations are deliberately
-not covered. Release draft recreation, alternate packager sources, and every
-alias/retry variant are also outside this focused suite. Data-transfer tests use
+not covered. Release draft recreation and every alias/retry variant are also
+outside this focused suite. Data-transfer tests use
 local files rather than a network server. Docker lifecycle calls use stubs; real
 Compose checks render models but do not run containers. These tests do not
 replace hosted build/scan/evidence or real two-host SIL acceptance.

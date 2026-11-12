@@ -40,24 +40,10 @@ python3 "${planner}" \
   --output "${plan_file}" \
   --stage "${bundle_root}"
 
-# The installer asset and the bundle entrypoint come from the packager
-# revision, not from the promoted build being released. A promoted build can
-# predate the install/upgrade launcher while release notes and docs advertise
-# those commands for every release.
-installer_dir=${INSTALLER_SOURCE_DIR:-$(cd -- "${script_dir}/../.." && pwd -P)}
-installer="${installer_dir}/openadkit"
-[[ -x $installer ]] || {
-  echo "Expected an executable installer at ${installer}" >&2
-  exit 1
-}
-"$installer" install --help >/dev/null 2>&1 || {
-  echo "Installer ${installer} does not support 'install'; update the packager revision" >&2
-  exit 1
-}
-cp -a "$installer" "${bundle_root}/openadkit"
-
+# The installer asset is the bundle's own launcher, staged from the release
+# commit with the CLI it starts: the release ships the launcher its evidence ran.
 (cd "${bundle_root}" && ./openadkit list)
-cp -a "$installer" dist/openadkit
+cp -a "${bundle_root}/openadkit" dist/openadkit
 
 # Split-host node views require Zenoh endpoints. These dummies only render and
 # validate the Compose graphs; they never start a bridge.
