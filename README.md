@@ -49,15 +49,15 @@ Stuck, or want the details? See the full [Quickstart](https://autowarefoundation
 
 ## Deployments
 
-| Deployment | What it runs | GPU |
+| Deployment | What it runs | Requires |
 |---|---|---|
-| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map | Optional |
-| [`scenario-simulation`](https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/) | Predefined traffic scenarios in Scenario Simulator | No |
-| [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data, from sensing to localization | Optional |
-| [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Closed-loop driving in the CARLA simulator | Required |
-| [`safety-island-simulation`](https://autowarefoundation.github.io/openadkit/deployments/safety-island-simulation/) | Planning Simulation driven by the Safety Island controller | No |
+| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map<br>`--gpu` plans with the Diffusion Planner | |
+| [`scenario-simulation`](https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/) | Predefined traffic scenarios in Scenario Simulator<br>`--node` [splits it across two hosts](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (experimental) | |
+| [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data, sensing to localization<br>`--gpu` runs CenterPoint on CUDA | |
+| [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Closed-loop driving in the CARLA simulator<br>`--node` [splits it across two hosts](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (experimental) | NVIDIA GPU<br>amd64, Humble |
+| [`safety-island-simulation`](https://autowarefoundation.github.io/openadkit/deployments/safety-island-simulation/) | Planning Simulation controlled by the Safety Island | amd64 |
 
-`openadkit list` prints this catalog. With `--gpu`, Planning Simulation plans with the Diffusion Planner. CARLA requires Humble, amd64 and an NVIDIA GPU; Safety Island Simulation requires amd64. [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (`--node` over Zenoh) is experimental.
+`openadkit list` prints this catalog in your terminal.
 
 ## Create a Kit
 
