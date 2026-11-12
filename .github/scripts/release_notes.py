@@ -1,8 +1,8 @@
 """Write a release's notes from its validated plan.
 
 The notes are for people: the highlights, how to install, what changed and
-what the evidence showed. Digests, provenance and the BOM stay in the release
-assets (release-plan.json and release-metadata.json), where tools read them.
+what the evidence showed. Digests, provenance and the BOM stay in the release's
+release-metadata.json, where tools read them.
 
 What changed comes from GitHub's generated notes since the previous release,
 grouped by the Conventional Commits type of each pull request title.

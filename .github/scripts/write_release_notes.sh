@@ -25,13 +25,11 @@ bundle_name=$(jq -r '.bundle.asset' "${plan_file}")
 bundle="dist/${bundle_name}"
 
 bundle_sha256=$(sha256sum "${bundle}" | cut -d ' ' -f1)
-plan_sha256=$(sha256sum "${plan_file}" | cut -d ' ' -f1)
 jq \
   --arg version "${VERSION}" \
   --arg release_sha "${RELEASE_SHA}" \
   --arg default_ros_distro "${DEFAULT_ROS_DISTRO}" \
   --arg packager_sha "${PACKAGER_SHA}" \
-  --arg plan_sha256 "${plan_sha256}" \
   --arg bundle_name "${bundle_name}" \
   --arg bundle_sha256 "${bundle_sha256}" \
   --argjson publish_latest_aliases "${PUBLISH_LATEST_ALIASES}" \
@@ -44,7 +42,6 @@ jq \
     release_sha: $release_sha,
     default_ros_distro: $default_ros_distro,
     packager_sha: $packager_sha,
-    release_plan_sha256: $plan_sha256,
     bundles: [{name: $bundle_name, sha256: $bundle_sha256}],
     latest_aliases_updated: $publish_latest_aliases,
     scan: $scan[0],

@@ -9,10 +9,10 @@ metadata. Each stable release publishes:
 - a versionless `openadkit` installer
 - the versioned `openadkit-vX.Y.Z.tar.gz` bundle: the CLI and the catalog of
   deployments
-- `release-plan.json` and `release-metadata.json`: the pinned Autoware release,
-  ROS distros, image tags and digests, the BOM, the passing evidence summary
-  and the CI exemptions
-- build provenance for the installer, bundle, plan and metadata
+- `release-metadata.json`: the pinned Autoware release, ROS distros, image
+  digests, the BOM, the bundle's checksum, the passing evidence summary and
+  the CI exemptions
+- build provenance for the installer, bundle and metadata
 
 The release notes open with the highlights and the install command, list the
 merged pull requests by type, and summarize the evidence. An installed release

@@ -386,5 +386,7 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     assert "**1/1** evidence cells passed" in notes
     metadata = json.loads((tmp_path / "release-metadata.json").read_text())
     assert metadata["bundles"] == [{"name": asset.name, "sha256": first_asset}]
-    assert metadata["release_plan_sha256"] == hashlib.sha256(first_plan).hexdigest()
+    # The plan stays in the workflow: the metadata is the one file a release publishes about itself.
+    assert "release-plan.json" not in [item["name"] for item in json.loads(first_plan)["githubAssets"]]
+    assert "release_plan_sha256" not in metadata
     assert metadata["evidence"]["result"] == "PASSED"

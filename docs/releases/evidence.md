@@ -108,14 +108,15 @@ input.
 
 ## Metadata and Verification Report
 
-`release-plan.json` seals the selected evidence summary (result, build, commit,
-run URL and cells) before packaging. `release-metadata.json` includes that same
-evidence, the BOM and the CI exemptions. The bundle, installer, plan and
-metadata receive build provenance from the release workflow.
+The release workflow seals the selected evidence summary (result, build,
+commit, run URL and cells) in its release plan before packaging.
+`release-metadata.json` publishes that same evidence, the BOM and the CI
+exemptions. The bundle, installer and metadata receive build provenance from
+the release workflow.
 
 The verification table in the release notes shows the passing-cell count,
 readiness time, arrival time and peak memory of that build. A release never
-searches older runs or releases; its notes depend only on the release plan.
+searches older runs or releases; its notes depend only on its release plan.
 Missing metrics are shown as `-`, never replaced with zeroes.
 
 See [Verify a Release](verification.md) to check a release yourself, and the

@@ -268,8 +268,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             "shared": sorted(product["shared"]),
             "validation": product["validation"],
         },
+        # The plan itself stays in the workflow: release-metadata.json is the
+        # one file a release publishes about itself.
         "githubAssets": [
-            {"name": "release-plan.json", "path": "release-plan.json"},
             {"name": "release-metadata.json", "path": "release-metadata.json"},
             {
                 "name": "autoware-lock.repos",
