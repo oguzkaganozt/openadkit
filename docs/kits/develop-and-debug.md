@@ -91,6 +91,4 @@ container reaches the processes of all of them.
 ## Editor Support
 
 An editor on the host does not see the Autoware and ROS headers, which exist
-only in the devel image.
-[Issue #193](https://github.com/autowarefoundation/openadkit/issues/193)
-compares the ways to close that gap.
+only in the devel image, so it cannot complete or check your code against them.

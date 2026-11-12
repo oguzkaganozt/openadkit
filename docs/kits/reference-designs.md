@@ -7,9 +7,8 @@ the parameters), so that others can reproduce the system. A kit is the form in
 which Open AD Kit holds such a software stack: it pins every part, and one
 command runs it.
 
-No Reference Design is published as a kit yet;
-[issue #191](https://github.com/autowarefoundation/openadkit/issues/191) plans
-the first one. This page shows how the two fit.
+No Reference Design is published as a kit yet. This page shows how the two
+fit.
 
 ## What Goes Where
 
@@ -47,10 +46,7 @@ GPU.
 
 - **Simulation only.** Every base deployment is a simulation, so a kit shows
   the stack in simulation, not on the vehicle.
-  [Issue #187](https://github.com/autowarefoundation/openadkit/issues/187)
-  plans a deployment with live sensors and a vehicle interface.
 - **A base is required.** A kit deployment builds on a base deployment. A stack
   that does not run the Autoware Universe pipeline, such as
   [Vision Pilot](https://github.com/autowarefoundation/vision_pilot), cannot be
-  a kit yet
-  ([issue #190](https://github.com/autowarefoundation/openadkit/issues/190)).
+  a kit yet.
