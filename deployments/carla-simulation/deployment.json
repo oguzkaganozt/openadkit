@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "description": "Autoware driving in the CARLA simulator",
-  "evidence": {"exempt": "Needs an NVIDIA GPU with 16 GB of VRAM; the CI runners have no GPU."},
+  "evidence": {"exempt": "Needs an NVIDIA GPU; the CI runners have none."},
   "shared": ["shared"],
   "compose": {
     "files": ["docker-compose.yaml"],
