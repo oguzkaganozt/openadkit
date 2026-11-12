@@ -19,7 +19,7 @@ the first one. This page shows how the two fit.
 | Modules | The base deployment's services, your packages in `overlay_ws/` and your extra services |
 | Model versions | `data` in `deployment.json`: each download with its URL and SHA-256 |
 | Parameters | `config/autoware/` and `settings.env` |
-| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, and the parameters under [A New Vehicle](integrator-guide.md#a-new-vehicle) |
+| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](integrator-guide.md#a-new-vehicle)) |
 | Evaluation and testing | The `verify` step, which `openadkit run --verify` runs |
 
 The Deployment Profile stays in the Reference Design's own documents: the
