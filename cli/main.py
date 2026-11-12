@@ -41,7 +41,7 @@ class UsageError(OpenADKitError):
 
 
 def find_kit(start: Path) -> Path | None:
-    """The integrator kit around the working directory, if any.
+    """The kit around the working directory, if any.
 
     Like git, the nearest openadkit.json wins; it is a kit only when its kind
     is "kit". OPENADKIT_KIT names the kit directly.

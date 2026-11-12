@@ -1,4 +1,4 @@
-"""Integrator evidence covers the example kit, made by the staged release's own openadkit new."""
+"""Kit evidence covers the example kit, made by the staged release's own openadkit new."""
 import json
 import shutil
 import subprocess

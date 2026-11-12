@@ -122,7 +122,7 @@ def logs(project: str, follow: bool, services: list[str]) -> None:
 
 
 def hooked_services(project: str) -> list[str]:
-    """Services that take the integrator's layer: config overrides or overlay workspaces."""
+    """Services that mount config overrides or overlay workspaces."""
     ids = run_project(project, ["ps", "--quiet"]).stdout.split()
     inspected = docker(["docker", "inspect", *ids], check=False, trace=False) if ids else None
     try:
@@ -149,7 +149,7 @@ def record(project: str, topics: list[str], output: Path | None) -> Path:
     The recorder runs as a copy of the running api container: its image,
     environment, user and mounts, so it joins the same ROS domain and
     middleware, and its entrypoint sources the overlay workspaces for
-    integrator message types. The bag is written to a host directory, so it
+    a kit's message types. The bag is written to a host directory, so it
     survives the deployment's containers.
     """
     ids = run_project(project, ["ps", "--quiet", "api"]).stdout.split()

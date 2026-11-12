@@ -18,7 +18,7 @@ set -uo pipefail
 #
 # Usage: run_cell.sh <cell-json> <output-dir>
 # Env:   BUILD_TAG, SOURCE_SHA,
-#        OPENADKIT_CLI (absolute launcher when running inside an integrator kit)
+#        OPENADKIT_CLI (absolute launcher when running inside a kit)
 
 cell=${1:?usage: run_cell.sh <cell-json> <output-dir>}
 out=${2:?usage: run_cell.sh <cell-json> <output-dir>}

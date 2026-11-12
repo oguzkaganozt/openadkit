@@ -212,7 +212,7 @@ def test_real_compose_preserves_single_and_split_graphs(compose_context, name, n
         assert ("map" in services["visualizer"].get("depends_on", {})) is (node is None)
 
 
-def test_real_integrator_kit_validates_against_its_source_base(tmp_path, compose_context):
+def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
     import validation_matrix
     [kit] = validation_matrix.make_example_kits(ROOT, tmp_path)
     assert json.loads((kit / "openadkit.json").read_text())["extends"] == str(ROOT)
@@ -228,7 +228,7 @@ def test_real_integrator_kit_validates_against_its_source_base(tmp_path, compose
 
 
 def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compose_context):
-    # An integrator kit: carla-simulation's Autoware side, with its own CARLA.
+    # A kit: carla-simulation's Autoware side, with its own CARLA.
     kit = tmp_path / "kit"
     directory = kit / "deployments/world"
     directory.mkdir(parents=True)
@@ -252,7 +252,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
 
 
 def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, compose_context):
-    # An integrator kit: a world file two deployments include, one of which
+    # A kit: a world file two deployments include, one of which
     # takes nothing from the base and reads the desktop's DISPLAY.
     kit = tmp_path / "kit"
     (kit / "deployments/shared").mkdir(parents=True)

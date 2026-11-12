@@ -17,13 +17,14 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_REFERENCE_RE = re.compile(r"^\S+@sha256:[0-9a-f]{64}$")
 # Component images only a GPU run uses (amd64-only CUDA builds), by name.
 GPU_COMPONENT_IMAGE_SUFFIX = "_GPU_IMAGE"
-# The image a release builds integrator overlays in, pinned with its runtime images.
+# The image a kit builds its overlay workspace in, pinned with the runtime images.
 DEVEL_IMAGE_TARGET = "universe-common-devel"
 # Manifests from before v2.0.0 never shipped in a stable release; they are
 # rejected rather than translated.
 SCHEMA_VERSION = 2
 
-ALLOWED_KIT_KEYS = {
+# Open AD Kit's own manifest (kind "source" or "release"): the base a kit extends.
+ALLOWED_BASE_KEYS = {
     "schemaVersion",
     "kind",
     "version",
@@ -37,12 +38,12 @@ ALLOWED_KIT_KEYS = {
     "autoware",
 }
 ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
-# An integrator kit: its own deployments on top of one pinned Open AD Kit.
-ALLOWED_INTEGRATOR_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
-ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS = {
+# A kit (kind "kit"): its own deployments on top of one pinned Open AD Kit.
+ALLOWED_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
+ALLOWED_KIT_DEPLOYMENT_KEYS = {
     "schemaVersion", "description", "base", "compose", "requirements", "data", "verify",
 }
-ALLOWED_INTEGRATOR_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
+ALLOWED_KIT_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
 VERSION_RE = re.compile(
@@ -50,7 +51,7 @@ VERSION_RE = re.compile(
     rf"(?:-({_IDENTIFIER}(?:\.{_IDENTIFIER})*))?$"
 )
 ALLOWED_DEPLOYMENT_REF_KEYS = {"path", "checksum"}
-ALLOWED_DEPLOYMENT_KEYS = {
+ALLOWED_BASE_DEPLOYMENT_KEYS = {
     "schemaVersion",
     "description",
     "compose",
@@ -64,7 +65,7 @@ ALLOWED_DEPLOYMENT_KEYS = {
 # What `run --verify` runs once the deployment is ready: a command in a running
 # service, or, without one, that service's own exit.
 ALLOWED_VERIFY_KEYS = {"service", "command"}
-ALLOWED_COMPOSE_KEYS = {
+ALLOWED_BASE_COMPOSE_KEYS = {
     "files",
     "gpuFiles",
     "resetServices",
@@ -408,7 +409,7 @@ def narrow_requirements(base: dict[str, Any], value: Any) -> dict[str, Any]:
 
 def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict[str, Any]:
     """A base deployment.json, checked and with its defaults filled in."""
-    manifest = read_deployment_manifest(directory, ALLOWED_DEPLOYMENT_KEYS, name)
+    manifest = read_deployment_manifest(directory, ALLOWED_BASE_DEPLOYMENT_KEYS, name)
 
     shared = require_string_list(manifest.get("shared", []), "shared")
     for shared_name in shared:
@@ -455,7 +456,7 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
             )
     manifest["requirements"] = requirements
 
-    manifest["compose"] = validate_compose(manifest.get("compose"), ALLOWED_COMPOSE_KEYS, 300)
+    manifest["compose"] = validate_compose(manifest.get("compose"), ALLOWED_BASE_COMPOSE_KEYS, 300)
 
     nodes = manifest.get("nodes", {})
     if not isinstance(nodes, dict):
