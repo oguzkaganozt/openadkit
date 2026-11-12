@@ -12,7 +12,7 @@ include:
   - ../shared/services/system.yaml
   - ../shared/services/control.yaml
   - ../shared/services/simulator.yaml
-  - ../shared/services/perception-simulation.yaml
+  - ../shared/services/simulated-perception.yaml
   - ../shared/services/api.yaml
   - ../shared/services/visualizer.yaml
 
@@ -49,7 +49,7 @@ services:
       vehicle:
         condition: service_started
 
-  perception-simulation:
+  simulated-perception:
     depends_on:
       - map
 

@@ -110,7 +110,7 @@ hardware:
 
 Launch: `tier4_simulator_component.launch.xml`, with the perception simulation
 (dummy objects, tracking, prediction and the occupancy grid map) in its own
-`perception-simulation` service from `planning_simulator/perception_simulation.launch.xml`.
+`simulated-perception` service from `planning_simulator/perception_simulation.launch.xml`.
 On amd64 it also carries the CARLA bridge and the CARLA Python client that the
 [CARLA Simulation](../deployments/carla-simulation.md) deployment runs in
 its `carla-interface` service.

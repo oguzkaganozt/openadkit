@@ -60,7 +60,7 @@ The tree is what an image would contain, so a host with Podman 4.9 or newer,
 ```bash
 sudo cp -a out/rootfs/. /
 sudo systemctl daemon-reload
-sudo systemctl start autoware-api autoware-control autoware-perception-simulation \
+sudo systemctl start autoware-api autoware-control autoware-simulated-perception \
   autoware-planning autoware-simulator autoware-system autoware-vehicle
 systemctl status 'autoware-*'
 journalctl -u autoware-control -f
