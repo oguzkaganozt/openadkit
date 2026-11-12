@@ -4,9 +4,11 @@ Run the full modular Autoware stack against CARLA 0.9.16 in closed loop.
 
 ## Requirements
 
-- amd64 host with Ubuntu 22.04 (CARLA 0.9.16 is not validated on 24.04)
-- NVIDIA GPU with 16 GB of VRAM, with the NVIDIA Container Toolkit and the
-  OpenGL/Vulkan libraries that `openadkit setup --gpu` installs
+- amd64 host with Ubuntu 22.04 or 24.04
+- NVIDIA GPU with at least 8 GB of VRAM, 16 GB recommended, with the NVIDIA
+  Container Toolkit and the OpenGL/Vulkan libraries that
+  `openadkit setup --gpu` installs. The default sensors (LiDAR, IMU and GNSS)
+  used about 4.5 GB in a measured run; cameras need more.
 - ROS 2 Humble images; this deployment does not support Jazzy
 
 Complete the [Quickstart](../getting-started/index.md) setup with GPU
