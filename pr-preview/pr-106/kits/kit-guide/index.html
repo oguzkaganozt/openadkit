@@ -2133,10 +2133,10 @@ release tag or, for development, the path of a source checkout. Manifests use
   set to <code>none</code> or <code>required</code> where the base leaves it optional. It never
   widens them, since the kit runs the base's services. Without a GPU mode, the
   base's GPU-only downloads are left out.</li>
-<li><strong>Downloads and one-shot reset services</strong> are inherited. A kit can add
-  downloads with distinct destination variables, and reset services of its
+<li><strong>Downloads and one-shot services</strong> are inherited. A kit can add
+  downloads with distinct destination variables, and one-shot services of its
   own.</li>
-<li><strong>Split-host nodes are not inherited:</strong> a kit deployment runs on one host.</li>
+<li><strong>Split-host roles are not inherited:</strong> a kit deployment runs on one host.</li>
 </ul>
 <p>A kit made by <code>openadkit new my-kit</code> has one deployment, also named <code>my-kit</code>.
 Its manifests, Compose file and differences live in one directory
@@ -2248,11 +2248,11 @@ base ROS domain and middleware, and give each one <code>init: true</code>
 workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image (<a href="#5-image-replacement">point 5</a>).</p>
-<p>To replace one side of a base that runs as split-host nodes, include only the
-other side's Compose file instead of the base's <code>docker-compose.yaml</code>. For
+<p>To replace one side of a base that runs as split-host roles, include only the
+other side's Compose file instead of the base's <code>compose.yaml</code>. For
 example, a kit that brings its own simulator to <code>carla-simulation</code> includes
 <code>${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml</code>: no service in it depends
-on a CARLA service. The base's <code>resetServices</code> that the kit's services leave
+on a CARLA service. The base's <code>oneShotServices</code> that the kit's services leave
 out are skipped; the kit's own must exist.</p>
 <h3 id="5-image-replacement">5. Image Replacement<a class="headerlink" href="#5-image-replacement" title="Permanent link">#</a></h3>
 <p>Declare the images your kit uses but does not build in its <code>externalImages</code>,
@@ -2378,7 +2378,7 @@ does not yet accept external kits.</p>
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host settings, downloaded data and output directories
 are outside the base release, and <code>openadkit upgrade</code> does not change a kit's
-<code>extends</code>. See <a href="../../getting-started/cli/#configuration">Configuration</a> and
+<code>extends</code>. See <a href="../../getting-started/cli/#settings">Settings</a> and
 <a href="../../getting-started/cli/#downloaded-data">Downloaded Data</a>.</p>
 
 

@@ -2022,7 +2022,7 @@ distro, architecture and topology:</p>
 <td>Scenario Simulation</td>
 <td>Humble, Jazzy</td>
 <td>amd64, arm64</td>
-<td>Single host; two isolated nodes on one host</td>
+<td>Single host; two isolated roles on one host</td>
 </tr>
 <tr>
 <td>Logging Simulation</td>
@@ -2057,7 +2057,7 @@ distro, architecture and topology:</p>
   ROS interfaces are present and its topics publish.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
   Planning Simulation ego arrives at its goal, the scenarios pass, or
-  localization and tracking follow the replayed rosbag, plus the split-node
+  localization and tracking follow the replayed rosbag, plus the split-role
   checks.</li>
 <li><strong>L3:</strong> the example kit only: the development loop on the running stack. Its
   C++ package changes, <code>openadkit build</code> builds it, <code>openadkit restart</code> from

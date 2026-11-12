@@ -2024,7 +2024,7 @@ hardware:</p>
 </ul>
 <p>Launch: <code>tier4_simulator_component.launch.xml</code>, with the perception simulation
 (dummy objects, tracking, prediction and the occupancy grid map) in its own
-<code>perception-simulation</code> service from <code>planning_simulator/perception_simulation.launch.xml</code>.
+<code>simulated-perception</code> service from <code>planning_simulator/perception_simulation.launch.xml</code>.
 On amd64 it also carries the CARLA bridge and the CARLA Python client that the
 <a href="../deployments/carla-simulation/">CARLA Simulation</a> deployment runs in
 its <code>carla-interface</code> service.</p>
@@ -2036,7 +2036,7 @@ tunnel. To serve HTTPS, mount your own certificate into the visualizer from a
 <a href="../kits/kit-guide/#4-extra-services">kit</a> (the release mounts
 none) and name its files in <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>; it stays the same
 across starts, so a browser exception for it holds.</p>
-<p>Set these in the <a href="../getting-started/cli/#configuration">host settings file</a>:</p>
+<p>Set these in the <a href="../getting-started/cli/#settings">host settings file</a>:</p>
 <table>
 <thead>
 <tr>
