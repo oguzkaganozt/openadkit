@@ -2310,12 +2310,13 @@ openadkit<span class="w"> </span>fetch<span class="w"> </span>planning-simulatio
 openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">             </span><span class="c1"># delete, after asking</span>
 </code></pre></div>
 <ul>
-<li><strong><code>run</code></strong> downloads missing data but never replaces an existing data
-  directory; <code>run --force</code> is not supported.</li>
-<li><strong><code>fetch --force</code></strong> replaces incomplete or outdated data. Data is outdated
-  when the deployment now declares other content for it, for example a map with
-  a new checksum: <code>run</code>, <code>fetch</code> and <code>validate --data</code> then stop and ask for
-  <code>fetch --force</code>. <code>fetch</code> always includes the GPU data.</li>
+<li><strong><code>run</code></strong> and <strong><code>fetch</code></strong> download missing data and update outdated data.
+  Data is outdated when the deployment now declares other content for it, for
+  example a map with a new checksum. They update only data the CLI installed,
+  and not while a running container uses it. <code>fetch</code> always includes the GPU
+  data; <code>run --force</code> is not supported.</li>
+<li><strong><code>fetch --force</code></strong> replaces the data even when it is complete, and is the
+  way to repair incomplete data.</li>
 <li><strong><code>clean</code></strong> lists what it deletes and asks first; <code>--yes</code> skips the question,
   as scripts need. It deletes all the data the deployment uses, so a kit or a
   deployment on a base also deletes the base's data (the list says so). The
