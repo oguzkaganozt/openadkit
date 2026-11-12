@@ -20,7 +20,7 @@ my-kit/
 └── overlay_ws/src/
 ```
 
-- `openadkit.json` selects the base (`extends`), lists extra images you pin
+- `openadkit.json` pins the Open AD Kit release (`extends`), lists extra images you pin
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment. Compose reads
@@ -28,7 +28,7 @@ my-kit/
   distro, GPU, downloads and the verify step are inherited; `requirements` may
   narrow the first three.
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
-  add your services below it. `OPENADKIT_BASE_ROOT` names the base root for
+  add your services below it. `OPENADKIT_BASE_ROOT` names the release's root for
   shared assets.
 - `settings.env` holds only the values you change, such as `VEHICLE_ID`.
 - `config/autoware/` holds parameter overrides for Autoware packages.
@@ -37,7 +37,7 @@ my-kit/
 The deployment's name is its key in `openadkit.json`, here `my-kit`;
 `deployment.json` does not repeat it. Renaming the directory changes nothing.
 
-## Pin Your Base
+## Pin the Release
 
 `openadkit new` from an installed release writes its version, such as
 `"extends": "v2.0.0"`; the kit then runs with that release's own launcher.

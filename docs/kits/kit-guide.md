@@ -5,7 +5,7 @@ validated and upgraded. A kit owns its differences; Open AD Kit owns the base
 CLI, images and deployments. Start one with `openadkit new`
 ([Create a Kit](create-a-kit.md)).
 
-## Pin the Base
+## Pin the Release
 
 In the kit's `openadkit.json`, `kind` is `kit` and `extends` names a published
 release tag or, for development, the path of a source checkout. Manifests use
@@ -22,7 +22,7 @@ release tag or, for development, the path of a source checkout. Manifests use
   only look at starts no program and no download.
 - **One level of `extends`:** a kit extends Open AD Kit, not another kit.
 
-## Base a Deployment
+## Choose a Base Deployment
 
 Each kit deployment names a `base` deployment of the pinned release in its
 `deployment.json`.
@@ -58,7 +58,7 @@ files in order (later files win):
 
 Shell exports do not override values set in these files. The CLI adds the ROS
 distro, the host UID and GID, the overlay mount paths, `OPENADKIT_BASE_ROOT`
-(the base's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
+(the release's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
 deployment); a release's component and external images stay pinned. Inside the
 containers, the ROS and DDS defaults come from the base services'
 `runtime.env`.
@@ -221,7 +221,7 @@ release tests this path: the example kit drives with four such packages.
 Autoware's defaults describe a passenger car. Review these for your vehicle.
 The first two are in your packages. The others belong to Autoware packages, so
 change them with [config overrides](#2-config-overrides); their package and
-path depend on the base's Autoware version, so look them up in its images and
+path depend on the release's Autoware version, so look them up in its images and
 check `run`'s override warnings.
 
 | Parameters | File | Why |

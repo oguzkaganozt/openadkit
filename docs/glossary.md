@@ -25,8 +25,8 @@ it.
 | Term | Meaning |
 |------|---------|
 | [**Kit**](kits/create-a-kit.md) | A kit manifest and its deployments: the reference kit in this repository, or your differences on top of a pinned release. |
-| [**Kit manifest**](kits/kit-guide.md#pin-the-base) | `openadkit.json`: what the kit extends, its deployments (each named by its key) and the images it pins. |
-| [**`extends` / `base`**](kits/kit-guide.md#base-a-deployment) | The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on. |
+| [**Kit manifest**](kits/kit-guide.md#pin-the-release) | `openadkit.json`: what the kit extends, its deployments (each named by its key) and the images it pins. |
+| [**`extends` / `base`**](kits/kit-guide.md#choose-a-base-deployment) | The Open AD Kit release a kit pins, and the deployment of that release a kit deployment builds on. |
 | [**Config override**](kits/kit-guide.md#2-config-overrides) | Parameter and file differences under `config/autoware/`, merged over a package's configuration on every start; not a copy of the full file. `restart` applies them. |
 | [**Overlay workspace**](kits/kit-guide.md#3-overlay-workspace) | Your ROS packages in `overlay_ws/`, built in the release's devel image and sourced on top of Autoware. |
 | [**Reference Design**](kits/reference-designs.md) | An Autoware Reference Design: a Deployment Profile and a Reference Software Stack that others can reproduce. A kit holds its software stack. |
