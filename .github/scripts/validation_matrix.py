@@ -76,17 +76,17 @@ def load_runtime(source_root: Path) -> ModuleType:
 def validation_cells(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> list[dict[str, Any]]:
     """Return sorted validation cells for every deployment and each of its roles."""
-    kit = kit if kit is not None else runtime.load_kit(source_root)
-    if not kit.deployments:
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
+    if not catalog.deployments:
         fail("release source has no deployments")
 
     rows: list[dict[str, Any]] = []
     distros: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         gpu = deployment.requirements["gpu"]
         roles = [""] + sorted(deployment.roles)
         for distro in deployment.requirements["rosDistros"]:
@@ -128,17 +128,17 @@ def validation_cells(
 def evidence_cells(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
     platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
 ) -> list[dict[str, str]]:
     """Cells the evidence workflow runs: every distro and architecture of every
     deployment that is not exempt, plus one cell running all roles where a
     deployment declares roles. Each cell carries its identity and everything
     run_cell.sh checks."""
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     cells: list[dict[str, str]] = []
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         if deployment.evidence_exemption:
             continue
         if deployment.verify is None:
@@ -220,23 +220,23 @@ def evidence_cell_name(cell: dict[str, Any]) -> str:
     return f"{cell['deployment']}-{cell['distro']}{suffix}-{platform}"
 
 
-def kit_inventory(
+def catalog_inventory(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> dict[str, dict[str, Any]]:
     """What a kit ships: deployment paths and checksums, and shared asset checksums.
 
     The release plan and bundle staging and verification read this one view,
     so packaging and the evidence kit cannot disagree about a kit's contents.
     """
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     deployments: dict[str, dict[str, str]] = {}
     shared: set[str] = set()
-    for name in sorted(kit.deployments):
-        deployment = runtime.get_deployment(source_root, kit, name)
+    for name in sorted(catalog.deployments):
+        deployment = runtime.get_deployment(source_root, catalog, name)
         deployments[name] = {
-            "path": kit.deployments[name].path,
+            "path": catalog.deployments[name].path,
             "checksum": runtime.deployment_checksum(deployment.directory),
         }
         shared.update(deployment.shared)
@@ -252,12 +252,12 @@ def kit_inventory(
 def evidence_exemptions(
     runtime: ModuleType,
     source_root: Path,
-    kit: Any | None = None,
+    catalog: Any | None = None,
 ) -> list[dict[str, str]]:
-    kit = kit if kit is not None else runtime.load_kit(source_root)
+    catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     exempt = []
-    for name in sorted(kit.deployments):
-        reason = runtime.get_deployment(source_root, kit, name).evidence_exemption
+    for name in sorted(catalog.deployments):
+        reason = runtime.get_deployment(source_root, catalog, name).evidence_exemption
         if reason:
             exempt.append({"deployment": name, "reason": reason})
     return exempt

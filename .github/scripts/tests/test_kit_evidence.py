@@ -45,7 +45,7 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     assert result.returncode == 0, result.stderr
     runtime = validation_matrix.load_runtime(staged)
     example = staged / "kits/example-kit"
-    kit = runtime.load_kit(example)
+    kit = runtime.load_catalog(example)
     assert set(kit.deployments) == {"example-kit"} and kit.deployments["example-kit"].path == "."
     # The staged release is not installed, so the kit extends it by its path.
     manifest = json.loads((example / "openadkit.json").read_text())

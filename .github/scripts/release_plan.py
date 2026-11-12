@@ -51,17 +51,17 @@ def require_string(value: Any, name: str) -> str:
 
 
 def load_product(runtime: ModuleType, source_root: Path) -> dict[str, Any]:
-    kit = runtime.load_kit(source_root)
-    validation = validation_matrix.validation_cells(runtime, source_root, kit)
-    inventory = validation_matrix.kit_inventory(runtime, source_root, kit)
+    catalog = runtime.load_catalog(source_root)
+    validation = validation_matrix.validation_cells(runtime, source_root, catalog)
+    inventory = validation_matrix.catalog_inventory(runtime, source_root, catalog)
     if not inventory["shared"]:
         fail("release deployments do not declare shared assets")
     return {
-        "kit": kit,
+        "catalog": catalog,
         **inventory,
         "distros": sorted({row["rosDistro"] for row in validation}),
         "validation": validation,
-        "evidenceExempt": validation_matrix.evidence_exemptions(runtime, source_root, kit),
+        "evidenceExempt": validation_matrix.evidence_exemptions(runtime, source_root, catalog),
     }
 
 
@@ -118,7 +118,7 @@ def verify_staged_bundle(bundle_root: Path, plan: dict[str, Any]) -> None:
     if sorted(expected_shared) != sorted(context.get("shared", {})):
         fail("release plan shared assets do not match releaseContext")
 
-    staged = validation_matrix.kit_inventory(load_runtime(bundle_root), bundle_root)
+    staged = validation_matrix.catalog_inventory(load_runtime(bundle_root), bundle_root)
     for name in expected_deployments:
         meta = context["deployments"].get(name)
         if not isinstance(meta, dict):
@@ -135,13 +135,13 @@ def verify_staged_bundle(bundle_root: Path, plan: dict[str, Any]) -> None:
 
 def verify_release_integrity(bundle_root: Path, plan: dict[str, Any]) -> None:
     runtime = load_runtime(bundle_root)
-    kit = runtime.load_kit(bundle_root)
+    catalog = runtime.load_catalog(bundle_root)
     expected = plan["bundle"]["deployments"]
-    if sorted(kit.deployments) != sorted(expected):
+    if sorted(catalog.deployments) != sorted(expected):
         fail("staged bundle deployments do not match the release plan")
     for name in expected:
-        deployment = runtime.get_deployment(bundle_root, kit, name)
-        state = runtime.deployment_integrity(bundle_root, deployment, kit)
+        deployment = runtime.get_deployment(bundle_root, catalog, name)
+        state = runtime.deployment_integrity(bundle_root, deployment, catalog)
         if state != "intact":
             fail(f"packaged deployment is not intact: {name} ({state})")
 
@@ -179,7 +179,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         fail("release SHA must be 40 lowercase hexadecimal characters")
     if not SHA_RE.fullmatch(args.packager_sha):
         fail("packager SHA must be 40 lowercase hexadecimal characters")
-    default_ros_distro = product["kit"].default_ros_distro
+    default_ros_distro = product["catalog"].default_ros_distro
     if default_ros_distro not in product["distros"]:
         fail(f"unsupported default ROS distro: {default_ros_distro}")
     if args.publish_latest_aliases and not args.stable_release:
@@ -216,8 +216,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             fail(f"duplicate target/distro image across repositories: {target}-{distro}")
         indexed[runtime_key] = row
 
-    kit = product["kit"]
-    component_images = dict(kit.component_images)
+    catalog = product["catalog"]
+    component_images = dict(catalog.component_images)
     # The devel image ships pinned too, so integrators build overlays in it.
     runtime_targets = sorted(set(component_images.values()) | {runtime.DEVEL_IMAGE_TARGET})
     context_images: dict[str, dict[str, str]] = {}
@@ -245,7 +245,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             {key: item[key] for key in ("repository", "subject", "upstream")} for item in backports
         ]
     release_context = {
-        "externalImages": kit.external_images,
+        "externalImages": catalog.external_images,
         "autoware": autoware,
         "componentImages": component_images,
         "defaultRosDistro": default_ros_distro,

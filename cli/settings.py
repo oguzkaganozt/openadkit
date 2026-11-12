@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from catalog import Deployment, Kit, state_root
+from catalog import Catalog, Deployment, state_root
 from manifest import OpenADKitError
 
 # Compose settings the CLI passes itself; a shell export must not change them.
@@ -216,7 +216,7 @@ def _resolved(deployment: Deployment, gpu: bool, injections: dict[str, str]) -> 
 
 def resolve(
     deployment: Deployment,
-    kit: Kit,
+    catalog: Catalog,
     ros_distro: str | None = None,
     gpu: bool = False,
     *,
@@ -232,7 +232,7 @@ def resolve(
     if role is not None and role not in deployment.roles:
         valid = ", ".join(sorted(deployment.roles)) if deployment.roles else "none"
         raise OpenADKitError(f"{deployment.name} has no role {role}\navailable roles: {valid}")
-    distro = ros_distro or kit.default_ros_distro
+    distro = ros_distro or catalog.default_ros_distro
     injections = _injections(deployment, distro, role)
     if data_only:
         environment = _resolved(deployment, False, injections)
@@ -244,10 +244,10 @@ def resolve(
 
     architecture = host_architecture()
     gpu = _require_host_support(deployment, distro, architecture, gpu)
-    images = kit.component_environment(distro, architecture, gpu)
-    images.update(kit.external_image_environment(distro))
+    images = catalog.component_environment(distro, architecture, gpu)
+    images.update(catalog.external_image_environment(distro))
     file_settings = configuration_environment(deployment, gpu)
-    if not kit.pinned:
+    if not catalog.pinned:
         # A source checkout may set its own images in the env files; Compose
         # reads those itself, ${VAR} and all.
         images = {name: image for name, image in images.items() if name not in file_settings}

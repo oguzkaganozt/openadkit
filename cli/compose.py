@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
-from catalog import Deployment, Kit, deployment_checksum, state_root
+from catalog import Catalog, Deployment, deployment_checksum, state_root
 from manifest import OpenADKitError
 from settings import Selection, compose_process_environment, docker_environment
 
@@ -276,7 +276,7 @@ def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
 
 
 def run_report(
-    deployment: Deployment, selection: Selection, kit: Kit, model: str, started: float,
+    deployment: Deployment, selection: Selection, catalog: Catalog, model: str, started: float,
 ) -> dict[str, Any]:
     """What this run started: the version, the images, the resolved model's
     digest, and the content digests of what the services mount from the host.
@@ -293,8 +293,8 @@ def run_report(
         "role": selection.role,
         "rosDistro": selection.ros_distro,
         "gpu": selection.gpu,
-        "version": kit.version or (kit.base.version if kit.base else None),
-        "extends": kit.extends,
+        "version": catalog.version or (catalog.extended.version if catalog.extended else None),
+        "extends": catalog.extends,
         "images": {name: service.get("image") for name, service in sorted(services.items())},
         "modelSha256": hashlib.sha256(model.encode("utf-8")).hexdigest(),
         "configSha256": {

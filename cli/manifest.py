@@ -330,7 +330,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
 
 def read_deployment_manifest(directory: Path, allowed_keys: set[str], name: str) -> dict[str, Any]:
     """The part every deployment manifest shares: location and schema. The
-    name is the deployment's key in the kit manifest; the file does not repeat it."""
+    name is the deployment's key in openadkit.json; the file does not repeat it."""
     if directory.is_symlink() or not directory.is_dir():
         raise OpenADKitError(f"unsafe deployment directory: {directory}")
     manifest = load_json(

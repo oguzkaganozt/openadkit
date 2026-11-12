@@ -116,7 +116,7 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     return root, directory
 
 
-def edit_kit(root, change):
+def edit_manifest(root, change):
     path = root / "openadkit.json"
     document = json.loads(path.read_text())
     change(document)
@@ -409,7 +409,7 @@ def test_version_pairs_the_release_with_its_autoware_also_in_a_kit(tmp_path):
     output = run_cli(root, "version", directory=kit).stdout
     assert f"autoware: 1.8.0 ({'a' * 40})" in output.splitlines()
     # A line's backported fixes show with the Autoware they patch.
-    edit_kit(root, lambda doc: doc["autoware"].update(backports=[
+    edit_manifest(root, lambda doc: doc["autoware"].update(backports=[
         {"repository": "universe/autoware_universe", "subject": "fix", "upstream": "https://example.com/pull/1"}]))
     assert f"autoware: 1.8.0 ({'a' * 40}, 1 backported fix)" in run_cli(root, "version").stdout.splitlines()
 
@@ -558,7 +558,7 @@ def test_image_and_env_priority_reaches_compose(tmp_path, release):
 @pytest.mark.parametrize("problem", ["mutable", "missing"])
 def test_release_image_failures_prevent_compose(tmp_path, problem):
     root, _ = runtime_tree(tmp_path, release=True)
-    edit_kit(root, lambda kit: kit["images"]["humble"].update(api="registry.example/api:latest")
+    edit_manifest(root, lambda kit: kit["images"]["humble"].update(api="registry.example/api:latest")
              if problem == "mutable" else kit["images"]["humble"].pop("api"))
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example")
@@ -685,7 +685,7 @@ def test_run_verify_needs_a_verify_step(tmp_path):
 def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     document = manifest() | {"verify": {"service": "scenario"}}
     root, _ = runtime_tree(tmp_path, document=document)
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setenv("OPENADKIT_OUTPUT_DIR", str(tmp_path / "output"))
     captured = []
@@ -704,7 +704,7 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
     verify = {"service": "app", "command": ["python3", "drive_to_goal.py"]}
     root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": verify})
     kit_root = extending_kit(tmp_path, root)
-    kit = cli_catalog.load_kit(kit_root)
+    kit = cli_catalog.load_catalog(kit_root)
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == verify
     path = kit_root / "deployments/custom/deployment.json"
     path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "acme"}}))
@@ -719,7 +719,7 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
 def test_invalid_verify_steps_are_rejected(tmp_path, verify, message):
     root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": verify})
     with pytest.raises(cli_manifest.OpenADKitError, match=re.escape(message)):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example")
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
 
 
 def test_a_verify_service_must_be_in_the_compose_graph(tmp_path):
@@ -760,7 +760,7 @@ def test_run_prints_https_only_for_a_site_certificate(tmp_path):
 ])
 def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, args, message):
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
-    edit_kit(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
+    edit_manifest(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
     calls = fake_docker(tmp_path, projects=projects)
     result = run_cli(root, "run", "example", "--pull", "never", *args)
     assert result.returncode != 0 and message in result.stderr
@@ -784,7 +784,7 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
                                                 ("openadkit-example_foreign", False)])
 def test_exclusivity_only_allows_declared_roles_of_the_selected_deployment(tmp_path, monkeypatch, project, allowed):
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: {project: []})
     assert cli_compose.other_projects(deployment) == ([] if allowed else [project])
@@ -793,7 +793,7 @@ def test_exclusivity_only_allows_declared_roles_of_the_selected_deployment(tmp_p
 @pytest.mark.parametrize("started_from", ["own", "elsewhere", "other-role"])
 def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_path, monkeypatch, started_from):
     root, directory = runtime_tree(tmp_path, document=manifest(roles=True))
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
     # single-host or primary project.
@@ -816,7 +816,7 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
     monkeypatch.delenv("ROLE_TOKEN", raising=False)
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     host_settings(root, "ROLE_TOKEN=${MY_TOKEN}\n")
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     selection = cli_settings.resolve(deployment, kit, "humble", role="secondary")
     assert selection.environment["ROLE_TOKEN"] == "secret"
@@ -1327,7 +1327,7 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
     deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
-    kit = cli_catalog.Kit("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    kit = cli_catalog.Catalog("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
@@ -1348,7 +1348,7 @@ def test_a_source_checkout_image_setting_resolves_as_compose_resolves_it(tmp_pat
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("REGISTRY", "registry.example/mine")
     root, directory = runtime_tree(tmp_path, config="API_IMAGE=${REGISTRY}/api:dev\n")
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     selection = cli_settings.resolve(deployment, kit, "humble")
     assert "API_IMAGE" not in selection.injections
@@ -1363,7 +1363,7 @@ def test_a_run_without_gpu_resolves_its_settings_once(tmp_path, monkeypatch):
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     root, _ = runtime_tree(tmp_path, document=manifest(gpu=True))
-    kit = cli_catalog.load_kit(root)
+    kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     passes = []
     real = cli_settings.compose_environment
@@ -1511,17 +1511,17 @@ def test_fetch_checks_every_destination_before_download(tmp_path):
 @pytest.mark.parametrize("base_refs", [{"ref": PIN}, {"distros": {"humble": PIN, "jazzy": PIN}}])
 def test_kit_external_image_fallback_and_wildcard_override(tmp_path, base_refs):
     root, _ = runtime_tree(tmp_path)
-    edit_kit(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
+    edit_manifest(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
     kit = extending_kit(tmp_path, root, external_images={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
-    context = cli_catalog.load_kit(kit)
+    context = cli_catalog.load_catalog(kit)
     assert context.external_image_environment("humble")["EXTERNAL_IMAGE"] == OTHER_PIN
     assert context.external_image_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
-    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
-    assert cli_catalog.load_kit(kit).external_image_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
+    edit_manifest(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"ref": OTHER_PIN}}))
+    assert cli_catalog.load_catalog(kit).external_image_environment("jazzy")["EXTERNAL_IMAGE"] == OTHER_PIN
     # Every distro is `ref`, never a "*" distro.
-    edit_kit(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
+    edit_manifest(kit, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {"distros": {"*": OTHER_PIN}}}))
     with pytest.raises(cli_manifest.OpenADKitError, match="invalid ROS distro"):
-        cli_catalog.load_kit(kit)
+        cli_catalog.load_catalog(kit)
 
 
 @pytest.mark.parametrize("text", ["[]", "{"])
@@ -1540,14 +1540,14 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
         monkeypatch.delenv(name, raising=False)
     root, base = runtime_tree(tmp_path, release=release,
                               document=manifest(gpu=True, data=[files_resource(tmp_path)]), config="VALUE=base\nMAP_PATH=$HOME/data/map\n")
-    edit_kit(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
+    edit_manifest(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
     kit = extending_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
         path.mkdir()
     host_settings(root, "VALUE=site\n", name="custom")
-    context = cli_catalog.load_kit(kit)
+    context = cli_catalog.load_catalog(kit)
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"
     selection = cli_settings.resolve(deployment, context, "humble", True)
@@ -1610,7 +1610,7 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
-        loaded = cli_catalog.load_kit(kit)
+        loaded = cli_catalog.load_catalog(kit)
         assert loaded.kind == "kit" and set(loaded.deployments) == {"my-kit"}
         assert cli_catalog.get_deployment(kit, loaded, "my-kit").base.name == "example"
 
@@ -1647,7 +1647,7 @@ def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
     assert run_cli(root, "validate").returncode == 2
     second = kit / "deployments/second"
     shutil.copytree(kit / "deployments/custom", second)
-    edit_kit(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
+    edit_manifest(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
     result = run_cli(root, "validate", directory=kit)
     assert result.returncode == 2 and "deployment name required" in result.stderr
 
@@ -1683,7 +1683,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
 
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     # In a kit, build takes its workspace; it builds where the services mount it.
     result = run_cli(root, "build", directory=kit)
     assert result.returncode == 0, result.stderr
@@ -1695,7 +1695,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
 
     # After a base upgrade the install is stale until rebuilt.
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 0 and f"openadkit build {workspace}" in result.stderr
     result = run_cli(root, "build", directory=kit, DEVEL_IMAGE="local/devel:test")
@@ -1735,7 +1735,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
 def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
-    edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
     kit = extending_kit(tmp_path, root)
     (kit / "overlay_ws/src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
@@ -1757,7 +1757,7 @@ def overlay_workspace(root, name, monkeypatch, tmp_path, workspace=None):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     for variable in ISOLATED_ENV:
         monkeypatch.delenv(variable, raising=False)
-    context = cli_catalog.load_kit(root)
+    context = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, context, name)
     if workspace is not None:
         deployment.use_workspace(workspace)
@@ -1780,7 +1780,7 @@ def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypat
     for item in directory.iterdir():
         shutil.move(str(item), kit)
     shutil.rmtree(kit / "deployments")
-    edit_kit(kit, lambda document: document["deployments"].update(custom={"path": "."}))
+    edit_manifest(kit, lambda document: document["deployments"].update(custom={"path": "."}))
     # The deployment is the kit root, so the root is named after it.
     kit = kit.rename(tmp_path / "custom")
     (kit / "overlay_ws").mkdir()
@@ -1796,9 +1796,9 @@ def test_only_a_kit_deployment_names_a_base(tmp_path):
         "compose": {"files": ["compose.yaml"]},
     }))
     (directory / "compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
-    edit_kit(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))
+    edit_manifest(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))
     with pytest.raises(cli_manifest.OpenADKitError, match="unknown manifest field\\(s\\): base"):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "on-top")
 
 
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
@@ -1811,7 +1811,7 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
     def on_top_with(requirements):
         path = kit_root / "deployments/custom/deployment.json"
         path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
-        return cli_catalog.get_deployment(kit_root, cli_catalog.load_kit(kit_root), "custom")
+        return cli_catalog.get_deployment(kit_root, cli_catalog.load_catalog(kit_root), "custom")
 
     # Only what it names changes; without a GPU mode the GPU-only data goes too.
     deployment = on_top_with({"architectures": ["amd64"], "gpu": "none"})
@@ -1838,7 +1838,7 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
 
 
 def test_safety_island_simulation_runs_where_its_release_does():
-    kit = cli_catalog.load_kit(ROOT)
+    kit = cli_catalog.load_catalog(ROOT)
     deployment = cli_catalog.get_deployment(ROOT, kit, "safety-island-simulation")
     assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
     assert not any(item.get("gpu") for item in deployment.data)
@@ -1986,7 +1986,7 @@ def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
 @pytest.mark.parametrize("gpu", [False, True])
 def test_only_a_gpu_run_uses_the_gpu_component_images(gpu):
     # The CUDA builds are amd64-only: a CPU run, also on arm64, must not need them.
-    kit = cli_catalog.load_kit(ROOT)
+    kit = cli_catalog.load_catalog(ROOT)
     environment = kit.component_environment("humble", "arm64", gpu)
     gpu_images = {name for name in COMPONENT_IMAGES if name.endswith("_GPU_IMAGE")}
     assert gpu_images >= {"SENSING_PERCEPTION_GPU_IMAGE", "PLANNING_GPU_IMAGE"}
@@ -1999,9 +1999,9 @@ def test_a_deployment_is_named_by_its_kit_manifest_key_alone(tmp_path):
     document = json.loads((directory / "deployment.json").read_text())
     # A renamed directory keeps working: only the kit manifest's key names it.
     renamed = directory.rename(directory.parent / "elsewhere")
-    edit_kit(root, lambda kit: kit["deployments"].update(example={"path": "deployments/elsewhere"}))
-    assert cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example").name == "example"
+    edit_manifest(root, lambda kit: kit["deployments"].update(example={"path": "deployments/elsewhere"}))
+    assert cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example").name == "example"
     # The file does not repeat the name.
     (renamed / "deployment.json").write_text(json.dumps(document | {"name": "example"}))
     with pytest.raises(cli_manifest.OpenADKitError, match="name"):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "example")
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")

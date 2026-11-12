@@ -174,7 +174,7 @@ def compose_context(tmp_path, monkeypatch):
     monkeypatch.setenv("REMOTE_PASSWORD", "ci-validate")
     monkeypatch.delenv("OPENADKIT_KIT", raising=False)
     monkeypatch.delenv("OPENADKIT_DELEGATED", raising=False)
-    return catalog.load_kit(ROOT)
+    return catalog.load_catalog(ROOT)
 
 
 @pytest.mark.parametrize(("name", "role", "present", "absent"), [

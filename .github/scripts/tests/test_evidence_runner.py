@@ -248,7 +248,7 @@ sys.path.insert(0, {str(ROOT / 'cli')!r})
 import catalog, settings
 args = sys.argv[1:]
 if args[0] == 'validate':
-    root = Path({str(ROOT)!r}); kit = catalog.load_kit(root)
+    root = Path({str(ROOT)!r}); kit = catalog.load_catalog(root)
     settings.resolve(catalog.get_deployment(root, kit, args[1]), kit, 'humble', False, role=args[args.index('--role') + 1])
     print(json.dumps({{'deployment': args[1]}}))
 sys.exit(1 if args[0] == 'run' else 0)

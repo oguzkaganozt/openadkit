@@ -1,7 +1,7 @@
 """mkdocs-macros module — single-source repeated reference facts.
 
 The registry prefix and default ROS distro title come from openadkit.json, the
-kit manifest the release reads them from, so the published docs cannot
+release manifest the release reads them from, so the published docs cannot
 contradict the release. The component image table is generated from the catalog
 (.github/image-inventory.json) so the docs cannot drift from what CI builds.
 
@@ -19,7 +19,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 INVENTORY = REPO_ROOT / ".github" / "image-inventory.json"
-KIT = REPO_ROOT / "openadkit.json"
+MANIFEST = REPO_ROOT / "openadkit.json"
 
 
 def _load_json(path, label):
@@ -30,14 +30,14 @@ def _load_json(path, label):
 
 
 def define_env(env):
-    kit = _load_json(KIT, "kit manifest")
-    registry = kit["imageRepository"]
+    manifest = _load_json(MANIFEST, "release manifest")
+    registry = manifest["imageRepository"]
     if not isinstance(registry, str) or not registry.strip():
         raise RuntimeError(
-            "kit manifest imageRepository must be a non-empty string"
+            "release manifest imageRepository must be a non-empty string"
         )
     env.variables["registry"] = registry
-    env.variables["default_distro_title"] = kit["defaultRosDistro"].capitalize()
+    env.variables["default_distro_title"] = manifest["defaultRosDistro"].capitalize()
 
     @env.macro
     def component_table():

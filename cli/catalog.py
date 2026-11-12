@@ -100,7 +100,7 @@ def install_root() -> Path:
 
 
 @dataclass(frozen=True)
-class Kit:
+class Catalog:
     """A loaded openadkit.json: Open AD Kit itself (kind "source" or "release"),
     or a kit that extends it (kind "kit")."""
 
@@ -116,10 +116,10 @@ class Kit:
     external_images: dict[str, dict[str, Any]]
     # Release only: the Autoware version, commit and lock file it was built from.
     autoware: dict[str, str] | None = None
-    # An extending kit only: the pinned Open AD Kit it extends.
+    # A kit only: the Open AD Kit it extends, as written in the manifest and loaded.
     extends: str | None = None
-    base: Kit | None = None
-    base_root: Path | None = None
+    extended: Catalog | None = None
+    extended_root: Path | None = None
 
     @property
     def pinned(self) -> bool:
@@ -131,7 +131,7 @@ class Kit:
         return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
 
     def bom(self) -> dict[str, Any]:
-        """What this kit runs: Autoware, component images and external images."""
+        """What this catalog runs: Autoware, component images and external images."""
         return {
             "autoware": self.autoware,
             "images": self.images or None,
@@ -146,7 +146,7 @@ class Kit:
         """
         environment = {}
         for name, image in self.external_images.items():
-            # A resolved kit can have per-distro overrides and a base fallback.
+            # A kit can have per-distro overrides and a fallback from what it extends.
             reference = image.get("distros", {}).get(ros_distro) or image.get("ref")
             if reference:
                 environment[name] = reference
@@ -331,18 +331,18 @@ def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
 
 
 def _load_kit_deployment(
-    root: Path, directory: Path, base_kit: Kit, base_root: Path, name: str
+    root: Path, directory: Path, extended: Catalog, extended_root: Path, name: str
 ) -> Deployment:
     """A kit deployment: its own Compose file and values on top of a
     base deployment of the Open AD Kit it extends, whose requirements it keeps or narrows."""
     manifest = read_deployment_manifest(directory, ALLOWED_KIT_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
-    if base_name not in base_kit.deployments:
+    if base_name not in extended.deployments:
         raise OpenADKitError(
             f"unknown base deployment: {base_name}; "
-            f"available: {available_deployments(base_kit)}"
+            f"available: {available_deployments(extended)}"
         )
-    base = get_deployment(base_root, base_kit, base_name)
+    base = get_deployment(extended_root, extended, base_name)
 
     compose = validate_compose(manifest.get("compose"), ALLOWED_KIT_COMPOSE_KEYS, base.compose["waitTimeout"])
     requirements = narrow_requirements(base.requirements, manifest.get("requirements"))
@@ -400,14 +400,14 @@ def resolve_extends(kit_root: Path, extends: str) -> Path:
     return candidate
 
 
-def _load_extending_kit(root: Path, value: dict[str, Any]) -> Kit:
-    reject_unknown(value, ALLOWED_KIT_KEYS, "kit")
+def _load_kit(root: Path, value: dict[str, Any]) -> Catalog:
+    reject_unknown(value, ALLOWED_KIT_KEYS, "kit manifest")
     extends = require_string(value.get("extends"), "extends")
-    base_root = resolve_extends(root, extends)
-    base = load_kit(base_root)
+    extended_root = resolve_extends(root, extends)
+    extended = load_catalog(extended_root)
     # A kit's external image may reuse a component image name to replace that component.
     own_images = parse_external_images(value.get("externalImages", {}), {})
-    external_images = dict(base.external_images)
+    external_images = dict(extended.external_images)
     for name, image in own_images.items():
         if name in external_images and "distros" in image:
             inherited = external_images[name]
@@ -417,33 +417,33 @@ def _load_extending_kit(root: Path, value: dict[str, Any]) -> Kit:
             }
         else:
             external_images[name] = image
-    return Kit(
+    return Catalog(
         kind="kit",
-        default_ros_distro=base.default_ros_distro,
+        default_ros_distro=extended.default_ros_distro,
         version=None,
-        image_repository=base.image_repository,
-        component_images=base.component_images,
-        images=base.images,
+        image_repository=extended.image_repository,
+        component_images=extended.component_images,
+        images=extended.images,
         deployments=parse_deployment_refs(value.get("deployments"), "kit"),
         shared={},
         external_images=external_images,
-        autoware=base.autoware,
+        autoware=extended.autoware,
         extends=extends,
-        base=base,
-        base_root=base_root,
+        extended=extended,
+        extended_root=extended_root,
     )
 
 
-def load_kit(root: Path) -> Kit:
-    value = load_json(ensure_safe_existing(root, "openadkit.json", "kit manifest"))
+def load_catalog(root: Path) -> Catalog:
+    value = load_json(ensure_safe_existing(root, "openadkit.json", "manifest"))
     if value.get("schemaVersion") != SCHEMA_VERSION:
         raise OpenADKitError(
             f"unsupported openadkit.json schemaVersion {value.get('schemaVersion')!r} "
             f"(expected {SCHEMA_VERSION})"
         )
     if value.get("kind") == "kit":
-        return _load_extending_kit(root, value)
-    reject_unknown(value, ALLOWED_BASE_KEYS, "kit manifest")
+        return _load_kit(root, value)
+    reject_unknown(value, ALLOWED_BASE_KEYS, "release manifest")
     if value.get("kind") not in ("source", "release"):
         raise OpenADKitError("openadkit.json kind must be source, release or kit")
     default_ros_distro = require_string(
@@ -484,7 +484,7 @@ def load_kit(root: Path) -> Kit:
         version = require_string(version, "version")
     elif kind == "release":
         raise OpenADKitError("release bundles must declare version")
-    return Kit(
+    return Catalog(
         kind=kind,
         default_ros_distro=default_ros_distro,
         version=version,
@@ -498,26 +498,26 @@ def load_kit(root: Path) -> Kit:
     )
 
 
-def available_deployments(kit: Kit) -> str:
-    return ", ".join(kit.deployments)
+def available_deployments(catalog: Catalog) -> str:
+    return ", ".join(catalog.deployments)
 
 
-def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
-    available = available_deployments(kit)
+def get_deployment(root: Path, catalog: Catalog, name: str) -> Deployment:
+    available = available_deployments(catalog)
     if not NAME_RE.fullmatch(name):
         raise OpenADKitError(
             f"invalid deployment name: {name}\navailable: {available}"
         )
     try:
-        reference = kit.deployments[name]
+        reference = catalog.deployments[name]
     except KeyError as error:
         raise OpenADKitError(
             f"unknown deployment: {name}\navailable: {available}"
         ) from error
     directory = root.joinpath(*safe_relative(reference.path, "deployment path").parts)
-    if kit.base is not None:
-        assert kit.base_root is not None
-        deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root, name)
+    if catalog.extended is not None:
+        assert catalog.extended_root is not None
+        deployment = _load_kit_deployment(root, directory, catalog.extended, catalog.extended_root, name)
     else:
         deployment = _load_base_deployment(root, directory, name)
     return deployment
@@ -553,15 +553,15 @@ def deployment_checksum(directory: Path, *, exclude_dirs: tuple[str, ...] = ()) 
 def deployment_integrity(
     root: Path,
     deployment: Deployment,
-    kit: Kit,
+    catalog: Catalog,
 ) -> str:
-    if kit.kind != "release":
+    if catalog.kind != "release":
         return "source"
-    expected = kit.deployments[deployment.name].checksum
+    expected = catalog.deployments[deployment.name].checksum
     if expected != deployment_checksum(deployment.directory):
         return "modified"
     if not all(
-        kit.shared.get(name) == deployment_checksum(root / "deployments" / name)
+        catalog.shared.get(name) == deployment_checksum(root / "deployments" / name)
         for name in deployment.shared
     ):
         return "modified"
