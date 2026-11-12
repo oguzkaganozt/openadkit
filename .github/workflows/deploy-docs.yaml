@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Release calls pass the default branch so the build tracks main at
           # build time instead of the dispatch-time SHA. Manual runs also
@@ -61,7 +61,7 @@ jobs:
         run: printf '%s\n' "$SOURCE_SHA" > site/openadkit-docs-source.txt
 
       - name: Upload production site
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: production-docs-site
           path: site
@@ -86,7 +86,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout deployment repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -125,14 +125,14 @@ jobs:
 
       - name: Download production site
         if: ${{ steps.freshness.outputs.current == 'true' }}
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: production-docs-site
           path: site
 
       - name: Deploy to GitHub Pages
         if: ${{ steps.freshness.outputs.current == 'true' }}
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         with:
           folder: site
           branch: gh-pages

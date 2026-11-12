@@ -4,6 +4,10 @@ The pipeline is **build → scan + runtime evidence → validate → package →
 Workflows own triggers, job ordering, runners and permissions. Scripts own the
 data and behavior contracts; local actions own repeated execution recipes.
 
+Every action is pinned by commit, with its version in a comment
+(`owner/action@<sha> # vX.Y.Z`): a tag can move, a commit cannot. Dependabot
+raises both, and `test_pinned_actions.py` fails on a tag.
+
 | Responsibility | Owner |
 | --- | --- |
 | Build matrices, changed-target selection, contexts and Bake overrides | `scripts/build.py` |

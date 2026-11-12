@@ -63,7 +63,7 @@ jobs:
       manifest_matrix: ${{ steps.inventory.outputs.manifest_matrix }}
     steps:
       - name: Check out the Open AD Kit repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Resolve shared build inputs
         id: prepare
@@ -80,7 +80,7 @@ jobs:
         shell: bash
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Resolve immutable upstream Autoware images
         id: upstream
@@ -93,14 +93,14 @@ jobs:
         shell: bash
 
       - name: Upload immutable upstream image metadata
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: upstream-images-${{ steps.prepare.outputs.build_tag }}
           path: upstream-images/upstream-images.json
           retention-days: 90
 
       - name: Upload image inventory
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: image-inventory-${{ steps.prepare.outputs.build_tag }}
           path: image-inventory/image-inventory.json
@@ -124,7 +124,7 @@ jobs:
         shell: bash
 
       - name: Upload Autoware dependency lockfile
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: autoware-lock-${{ steps.prepare.outputs.build_tag }}
           path: autoware-lock/autoware-lock.repos
@@ -147,7 +147,7 @@ jobs:
       matrix: ${{ fromJson(needs.prepare.outputs.common_matrix) }}
     steps:
       - name: Check out the Open AD Kit repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up build environment
         uses: ./.github/actions/setup-build-env
@@ -196,7 +196,7 @@ jobs:
       matrix: ${{ fromJson(needs.prepare.outputs.component_matrix) }}
     steps:
       - name: Check out the Open AD Kit repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up build environment
         uses: ./.github/actions/setup-build-env
@@ -241,10 +241,10 @@ jobs:
       matrix: ${{ fromJson(needs.prepare.outputs.manifest_matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Create multi-arch manifest for ${{ matrix.target }} (${{ matrix.ros-distro }})
         uses: ./.github/actions/combine-multi-arch-images
@@ -267,31 +267,31 @@ jobs:
       packages: read
     steps:
       - name: Check out the Open AD Kit repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download Autoware dependency lockfile
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: autoware-lock-${{ needs.prepare.outputs.build_tag }}
           path: build-metadata
 
       - name: Download image inventory
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: image-inventory-${{ needs.prepare.outputs.build_tag }}
           path: build-metadata
 
       - name: Download immutable upstream image metadata
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: upstream-images-${{ needs.prepare.outputs.build_tag }}
           path: build-metadata
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -311,7 +311,7 @@ jobs:
         shell: bash
 
       - name: Upload build metadata
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-metadata-${{ needs.prepare.outputs.build_tag }}
           path: |

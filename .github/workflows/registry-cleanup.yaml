@@ -78,7 +78,7 @@ jobs:
         # GitHub can refuse to delete a version, as it did the last one left
         # in the package; the next step checks what matters.
         continue-on-error: true
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit-ci
           use-regex: true
@@ -113,7 +113,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the image inventory
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: .github/image-inventory.json
           sparse-checkout-cone-mode: false
@@ -157,7 +157,7 @@ jobs:
         # As for a pull request's images: a refused version must not stop the
         # other packages' cleanup; the next step checks what matters.
         continue-on-error: true
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit-ci
           delete-tags: '*'
@@ -186,7 +186,7 @@ jobs:
         shell: bash
 
       - name: Delete branch builds older than 90 days
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit
           use-regex: true
@@ -201,7 +201,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete compile bases of builds older than 90 days
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit-buildcache
           use-regex: true
@@ -211,7 +211,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete caches of removed images and branches
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit-buildcache
           use-regex: true
@@ -222,7 +222,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete overwritten cache exports older than 14 days
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           package: openadkit-buildcache
           delete-untagged: true
