@@ -1,6 +1,6 @@
 # {{base}} and this kit's own services.
 include:
-  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
+  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml
 
 # Add services here. One that runs your overlay packages uses an Open AD Kit
 # image and mounts the workspace:

@@ -1,5 +1,5 @@
 # Logging simulation — the live sensing, perception, and localization stack plus
-# a rosbag player. Pair with docker-compose.gpu.yaml to GPU-accelerate
+# a rosbag player. Pair with compose.gpu.yaml to GPU-accelerate
 # sensing/perception.
 #
 # Service definitions live in ../shared/services/<service>.yaml (one file per service).

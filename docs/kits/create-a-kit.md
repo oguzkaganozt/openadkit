@@ -14,7 +14,7 @@ openadkit new my-kit --base scenario-simulation
 my-kit/
 ├── openadkit.json
 ├── deployment.json
-├── docker-compose.yaml
+├── compose.yaml
 ├── settings.env
 ├── config/autoware/
 └── overlay_ws/src/
@@ -24,10 +24,10 @@ my-kit/
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
 - `deployment.json` names the base deployment. Compose reads
-  `docker-compose.yaml` unless `compose.files` names others. Architecture, ROS
+  `compose.yaml` unless `compose.files` names others. Architecture, ROS
   distro, GPU, downloads and the verify step are inherited; `requirements` may
   narrow the first three.
-- `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
+- `compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml`;
   add your services below it. `OPENADKIT_ROOT` names the release's root, for
   its shared assets.
 - `settings.env` holds only the values you change, such as `VEHICLE_ID`.

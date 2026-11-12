@@ -43,7 +43,7 @@ ALLOWED_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "external
 ALLOWED_KIT_DEPLOYMENT_KEYS = {
     "schemaVersion", "description", "base", "compose", "requirements", "data", "verify",
 }
-ALLOWED_KIT_COMPOSE_KEYS = {"files", "resetServices", "waitTimeout"}
+ALLOWED_KIT_COMPOSE_KEYS = {"files", "oneShotServices", "waitTimeout"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
 VERSION_RE = re.compile(
@@ -68,12 +68,12 @@ ALLOWED_VERIFY_KEYS = {"service", "command"}
 ALLOWED_BASE_COMPOSE_KEYS = {
     "files",
     "gpuFiles",
-    "resetServices",
+    "oneShotServices",
     "waitTimeout",
 }
 ALLOWED_NODE_KEYS = {
     "files",
-    "resetServices",
+    "oneShotServices",
     "requiredEnv",
     "requiredFiles",
     "rosDomainId",
@@ -306,12 +306,12 @@ def validate_data(data: Any, nodes: dict[str, Any], directory: Path) -> list[dic
 
 
 # Compose's own default file name, used when a deployment names no files.
-DEFAULT_COMPOSE_FILES = ["docker-compose.yaml"]
+DEFAULT_COMPOSE_FILES = ["compose.yaml"]
 
 
 def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[str, Any]:
     """A deployment's compose section, with what it leaves out empty and
-    docker-compose.yaml as its files by default."""
+    compose.yaml as its files by default."""
     if value is None:
         value = {}
     if not isinstance(value, dict):
@@ -319,7 +319,7 @@ def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[s
     reject_unknown(value, allowed, "compose")
     compose: dict[str, Any] = {
         field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("gpuFiles", "resetServices")
+        for field in ("gpuFiles", "oneShotServices")
     }
     compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
     if not compose["files"]:
@@ -472,8 +472,8 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
         node["files"] = require_string_list(
             node.get("files"), f"{where}.files", nonempty=True
         )
-        node["resetServices"] = require_string_list(
-            node.get("resetServices", []), f"{where}.resetServices"
+        node["oneShotServices"] = require_string_list(
+            node.get("oneShotServices", []), f"{where}.oneShotServices"
         )
         node["requiredEnv"] = require_string_list(
             node.get("requiredEnv", []), f"{where}.requiredEnv"

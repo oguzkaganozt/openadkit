@@ -239,11 +239,11 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
         .stdout.splitlines()
     )
     # The Compose project is the deployment: every configured service is meant
-    # to run. Only the oneshot services are cross-checked, so a typo in a
-    # resetServices entry still fails fast. A kit inherits its base's oneshots
+    # to run. Only the one-shot services are cross-checked, so a typo in a
+    # oneShotServices entry still fails fast. A kit inherits its base's one-shot services
     # but may leave their side of the base out (one service layer of it).
-    inherited = set(deployment.base.reset_services()) if deployment.base else set()
-    unknown = sorted(set(deployment.reset_services(selection.node)) - configured - inherited)
+    inherited = set(deployment.base.one_shot_services()) if deployment.base else set()
+    unknown = sorted(set(deployment.one_shot_services(selection.node)) - configured - inherited)
     # A node may leave the verify service to another node; the whole graph must have it.
     if deployment.verify and selection.node is None and deployment.verify["service"] not in configured:
         unknown.append(deployment.verify["service"])
@@ -379,8 +379,8 @@ def failed_services(
     failed = set()
     for line in result.stdout.splitlines():
         container, service, restarts, state, exit_code, health = line.split()
-        # Reset services may finish, as map-check does, but not fail.
-        if service in deployment.reset_services(selection.node):
+        # One-shot services may finish, as map-check does, but not fail.
+        if service in deployment.one_shot_services(selection.node):
             if state == "exited" and exit_code != "0":
                 failed.add(service)
             continue
@@ -433,7 +433,7 @@ def start(
         pull = ["pull", "--policy", pull_policy]
         run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
 
-    for service in deployment.reset_services(selection.node):
+    for service in deployment.one_shot_services(selection.node):
         if service not in services:
             continue
         run_compose(deployment, selection, ["rm", "--stop", "--force", service], show=True)
@@ -455,7 +455,7 @@ def scale_to_zero(services: set[str]) -> list[str]:
 def up(deployment: Deployment, selection: Selection, arguments: list[str]) -> None:
     """`compose up`, held to one readiness policy for run and restart:
     healthchecks pass within the deployment's waitTimeout, then no service
-    crashes, restarts or exits while the stack settles. One-shot reset services
+    crashes, restarts or exits while the stack settles. One-shot services
     may finish, but not fail."""
     baseline = restart_counts(deployment, selection)
     run_compose(

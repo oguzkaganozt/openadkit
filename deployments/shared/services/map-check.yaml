@@ -1,5 +1,5 @@
 # Map data gate — fails fast when MAP_PATH is empty or missing required files.
-# A oneshot (restart: "no"): deployments list it in deployment.json resetServices.
+# A one-shot service (restart: "no"): deployments list it in deployment.json oneShotServices.
 services:
   map-check:
     image: ${LOCALIZATION_MAPPING_IMAGE:?set by the openadkit CLI}

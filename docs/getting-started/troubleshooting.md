@@ -72,7 +72,7 @@ it a certificate (`NOVNC_CERT`, `NOVNC_KEY`); with one, open it over
 ### Port 6080 already in use
 
 Port 6080 serves the visualizer. Stop the service that holds the port. The
-deployments use host networking, so a `ports:` mapping in `docker-compose.yaml`
+deployments use host networking, so a `ports:` mapping in `compose.yaml`
 has no effect.
 
 ### Point clouds arrive at a lower rate than they are published

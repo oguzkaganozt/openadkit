@@ -213,7 +213,7 @@ class Deployment:
         base: Deployment | None = None,
     ) -> None:
         self.root = root
-        # Kept for provenance and the inherited reset services.
+        # Kept for provenance and the inherited one-shot services.
         # Runtime layers below are resolved once; they never delegate to base.
         self.base = base
         self.directory = directory
@@ -306,10 +306,10 @@ class Deployment:
             )
         return files
 
-    def reset_services(self, node: str | None = None) -> list[str]:
+    def one_shot_services(self, node: str | None = None) -> list[str]:
         if node is None:
-            return list(self.compose["resetServices"])
-        return list(self.nodes[node]["resetServices"])
+            return list(self.compose["oneShotServices"])
+        return list(self.nodes[node]["oneShotServices"])
 
 
 def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
@@ -362,7 +362,7 @@ def _load_kit_deployment(
         "description": manifest["description"],
         "compose": {
             **compose,
-            "resetServices": list(dict.fromkeys(base.compose["resetServices"] + compose["resetServices"])),
+            "oneShotServices": list(dict.fromkeys(base.compose["oneShotServices"] + compose["oneShotServices"])),
         },
         "nodes": {},
         "requirements": requirements,

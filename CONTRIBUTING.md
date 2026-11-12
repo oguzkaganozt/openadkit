@@ -89,7 +89,7 @@ the `PASSED` evidence release gate. Share release inputs through
 `release_fixtures.py`; do not import one test module from another.
 
 Help wording, exhaustive schema-error and option combinations, terminal signals,
-upgrade-check/rollback UX, one-shot resets, bind-mount preparation, post-start
+upgrade-check/rollback UX, one-shot services, bind-mount preparation, post-start
 crash/timeout diagnostics, and all GPU/node data combinations are deliberately
 not covered. Release draft recreation and every alias/retry variant are also
 outside this focused suite. Data-transfer tests use

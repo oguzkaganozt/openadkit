@@ -3,9 +3,9 @@
   "description": "Autoware driving test scenarios in Scenario Simulator",
   "shared": ["shared"],
   "compose": {
-    "files": ["docker-compose.yaml"],
+    "files": ["compose.yaml"],
     "gpuFiles": [],
-    "resetServices": ["map-check", "scenario-simulator"],
+    "oneShotServices": ["map-check", "scenario-simulator"],
     "waitTimeout": 600
   },
   "verify": {
@@ -16,14 +16,14 @@
       "rosDomainId": 1,
       "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
-      "resetServices": ["map-check"],
+      "oneShotServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "scenario": {
       "rosDomainId": 2,
       "files": ["compose.scenario.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
-      "resetServices": ["scenario-simulator"],
+      "oneShotServices": ["scenario-simulator"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
   },

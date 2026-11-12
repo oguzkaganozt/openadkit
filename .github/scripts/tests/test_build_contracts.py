@@ -238,10 +238,10 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
     }))
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "Own simulator",
-        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
-    (directory / "docker-compose.yaml").write_text(
+    (directory / "compose.yaml").write_text(
         "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml\n"
         "services:\n"
         "  carla:\n    image: busybox:1.36.1\n    command: [\"sleep\", \"${TOWN}\"]\n"
@@ -266,10 +266,10 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "Drive by hand",
-        "base": "carla-simulation", "compose": {"files": ["docker-compose.yaml"]},
+        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
-    (directory / "docker-compose.yaml").write_text(
+    (directory / "compose.yaml").write_text(
         "include:\n  - ../shared/world.yaml\n"
         "services:\n  manual:\n    image: busybox:1.36.1\n"
         "    environment:\n      DISPLAY: ${DISPLAY:?run from a desktop session}\n"

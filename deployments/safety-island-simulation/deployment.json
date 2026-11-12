@@ -3,8 +3,8 @@
   "description": "Planning Simulation controlled by the Safety Island",
   "shared": ["shared"],
   "compose": {
-    "files": ["docker-compose.yaml"],
-    "resetServices": ["map-check"],
+    "files": ["compose.yaml"],
+    "oneShotServices": ["map-check"],
     "waitTimeout": 600
   },
   "verify": {

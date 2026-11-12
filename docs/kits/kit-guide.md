@@ -32,8 +32,8 @@ Each kit deployment names a `base` deployment of the pinned release in its
   set to `none` or `required` where the base leaves it optional. It never
   widens them, since the kit runs the base's services. Without a GPU mode, the
   base's GPU-only downloads are left out.
-- **Downloads and one-shot reset services** are inherited. A kit can add
-  downloads with distinct destination variables, and reset services of its
+- **Downloads and one-shot services** are inherited. A kit can add
+  downloads with distinct destination variables, and one-shot services of its
   own.
 - **Split-host nodes are not inherited:** a kit deployment runs on one host.
 
@@ -174,10 +174,10 @@ lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 
 To replace one side of a base that runs as split-host nodes, include only the
-other side's Compose file instead of the base's `docker-compose.yaml`. For
+other side's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends
-on a CARLA service. The base's `resetServices` that the kit's services leave
+on a CARLA service. The base's `oneShotServices` that the kit's services leave
 out are skipped; the kit's own must exist.
 
 ### 5. Image Replacement

@@ -1,7 +1,7 @@
 # Scenario-host services for scenario simulation: the scenario runner and the
 # visualizer, which split-host runs on this host rather than the edge.
 #
-# Shared by the single-host entry point (docker-compose.yaml, which adds
+# Shared by the single-host entry point (compose.yaml, which adds
 # pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--node scenario`
 # view (this file plus compose.zenoh.yaml). Autoware edges and pid: service:map
 # live in the default entry point, not here: the node view has no Autoware

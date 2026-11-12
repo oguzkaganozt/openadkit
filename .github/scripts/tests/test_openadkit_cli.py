@@ -68,8 +68,8 @@ def run_cli(root, *args, directory=None, **env):
 def manifest(*, data=None, gpu=False, nodes=False):
     document = {
         "schemaVersion": 2, "description": "Test deployment",
-        "compose": {"files": ["docker-compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
-                    "resetServices": [], "waitTimeout": 1},
+        "compose": {"files": ["compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
+                    "oneShotServices": [], "waitTimeout": 1},
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],
@@ -77,7 +77,7 @@ def manifest(*, data=None, gpu=False, nodes=False):
     if nodes:
         document["nodes"] = {
             name: {"rosDomainId": domain, "files": [f"compose.{name}.yaml"],
-                   "resetServices": [], "requiredEnv": ["NODE_TOKEN"] if domain == 2 else []}
+                   "oneShotServices": [], "requiredEnv": ["NODE_TOKEN"] if domain == 2 else []}
             for name, domain in (("primary", 1), ("secondary", 2))
         }
     return document
@@ -229,8 +229,8 @@ def extending_kit(tmp_path, root, *, extends=None, external_images=None):
         "schemaVersion": 2, "description": "Kit deployment", "base": "example",
     }))
     (directory / "settings.env").write_text("VALUE=kit\n")
-    (directory / "docker-compose.yaml").write_text(
-        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml\n"
+    (directory / "compose.yaml").write_text(
+        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml\n"
         "services:\n  acme:\n    image: busybox:1.36.1\n"
     )
     return kit
@@ -624,7 +624,7 @@ def test_split_node_run_discovery_and_safe_stop(tmp_path):
     assert "openadkit-example_secondary" in up["args"]
     assert up["env"]["OPENADKIT_ROS_DOMAIN_ID"] == "2"
     assert str(root / "deployments/example/compose.secondary.yaml") in up["args"]
-    assert not any("zenoh" in arg or arg.endswith("docker-compose.yaml") for arg in up["args"])
+    assert not any("zenoh" in arg or arg.endswith("compose.yaml") for arg in up["args"])
     calls.write_text("")
     # stop finds the stack from Docker, from any directory.
     result = run_cli(root, "stop", directory=tmp_path)
@@ -797,10 +797,10 @@ def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_p
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
     # single-host or primary project.
-    entry = {"own": directory / "docker-compose.yaml", "elsewhere": tmp_path / "other-kit/docker-compose.yaml",
+    entry = {"own": directory / "compose.yaml", "elsewhere": tmp_path / "other-kit/compose.yaml",
              "other-node": directory / "compose.secondary.yaml"}[started_from]
     live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
-        "docker-compose.yaml", "compose.primary.yaml")]}
+        "compose.yaml", "compose.primary.yaml")]}
     monkeypatch.setattr(cli_compose, "live_project_files", lambda: live)
     # run must not replace another stack in place; stop still reaches it by name.
     assert cli_compose.other_projects(deployment) == ([] if started_from == "own" else sorted(live))
@@ -1057,7 +1057,7 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
 
 def test_rerun_counts_only_restarts_since_up(monkeypatch):
     # "kept" restarted once before this `up` and was left in place; "crashed" restarted after it.
-    # Reset services may exit, but not fail: "init" finished, "rosbag" crashed.
+    # One-shot services may exit, but not fail: "init" finished, "rosbag" crashed.
     # A long-running service that exits cleanly is gone too: on-failure does not restart it.
     # A healthcheck that fails after up, and a dead container, fail too.
     inspect = ("kept api 1 running 0 healthy\ncrashed planning 1 running 0 none\nreset init 3 exited 0 none\n"
@@ -1065,7 +1065,7 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
                "gone vehicle 0 dead 0 none\n")
     monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"reset_services": staticmethod(lambda node: {"init", "rosbag"})})()
+    deployment = type("Deployment", (), {"one_shot_services": staticmethod(lambda node: {"init", "rosbag"})})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == [
         "map", "planning", "rosbag", "system", "vehicle"]
@@ -1551,7 +1551,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"
     selection = cli_settings.resolve(deployment, context, "humble", True)
-    assert deployment.compose_files(True) == [directory / "docker-compose.yaml", base / "gpu.yaml"]
+    assert deployment.compose_files(True) == [directory / "compose.yaml", base / "gpu.yaml"]
     assert selection.environment["VALUE"] == "site" and selection.environment["BASE_GPU"] == "1"
     assert selection.injections["API_IMAGE"] == OTHER_PIN
     assert selection.injections["OPENADKIT_BASE_DEPLOYMENT"] == str(base)
@@ -1567,22 +1567,22 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     assert (bom["images"] is not None) is release
 
 
-def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_path):
+def test_kit_may_leave_out_the_base_side_its_inherited_one_shot_services_belong_to(tmp_path):
     document = manifest()
-    document["compose"]["resetServices"] = ["loader"]
+    document["compose"]["oneShotServices"] = ["loader"]
     root, _ = runtime_tree(tmp_path, document=document)
     kit = extending_kit(tmp_path, root)
     calls = fake_docker(tmp_path, services=("app", "acme"))
-    # The base itself must still define its oneshots.
+    # The base itself must still define its one-shot services.
     result = run_cli(root, "validate", "example")
     assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
     assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
     assert run_cli(root, "run", "custom", "--pull", "never", directory=kit).returncode == 0
     assert not any("rm" in row["args"] for row in recorded(calls))
-    # A kit's own oneshot is checked like a base's.
+    # A kit's own one-shot service is checked like a base's.
     path = kit / "deployments/custom/deployment.json"
     document = json.loads(path.read_text())
-    document["compose"] = {"resetServices": ["probe"]}
+    document["compose"] = {"oneShotServices": ["probe"]}
     path.write_text(json.dumps(document))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
@@ -1605,7 +1605,7 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     assert manifest["extends"] == ("v1.2.3" if installed else str(root.resolve()))
     assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
     deployment = json.loads((kit / "deployment.json").read_text())
-    # The name lives once, in openadkit.json; Compose files default to docker-compose.yaml.
+    # The name lives once, in openadkit.json; Compose files default to compose.yaml.
     assert deployment == {"schemaVersion": 2, "description": "example with this kit's layer on top", "base": "example"}
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
@@ -1793,9 +1793,9 @@ def test_only_a_kit_deployment_names_a_base(tmp_path):
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
         "schemaVersion": 2, "description": "On top", "base": "example",
-        "compose": {"files": ["docker-compose.yaml"]},
+        "compose": {"files": ["compose.yaml"]},
     }))
-    (directory / "docker-compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
+    (directory / "compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
     edit_kit(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))
     with pytest.raises(cli_manifest.OpenADKitError, match="unknown manifest field\\(s\\): base"):
         cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
