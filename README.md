@@ -22,23 +22,26 @@ Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stag
 
 ## Quickstart
 
-Run Planning Simulation on Ubuntu 22.04 or 24.04. No GPU is required.
+Three commands on Ubuntu 22.04 or 24.04. No GPU needed.
 
 > [!NOTE]
 > **v2.0.0 is not published yet.** Until it is, [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
 
 ```bash
+# 1. Install the CLI
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
   | bash -s -- install
+
+# 2. Prepare the host
 openadkit setup --verify
+
+# 3. Start Autoware
 openadkit run planning-simulation
 ```
 
-`run` downloads the sample map, pulls the images and returns once the stack is ready. Open the visualizer address it prints, sign in with the password `openadkit`, and set a route. `openadkit stop` ends the run.
+Then open <http://localhost:6080/vnc.html>, sign in with `openadkit`, and set a goal. The vehicle plans the route and drives it.
 
-If `setup` adds you to the `docker` group, run `newgrp docker` or start a new login session before `run`.
-
-The [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/) walks through each step and the installation options.
+`openadkit stop` shuts it down. Stuck, or want the details? See the full [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/).
 
 ## Deployments
 
