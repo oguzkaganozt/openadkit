@@ -1,9 +1,9 @@
 # Open AD Kit
 
 [![Build](https://img.shields.io/github/actions/workflow/status/autowarefoundation/openadkit/build-all-images.yaml?branch=main&label=build)](https://github.com/autowarefoundation/openadkit/actions/workflows/build-all-images.yaml)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://autowarefoundation.github.io/openadkit/)
 [![Release](https://img.shields.io/github/v/release/autowarefoundation/openadkit?label=release)](https://github.com/autowarefoundation/openadkit/releases)
 [![ROS 2](https://img.shields.io/badge/ROS%202-Humble%20%7C%20Jazzy-22314E?logo=ros&logoColor=white)](https://autowarefoundation.github.io/openadkit/platforms/)
-[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://autowarefoundation.github.io/openadkit/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **The deployment layer for the Autoware ecosystem.**
