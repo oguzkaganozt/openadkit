@@ -4,7 +4,8 @@
 
 **The deployment layer for the Autoware ecosystem.**
 
-[Autoware](https://github.com/autowarefoundation/autoware), packaged into focused container images and ready-to-run deployments.<br>
+[Autoware](https://github.com/autowarefoundation/autoware) provides the autonomy stack; Open AD Kit makes it deployable.<br>
+Focused container images and ready-to-run deployments, with [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) alongside.<br>
 One CLI runs them the same way on every host.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -17,8 +18,6 @@ One CLI runs them the same way on every host.
 </picture>
 
 </div>
-
-Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stage of the driving pipeline is its own image, so a deployment runs only what its task needs, and [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) joins the same stack.
 
 ## Quickstart
 

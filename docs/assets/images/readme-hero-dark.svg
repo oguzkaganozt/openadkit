@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 452" width="1000" height="452" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 444" width="1000" height="444" role="img" aria-labelledby="title desc">
   <title id="title">One command starts Autoware as separate containers</title>
   <desc id="desc">openadkit run planning-simulation starts the localization-mapping, planning, control, vehicle-system, simulator, visualizer and api images as containers that talk over ROS 2. The sensing-perception image and the Safety Island belong to other deployments. Caption: one reproducible path from simulation to in-vehicle systems.</desc>
   <rect x="12" y="52" width="976" height="324" rx="16" fill="none" stroke="#30363d" stroke-width="1.5"/>
@@ -41,5 +41,5 @@
   <text x="340" y="348.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">started by this command</text>
   <rect x="530" y="337" width="14" height="14" rx="4" fill="none" stroke="#484f58" stroke-width="1.5" stroke-dasharray="3 3"/>
   <text x="552" y="348.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">used by other deployments</text>
-  <text x="500" y="424" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="21" font-weight="600" fill="#e6edf3">One reproducible path from <tspan fill="#7cacff">simulation</tspan> to <tspan fill="#7cacff">in-vehicle systems</tspan></text>
+  <text x="500" y="418" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="16" fill="#e6edf3">One reproducible path from <tspan fill="#7cacff">simulation</tspan> to <tspan fill="#7cacff">in-vehicle systems</tspan></text>
 </svg>
