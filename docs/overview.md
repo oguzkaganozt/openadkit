@@ -12,6 +12,8 @@ Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packag
 
 It also integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/), which runs on real-time operating systems and automotive hardware rather than in a container. Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle; [Supported Platforms](platforms/index.md) covers the derived blueprints and the support tiers.
 
+A [kit](kits/create-a-kit.md) is also the form in which an Autoware Reference Design can publish its software stack; see [Reference Designs](kits/reference-designs.md).
+
 Open AD Kit is not a custom OTA service, a Kubernetes stack or a fork of
 upstream workloads, and it makes no ASIL or NCAP certification claim. Safety
 Island owns its safety boundary; Open AD Kit integrates it.
