@@ -1,6 +1,6 @@
 # Create a Kit
 
-`openadkit new` makes a kit that extends this Open AD Kit and one of its
+`openadkit new` makes a kit that extends this release and one of its
 deployments without copying them, so the kit holds only your differences:
 
 ```bash
@@ -51,7 +51,7 @@ release, change `extends`; the next command that acts on the kit, such as
 cd my-kit
 openadkit build                 # overlay_ws, in the release's devel image
 openadkit validate
-openadkit run --verify          # start, wait until ready, run the base's end-to-end check
+openadkit run --verify          # start, wait until ready, run the base's verify step
 openadkit stop
 ```
 

@@ -23,7 +23,7 @@ The commands you need after the first run. `openadkit --help` and
 ```bash
 openadkit list                                    # the deployments you can run
 openadkit run planning-simulation
-openadkit run planning-simulation --verify        # then run its end-to-end check
+openadkit run planning-simulation --verify        # then run its verify step
 openadkit run planning-simulation --pull always   # refresh the images first
 openadkit run planning-simulation --no-visualizer
 ```
@@ -189,7 +189,7 @@ data usage cannot be checked, they refuse as well.
 ## Your Own Kit
 
 `openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit on top of a
-deployment of this Open AD Kit (Planning Simulation by default) that holds
+catalog deployment (Planning Simulation by default) that holds
 only your differences. `openadkit build` builds the kit's overlay workspace in
 the release's devel image. See [Create a Kit](../kits/create-a-kit.md).
 

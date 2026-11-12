@@ -60,7 +60,7 @@ A kit holds only your differences from a deployment: your ROS packages, paramete
 openadkit new my-kit        # on top of planning-simulation
 cd my-kit
 openadkit build             # your overlay workspace
-openadkit run --verify      # start, wait until ready, run the end-to-end check
+openadkit run --verify      # start, wait until ready, run the verify step
 ```
 
 ## Documentation

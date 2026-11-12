@@ -83,7 +83,7 @@ def root_path() -> Path:
     raw = os.environ.get("OPENADKIT_ROOT")
     if not raw:
         raise OpenADKitError(
-            "OPENADKIT_ROOT is not set; invoke the root ./openadkit entrypoint"
+            "OPENADKIT_ROOT is not set; run the ./openadkit launcher"
         )
     root = Path(raw)
     if root.is_symlink() or not root.is_dir():
@@ -230,7 +230,7 @@ class Deployment:
         self.project = f"openadkit-{self.name}"
         own_layer = EnvironmentLayer(directory, base is None, bool(self.compose["gpuFiles"]))
         self.env_layers: tuple[EnvironmentLayer, ...] = (*(base.env_layers if base else ()), own_layer)
-        # Kit GPU patches follow its Compose entrypoint, as before.
+        # A kit's GPU files follow its entry Compose file.
         self.gpu_files: list[tuple[Path, str]] = [
             (directory, name) for name in self.compose["gpuFiles"]
         ] + (base.gpu_files if base else [])

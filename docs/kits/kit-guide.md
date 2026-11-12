@@ -1,8 +1,8 @@
 # Kit Guide
 
 The reference for a kit: what it pins, each extension point, and how it is
-validated and upgraded. A kit owns its differences; Open AD Kit owns the base
-CLI, images and deployments. Start one with `openadkit new`
+validated and upgraded. A kit owns its differences; Open AD Kit owns the
+CLI, the images and the catalog. Start one with `openadkit new`
 ([Create a Kit](create-a-kit.md)).
 
 ## Pin the Release
@@ -90,7 +90,7 @@ hook logs them and writes `/tmp/openadkit/overlay-report.json` in each container
 Once the services are up, `run` collects those reports and warns about every
 override without a counterpart: a package no service has changes nothing, and a
 file or a parameter its package does not have is added. That is intended for a
-new file such as a diagnostics graph; after a base version change it usually
+new file such as a diagnostics graph; after a release change it usually
 means a renamed package, file or parameter. Every service gets the same layers,
 so a package installed in only some images is not reported.
 
@@ -112,7 +112,7 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
 
 - Packages build incrementally: a second build compiles only what changed.
 - The CLI records the image and distro in `install/.openadkit-overlay.json`.
-  After a base upgrade or a distro change, `validate` and `run` warn until you
+  After a release upgrade or a distro change, `validate` and `run` warn until you
   rebuild, and that rebuild starts from a clean `build/` and `install/`, since
   CMake caches record the paths they were configured with.
 - `--install-base` and `--build-base` stay fixed: the services source
@@ -123,7 +123,7 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
 #### Run
 
 The workspace belongs to the kit: the one `overlay_ws` at the kit root serves
-every deployment of the kit, since they all extend one base and its images.
+every deployment of the kit, since they all extend one release and its images.
 Every Autoware service mounts it, and the entrypoint hook sources
 `overlay_ws/install/local_setup.bash` on top of Autoware, so its packages are
 visible in every service. Whether your code runs depends on what starts it:

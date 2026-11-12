@@ -48,7 +48,7 @@ version keeps working.
   [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
   title pairs the two, `Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do
   `openadkit install` and `openadkit version`.
-- **Pinned inputs.** A release also pins the ROS 2 distros and every image
+- **Pinned inputs.** A release also pins the ROS distros and every image
   digest, and its images carry
   `org.opencontainers.image.autoware-base-version`.
 - **Backports.** A fix that is upstream but not yet in an Autoware release can
@@ -57,7 +57,7 @@ version keeps working.
 - **Older versions.** A `release/X.Y` branch is created from a release tag only
   to fix an older version.
 
-## ROS 2 Distro Support
+## ROS Distro Support
 
 | Distro | Status |
 |--------|--------|

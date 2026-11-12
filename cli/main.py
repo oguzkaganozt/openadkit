@@ -437,7 +437,7 @@ def run_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--verify", action="store_true",
-        help="once ready, run the deployment's verify step (the CI end-to-end check) and exit with its result",
+        help="once ready, run the deployment's verify step and exit with its result",
     )
 
 

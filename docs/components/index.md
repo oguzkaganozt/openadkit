@@ -158,7 +158,7 @@ Humble-only and needs an NVIDIA GPU.
 
 ## Image Reference
 
-Generated from the image catalog (`.github/image-inventory.json`), so it always
+Generated from the image inventory (`.github/image-inventory.json`), so it always
 matches what CI builds. Tag names are explained in
 [Container Images & Versioning](../releases/container-images.md).
 

@@ -2,7 +2,7 @@
 
 The registry prefix and default ROS distro title come from openadkit.json, the
 release manifest the release reads them from, so the published docs cannot
-contradict the release. The component image table is generated from the catalog
+contradict the release. The component image table is generated from the image inventory
 (.github/image-inventory.json) so the docs cannot drift from what CI builds.
 
 Used by the `macros` plugin configured in mkdocs.yaml. Reference in any page
@@ -41,12 +41,12 @@ def define_env(env):
 
     @env.macro
     def component_table():
-        """Markdown table of component images, generated from the catalog.
+        """Markdown table of component images, generated from the image inventory.
 
         The ROS Distros column reflects the per-image `ros_distros` override in
-        the catalog when present, otherwise the catalog-wide `ros_distros` list.
+        the inventory when present, otherwise the inventory-wide `ros_distros` list.
         """
-        data = _load_json(INVENTORY, "image catalog")
+        data = _load_json(INVENTORY, "image inventory")
         global_distros = data["ros_distros"]
         rows = [
             "| Component | Image | ROS Distros | Platforms |",
