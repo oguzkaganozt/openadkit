@@ -18,7 +18,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 ## Start Here { .oak-eyebrow }
 
-<div class="oak-card-grid oak-card-grid--four" markdown="1">
+<div class="oak-card-grid oak-card-grid--start" markdown="1">
 
 <div class="oak-card" markdown="1">
 
