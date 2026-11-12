@@ -11,7 +11,7 @@ is the canonical reference for running, configuring and troubleshooting them.
 | [`logging-simulation/`](./logging-simulation) | Replay recorded sensor data through sensing, perception and localization |
 | [`carla-simulation/`](./carla-simulation) | Drive in closed loop with the CARLA simulator (Humble, amd64, NVIDIA GPU) |
 | [`safety-island-simulation/`](./safety-island-simulation) | Planning Simulation driven by the Autoware Safety Island controller (amd64) |
-| `shared/` | What the deployments share: `services/*.yaml`, `runtime.env`, `cyclonedds.xml`, `compose.zenoh.yaml`, launch files, config and checks |
+| `shared/` | What the deployments share: `services/*.yaml`, `runtime.env`, `cyclonedds.xml`, `compose.zenoh.yaml`, launch files and checks |
 
 Each deployment directory holds its deployment manifest (`deployment.json`),
 its settings (`settings.env`, and `settings.gpu.env` for a GPU mode) and its
