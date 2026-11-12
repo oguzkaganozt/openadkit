@@ -1,3 +1,8 @@
+---
+hide:
+  - toc
+---
+
 # Open AD Kit
 
 <p class="oak-hero-lead">
@@ -6,8 +11,9 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 <p class="oak-hero-meta">
 <span class="oak-badge oak-badge--accent">First SOAFEE blueprint</span>
-<span class="oak-badge oak-badge--neutral">Cloud-native containers</span>
-<span class="oak-badge oak-badge--neutral">Simulation to in-vehicle</span>
+<span class="oak-badge oak-badge--neutral">Autoware {{ autoware_version }}</span>
+<span class="oak-badge oak-badge--neutral">ROS 2 Humble and Jazzy</span>
+<span class="oak-badge oak-badge--neutral">amd64 and arm64</span>
 </p>
 
 ## Start Here { .oak-eyebrow }
@@ -28,7 +34,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 :material-cube-outline:{ .oak-card-icon }
 
 <p class="oak-card-title" role="heading" aria-level="3">Run a deployment</p>
-<p>Planning, scenario, logging, CARLA and Safety Island simulation, on one host or split over Zenoh.</p>
+<p>Five ready-to-run simulations: planning, scenario, logging, CARLA and Safety Island.</p>
 <a href="deployments/" class="md-button">Deployments</a>
 </div>
 
@@ -36,8 +42,8 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 :material-layers-plus:{ .oak-card-icon }
 
-<p class="oak-card-title" role="heading" aria-level="3">Build your own stack</p>
-<p>A kit holds your packages, parameters and services on top of a deployment, with one CLI to build, run and restart it.</p>
+<p class="oak-card-title" role="heading" aria-level="3">Start your own kit</p>
+<p>A kit holds your packages, parameters and services on top of a deployment. One CLI builds, runs and restarts it.</p>
 <a href="kits/create-a-kit/" class="md-button">Create a Kit</a>
 </div>
 
@@ -57,12 +63,9 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 <div class="oak-link-list" markdown="1">
 
 - [**Overview**](overview.md) — What Open AD Kit is and how it is put together
-- [**Glossary**](glossary.md) — The terms these docs use
 - [**CLI & Maintenance**](getting-started/cli.md) — Every command, configuration, upgrades and cleanup
 - [**Troubleshooting**](getting-started/troubleshooting.md) — Docker, data, GPU, visualizer and network
-- [**Integrator Guide**](kits/integrator-guide.md) — The reference for every kit extension point
 - [**Components**](components/index.md) — The container images and what each one runs
-- [**Container Images & Versioning**](releases/container-images.md) — Tags, versions and what to pin
 - [**Releases**](releases/index.md) — What a release ships, promises and proves
 - [**Development**](development/index.md) — Build from source, contribute and release
 

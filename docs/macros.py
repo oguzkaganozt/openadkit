@@ -38,6 +38,8 @@ def define_env(env):
         )
     env.variables["registry"] = registry
     env.variables["default_distro_title"] = kit["defaultRosDistro"].capitalize()
+    # The Autoware release this branch builds on.
+    env.variables["autoware_version"] = (KIT.parent / ".github/autoware.ref").read_text(encoding="utf-8").strip()
 
     @env.macro
     def component_table():

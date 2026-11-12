@@ -124,6 +124,6 @@ so the next `run` starts faster.
 
 - [Deployments](../deployments/index.md) — scenario testing, rosbag replay, CARLA and Safety Island
 - [CLI & Maintenance](cli.md) — runtime controls, configuration, upgrades and cleanup
-- [Create a Kit](../kits/create-a-kit.md) — your own stack on top of a deployment
+- [Create a Kit](../kits/create-a-kit.md) — your packages, parameters and services on top of a deployment
 - [Components](../components/index.md) — the images behind what you just ran
 - [Troubleshooting](troubleshooting.md) — when something does not start
