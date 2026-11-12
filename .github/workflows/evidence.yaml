@@ -172,11 +172,16 @@ jobs:
         # Every deployment and distro the manifests declare, minus the
         # deployments with an evidence exemption. Each row is a complete cell
         # plan: identity, nodes and the checks run_cell.sh executes.
+        # A pull request runs the amd64 cells only: the images it builds are
+        # amd64, and it gets its answer sooner. A build of the branch runs
+        # every architecture.
         if: steps.source.outputs.skip != 'true'
         id: cells
+        env:
+          PLATFORMS: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
         run: |
           set -euo pipefail
-          cells=$(python3 .github/scripts/validation_matrix.py --source-root . --evidence-cells --include-example-kits)
+          cells=$(python3 .github/scripts/validation_matrix.py --source-root . --evidence-cells --include-example-kits --evidence-platforms "${PLATFORMS}")
           echo "cells=${cells}" >> "$GITHUB_OUTPUT"
 
       - name: Stage evidence kit
@@ -205,7 +210,7 @@ jobs:
   cell:
     needs: prepare
     if: needs.prepare.outputs.skip != 'true'
-    runs-on: ${{ matrix.runner || vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.runner || (matrix.platform == 'linux/arm64' && (vars.RUNNER_ARM64 || 'ubuntu-22.04-arm')) || vars.RUNNER_AMD64 || 'ubuntu-22.04' }}
     timeout-minutes: 120
     permissions:
       actions: read

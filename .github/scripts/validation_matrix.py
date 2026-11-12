@@ -22,7 +22,9 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, NoReturn
 
-EVIDENCE_PLATFORM = "linux/amd64"
+# A cell runs on a hosted runner of its own architecture, for every
+# architecture its deployment supports.
+EVIDENCE_PLATFORMS = ("linux/amd64", "linux/arm64")
 # Readiness (L1) is each deployment's healthchecks, which `openadkit run` waits
 # for, and the end-to-end check (L2) its manifest's verify step. A cell passes
 # only with L2, so every deployment that is not exempt declares one.
@@ -32,6 +34,8 @@ EVIDENCE_PLATFORM = "linux/amd64"
 PLATFORM_CELLS: dict[str, dict[str, str]] = {
     "planning-simulation": {"backend": "quadlet", "runner": "ubuntu-24.04"},
 }
+# The same runner image for an arm64 cell.
+ARM64_RUNNER_SUFFIX = "-arm"
 # The example kits and their bases, exercised against the same build as the
 # base: made by the staged kit's own `openadkit new` into kits/, with the CI
 # fixture on top (an overlay C++ package, a parameter override, a healthcheck
@@ -125,10 +129,12 @@ def evidence_cells(
     runtime: ModuleType,
     source_root: Path,
     kit: Any | None = None,
+    platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
 ) -> list[dict[str, str]]:
-    """Cells the evidence workflow runs: every distro of every deployment that
-    is not exempt, plus one cell running all nodes where a deployment declares
-    nodes. Each cell carries its identity and everything run_cell.sh checks."""
+    """Cells the evidence workflow runs: every distro and architecture of every
+    deployment that is not exempt, plus one cell running all nodes where a
+    deployment declares nodes. Each cell carries its identity and everything
+    run_cell.sh checks."""
     kit = kit if kit is not None else runtime.load_kit(source_root)
     cells: list[dict[str, str]] = []
     for name in sorted(kit.deployments):
@@ -137,14 +143,16 @@ def evidence_cells(
             continue
         if deployment.verify is None:
             fail(f"{name} declares no verify step; add one to its deployment.json or declare evidence.exempt")
-        for distro in deployment.requirements["rosDistros"]:
-            identities = [{"deployment": name, "distro": distro}]
+        supported = [platform for platform in platforms
+                     if platform.split("/")[1] in deployment.requirements["architectures"]]
+        for distro, platform in ((distro, platform) for distro in deployment.requirements["rosDistros"]
+                                 for platform in supported):
+            identities = [{"deployment": name, "distro": distro, "platform": platform}]
             if deployment.nodes:
-                identities.append({"deployment": name, "distro": distro, "node": "split"})
+                identities.append({"deployment": name, "distro": distro, "platform": platform, "node": "split"})
             for identity in identities:
                 cells.append(identity | {
                     "name": evidence_cell_name(identity),
-                    "platform": EVIDENCE_PLATFORM,
                     # Started in manifest order and stopped in reverse.
                     "nodes": " ".join(deployment.nodes) if "node" in identity else "",
                     "verify": json.dumps(deployment.verify),
@@ -152,6 +160,8 @@ def evidence_cells(
         if name in PLATFORM_CELLS:
             for row in [row for row in cells if row["deployment"] == name and "node" not in row]:
                 cell = row | PLATFORM_CELLS[name]
+                if cell["platform"] == "linux/arm64":
+                    cell["runner"] += ARM64_RUNNER_SUFFIX
                 cells.append(cell | {"name": evidence_cell_name(cell)})
     # One plain cell per distro also checks the launch arguments of every
     # deployment, the exempt ones included (evidence/launch_arguments.py).
@@ -186,9 +196,11 @@ def make_example_kits(launcher_root: Path, parent: Path) -> list[Path]:
     return kits
 
 
-def example_kit_cells(runtime: ModuleType, source_root: Path) -> list[dict[str, str]]:
+def example_kit_cells(
+    runtime: ModuleType, source_root: Path, platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
+) -> list[dict[str, str]]:
     """Each example kit runs its base's single-host cells, from its directory in kits/."""
-    base_cells = evidence_cells(runtime, source_root)
+    base_cells = evidence_cells(runtime, source_root, platforms=platforms)
     cells = []
     for name, base in EXAMPLE_KITS.items():
         for cell in base_cells:
@@ -204,7 +216,7 @@ def evidence_cell_name(cell: dict[str, Any]) -> str:
     """The evidence cell identity, shared by the workflow matrix and the summary."""
     variant = cell.get("node") or cell.get("backend") or ""
     suffix = f"-{variant}" if variant else ""
-    platform = EVIDENCE_PLATFORM.replace("/", "-")
+    platform = cell["platform"].replace("/", "-")
     return f"{cell['deployment']}-{cell['distro']}{suffix}-{platform}"
 
 
@@ -261,6 +273,10 @@ def main() -> int:
     )
     parser.add_argument("--include-example-kits", action="store_true")
     parser.add_argument(
+        "--evidence-platforms", default=",".join(EVIDENCE_PLATFORMS), metavar="LIST",
+        help="comma-separated platforms to list evidence cells for (default: all)",
+    )
+    parser.add_argument(
         "--make-example-kits", type=Path, metavar="DIRECTORY",
         help="make the example kits in DIRECTORY with this checkout's openadkit new instead",
     )
@@ -273,9 +289,13 @@ def main() -> int:
             return 0
         runtime = load_runtime(source_root)
         if args.evidence_cells:
-            cells = evidence_cells(runtime, source_root)
+            platforms = tuple(args.evidence_platforms.split(","))
+            unknown = sorted(set(platforms) - set(EVIDENCE_PLATFORMS))
+            if unknown:
+                parser.error(f"unknown evidence platform: {', '.join(unknown)}")
+            cells = evidence_cells(runtime, source_root, platforms=platforms)
             if args.include_example_kits:
-                cells.extend(example_kit_cells(runtime, source_root))
+                cells.extend(example_kit_cells(runtime, source_root, platforms))
             print(json.dumps({"include": cells}))
             return 0
         cells = validation_cells(runtime, source_root)

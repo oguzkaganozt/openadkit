@@ -51,6 +51,20 @@ def test_one_plain_cell_per_distro_checks_the_launch_arguments():
     assert not any("launch_arguments" in cell for cell in validation_matrix.example_kit_cells(runtime, ROOT))
 
 
+def test_a_cell_runs_on_every_architecture_its_deployment_supports():
+    runtime = validation_matrix.load_runtime(ROOT)
+    cells = validation_matrix.evidence_cells(runtime, ROOT)
+    platforms = {name: {cell["platform"] for cell in cells if cell["deployment"] == name}
+                 for name in {cell["deployment"] for cell in cells}}
+    for name, found in platforms.items():
+        assert found == {f"linux/{arch}" for arch in manifest(name)["requirements"]["architectures"]}, name
+    assert platforms["planning-simulation"] == {"linux/amd64", "linux/arm64"}
+    assert platforms["safety-island-simulation"] == {"linux/amd64"}
+    # A pull request lists one platform.
+    amd64 = validation_matrix.evidence_cells(runtime, ROOT, platforms=("linux/amd64",))
+    assert amd64 and {cell["platform"] for cell in amd64} == {"linux/amd64"}
+
+
 def test_a_failed_launch_argument_check_fails_l0(tmp_path):
     # The stub's catalog has no deployment, so the check finds no launch command.
     executable(tmp_path / "bin/openadkit", '''#!/usr/bin/env python3
@@ -103,10 +117,11 @@ def test_quadlet_cell_runs_the_drive_to_goal_check_on_a_runner_with_quadlet():
     runtime = validation_matrix.load_runtime(ROOT)
     cells = [cell for cell in validation_matrix.evidence_cells(runtime, ROOT) if cell.get("backend")]
     assert [cell["name"] for cell in cells] == [
-        f"planning-simulation-{distro}-quadlet-linux-amd64" for distro in ("humble", "jazzy")
+        f"planning-simulation-{distro}-quadlet-linux-{arch}" for distro in ("humble", "jazzy") for arch in ("amd64", "arm64")
     ]
     for cell in cells:
-        assert cell["backend"] == "quadlet" and cell["runner"] == "ubuntu-24.04"
+        runner = "ubuntu-24.04-arm" if cell["platform"] == "linux/arm64" else "ubuntu-24.04"
+        assert cell["backend"] == "quadlet" and cell["runner"] == runner
         assert json.loads(cell["verify"]) == manifest("planning-simulation")["verify"] and cell["nodes"] == ""
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
 

@@ -15,14 +15,14 @@ import validation_matrix  # noqa: E402
 
 
 def identities(cells):
-    return [{key: cell[key] for key in ("deployment", "distro", "node", "kit") if key in cell} for cell in cells]
+    return [{key: cell[key] for key in ("deployment", "distro", "platform", "node", "kit") if key in cell} for cell in cells]
 
 
 def test_example_evidence_cells_follow_the_base_distros():
     runtime = validation_matrix.load_runtime(ROOT)
     assert identities(validation_matrix.example_kit_cells(runtime, ROOT)) == [
-        {"deployment": kit, "distro": distro, "kit": f"kits/{kit}"}
-        for kit in ("example-kit",) for distro in ("humble", "jazzy")
+        {"deployment": kit, "distro": distro, "platform": platform, "kit": f"kits/{kit}"}
+        for kit in ("example-kit",) for distro in ("humble", "jazzy") for platform in ("linux/amd64", "linux/arm64")
     ]
 
 
