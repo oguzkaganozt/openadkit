@@ -2152,7 +2152,7 @@ files in order (later files win):</p>
 <li>Base <code>settings.gpu.env</code>, when GPU mode is selected</li>
 <li>Kit <code>settings.env</code>, if present</li>
 <li>Kit <code>settings.gpu.env</code>, if present and GPU mode is selected</li>
-<li><code>~/.config/openadkit/&lt;kit-deployment&gt;.env</code>, if present</li>
+<li>The host settings file, <code>~/.config/openadkit/&lt;kit-deployment&gt;.env</code>, if present</li>
 </ol>
 <p>Shell exports do not override values set in these files. The CLI adds the ROS
 distro, the host UID and GID, the overlay mount paths, <code>OPENADKIT_ROOT</code>
@@ -2223,7 +2223,7 @@ visible in every service. Whether your code runs depends on what starts it:</p>
   <code>openadkit shell &lt;service&gt; ros2 run &lt;package&gt; &lt;node&gt;</code>.</li>
 </ul>
 <h4 id="without-a-kit">Without a Kit<a class="headerlink" href="#without-a-kit" title="Permanent link">#</a></h4>
-<p>To try a workspace with a reference deployment, without writing a kit, mount it
+<p>To try a workspace with a catalog deployment, without writing a kit, mount it
 with <code>--ws</code>:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build<span class="w"> </span>~/my_ws
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--ws<span class="w"> </span>~/my_ws
@@ -2248,8 +2248,8 @@ base ROS domain and middleware, and give each one <code>init: true</code>
 workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image (<a href="#5-image-replacement">point 5</a>).</p>
-<p>To replace one side of a base that runs as split-host roles, include only the
-other side's Compose file instead of the base's <code>compose.yaml</code>. For
+<p>To replace one role of a base that runs as split-host roles, include only the
+other role's Compose file instead of the base's <code>compose.yaml</code>. For
 example, a kit that brings its own simulator to <code>carla-simulation</code> includes
 <code>${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml</code>: no service in it depends
 on a CARLA service. The base's <code>oneShotServices</code> that the kit's services leave
@@ -2260,7 +2260,7 @@ each with either one digest-pinned <code>ref</code> or a <code>distros</code> ma
 references. A name matching a component image variable replaces that
 component; other names supply images for new services. Use <code>${NAME:?}</code> in
 Compose to require the declared reference.</p>
-<p>A replaced base image needs your own runtime evidence: pinning alone does not
+<p>A replaced component image needs your own runtime evidence: pinning alone does not
 prove that it honors the entrypoint, launch or parameter interfaces.</p>
 <h2 id="a-new-vehicle">A New Vehicle<a class="headerlink" href="#a-new-vehicle" title="Permanent link">#</a></h2>
 <p>Autoware finds a vehicle and its sensors by package name. With

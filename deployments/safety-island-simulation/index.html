@@ -1978,7 +1978,7 @@ is required.</p>
 </code></pre></div>
 <p>Add <code>--ros-distro jazzy</code> to select Jazzy; Humble is the default.</p>
 <p><code>run</code> downloads the sample map and the pinned Safety Island release, then
-starts Planning Simulation with two more services:</p>
+starts Planning Simulation's services and two more:</p>
 <table>
 <thead>
 <tr>
@@ -2011,8 +2011,8 @@ not running.</p>
 </ul>
 <h2 id="open-the-visualizer">Open the Visualizer<a class="headerlink" href="#open-the-visualizer" title="Permanent link">#</a></h2>
 <p>Open <code>http://localhost:6080/vnc.html</code> and sign in with the default password
-<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in
-<code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
+<strong><code>openadkit</code></strong>. To use your own, set <code>REMOTE_PASSWORD</code> in the host settings
+file, <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</p>
 <p>The visualizer listens on loopback only. For a remote host, forward the port
 over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8080</span>:localhost:6080<span class="w"> </span>&lt;user&gt;@&lt;host&gt;
@@ -2022,7 +2022,7 @@ the Safety Island's control command.</p>
 <h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>safety-island-simulation<span class="w"> </span>--verify
 </code></pre></div>
-<p><code>--verify</code> runs Planning Simulation's drive-to-goal check on top, as the
+<p><code>--verify</code> runs the same drive-to-goal check as Planning Simulation, as the
 deployment's evidence cells do on Humble and Jazzy.</p>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>stop

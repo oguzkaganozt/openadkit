@@ -1976,7 +1976,7 @@ dedicated, pinned, trusted-builder implementation first.</p>
   <code>build-metadata-&lt;build_tag&gt;</code> artifact must be available in the repository.</li>
 <li><strong>What it tests:</strong> the workflow checks out the build's <code>openadkit_sha</code> and
   takes the image digests from the same metadata, never latest aliases. It
-  stages the kit with the same step that assembles release bundles, so the
+  stages the release tree with the same step that assembles release bundles, so the
   cells run the tree a release of that build ships, plus the example kit. The
   staged CLI's <code>openadkit new</code> makes that kit, with the fixture in
   <code>.github/scripts/evidence/example-kit</code> on top; its workspace builds against the

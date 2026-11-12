@@ -1990,7 +1990,7 @@ compile their package sets from a local <code>autoware/src</code> tree (step 4 b
 the same file CI uses.</p>
 <pre class="mermaid"><code>flowchart LR
     CORE["autoware:core-devel (build)&lt;br/&gt;autoware:base (runtime)"] --&gt; UC["universe-common"]
-    CORE --&gt; UCD["universe-common-devel&lt;br/&gt;(builds kit overlays)"]
+    CORE --&gt; UCD["universe-common-devel&lt;br/&gt;(builds overlay workspaces)"]
     UC --&gt; COMP["sensing-perception&lt;br/&gt;localization-mapping&lt;br/&gt;planning, control&lt;br/&gt;vehicle-system, api&lt;br/&gt;visualizer, simulator"]
     CUDA["autoware:base-cuda-{devel,runtime}"] --&gt; GPU["sensing-perception-cuda&lt;br/&gt;planning-cuda"]
     UC -.-&gt; GPU</code></pre>
@@ -2081,7 +2081,7 @@ docker<span class="w"> </span>buildx<span class="w"> </span>bake<span class="w">
   <code>planning-amd64-humble</code>), which is the tag <code>./openadkit</code> looks up in a
   source checkout. The arch follows the build host; when cross-building, set tags
   with <code>--set &lt;target&gt;.tags=...</code>. To use other images, set the <code>*_IMAGE</code>
-  variables in <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
+  variables in the host settings file, <code>~/.config/openadkit/&lt;deployment&gt;.env</code>.</li>
 <li>For Jazzy, build with <code>ROS_DISTRO=jazzy</code> and run with <code>--ros-distro jazzy</code>.</li>
 </ul>
 <p>Other useful targets:</p>

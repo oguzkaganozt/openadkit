@@ -2112,7 +2112,8 @@ the <a href="../../releases/evidence/">Evidence Policy</a>.</p>
 openadkit<span class="w"> </span>fetch<span class="w"> </span>carla-simulation<span class="w">      </span><span class="c1"># Autoware host only</span>
 </code></pre></div>
 <h2 id="configure-the-bridge-endpoints">Configure the Bridge Endpoints<a class="headerlink" href="#configure-the-bridge-endpoints" title="Permanent link">#</a></h2>
-<p>Create or edit <code>~/.config/openadkit/&lt;deployment&gt;.env</code> on each host. Use the
+<p>Create or edit the host settings file,
+<code>~/.config/openadkit/&lt;deployment&gt;.env</code>, on each host. Use the
 host's LAN IP, not <code>0.0.0.0</code>:</p>
 <table>
 <thead>
@@ -2165,7 +2166,7 @@ the raw LiDAR already originates.</p>
 <p>Each deployment ships its Zenoh allowlist in
 <code>deployments/&lt;deployment&gt;/config/zenoh.json5</code>, mounted into the bridge of
 every role. Entries are full-name regular expressions, not globs. Both hosts
-use the same file, since either side can own an endpoint. Review the list
+use the same file, since either role can own an endpoint. Review the list
 before routing anything new.</p>
 <ul>
 <li><strong>The visualizer's topics</strong> are on both allowlists: planning and control

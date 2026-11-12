@@ -1981,7 +1981,7 @@ openadkit<span class="w"> </span>restart<span class="w"> </span>my-node<span cla
 <ul>
 <li><code>build</code> is incremental: a second build compiles only what changed.</li>
 <li><code>restart &lt;service&gt;</code> recreates only that service. Without a name it recreates
-  every service with Open AD Kit config, which a changed copy of an Autoware
+  every service that takes config overrides, which a changed copy of an Autoware
   package needs.</li>
 <li><code>restart</code> returns once the service's healthcheck passes and the services
   have stayed up for 10 seconds.</li>
