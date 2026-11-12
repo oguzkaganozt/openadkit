@@ -214,7 +214,8 @@ Every service sources the workspace, so planning, control, the simulator and
 the visualizer all read the same vehicle. All four packages must exist: the
 vehicle and system services look up the two `_launch` packages on every start.
 `validate` does not check for them. When one is missing, `run` reports the
-service that failed, and `openadkit logs <service>` names the package.
+service that failed, and `openadkit logs <service>` names the package. Every
+release tests this path: the example kit drives with four such packages.
 
 Autoware's defaults describe a passenger car. Review these for your vehicle.
 The first two are in your packages. The others belong to Autoware packages, so

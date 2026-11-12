@@ -30,7 +30,7 @@ and topology:
 | Planning Simulation | Humble, Jazzy | Single host; also under Podman and systemd with the [AutoSD](../platforms/autosd.md) units |
 | Scenario Simulation | Humble, Jazzy | Single host; two isolated nodes on one host |
 | Safety Island Simulation | Humble, Jazzy | Single host, with the pinned Safety Island release over `domain_bridge` |
-| `example-kit` | Humble, Jazzy | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point |
+| `example-kit` | Humble, Jazzy | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages |
 
 Each cell runs these levels on a fresh stack, started with
 `openadkit run --no-visualizer`:
