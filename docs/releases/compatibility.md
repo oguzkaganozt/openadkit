@@ -87,8 +87,12 @@ See [CLI & Maintenance](../getting-started/cli.md).
 
 - The versionless installer and its `install`, `upgrade`, `uninstall` and
   `setup` commands.
-- The `openadkit-vX.Y.Z.tar.gz` bundle, and the fields of
-  `release-metadata.json` and `release-plan.json`.
+- The `openadkit-vX.Y.Z.tar.gz` bundle and the fields of `release-plan.json`,
+  which carries `schemaVersion`.
+- These fields of `release-metadata.json`, which the installer and
+  [Verify a Release](verification.md) read: `openadkit_version`,
+  `autoware_base_version`, `bundles`, `release_plan_sha256`, `evidence` and
+  `bom`.
 
 ## Experimental
 
@@ -108,6 +112,8 @@ release:
 - Human-readable output: messages, tables and their wording.
 - The output of `openadkit config`, which is Docker Compose's resolved model.
 - The CI workflows and everything under `.github/`.
+- The other fields of `release-metadata.json`, which are CI's own build and
+  scan records.
 - The other settings in `settings.env`. Most are arguments of Autoware's launch
   files and follow the pinned Autoware release; `READINESS_CHECKS` holds the
   arguments of the readiness check.

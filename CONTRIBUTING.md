@@ -49,8 +49,14 @@ Run these before pushing. They cover most of what `.github/workflows/lint.yaml` 
 # Shell scripts (and the extensionless launcher)
 { git ls-files '*.sh'; echo openadkit; } | xargs shellcheck --severity=error
 
-# GitHub Actions workflows (no glob — picks up .github/actions/ composites too)
+# GitHub Actions workflows (no glob — picks up .github/actions/ composites too).
+# Download the binary once:
+#   bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
 ./actionlint
+
+# Python lint and types
+ruff check cli .github/scripts components/shared/entrypoint
+mypy
 
 # Dockerfiles
 git ls-files '**/Dockerfile*' | xargs hadolint --config .hadolint.yaml

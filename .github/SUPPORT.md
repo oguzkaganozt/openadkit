@@ -28,9 +28,9 @@ candidates are development previews.
 
 Release evidence covers specific deployment, ROS distro, role topology and
 platform cells, not every hardware or environment combination. The hosted
-evidence cells currently use `linux/amd64`; a successful arm64 image build is
-not arm64 runtime evidence. A documented CI exemption means **not verified in
-CI**, not a passing test. See the
+evidence cells run on `linux/amd64` and `linux/arm64` runners; GPU modes,
+boards and two-machine setups are outside them. A documented CI exemption
+means **not verified in CI**, not a passing test. See the
 [evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
 and [platform matrix](https://autowarefoundation.github.io/openadkit/platforms/).
 

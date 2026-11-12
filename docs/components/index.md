@@ -17,43 +17,45 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 
 ## Component Images
 
+| Image | Services | Deployments |
+|-------|----------|-------------|
+| `sensing-perception` | `sensing`, `perception` | Logging; CARLA runs the CUDA variant |
+| `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
+| `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
+| `control` | `control` | Planning, Scenario, CARLA, Safety Island |
+| `vehicle-system` | `vehicle`, `system` | All |
+| `api` | `api` | All |
+| `simulator` | `simulator`, `simulated-perception`, `carla-interface` | Planning, Scenario, Safety Island; `carla-interface` in CARLA |
+| `visualizer` | `visualizer` | All |
+
 ### Sensing & Perception {: #sensing-perception }
 
-Sensor preprocessing and environment understanding in one image.
+Sensor preprocessing and object recognition, as two services from one image.
 
-- **Sensing** — LiDAR distortion correction, filtering, and point cloud
-  preprocessing; camera and radar preprocessing; GNSS/INS preprocessing; shared
-  point cloud container. Launch: `component_sensing.launch.xml`
-- **Perception** — camera, LiDAR, and radar object detection and fusion;
-  multi-object tracking and trajectory prediction; traffic light recognition;
-  occupancy grid mapping. Launch: `component_perception.launch.xml`
-- **CUDA variant** — `sensing-perception-cuda` accelerates point cloud
-  processing and neural-network inference on NVIDIA GPUs. It is amd64-only and
-  requires the NVIDIA Container Toolkit. Used by
+- **`sensing`** — launch: `component_sensing.launch.xml`
+- **`perception`** — launch: `component_perception.launch.xml`
+- **CUDA variant** — `sensing-perception-cuda` builds the same packages with
+  CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
+  and requires the NVIDIA Container Toolkit. Used by
   [Logging Simulation](../deployments/logging-simulation.md) (`--gpu`) and
   [CARLA Simulation](../deployments/carla-simulation.md).
 
 ### Localization & Mapping {: #localization-mapping }
 
-Serves HD maps and estimates the vehicle pose within them.
+Serves the Lanelet2 and point cloud maps and estimates the vehicle's pose on
+them, as two services from one image.
 
-- **Localization** — GNSS/RTK positioning and IMU dead reckoning; visual
-  odometry and LiDAR map matching; automatic pose initialization; EKF state
-  estimation. Launch: `component_localization.launch.xml`
-- **Mapping** — Lanelet2 vector map and point cloud map serving; occupancy grid
-  and point cloud map construction; map coordinate transforms. Launch:
-  `component_map.launch.xml`
+- **`map`** — launch: `component_map.launch.xml`
+- **`localization`** — launch: `component_localization.launch.xml`
 
-Planning and Scenario Simulation run only the `map` service; the simulator
-supplies map-to-odometry transforms. Logging and CARLA Simulation also run
-localization.
+Planning, Scenario and Safety Island Simulation run only `map`: the simulator
+stands in for localization. Logging and CARLA Simulation also run
+`localization`.
 
 ### Planning {: #planning }
 
-Trajectory generation: route planning on Lanelet2 road networks; behavior
-planning for lanes, intersections, and obstacles; kinematically feasible motion
-planning; goal and parking maneuvers; the planning validator that publishes
-`/planning/trajectory`. Launch: `component_planning.launch.xml`
+Plans the route and the trajectory, and publishes `/planning/trajectory`.
+Launch: `component_planning.launch.xml`
 
 - **CUDA variant** — `planning-cuda` builds the same packages with CUDA and
   TensorRT, so `planning_setting:=diffusion_planner` runs Autoware 2.0's
@@ -63,57 +65,37 @@ planning; goal and parking maneuvers; the planning validator that publishes
 
 ### Control {: #control }
 
-Vehicle control from `/planning/trajectory`: lateral steering and longitudinal
-velocity control; PID and Model Predictive Control modes; vehicle-specific
-command conversion; emergency stop and heartbeat monitoring. Control reads only
-that trajectory, so it stays the same whichever planner produces it. Launch:
-`component_control.launch.xml`
+Follows `/planning/trajectory` and publishes the control command. Control reads
+only that trajectory, so it stays the same whichever planner produces it.
+Launch: `component_control.launch.xml`
 
 ### Vehicle & System {: #vehicle-and-system }
 
-Vehicle actuation and system diagnostics, run as separate containers from one
+The vehicle interface and the system diagnostics, as two services from one
 image.
 
-- **Vehicle** — actuation and state reporting; steering, throttle, brake, gear,
-  and turn-signal conversion; vehicle dimensions, limits, and kinematic
-  parameters. Launch: `tier4_vehicle_launch/vehicle.launch.xml`
-- **System** — health monitoring and heartbeat management; diagnostic
-  aggregation; Minimum Risk Maneuver handling; CPU, memory, and process
-  monitoring. Launch: `tier4_system_component.launch.xml`
+- **`vehicle`** — launch: `tier4_vehicle_launch/vehicle.launch.xml`
+- **`system`** — launch: `tier4_system_component.launch.xml`
 
 ### API {: #api }
 
-Packages the [Autoware AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/)
-used by fleet managers, HMIs, and scenario runners. It provides ROS 2 services
-and topics for:
-
-- vehicle position, velocity, engage status, and operation mode
-- autonomous, manual, stop, local, and remote mode transitions
-- route and goal setting
-- emergency stop and engage/disengage commands
-- scenario simulation auto-engage and route integration
-
-Launch: `tier4_autoware_api_component.launch.xml`. It is the external entry
-point of every deployment.
+Runs the [Autoware AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/),
+the external entry point of every deployment: clients initialize localization,
+set a route and change the operation mode through it. Launch:
+`tier4_autoware_api_component.launch.xml`
 
 ### Simulator {: #simulator }
 
-Closed-loop vehicle and environment simulation without real sensors or vehicle
-hardware:
+The built-in simulator: a simulated vehicle and simulated perception in place
+of real sensors and vehicle hardware.
 
-- configurable kinematic and dynamic vehicle models
-- dummy perception, vehicle, door, and traffic-infrastructure interfaces
-- Scenario Simulator v2 adapter and localization simulation mode
-- simulated point cloud preprocessing, object tracking, shape estimation, and
-  map-based prediction
-- occupancy and elevation map handling; vehicle command conversion
+- **`simulator`** — launch: `tier4_simulator_component.launch.xml`
+- **`simulated-perception`** — dummy objects, tracking, prediction and the
+  occupancy grid map. Launch: `planning_simulator/perception_simulation.launch.xml`
 
-Launch: `tier4_simulator_component.launch.xml`, with the perception simulation
-(dummy objects, tracking, prediction and the occupancy grid map) in its own
-`simulated-perception` service from `planning_simulator/perception_simulation.launch.xml`.
-On amd64 it also carries the CARLA bridge and the CARLA Python client that the
-[CARLA Simulation](../deployments/carla-simulation.md) deployment runs in
-its `carla-interface` service.
+On amd64 the image also carries the CARLA bridge and the CARLA Python client
+that [CARLA Simulation](../deployments/carla-simulation.md) runs in its
+`carla-interface` service.
 
 ### Visualizer {: #visualizer }
 
@@ -132,8 +114,7 @@ Set these in the [host settings file](../getting-started/cli.md#settings):
 | `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz configuration inside the container; the default is the copy with config overrides applied |
 | `REMOTE_DISPLAY` | `true` | `true`, `false` | RViz in the browser; `false` opens RViz on your own desktop instead, using the session's `DISPLAY` and `XAUTHORITY` |
 | `REMOTE_PASSWORD` | `openadkit` | String | noVNC password, required when `REMOTE_DISPLAY=true`. The deployments set this default; the image itself has none |
-| `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address; bridge networking uses `0.0.0.0` with a host loopback port mapping |
-| `USE_SIM_TIME` | `false` | `true`, `false` | Use the ROS simulation clock |
+| `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address. `0.0.0.0` exposes noVNC on every interface of the host: put an authenticated reverse proxy in front of it |
 | `RVIZ_GPU` | `auto` | `auto`, `on`, `off` | Automatic, forced, or disabled VirtualGL acceleration |
 | `NOVNC_CERT`, `NOVNC_KEY` | unset | Paths | Certificate and key inside the container; set both to serve HTTPS only |
 
@@ -143,18 +124,13 @@ To open it, see the
 ### CARLA Interface {: #carla-interface }
 
 The simulator image's `autoware_carla_interface` translates Autoware control
-commands to CARLA and CARLA sensor data to ROS 2 messages:
+commands to CARLA and CARLA sensor data to ROS 2 messages. Launch:
+`autoware_carla_interface.launch.xml`
 
-- CARLA world initialization and synchronous simulation
-- ego vehicle spawning and sensor-kit configuration
-- camera, LiDAR, IMU, and GNSS message translation
-- vehicle command calibration and traffic light state publication
-- lightweight sensor mappings for constrained hosts
-
-Launch: `autoware_carla_interface.launch.xml`. CARLA publishes its Python
-client for x86_64 only, so only the amd64 simulator image has it (Humble and
-Jazzy); [CARLA Simulation](../deployments/carla-simulation.md) is
-Humble-only and needs an NVIDIA GPU.
+CARLA publishes its Python client for x86_64 only, so only the amd64 simulator
+image has it (Humble and Jazzy);
+[CARLA Simulation](../deployments/carla-simulation.md) is Humble-only and needs
+an NVIDIA GPU.
 
 ## Image Reference
 
