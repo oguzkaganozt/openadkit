@@ -1,28 +1,9 @@
 name: deploy-docs
 
+# The site documents the latest stable release, not main: the release workflow
+# publishes it, and a maintainer can dispatch it to publish a fix in between.
+# Pull requests get a preview (pr-preview.yaml).
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - mkdocs.yaml
-      - openadkit
-      - openadkit.json
-      - "cli/**"
-      - docs/macros.py
-      - .github/image-inventory.json
-      - docs/requirements.txt
-      - "**/*.md"
-      - "**/*.svg"
-      - "**/*.png"
-      - "**/*.jpg"
-      - "docs/.pages"
-      - "docs/**/.pages"
-      - "docs/assets/**"
-      - "docs/overrides/**"
-      - "**/*.pages"
-      - ".github/actions/build-docs/**"
-      - ".github/workflows/deploy-docs.yaml"
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -49,7 +30,7 @@ jobs:
         with:
           # Release calls pass the default branch so the build tracks main at
           # build time instead of the dispatch-time SHA. Manual runs also
-          # use main. Pushes check out the triggering commit by default.
+          # use main.
           ref: ${{ inputs.source_ref || (github.event_name == 'workflow_dispatch' && github.event.repository.default_branch) || '' }}
 
       - name: Build docs

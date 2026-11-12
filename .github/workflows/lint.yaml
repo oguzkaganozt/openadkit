@@ -31,6 +31,8 @@ on:
       - 'deployments/**/*.yml'
       - 'platforms/**/*.yaml'
       - 'platforms/**/*.yml'
+      - 'platforms/**/*.py'
+      - 'deployments/**/*.py'
       - 'components/**/*.hcl'
       - 'components/shared/**'
       - '.hadolint.yaml'
@@ -105,7 +107,7 @@ jobs:
       - name: Run markdownlint
         run: npx --yes markdownlint-cli --config .markdownlint.yaml '**/*.md'
 
-      - name: Install Docker Compose v5.2+
+      - name: Install Docker Compose 5.0+
         # The ubuntu-latest runner ships an older compose plugin that rejects
         # service overrides after `include:` (used by scenario-simulation).
         # Install the latest release that supports the compose-spec include/merge.
