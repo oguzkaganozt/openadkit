@@ -26,7 +26,7 @@ from typing import Any, NoReturn
 # architecture its deployment supports.
 EVIDENCE_PLATFORMS = ("linux/amd64", "linux/arm64")
 # Readiness (L1) is each deployment's healthchecks, which `openadkit run` waits
-# for, and the end-to-end check (L2) its manifest's verify step. A cell passes
+# for, and the end-to-end level (L2) its manifest's verify step. A cell passes
 # only with L2, so every deployment that is not exempt declares one.
 # Cells beyond Compose on Docker, for each distro: the backend run_cell.sh starts
 # the stack with, on the runner it needs. quadlet runs platforms/autosd under
