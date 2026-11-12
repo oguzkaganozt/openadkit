@@ -43,7 +43,7 @@ This page lists what that promise covers. Within one major version:
 What a kit made with `openadkit new` builds on:
 
 - `extends` pinning a release, and `base` naming one of its deployments.
-- The Compose variables `OPENADKIT_BASE_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
+- The Compose variables `OPENADKIT_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
   `OPENADKIT_OVERLAY_WS`.
 - Each base deployment's Compose entrypoints, service names, data destination
   variables (such as `MAP_PATH`), verify step and the settings listed under

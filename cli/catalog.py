@@ -242,7 +242,7 @@ class Deployment:
             "OPENADKIT_OVERLAY_WS": (root if base and base.root != root else directory) / "overlay_ws",
         }
         self.kit_environment = {
-            "OPENADKIT_BASE_ROOT": str(base.root),
+            "OPENADKIT_ROOT": str(base.root),
             "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
         } if base else {}
 
@@ -334,12 +334,12 @@ def _load_kit_deployment(
     root: Path, directory: Path, base_kit: Kit, base_root: Path, name: str
 ) -> Deployment:
     """A kit deployment: its own Compose file and values on top of a
-    base deployment from the pinned kit, whose requirements it keeps or narrows."""
+    base deployment of the Open AD Kit it extends, whose requirements it keeps or narrows."""
     manifest = read_deployment_manifest(directory, ALLOWED_KIT_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in base_kit.deployments:
         raise OpenADKitError(
-            f"base deployment {base_name} is not in the pinned kit; "
+            f"unknown base deployment: {base_name}; "
             f"available: {available_deployments(base_kit)}"
         )
     if declares_base(base_root, base_kit, base_name):
@@ -527,7 +527,7 @@ def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
         assert kit.base_root is not None
         deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root, name)
     elif declares_base(root, kit, name):
-        # A deployment on another of the same catalog, as a kit's is on its pinned kit.
+        # A deployment on another of the same catalog, as a kit's is on the Open AD Kit it extends.
         deployment = _load_kit_deployment(root, directory, kit, root, name)
     else:
         deployment = _load_base_deployment(root, directory, name)

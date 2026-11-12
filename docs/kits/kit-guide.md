@@ -57,7 +57,7 @@ files in order (later files win):
 5. `~/.config/openadkit/<kit-deployment>.env`, if present
 
 Shell exports do not override values set in these files. The CLI adds the ROS
-distro, the host UID and GID, the overlay mount paths, `OPENADKIT_BASE_ROOT`
+distro, the host UID and GID, the overlay mount paths, `OPENADKIT_ROOT`
 (the release's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
 deployment); a release's component and external images stay pinned. Inside the
 containers, the ROS and DDS defaults come from the base services'

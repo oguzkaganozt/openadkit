@@ -28,8 +28,8 @@ my-kit/
   distro, GPU, downloads and the verify step are inherited; `requirements` may
   narrow the first three.
 - `docker-compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml`;
-  add your services below it. `OPENADKIT_BASE_ROOT` names the release's root for
-  shared assets.
+  add your services below it. `OPENADKIT_ROOT` names the release's root, for
+  its shared assets.
 - `settings.env` holds only the values you change, such as `VEHICLE_ID`.
 - `config/autoware/` holds parameter overrides for Autoware packages.
 - `overlay_ws/src/` holds your ROS packages.
