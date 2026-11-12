@@ -83,7 +83,7 @@ openadkit run --verify      # start, wait until ready, run the end-to-end check
 
 ## Community
 
-- **Working Group** — open to everyone, every Thursday at 13:00 UTC: [add it to your calendar](https://www.google.com/calendar/event?eid=YnY4dmJxZTVsM2h2cWE1cTJ2NmhtOWdwMzZfMjAyNjA5MjRUMTMwMDAwWiBhdXRvd2FyZS5vcmdfNmxvbDBobzVmdDAyMTdoOGM2MHBpMWZtMzBAZw), read the [agendas and notes](https://github.com/orgs/autowarefoundation/discussions?discussions_q=label%3Ameeting%3Aopenadkit-wg), or see the [wiki](https://github.com/autowarefoundation/autoware-projects/wiki/Open-AD-Kit-Working-Group)
+- **Working Group** — open to everyone, every Thursday at 13:00 UTC: [add it to your calendar](https://www.google.com/calendar/event?eid=YnY4dmJxZTVsM2h2cWE1cTJ2NmhtOWdwMzZfMjAyNjA5MjRUMTMwMDAwWiBhdXRvd2FyZS5vcmdfNmxvbDBobzVmdDAyMTdoOGM2MHBpMWZtMzBAZw), [read the agendas](https://github.com/orgs/autowarefoundation/discussions?discussions_q=label%3Ameeting%3Aopenadkit-wg)
 - **Chat** — questions and design discussions on the [Autoware Discord](https://discord.gg/Q94UsPvReQ)
 - **Contribute** — [CONTRIBUTING.md](CONTRIBUTING.md) has the development workflow and validation steps
 
