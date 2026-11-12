@@ -193,7 +193,7 @@ sys.exit(1 if args[0] == os.environ['FAILURE'] or (args[0] == 'run' and os.envir
                 ("tcp/127.0.0.1:7447", env.get("ZENOH_PEER")), ("tcp/127.0.0.1:7448", "tcp/127.0.0.1:7447")]
 
 
-def test_cell_ignores_host_site_config_and_inherited_kit(tmp_path):
+def test_cell_ignores_host_settings_and_inherited_kit(tmp_path):
     # The CLI prints the paths it would use; the cell must point them at its own
     # output and inherit no kit selection from the runner's environment.
     cli = tmp_path / "bin/openadkit"

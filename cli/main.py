@@ -665,6 +665,25 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     return 0
 
 
+def sharing_deployments(root: Path, catalog: Catalog, deployment: Deployment) -> dict[str, list[str]]:
+    """The catalog deployments that declare the same data, by resource name.
+
+    They install it to the same place unless a host's settings move one, so
+    deleting it for one deletes it for all of them.
+    """
+    owner, owner_root = (catalog, root) if catalog.extended is None else (catalog.extended, catalog.extended_root)
+    assert owner_root is not None
+    digests = {resource["name"]: data.source_digest(resource) for resource in deployment.data}
+    sharing: dict[str, list[str]] = {}
+    for name in sorted(owner.deployments):
+        if owner is catalog and name == deployment.name:
+            continue
+        for resource in get_deployment(owner_root, owner, name).data:
+            if digests.get(resource["name"]) == data.source_digest(resource):
+                sharing.setdefault(resource["name"], []).append(name)
+    return sharing
+
+
 def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> int:
     if not deployment.data:
         print("no data resources declared")
@@ -677,10 +696,10 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
     if not present:
         print(f"no data of {deployment.name} is installed")
         return 0
-    inherited = {resource["name"] for resource in deployment.base.data} if deployment.base else set()
+    sharing = sharing_deployments(root, catalog, deployment)
     print("delete:")
     for destination, name in present.items():
-        shared = f" (also used by {deployment.base.name})" if deployment.base and name in inherited else ""
+        shared = f" (also used by {', '.join(sharing[name])})" if name in sharing else ""
         print(f"  {destination}{shared}")
     if not args.yes:
         if not sys.stdin.isatty():
@@ -822,7 +841,7 @@ ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "cle
 INSTALL_USAGE = {
     "install": "openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]",
     "upgrade": "openadkit upgrade [--check]",
-    "setup": "openadkit setup [--gpu] [--verify]",
+    "setup": "openadkit setup [--gpu] [--check]",
     "uninstall": "openadkit uninstall [--all]",
 }
 

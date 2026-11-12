@@ -212,6 +212,29 @@ def test_real_compose_preserves_single_and_split_graphs(compose_context, name, r
         assert ("map" in services["visualizer"].get("depends_on", {})) is (role is None)
 
 
+def test_safety_island_simulation_keeps_planning_simulations_stack():
+    """Safety Island Simulation repeats Planning Simulation's services, settings
+    and map in its own files, so the copies must not drift apart."""
+    planning, island = ROOT / "deployments/planning-simulation", ROOT / "deployments/safety-island-simulation"
+    stack = (planning / "compose.yaml").read_text(encoding="utf-8")
+    assert stack[stack.index("include:"):].rstrip() in (island / "compose.yaml").read_text(encoding="utf-8")
+
+    def values(path):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        return dict(line.split("=", 1) for line in lines if line and not line.startswith("#"))
+
+    own = {"SAFETY_ISLAND_PATH", "SYSTEM_DIAGNOSTICS_GRAPH"}
+    # The Diffusion Planner model belongs to the GPU mode, which this deployment does not have.
+    expected = {name: value for name, value in values(planning / "settings.env").items() if name != "DIFFUSION_PLANNER_DATA_PATH"}
+    assert {name: value for name, value in values(island / "settings.env").items() if name not in own} == expected
+
+    base, standalone = (json.loads((path / "deployment.json").read_text(encoding="utf-8")) for path in (planning, island))
+    assert standalone["verify"] == base["verify"]
+    assert standalone["compose"]["oneShotServices"] == base["compose"]["oneShotServices"]
+    assert standalone["compose"]["waitTimeout"] == base["compose"]["waitTimeout"]
+    assert [item for item in base["data"] if not item.get("gpu")] == standalone["data"][:1]
+
+
 def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
     import validation_matrix
     [kit] = validation_matrix.make_example_kits(ROOT, tmp_path)
