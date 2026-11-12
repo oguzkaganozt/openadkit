@@ -43,8 +43,9 @@ returns once the deployment is ready.
   nobody watches: its software-rendered RViz needs CPU that Autoware lacks on a
   small host. CI evidence runs this way.
 - **One deployment runs at a time**, including deployments from other kits,
-  even one with the same name. `run` refuses while another is running; stop it
-  first with `openadkit stop`. The roles of one
+  even one with the same name. `run` refuses while another is running, or
+  while another has left stopped containers; remove either with
+  `openadkit stop`. The roles of one
   [split-host](../deployments/split-host.md) deployment can run together.
 
 Every run writes `results/run.json` in the deployment's output directory: the
@@ -69,6 +70,10 @@ openadkit stop
 These act on the deployment running on this host, from any directory, so they
 take no deployment name. With several roles of a split-host deployment on one
 host, see [Lifecycle Notes](../deployments/split-host.md#lifecycle-notes).
+
+`status` and `stop` also see a deployment whose containers have all stopped,
+after a failed start or a restart of Docker. Its containers stay, with their
+logs, until `stop` removes them.
 
 ### Status
 
@@ -95,6 +100,10 @@ config overrides and overlay workspace, and keeps to the same readiness checks.
   parameter file, a rebuilt workspace or a new `settings.env` value applies
   without restarting a simulator such as CARLA; `restart` names the services it
   left running.
+- A running service that shares the process namespace of a recreated one is
+  recreated with it, since it cannot outlive that namespace: CARLA Simulation's
+  `carla-interface`, a rosbag that is still playing or a scenario that is still
+  running, which then start over.
 - `restart <service>...` recreates only those services.
 - `restart --all` recreates the whole deployment, one-shot services included.
 
@@ -173,9 +182,10 @@ openadkit clean planning-simulation             # delete, after asking
 - **`fetch --force`** replaces the data even when it is complete, and is the
   way to repair incomplete data.
 - **`clean`** lists what it deletes and asks first; `--yes` skips the question,
-  as scripts need. It deletes all the data the deployment uses, including data that
-  other deployments share, such as a kit deployment's base; the list names
-  them. The next `run` or `fetch` downloads it again.
+  as scripts need. Answering no deletes nothing and is not an error. It
+  deletes all the data the deployment uses, including data that other
+  deployments share, such as a kit deployment's base; the list names them. The
+  next `run` or `fetch` downloads it again.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file, and
 `clean` and `--force` only delete or replace marked data. Data that was already

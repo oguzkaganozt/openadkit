@@ -92,13 +92,15 @@ try:
     bundles = metadata["bundles"]
     if not isinstance(version, str) or not re.fullmatch(sys.argv[2], version):
         raise ValueError("invalid Open AD Kit version")
-    if not isinstance(bundles, list) or len(bundles) != 1:
-        raise ValueError("expected exactly one release bundle")
-    bundle = bundles[0]
-    name, digest = bundle["name"], bundle["sha256"]
+    # The bundle this installer knows, by name; a release may list others.
+    name = f"openadkit-{version}.tar.gz"
+    if not isinstance(bundles, list):
+        raise ValueError("bundles must be a list")
+    named = [bundle for bundle in bundles if isinstance(bundle, dict) and bundle.get("name") == name]
+    if len(named) != 1:
+        raise ValueError(f"expected one bundle named {name}")
+    digest = named[0]["sha256"]
     autoware = metadata.get("autoware_base_version") or "unknown"
-    if name != f"openadkit-{version}.tar.gz":
-        raise ValueError("bundle name does not match the release version")
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("invalid bundle SHA-256")
     print(version, name, digest, autoware, sep="\t")

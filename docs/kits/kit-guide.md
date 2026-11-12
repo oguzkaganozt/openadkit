@@ -178,7 +178,9 @@ other role's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends
 on a CARLA service. The base's `oneShotServices` that the kit's services leave
-out are skipped; the kit's own must exist.
+out are skipped; the kit's own must exist. The same holds for the verify step:
+a kit that leaves out the service of its base's verify step has none, until it
+names its own.
 
 ### 5. Image Replacement
 

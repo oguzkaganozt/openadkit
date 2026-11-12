@@ -22,6 +22,7 @@ from compose import (
     print_command,
     read_run_state,
     remove_run_state,
+    stopped_project_files,
 )
 from manifest import OpenADKitError
 from settings import docker_environment
@@ -72,6 +73,14 @@ def running_projects(role: str | None = None) -> list[str]:
     return projects
 
 
+def stopped_projects(role: str | None = None) -> list[str]:
+    """Projects whose containers are left but none runs; stop removes them."""
+    projects = sorted(stopped_project_files())
+    if role is not None:
+        projects = [name for name in projects if name.endswith(f"_{role}")]
+    return projects
+
+
 def display_name(project: str) -> str:
     return project[len(PROJECT_PREFIX):]
 
@@ -117,23 +126,54 @@ def status(project: str) -> None:
         print("password: REMOTE_PASSWORD (default openadkit)")
 
 
+def status_stopped(project: str) -> None:
+    """The containers a stopped project left, with how each ended."""
+    run_project(project, ["ps", "--all"], show=True)
+
+
 def logs(project: str, follow: bool, services: list[str]) -> None:
     run_project(project, ["logs", *(["--follow"] if follow else []), *services], show=True)
 
 
-def hooked_services(project: str) -> list[str]:
-    """Services that mount config overrides or overlay workspaces."""
+def running_containers(project: str) -> list[dict[str, Any]]:
+    """What Docker reports of the project's running containers."""
     ids = run_project(project, ["ps", "--quiet"]).stdout.split()
     inspected = docker(["docker", "inspect", *ids], check=False, trace=False) if ids else None
     try:
         containers = json.loads(inspected.stdout) if inspected else []
     except json.JSONDecodeError as error:
         raise OpenADKitError("could not inspect the running services") from error
+    return containers if isinstance(containers, list) else []
+
+
+def service_of(container: dict[str, Any]) -> str:
+    return container["Config"]["Labels"]["com.docker.compose.service"]
+
+
+def hooked_services(project: str) -> list[str]:
+    """Services that mount config overrides or overlay workspaces."""
     return sorted(
-        container["Config"]["Labels"]["com.docker.compose.service"]
-        for container in containers
+        service_of(container)
+        for container in running_containers(project)
         if any(mount.get("Destination", "").startswith(HOOK_MOUNTS) for mount in container.get("Mounts", []))
     )
+
+
+def pid_followers(project: str, services: set[str]) -> set[str]:
+    """Running services in the process namespace of one of `services`.
+
+    Recreating the owner (pid: service:map) ends every process in its
+    namespace, and Docker cannot restart a container into a namespace that is
+    gone: whoever joins a recreated service is recreated with it.
+    """
+    containers = running_containers(project)
+    owners = {container["Id"]: service_of(container) for container in containers}
+    followers = set()
+    for container in containers:
+        mode = (container.get("HostConfig") or {}).get("PidMode") or ""
+        if mode.startswith("container:") and owners.get(mode.removeprefix("container:")) in services:
+            followers.add(service_of(container))
+    return followers - services
 
 
 def shell(project: str, service: str, command: list[str]) -> None:

@@ -9,8 +9,9 @@
 3. See which services are up: `openadkit status`.
 4. Read the logs: `openadkit logs --follow`.
 
-If `run` fails after the containers are created, they keep running so you can
-read their logs. Stop them with `openadkit stop`.
+If `run` fails after the containers are created, they stay so you can read
+their logs, running or not; `openadkit status` lists them. Remove them with
+`openadkit stop`, which another deployment needs before it can start.
 
 ## Docker
 
