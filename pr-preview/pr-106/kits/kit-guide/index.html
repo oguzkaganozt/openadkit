@@ -2105,8 +2105,8 @@
 
 <h1 id="kit-guide">Kit Guide<a class="headerlink" href="#kit-guide" title="Permanent link">#</a></h1>
 <p>The reference for a kit: what it pins, each extension point, and how it is
-validated and upgraded. A kit owns its differences; Open AD Kit owns the base
-CLI, images and deployments. Start one with <code>openadkit new</code>
+validated and upgraded. A kit owns its differences; Open AD Kit owns the
+CLI, the images and the catalog. Start one with <code>openadkit new</code>
 (<a href="../create-a-kit/">Create a Kit</a>).</p>
 <h2 id="pin-the-release">Pin the Release<a class="headerlink" href="#pin-the-release" title="Permanent link">#</a></h2>
 <p>In the kit's <code>openadkit.json</code>, <code>kind</code> is <code>kit</code> and <code>extends</code> names a published
@@ -2181,7 +2181,7 @@ hook logs them and writes <code>/tmp/openadkit/overlay-report.json</code> in eac
 Once the services are up, <code>run</code> collects those reports and warns about every
 override without a counterpart: a package no service has changes nothing, and a
 file or a parameter its package does not have is added. That is intended for a
-new file such as a diagnostics graph; after a base version change it usually
+new file such as a diagnostics graph; after a release change it usually
 means a renamed package, file or parameter. Every service gets the same layers,
 so a package installed in only some images is not reported.</p>
 <h3 id="3-overlay-workspace">3. Overlay Workspace<a class="headerlink" href="#3-overlay-workspace" title="Permanent link">#</a></h3>
@@ -2198,7 +2198,7 @@ openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w">
 <ul>
 <li>Packages build incrementally: a second build compiles only what changed.</li>
 <li>The CLI records the image and distro in <code>install/.openadkit-overlay.json</code>.
-  After a base upgrade or a distro change, <code>validate</code> and <code>run</code> warn until you
+  After a release upgrade or a distro change, <code>validate</code> and <code>run</code> warn until you
   rebuild, and that rebuild starts from a clean <code>build/</code> and <code>install/</code>, since
   CMake caches record the paths they were configured with.</li>
 <li><code>--install-base</code> and <code>--build-base</code> stay fixed: the services source
@@ -2208,7 +2208,7 @@ openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w">
 </ul>
 <h4 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h4>
 <p>The workspace belongs to the kit: the one <code>overlay_ws</code> at the kit root serves
-every deployment of the kit, since they all extend one base and its images.
+every deployment of the kit, since they all extend one release and its images.
 Every Autoware service mounts it, and the entrypoint hook sources
 <code>overlay_ws/install/local_setup.bash</code> on top of Autoware, so its packages are
 visible in every service. Whether your code runs depends on what starts it:</p>
@@ -2365,7 +2365,7 @@ check <code>run</code>'s override warnings.</p>
   waits for the service to exit and takes its exit code.</li>
 </ul>
 <p>The example kit is what <code>openadkit new</code> makes, with a
-<a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/kit">fixture</a>
+<a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit">fixture</a>
 that uses every extension point on top. Its evidence cells run both checks on
 Humble and Jazzy, each with a workspace built against the matching devel
 digest, and every release needs them to pass. They show that the extension

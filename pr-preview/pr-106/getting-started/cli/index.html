@@ -2205,7 +2205,7 @@ source checkout, prefix them with <code>./</code> and run them from the reposito
 <h2 id="run-a-deployment">Run a Deployment<a class="headerlink" href="#run-a-deployment" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>list<span class="w">                                    </span><span class="c1"># the deployments you can run</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation
-openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--verify<span class="w">        </span><span class="c1"># then run its end-to-end check</span>
+openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--verify<span class="w">        </span><span class="c1"># then run its verify step</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--pull<span class="w"> </span>always<span class="w">   </span><span class="c1"># refresh the images first</span>
 openadkit<span class="w"> </span>run<span class="w"> </span>planning-simulation<span class="w"> </span>--no-visualizer
 </code></pre></div>
@@ -2361,7 +2361,7 @@ any live container mounts the data (including another kit or deployment). If
 data usage cannot be checked, they refuse as well.</p>
 <h2 id="your-own-kit">Your Own Kit<a class="headerlink" href="#your-own-kit" title="Permanent link">#</a></h2>
 <p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit on top of a
-deployment of this Open AD Kit (Planning Simulation by default) that holds
+catalog deployment (Planning Simulation by default) that holds
 only your differences. <code>openadkit build</code> builds the kit's overlay workspace in
 the release's devel image. See <a href="../../kits/create-a-kit/">Create a Kit</a>.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">#</a></h2>

@@ -2111,9 +2111,9 @@ This page lists what that promise covers. Within one major version:</p>
 </ul>
 <h3 id="manifests">Manifests<a class="headerlink" href="#manifests" title="Permanent link">#</a></h3>
 <ul>
-<li>The kit manifest <code>openadkit.json</code> and the deployment manifest
-  <code>deployment.json</code> at <code>schemaVersion: 2</code>: their fields and what they mean.
-  A deployment is named by its key in the kit manifest.</li>
+<li><code>openadkit.json</code> (the release manifest, or a kit's kit manifest) and the
+  deployment manifest <code>deployment.json</code> at <code>schemaVersion: 2</code>: their fields
+  and what they mean. A deployment is named by its key in <code>openadkit.json</code>.</li>
 </ul>
 <h3 id="kits">Kits<a class="headerlink" href="#kits" title="Permanent link">#</a></h3>
 <p>What a kit made with <code>openadkit new</code> builds on:</p>
@@ -2121,7 +2121,7 @@ This page lists what that promise covers. Within one major version:</p>
 <li><code>extends</code> pinning a release, and <code>base</code> naming one of its deployments.</li>
 <li>The Compose variables <code>OPENADKIT_ROOT</code>, <code>OPENADKIT_BASE_DEPLOYMENT</code> and
   <code>OPENADKIT_OVERLAY_WS</code>.</li>
-<li>Each base deployment's Compose entrypoints, service names, data destination
+<li>Each base deployment's Compose files, service names, data destination
   variables (such as <code>MAP_PATH</code>), verify step and the settings listed under
   <a href="#settings-and-paths">Settings and Paths</a>.</li>
 <li>Config overrides under <code>config/</code> and the overlay workspace in <code>overlay_ws/</code>,
