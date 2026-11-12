@@ -22,7 +22,7 @@ Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stag
 
 ## Quickstart
 
-Three commands on Ubuntu 22.04 or 24.04. No GPU needed.
+From nothing to a driving Autoware on Ubuntu 22.04 or 24.04. No GPU needed.
 
 > [!NOTE]
 > **v2.0.0 is not published yet.** Until it is, [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
@@ -37,11 +37,15 @@ openadkit setup --verify
 
 # 3. Start Autoware
 openadkit run planning-simulation
+
+# 4. Drive: open http://localhost:6080/vnc.html, sign in with "openadkit"
+#    and set a goal. The vehicle plans the route and drives it.
+
+# 5. Stop
+openadkit stop
 ```
 
-Then open <http://localhost:6080/vnc.html>, sign in with `openadkit`, and set a goal. The vehicle plans the route and drives it.
-
-`openadkit stop` shuts it down. Stuck, or want the details? See the full [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/).
+Stuck, or want the details? See the full [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/).
 
 ## Deployments
 
