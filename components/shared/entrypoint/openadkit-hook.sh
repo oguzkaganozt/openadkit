@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Apply the integrator layer, then run the container command.
+# Apply the kit layer, then run the container command.
 #
 # Chained after the upstream /docker-entrypoint.sh, so ROS and Autoware are
 # already sourced and this runs as the aw user. /tmp/openadkit is rebuilt on
 # every start, so an override that was removed never lingers:
-#   1. the integrator's overlay workspace, if mounted, is sourced on top of
+#   1. the kit's overlay workspace, if mounted, is sourced on top of
 #      Autoware;
 #   2. overlay.py copies autoware_launch and every package with overrides into
 #      /tmp/openadkit, merges the YAML overrides parameter by parameter and

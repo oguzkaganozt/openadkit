@@ -1,5 +1,5 @@
 # What every Autoware service shares: the host network and IPC, the DDS
-# settings, and the integrator layer. A service file extends `autoware` and
+# settings, and the kit layer. A service file extends `autoware` and
 # adds its image, its name and its command.
 services:
   autoware:
@@ -10,7 +10,7 @@ services:
       - ../runtime.env
     volumes:
       - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
+      # Kit layer, applied by the image's entrypoint hook (components/shared/entrypoint).
       - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
       - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
