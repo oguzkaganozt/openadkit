@@ -17,10 +17,10 @@ Without `--node`, the deployment runs on one host as usual.
 
 ## How It Works
 
-Each node has its own Compose entrypoint, `compose.<node>.yaml`, named in the
-manifest. It includes the node's services and `../shared/compose.zenoh.yaml`,
-and mounts the deployment's `config/zenoh.json5` allowlist. The CLI only
-selects the node's files and passes its `rosDomainId` as
+Each node runs two Compose files, named in the manifest: `compose.<node>.yaml`
+holds the node's services, and `compose.zenoh.yaml` adds the Zenoh bridge with
+the deployment's `config/zenoh.json5` allowlist. The CLI only selects the
+node's files and passes its `rosDomainId` as
 `OPENADKIT_ROS_DOMAIN_ID`; it adds no service of its own. The allowlist is one
 of the node's `requiredFiles`, so a missing or symlinked file fails validation
 before any container starts.

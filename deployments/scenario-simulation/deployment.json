@@ -14,14 +14,14 @@
   "nodes": {
     "autoware": {
       "rosDomainId": 1,
-      "files": ["compose.autoware.yaml"],
+      "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "scenario": {
       "rosDomainId": 2,
-      "files": ["compose.scenario.yaml"],
+      "files": ["compose.scenario.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["scenario-simulator"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]

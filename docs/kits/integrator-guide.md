@@ -173,9 +173,9 @@ lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 
 To replace one side of a base that runs as split-host nodes, include only the
-other side's service layer instead of the base's Compose file. For example, a
-kit that brings its own simulator to `carla-simulation` includes
-`${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml`: no service in it depends
+other side's Compose file instead of the base's `docker-compose.yaml`. For
+example, a kit that brings its own simulator to `carla-simulation` includes
+`${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends
 on a CARLA service. The base's `resetServices` that the kit's services leave
 out are skipped; the kit's own must exist.
 

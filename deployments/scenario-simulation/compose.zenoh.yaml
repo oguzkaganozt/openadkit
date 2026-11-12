@@ -1,0 +1,10 @@
+# The Zenoh bridge of a split-host node, with this deployment's allowlist.
+# The CLI adds this file to a node's own compose.<node>.yaml (deployment.json);
+# the single-host graph never includes it.
+include:
+  - ../shared/compose.zenoh.yaml
+
+services:
+  zenoh-bridge:
+    volumes:
+      - ./config/zenoh.json5:/config/zenoh.json5:ro

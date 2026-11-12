@@ -1,7 +1,7 @@
 # Zenoh bridge fragment for split-host deployments.
 #
-# Node Compose entrypoints explicitly include this fragment and mount their
-# own config/zenoh.json5 allowlist. The single-host graph never includes it.
+# A deployment's compose.zenoh.yaml includes this fragment and mounts its own
+# config/zenoh.json5 allowlist. The single-host graph never includes it.
 #
 # Host networking is required so the bridge can reach the LAN listen address
 # and so its DDS participant shares the host Cyclone environment. DDS stays

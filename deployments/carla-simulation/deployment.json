@@ -12,14 +12,14 @@
   "nodes": {
     "autoware": {
       "rosDomainId": 1,
-      "files": ["compose.autoware.yaml"],
+      "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "carla": {
       "rosDomainId": 2,
-      "files": ["compose.carla.yaml"],
+      "files": ["compose.carla.yaml", "compose.zenoh.yaml"],
       "requiredFiles": ["config/zenoh.json5"],
       "resetServices": ["carla-map-loader"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]

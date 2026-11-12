@@ -242,7 +242,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "docker-compose.yaml").write_text(
-        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/services.autoware.yaml\n"
+        "include:\n  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml\n"
         "services:\n"
         "  carla:\n    image: busybox:1.36.1\n    command: [\"sleep\", \"${TOWN}\"]\n"
     )

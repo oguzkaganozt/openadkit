@@ -2,15 +2,15 @@
 #
 # Assembles the shared Autoware and CARLA service files and restores the
 # single-host wiring: vehicle/sensing/visualizer wait on carla-interface. The
-# split views remove those edges: --node autoware / --node carla select one
-# compose.<node>.yaml entrypoint with an explicit bridge. This file never includes the
+# split views remove those edges: --node autoware / --node carla select
+# compose.<node>.yaml and compose.zenoh.yaml. This file never includes the
 # Zenoh bridge.
 #
 # Compose replaces depends_on on merge, so the default view restates the
 # Autoware edges plus the carla-interface edges.
 include:
-  - services.autoware.yaml
-  - services.carla.yaml
+  - compose.autoware.yaml
+  - compose.carla.yaml
 
 services:
   # Like every Autoware launch, carla-interface joins map's PID namespace so its
