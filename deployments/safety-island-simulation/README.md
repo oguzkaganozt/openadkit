@@ -15,9 +15,9 @@ cd ../..
 
 | File | What it does |
 | --- | --- |
-| `deployment.json` | Pins the Safety Island release by SHA-256: its FreeRTOS POSIX binary, its `bridge-config.yaml` topic contract and its `cyclonedds-domain2.xml` DDS setting. Narrows Planning Simulation's requirements to amd64 without a GPU mode |
-| `compose.yaml` | Adds the `safety-island` and `safety-island-bridge` services to Planning Simulation |
-| `settings.env` | Where the release is fetched, and the diagnostics graph below |
+| `deployment.json` | Pins the Safety Island release by SHA-256: its FreeRTOS POSIX binary, its `bridge-config.yaml` topic contract and its `cyclonedds-domain2.xml` DDS setting. Requires amd64 and has no GPU mode |
+| `compose.yaml` | Planning Simulation's services, plus the `safety-island` and `safety-island-bridge` services |
+| `settings.env` | Planning Simulation's settings, then where the release is fetched and the diagnostics graph below |
 | `config/autoware/autoware_control_config/.../default_preset.yaml` | The default control preset with `trajectory_follower_mode: none` |
 | `config/autoware/autoware_launch/.../autoware-safety-island.yaml` | Autoware's main diagnostics graph without the follower's `control_state`, which nothing publishes any more |
 | `checks/safety_island.py` | The bridge's healthcheck: the control command's only publisher is the Safety Island's bridge, and Autoware's follower is not running |
