@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from manifest import (
-    ALLOWED_INTEGRATOR_COMPOSE_KEYS,
-    ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS,
-    ALLOWED_INTEGRATOR_KIT_KEYS,
+    ALLOWED_BASE_KEYS,
+    ALLOWED_KIT_COMPOSE_KEYS,
+    ALLOWED_KIT_DEPLOYMENT_KEYS,
     ALLOWED_KIT_KEYS,
     DEVEL_IMAGE_TARGET,
     GPU_COMPONENT_IMAGE_SUFFIX,
@@ -100,7 +100,10 @@ def install_root() -> Path:
 
 
 @dataclass(frozen=True)
-class RuntimeContext:
+class Kit:
+    """A loaded openadkit.json: Open AD Kit itself (kind "source" or "release"),
+    or a kit that extends it (kind "kit")."""
+
     kind: str
     default_ros_distro: str
     version: str | None
@@ -113,9 +116,9 @@ class RuntimeContext:
     external_images: dict[str, dict[str, Any]]
     # Release only: the Autoware version, commit and lock file it was built from.
     autoware: dict[str, str] | None = None
-    # Integrator kit only: the pinned Open AD Kit it extends.
+    # An extending kit only: the pinned Open AD Kit it extends.
     extends: str | None = None
-    base: RuntimeContext | None = None
+    base: Kit | None = None
     base_root: Path | None = None
 
     @property
@@ -138,7 +141,7 @@ class RuntimeContext:
     def external_image_environment(self, ros_distro: str) -> dict[str, str]:
         """External image references for one distro; Compose requires them by name.
 
-        In an integrator kit its own external images come last, so one named like a
+        In a kit its own external images come last, so one named like a
         component image replaces that component.
         """
         environment = {}
@@ -309,7 +312,7 @@ class Deployment:
         return list(self.nodes[node]["resetServices"])
 
 
-def _load_deployment(root: Path, directory: Path, name: str) -> Deployment:
+def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
     manifest = validate_deployment_manifest(root, directory, name)
     compose, nodes = manifest["compose"], manifest["nodes"]
     deployment = Deployment(root, directory, manifest)
@@ -328,11 +331,11 @@ def _load_deployment(root: Path, directory: Path, name: str) -> Deployment:
 
 
 def _load_kit_deployment(
-    root: Path, directory: Path, base_kit: RuntimeContext, base_root: Path, name: str
+    root: Path, directory: Path, base_kit: Kit, base_root: Path, name: str
 ) -> Deployment:
-    """An integrator deployment: its own Compose file and values on top of a
+    """A kit deployment: its own Compose file and values on top of a
     base deployment from the pinned kit, whose requirements it keeps or narrows."""
-    manifest = read_deployment_manifest(directory, ALLOWED_INTEGRATOR_DEPLOYMENT_KEYS, name)
+    manifest = read_deployment_manifest(directory, ALLOWED_KIT_DEPLOYMENT_KEYS, name)
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in base_kit.deployments:
         raise OpenADKitError(
@@ -343,7 +346,7 @@ def _load_kit_deployment(
         raise OpenADKitError(f"base deployment {base_name} has a base of its own")
     base = get_deployment(base_root, base_kit, base_name)
 
-    compose = validate_compose(manifest.get("compose"), ALLOWED_INTEGRATOR_COMPOSE_KEYS, base.compose["waitTimeout"])
+    compose = validate_compose(manifest.get("compose"), ALLOWED_KIT_COMPOSE_KEYS, base.compose["waitTimeout"])
     requirements = narrow_requirements(base.requirements, manifest.get("requirements"))
     # Without a GPU mode it never mounts the data only that mode uses.
     base_data = [item for item in base.data if requirements["gpu"] != "none" or not item.get("gpu")]
@@ -399,8 +402,8 @@ def resolve_extends(kit_root: Path, extends: str) -> Path:
     return candidate
 
 
-def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
-    reject_unknown(value, ALLOWED_INTEGRATOR_KIT_KEYS, "kit")
+def _load_extending_kit(root: Path, value: dict[str, Any]) -> Kit:
+    reject_unknown(value, ALLOWED_KIT_KEYS, "kit")
     extends = require_string(value.get("extends"), "extends")
     base_root = resolve_extends(root, extends)
     base = load_kit(base_root)
@@ -416,7 +419,7 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
             }
         else:
             external_images[name] = image
-    return RuntimeContext(
+    return Kit(
         kind="kit",
         default_ros_distro=base.default_ros_distro,
         version=None,
@@ -433,7 +436,7 @@ def _load_integrator_kit(root: Path, value: dict[str, Any]) -> RuntimeContext:
     )
 
 
-def load_kit(root: Path) -> RuntimeContext:
+def load_kit(root: Path) -> Kit:
     value = load_json(ensure_safe_existing(root, "openadkit.json", "kit manifest"))
     if value.get("schemaVersion") != SCHEMA_VERSION:
         raise OpenADKitError(
@@ -441,8 +444,8 @@ def load_kit(root: Path) -> RuntimeContext:
             f"(expected {SCHEMA_VERSION})"
         )
     if value.get("kind") == "kit":
-        return _load_integrator_kit(root, value)
-    reject_unknown(value, ALLOWED_KIT_KEYS, "kit manifest")
+        return _load_extending_kit(root, value)
+    reject_unknown(value, ALLOWED_BASE_KEYS, "kit manifest")
     if value.get("kind") not in ("source", "release"):
         raise OpenADKitError("openadkit.json kind must be source, release or kit")
     default_ros_distro = require_string(
@@ -483,7 +486,7 @@ def load_kit(root: Path) -> RuntimeContext:
         version = require_string(version, "version")
     elif kind == "release":
         raise OpenADKitError("release bundles must declare version")
-    return RuntimeContext(
+    return Kit(
         kind=kind,
         default_ros_distro=default_ros_distro,
         version=version,
@@ -497,17 +500,17 @@ def load_kit(root: Path) -> RuntimeContext:
     )
 
 
-def available_deployments(kit: RuntimeContext) -> str:
+def available_deployments(kit: Kit) -> str:
     return ", ".join(kit.deployments)
 
 
-def declares_base(root: Path, kit: RuntimeContext, name: str) -> bool:
+def declares_base(root: Path, kit: Kit, name: str) -> bool:
     directory = root.joinpath(*safe_relative(kit.deployments[name].path, "deployment path").parts)
     manifest = directory / "deployment.json"
     return manifest.is_file() and not manifest.is_symlink() and "base" in load_json(manifest)
 
 
-def get_deployment(root: Path, kit: RuntimeContext, name: str) -> Deployment:
+def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
     available = available_deployments(kit)
     if not NAME_RE.fullmatch(name):
         raise OpenADKitError(
@@ -527,7 +530,7 @@ def get_deployment(root: Path, kit: RuntimeContext, name: str) -> Deployment:
         # A deployment on another of the same catalog, as a kit's is on its pinned kit.
         deployment = _load_kit_deployment(root, directory, kit, root, name)
     else:
-        deployment = _load_deployment(root, directory, name)
+        deployment = _load_base_deployment(root, directory, name)
     return deployment
 
 
@@ -561,7 +564,7 @@ def deployment_checksum(directory: Path, *, exclude_dirs: tuple[str, ...] = ()) 
 def deployment_integrity(
     root: Path,
     deployment: Deployment,
-    kit: RuntimeContext,
+    kit: Kit,
 ) -> str:
     if kit.kind != "release":
         return "source"

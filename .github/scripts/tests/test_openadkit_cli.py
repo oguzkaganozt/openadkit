@@ -125,7 +125,7 @@ def edit_kit(root, change):
 
 def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
                 services=("app", "acme")):
-    """One stateful stub shared by runtime and integrator subprocess tests."""
+    """One stateful stub shared by runtime and kit subprocess tests."""
     calls = tmp_path / "docker-calls"
     live = tmp_path / "projects.json"
     live.write_text(json.dumps([{"Name": name, "Status": "running(1)"} for name in projects]))
@@ -217,7 +217,7 @@ def site_config(root, text, name="example"):
     path.write_text(text)
 
 
-def integrator_kit(tmp_path, root, *, extends=None, external_images=None):
+def extending_kit(tmp_path, root, *, extends=None, external_images=None):
     kit = tmp_path / "kit"
     directory = kit / "deployments/custom"
     directory.mkdir(parents=True)
@@ -226,7 +226,7 @@ def integrator_kit(tmp_path, root, *, extends=None, external_images=None):
         "deployments": {"custom": {"path": "deployments/custom"}}, "externalImages": external_images or {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "Integrator deployment", "base": "example",
+        "schemaVersion": 2, "description": "Kit deployment", "base": "example",
     }))
     (directory / "settings.env").write_text("VALUE=kit\n")
     (directory / "docker-compose.yaml").write_text(
@@ -405,7 +405,7 @@ def test_completion_offers_commands_options_and_deployments(tmp_path):
 def test_version_pairs_the_release_with_its_autoware_also_in_a_kit(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
     assert run_cli(root, "version").stdout.splitlines()[0] == "Open AD Kit v1.2.3 · Autoware 1.8.0"
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     output = run_cli(root, "version", directory=kit).stdout
     assert f"autoware: 1.8.0 ({'a' * 40})" in output.splitlines()
     # A line's backported fixes show with the Autoware they patch.
@@ -703,7 +703,7 @@ def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
 def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path):
     verify = {"service": "app", "command": ["python3", "drive_to_goal.py"]}
     root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": verify})
-    kit_root = integrator_kit(tmp_path, root)
+    kit_root = extending_kit(tmp_path, root)
     kit = cli_catalog.load_kit(kit_root)
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == verify
     path = kit_root / "deployments/custom/deployment.json"
@@ -770,7 +770,7 @@ def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, a
 @pytest.mark.parametrize("target", ["base", "kit"])
 def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     name, other = ("example", "custom") if target == "base" else ("custom", "example")
     calls = fake_docker(tmp_path, projects=[f"openadkit-{other}"])
     result = run_cli(root, "run", name, "--pull", "never", directory=root if target == "base" else kit)
@@ -796,7 +796,7 @@ def test_run_treats_a_same_named_project_from_another_directory_as_foreign(tmp_p
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     # Another kit's "example" has the same project name as this one's
-    # single-host or primary view.
+    # single-host or primary project.
     entry = {"own": directory / "docker-compose.yaml", "elsewhere": tmp_path / "other-kit/docker-compose.yaml",
              "other-node": directory / "compose.secondary.yaml"}[started_from]
     live = {"openadkit-example": [str(entry)], "openadkit-example_primary": [str(entry).replace(
@@ -825,7 +825,7 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
 def test_a_node_is_never_read_from_a_deployment_name(monkeypatch):
     # planning-simulation running single-host is not node "simulation" of anything.
     monkeypatch.setattr(cli_live, "live_projects", lambda: {"openadkit-planning-simulation", "openadkit-split_simulation"})
-    assert cli_live.live_views("simulation") == ["openadkit-split_simulation"]
+    assert cli_live.running_projects("simulation") == ["openadkit-split_simulation"]
 
 
 def test_several_live_nodes_stop_together_but_take_one_target_otherwise(tmp_path):
@@ -1327,7 +1327,7 @@ def test_data_destinations_resolve_as_compose_resolves_them(tmp_path, monkeypatc
     (tmp_path / "settings.gpu.env").write_text("ROSBAG_PATH=/srv/gpu-rosbag\n")
     data = [{"name": "rosbag", "destinationEnv": "ROSBAG_PATH", "gpu": True}]
     deployment = SettingsDeployment(tmp_path, [tmp_path / "settings.env"], [tmp_path / "settings.gpu.env"], data)
-    kit = cli_catalog.RuntimeContext("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
+    kit = cli_catalog.Kit("source", "humble", None, "registry.example/x", {}, {}, {}, {}, {})
     resolved = cli_settings.resolve(deployment, kit, data_only=True)
     destination = lambda name, gpu=False: cli_data.resolve_destination(  # noqa: E731
         {"name": name, "destinationEnv": name, "gpu": gpu}, resolved)
@@ -1421,7 +1421,7 @@ def test_zip_fetch_publishes_validated_data(tmp_path):
 
 def test_clean_lists_what_it_deletes_and_needs_yes_without_a_terminal(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     target = tmp_path / "home/data/map"
     target.mkdir(parents=True)
     (target / cli_data.MARKER).write_text("{}")
@@ -1472,7 +1472,7 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
                                                         ("custom", "exited", True)])
 def test_clean_protects_shared_data_across_kit_catalogs(tmp_path, name, status, shared):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     target = tmp_path / "home/data/map"
     target.mkdir(parents=True)
     (target / cli_data.MARKER).write_text("{}")
@@ -1512,7 +1512,7 @@ def test_fetch_checks_every_destination_before_download(tmp_path):
 def test_kit_external_image_fallback_and_wildcard_override(tmp_path, base_refs):
     root, _ = runtime_tree(tmp_path)
     edit_kit(root, lambda doc: doc.update(externalImages={"EXTERNAL_IMAGE": {**base_refs}}))
-    kit = integrator_kit(tmp_path, root, external_images={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
+    kit = extending_kit(tmp_path, root, external_images={"EXTERNAL_IMAGE": {"distros": {"humble": OTHER_PIN}}})
     context = cli_catalog.load_kit(kit)
     assert context.external_image_environment("humble")["EXTERNAL_IMAGE"] == OTHER_PIN
     assert context.external_image_environment("jazzy")["EXTERNAL_IMAGE"] == PIN
@@ -1541,7 +1541,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     root, base = runtime_tree(tmp_path, release=release,
                               document=manifest(gpu=True, data=[files_resource(tmp_path)]), config="VALUE=base\nMAP_PATH=$HOME/data/map\n")
     edit_kit(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
-    kit = integrator_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
+    kit = extending_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
@@ -1571,7 +1571,7 @@ def test_kit_may_leave_out_the_base_side_its_inherited_oneshots_belong_to(tmp_pa
     document = manifest()
     document["compose"]["resetServices"] = ["loader"]
     root, _ = runtime_tree(tmp_path, document=document)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     calls = fake_docker(tmp_path, services=("app", "acme"))
     # The base itself must still define its oneshots.
     result = run_cli(root, "validate", "example")
@@ -1638,7 +1638,7 @@ def test_new_refuses_what_cannot_be_a_kit(tmp_path, name, base, message):
 
 def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     fake_docker(tmp_path)
     result = run_cli(root, "validate", directory=kit)
     assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
@@ -1661,20 +1661,20 @@ def test_usage_errors_exit_2_and_help_keeps_its_capitals(tmp_path):
     assert "in a running service with ROS sourced." in " ".join(run_cli(root, "shell", "--help").stdout.split())
     assert "resolved Compose model as JSON." in " ".join(run_cli(root, "config", "--help").stdout.split())
     # A kit on a source checkout names it once; one on a release names the version too.
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     assert f"extends: Open AD Kit at {root}" in run_cli(root, "version", directory=kit).stdout.splitlines()
 
 
 def test_new_refuses_inside_a_kit(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     result = run_cli(root, "new", "nested", "--base", "example", directory=kit)
     assert result.returncode != 0 and "outside a kit" in result.stderr
 
 
 def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     workspace = kit / "overlay_ws"
     (workspace / "src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
@@ -1736,7 +1736,7 @@ def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     root, _ = runtime_tree(tmp_path, release=True)
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
     edit_kit(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     (kit / "overlay_ws/src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
     colcon = ["--packages-select", "my_pkg", "--cmake-args", "-DCMAKE_BUILD_TYPE=Debug"]
@@ -1766,7 +1766,7 @@ def overlay_workspace(root, name, monkeypatch, tmp_path, workspace=None):
 
 def test_a_kit_has_one_workspace_at_its_root(tmp_path, monkeypatch):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     (kit / "overlay_ws").mkdir()
     # A deployment's own overlay_ws is no second layer.
     (kit / "deployments/custom/overlay_ws").mkdir()
@@ -1775,7 +1775,7 @@ def test_a_kit_has_one_workspace_at_its_root(tmp_path, monkeypatch):
 
 def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypatch):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     directory = kit / "deployments/custom"
     for item in directory.iterdir():
         shutil.move(str(item), kit)
@@ -1896,7 +1896,7 @@ def test_ws_mounts_a_built_workspace_for_a_deployment_without_one(tmp_path, monk
 
 def test_a_deployment_can_be_named_by_its_directory(tmp_path):
     root, directory = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root)
+    kit = extending_kit(tmp_path, root)
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     fake_docker(tmp_path)
@@ -1912,7 +1912,7 @@ def test_a_deployment_can_be_named_by_its_directory(tmp_path):
 @pytest.mark.parametrize("available", [False, True])
 def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path, available):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+    kit = extending_kit(tmp_path, root, extends="v1.2.3")
     record = tmp_path / "delegated"
     if available:
         pinned = tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3"
@@ -1933,7 +1933,7 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
 
 def test_a_kit_downloads_its_pinned_release_without_activating_it(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+    kit = extending_kit(tmp_path, root, extends="v1.2.3")
     release = release_bin(tmp_path)
     result = run_cli(root, "validate", "custom", "--json", directory=kit,
                      PATH=f"{release}:{tmp_path / 'bin'}:{os.environ['PATH']}")
@@ -1948,7 +1948,7 @@ def test_a_kit_downloads_its_pinned_release_without_activating_it(tmp_path):
 
 def test_a_kit_hands_over_options_only_its_pinned_release_knows(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+    kit = extending_kit(tmp_path, root, extends="v1.2.3")
     record = tmp_path / "delegated"
     pinned = tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3"
     pinned.mkdir(parents=True)
@@ -1976,9 +1976,9 @@ def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned)
         other = tmp_path / "other"
         shutil.copytree(root, other)
         executable(other / "openadkit", f'#!/usr/bin/env bash\ntouch "{acted}"\n')
-        kit = integrator_kit(tmp_path, root, extends=str(other))
+        kit = extending_kit(tmp_path, root, extends=str(other))
     else:
-        kit = integrator_kit(tmp_path, root, extends="v1.2.3")
+        kit = extending_kit(tmp_path, root, extends="v1.2.3")
         executable(tmp_path / "bin/curl", f'#!/usr/bin/env bash\ntouch "{acted}"\nexit 22\n')
     fake_docker(tmp_path)
     for args in (["list"], ["list", "--json"], ["version"], ["run", "--help"], ["validate", "custom", "--help"]):
@@ -1998,7 +1998,7 @@ def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned)
 
 def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    kit = integrator_kit(tmp_path, root, extends=str(tmp_path / "nowhere"))
+    kit = extending_kit(tmp_path, root, extends=str(tmp_path / "nowhere"))
     result = run_cli(root, "validate", "custom", "--json", directory=kit)
     assert result.returncode == 1
     document = json.loads(result.stdout)

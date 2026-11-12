@@ -45,7 +45,7 @@ python3 "${planner}" \
 (cd "${bundle_root}" && ./openadkit list)
 cp -a "${bundle_root}/openadkit" dist/openadkit
 
-# Split-host node views require Zenoh endpoints. These dummies only render and
+# Split-host nodes require Zenoh endpoints. These dummies only render and
 # validate the Compose graphs; they never start a bridge.
 export ZENOH_LISTEN="${ZENOH_LISTEN:-tcp/127.0.0.1:7447}"
 export ZENOH_PEER="${ZENOH_PEER:-tcp/127.0.0.1:7447}"
