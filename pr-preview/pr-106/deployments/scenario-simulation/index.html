@@ -1979,7 +1979,7 @@ over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 <td>Bundled example</td>
 </tr>
 <tr>
-<td><code>SCENARIO_HOST_DIR</code></td>
+<td><code>SCENARIO_HOST_PATH</code></td>
 <td>Host scenario directory, mounted at <code>/scenarios</code></td>
 <td><code>./scenarios</code></td>
 </tr>
@@ -2010,12 +2010,12 @@ over SSH and open <code>http://localhost:8080/vnc.html</code> locally:</p>
 </tr>
 </tbody>
 </table>
-<p>A relative <code>SCENARIO_HOST_DIR</code> resolves from
+<p>A relative <code>SCENARIO_HOST_PATH</code> resolves from
 <code>deployments/scenario-simulation/</code>. <code>MAP_PATH</code> must be absolute; use <code>$HOME</code>
 rather than <code>~</code>.</p>
 <p>To run your own scenario, keep it outside the release. Create a directory, put
 the YAML there, and point the deployment at it in the host settings file:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">SCENARIO_HOST_DIR</span><span class="o">=</span><span class="nv">$HOME</span>/openadkit-scenarios
+<div class="highlight"><pre><span></span><code><span class="nv">SCENARIO_HOST_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/openadkit-scenarios
 <span class="nv">SCENARIO</span><span class="o">=</span>/scenarios/my-scenario.yaml
 </code></pre></div>
 <p>The default <code>./scenarios</code> lies inside the installed release: files placed there
