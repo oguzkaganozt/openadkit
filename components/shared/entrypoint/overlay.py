@@ -2,8 +2,8 @@
 """Build /tmp/openadkit: stable paths and the merged config overrides.
 
 Overrides come in layers mounted under /openadkit/config, applied in order:
-shared (all our deployments), base (the deployment a kit builds on) and
-deployment (the one being run). Inside each layer, autoware/<package>/<path>
+base (the deployment a kit builds on) and deployment (the one being run).
+Inside each layer, autoware/<package>/<path>
 overrides <path> in that package's share directory. A YAML override holds only
 the changed parameters and is merged into the file; any other file replaces
 it. Keys and files with no counterpart in the package are reported, because
@@ -24,7 +24,7 @@ from typing import Any
 import yaml
 
 ROOT = Path("/tmp/openadkit")
-LAYERS = [Path("/openadkit/config") / name for name in ("shared", "base", "deployment")]
+LAYERS = [Path("/openadkit/config") / name for name in ("base", "deployment")]
 # Our Compose files pass paths inside it as launch arguments.
 ALWAYS = "autoware_launch"
 

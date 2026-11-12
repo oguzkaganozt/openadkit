@@ -663,14 +663,14 @@ def test_every_run_records_what_it_started(tmp_path):
     assert record["images"] == {} and record["modelSha256"] == hashlib.sha256(b'{"services": {}}\n').hexdigest()
     assert record["node"] is None and record["gpu"] is False and "verify" not in record
     # What the services mount from the host is identified by its content.
-    assert set(record["configSha256"]) == {"shared", "base", "deployment"}
+    assert set(record["configSha256"]) == {"base", "deployment"}
     override = root / "deployments/example/config/autoware/pkg/params.yaml"
     override.parent.mkdir(parents=True)
     override.write_text("rate: 1\n")
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
     changed = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
     assert changed["configSha256"]["deployment"] != record["configSha256"]["deployment"]
-    assert changed["configSha256"]["shared"] == record["configSha256"]["shared"]
+    assert changed["configSha256"]["base"] == record["configSha256"]["base"]
     assert changed["overlaySha256"] == record["overlaySha256"]
 
 
@@ -1198,7 +1198,7 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     root, _ = runtime_tree(tmp_path)
     containers = [
         {"Id": "a", "Config": {"Labels": {"com.docker.compose.service": "planning"}},
-         "Mounts": [{"Destination": "/openadkit/config/shared"}]},
+         "Mounts": [{"Destination": "/openadkit/config/base"}]},
         {"Id": "b", "Config": {"Labels": {"com.docker.compose.service": "acme"}},
          "Mounts": [{"Destination": "/openadkit/overlay_ws"}]},
         {"Id": "c", "Config": {"Labels": {"com.docker.compose.service": "carla"}}, "Mounts": []},

@@ -299,7 +299,7 @@ def run_record(
         "modelSha256": hashlib.sha256(model.encode("utf-8")).hexdigest(),
         "configSha256": {
             layer: deployment_checksum(Path(mounted[f"OPENADKIT_CONFIG_{layer.upper()}"]))
-            for layer in ("shared", "base", "deployment")
+            for layer in ("base", "deployment")
         },
         # What the services source; build products and logs are not.
         "overlaySha256": deployment_checksum(Path(mounted["OPENADKIT_OVERLAY_WS"]), exclude_dirs=("build", "log")),

@@ -76,8 +76,8 @@ Store overrides under
 ```
 
 On each start, the entrypoint hook copies the package share directory into
-`/tmp/openadkit/<package>/share/<package>`. It applies the shared,
-base-deployment and kit-deployment layers in that order. YAML mappings merge
+`/tmp/openadkit/<package>/share/<package>`. It applies the base deployment's
+layer, then the kit deployment's. YAML mappings merge
 recursively; scalars and lists replace the old value. Launch substitutions such
 as `$(var ...)` stay intact. Non-YAML files replace their counterpart.
 

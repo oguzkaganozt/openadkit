@@ -20,7 +20,7 @@ def overlay(tmp_path, monkeypatch):
     spec.loader.exec_module(module)
     monkeypatch.setattr(module, "ROOT", tmp_path / "tmp-openadkit")
     monkeypatch.setattr(
-        module, "LAYERS", [tmp_path / "layers" / name for name in ("shared", "base", "deployment")]
+        module, "LAYERS", [tmp_path / "layers" / name for name in ("base", "deployment")]
     )
     return module
 
@@ -62,7 +62,7 @@ def run(overlay, tmp_path, monkeypatch, capsys):
 
 
 def test_layers_merge_in_order_and_keep_untouched_values(overlay, tmp_path, monkeypatch, capsys):
-    layer(tmp_path, "shared", "autoware_launch", GATE,
+    layer(tmp_path, "base", "autoware_launch", GATE,
           "/**:\n  ros__parameters:\n    use_emergency_handling: false\n")
     layer(tmp_path, "deployment", "autoware_launch", GATE,
           "/**:\n  ros__parameters:\n    nominal:\n      vel_lim: 8.0\n")

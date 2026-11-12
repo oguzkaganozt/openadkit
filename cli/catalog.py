@@ -231,13 +231,9 @@ class Deployment:
         self.gpu_files: list[tuple[Path, str]] = [
             (directory, name) for name in self.compose["gpuFiles"]
         ] + (base.gpu_files if base else [])
-        owner = base if base else self
         # A kit's ROS packages serve all of its deployments, so its one
         # workspace lives at the kit root.
         self.overlay_paths: dict[str, Path | None] = {
-            "OPENADKIT_CONFIG_SHARED": (
-                owner.root / "deployments/shared/config" if "shared" in owner.shared else None
-            ),
             "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
             "OPENADKIT_OVERLAY_WS": (root if base and base.root != root else directory) / "overlay_ws",
