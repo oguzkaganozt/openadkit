@@ -153,6 +153,11 @@ def evidence_cells(
             for row in [row for row in cells if row["deployment"] == name and "node" not in row]:
                 cell = row | PLATFORM_CELLS[name]
                 cells.append(cell | {"name": evidence_cell_name(cell)})
+    # One plain cell per distro also checks the launch arguments of every
+    # deployment, the exempt ones included (evidence/launch_arguments.py).
+    for distro in sorted({cell["distro"] for cell in cells}):
+        plain = next(cell for cell in cells if cell["distro"] == distro and not cell.keys() & {"node", "backend"})
+        plain["launch_arguments"] = "all"
     return cells
 
 
@@ -188,7 +193,9 @@ def example_kit_cells(runtime: ModuleType, source_root: Path) -> list[dict[str, 
     for name, base in EXAMPLE_KITS.items():
         for cell in base_cells:
             if cell["deployment"] == base and not cell.get("node") and not cell.get("backend"):
-                kit_cell = cell | {"deployment": name, "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
+                # The base's cell already checks the launch arguments.
+                kit_cell = {key: value for key, value in cell.items() if key != "launch_arguments"}
+                kit_cell |= {"deployment": name, "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
                 cells.append(kit_cell | {"name": evidence_cell_name(kit_cell)})
     return cells
 

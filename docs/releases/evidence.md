@@ -35,7 +35,11 @@ and topology:
 Each cell runs these levels on a fresh stack, started with
 `openadkit run --no-visualizer`:
 
-- **L0:** manifests and Compose configuration validate.
+- **L0:** manifests and Compose configuration validate. One cell per distro
+  also checks that the images' launch files read every launch argument the
+  deployments pass, the exempt deployments included: `ros2 launch` ignores an
+  argument it does not know, so a renamed Autoware argument would otherwise do
+  nothing without any error.
 - **L1:** `openadkit run` returns: the deployment's healthchecks pass, so its
   ROS interfaces are present and its topics publish.
 - **L2:** the deployment's verify step passes (`openadkit run --verify`): the

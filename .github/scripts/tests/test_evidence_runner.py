@@ -13,12 +13,16 @@ import validation_matrix
 RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
 
 
-def matrix_cell(deployment, node=""):
-    """The real evidence-matrix row the workflow hands to the runner."""
+def matrix_cell(deployment, node="", launch_arguments=False):
+    """The real evidence-matrix row the workflow hands to the runner.
+
+    Without the launch-argument check, which starts the images, unless a test asks for it.
+    """
     runtime = validation_matrix.load_runtime(ROOT)
     cells = validation_matrix.evidence_cells(runtime, ROOT) + validation_matrix.example_kit_cells(runtime, ROOT)
-    return next(cell for cell in cells if cell["deployment"] == deployment and cell["distro"] == "humble"
+    cell = next(cell for cell in cells if cell["deployment"] == deployment and cell["distro"] == "humble"
                 and cell.get("node", "") == node)
+    return cell if launch_arguments else {key: value for key, value in cell.items() if key != "launch_arguments"}
 
 
 def manifest(deployment):
@@ -36,6 +40,60 @@ def test_evidence_cells_carry_the_manifest_plan():
     assert matrix_cell("planning-simulation")["nodes"] == ""
     for cell in (split, matrix_cell("example-kit"), matrix_cell("safety-island-simulation")):
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
+
+
+def test_one_plain_cell_per_distro_checks_the_launch_arguments():
+    runtime = validation_matrix.load_runtime(ROOT)
+    cells = validation_matrix.evidence_cells(runtime, ROOT)
+    checking = [cell for cell in cells if cell.get("launch_arguments") == "all"]
+    assert sorted(cell["distro"] for cell in checking) == sorted({cell["distro"] for cell in cells})
+    assert not any(cell.get("node") or cell.get("backend") for cell in checking)
+    assert not any("launch_arguments" in cell for cell in validation_matrix.example_kit_cells(runtime, ROOT))
+
+
+def test_a_failed_launch_argument_check_fails_l0(tmp_path):
+    # The stub's catalog has no deployment, so the check finds no launch command.
+    executable(tmp_path / "bin/openadkit", '''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+args = sys.argv[1:]
+if args[:2] == ["list", "--json"]:
+    print(json.dumps({"deployments": []}))
+elif args[0] == "run" and "--verify" in args:
+    report = Path(os.environ["OPENADKIT_OUTPUT_DIR"], args[1], "results/run.json")
+    report.parent.mkdir(parents=True)
+    report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
+''')
+    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    out = tmp_path / "out"
+    env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
+                        "OPENADKIT_CLI": str(tmp_path / "bin/openadkit")}
+    cell = matrix_cell("planning-simulation", launch_arguments=True)
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(out)],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30)
+    record = json.loads((out / "cell.json").read_text())
+    assert result.returncode != 0 and record["result"] == "FAILED" and record["levels"]["L0"]["ok"] is False
+    assert "no ros2 launch command found" in (out / "launch-arguments.log").read_text()
+
+
+def test_launch_argument_check_reads_the_ros2_launch_commands(tmp_path):
+    sys.path.insert(0, str(ROOT / ".github/scripts/evidence"))
+    import launch_arguments
+    (tmp_path / "launch").mkdir()
+    model = {"services": {
+        "planning": {"image": "planning", "command": ["ros2", "launch", "autoware_launch", "planning.launch.xml", "a:=1", "b:=x=y"],
+                     "volumes": [{"type": "bind", "source": str(tmp_path / "launch"), "target": "/openadkit/launch"},
+                                 {"type": "bind", "source": str(tmp_path / "missing"), "target": "/data"}]},
+        "map": {"image": "map", "command": ["ros2", "launch", "/openadkit/launch/component.launch.py", "component:=component_map"]},
+        "probe": {"image": "probe", "command": ["sleep", "infinity"]},
+        "idle": {"image": "idle"},
+    }}
+    found = {launch["service"]: launch for launch in launch_arguments.launches(model)}
+    assert sorted(found) == ["map", "planning"]
+    assert found["planning"]["spec"] == ["autoware_launch", "planning.launch.xml"]
+    assert found["planning"]["values"] == {"a": "1", "b": "x=y"}
+    assert found["planning"]["mounts"] == [(str(tmp_path / "launch"), "/openadkit/launch")]
+    assert found["map"]["spec"] == ["/openadkit/launch/component.launch.py"] and found["map"]["values"] == {"component": "component_map"}
 
 
 def test_quadlet_cell_runs_the_drive_to_goal_check_on_a_runner_with_quadlet():
