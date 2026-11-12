@@ -2273,7 +2273,8 @@ read four packages:</p>
 the visualizer all read the same vehicle. All four packages must exist: the
 vehicle and system services look up the two <code>_launch</code> packages on every start.
 <code>validate</code> does not check for them. When one is missing, <code>run</code> reports the
-service that failed, and <code>openadkit logs &lt;service&gt;</code> names the package.</p>
+service that failed, and <code>openadkit logs &lt;service&gt;</code> names the package. Every
+release tests this path: the example kit drives with four such packages.</p>
 <p>Autoware's defaults describe a passenger car. Review these for your vehicle.
 The first two are in your packages. The others belong to Autoware packages, so
 change them with <a href="#2-config-overrides">config overrides</a>; their package and
