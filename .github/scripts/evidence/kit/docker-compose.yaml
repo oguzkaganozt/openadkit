@@ -8,6 +8,7 @@ services:
     # A kit's external image (extension point 5), pinned in its openadkit.json.
     image: ${HEARTBEAT_IMAGE:?pinned in openadkit.json externalImages}
     network_mode: none
+    init: true
     command: ["sleep", "infinity"]
     restart: unless-stopped
 
@@ -17,6 +18,9 @@ services:
     # entrypoint hook sources the overlay workspace mounted below.
     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
     network_mode: host
+    # Without an init process the node is PID 1 and ignores the stop signal:
+    # every stop and restart then waits ten seconds for Docker to kill it.
+    init: true
     ipc: host
     env_file:
       - ${OPENADKIT_BASE_ROOT}/deployments/shared/runtime.env

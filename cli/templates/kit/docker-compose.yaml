@@ -8,6 +8,7 @@ include:
 #   my-node:
 #     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
 #     network_mode: host
+#     init: true
 #     ipc: host
 #     env_file:
 #       - ${OPENADKIT_BASE_ROOT}/deployments/shared/runtime.env
