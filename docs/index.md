@@ -9,13 +9,6 @@ hide:
 The deployment layer for the <a href="https://github.com/autowarefoundation/autoware">Autoware</a> ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.
 </p>
 
-<p class="oak-hero-meta">
-<span class="oak-badge oak-badge--accent">First SOAFEE blueprint</span>
-<span class="oak-badge oak-badge--neutral">Autoware {{ autoware_version }}</span>
-<span class="oak-badge oak-badge--neutral">ROS 2 Humble and Jazzy</span>
-<span class="oak-badge oak-badge--neutral">amd64 and arm64</span>
-</p>
-
 ## Start Here { .oak-eyebrow }
 
 <div class="oak-card-grid oak-card-grid--start" markdown="1">
