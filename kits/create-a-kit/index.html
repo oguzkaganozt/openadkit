@@ -1139,10 +1139,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pin-your-base" class="md-nav__link">
+  <a href="#pin-the-release" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pin Your Base
+        Pin the Release
       
     </span>
   </a>
@@ -1880,10 +1880,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pin-your-base" class="md-nav__link">
+  <a href="#pin-the-release" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pin Your Base
+        Pin the Release
       
     </span>
   </a>
@@ -1953,7 +1953,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 └── overlay_ws/src/
 </code></pre></div>
 <ul>
-<li><code>openadkit.json</code> selects the base (<code>extends</code>), lists extra images you pin
+<li><code>openadkit.json</code> pins the Open AD Kit release (<code>extends</code>), lists extra images you pin
   (<code>externalImages</code>), and points the <code>my-kit</code> deployment at <code>"."</code>, this same
   directory.</li>
 <li><code>deployment.json</code> names the base deployment. Compose reads
@@ -1961,7 +1961,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
   distro, GPU, downloads and the verify step are inherited; <code>requirements</code> may
   narrow the first three.</li>
 <li><code>docker-compose.yaml</code> includes <code>${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml</code>;
-  add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the base root for
+  add your services below it. <code>OPENADKIT_BASE_ROOT</code> names the release's root for
   shared assets.</li>
 <li><code>settings.env</code> holds only the values you change, such as <code>VEHICLE_ID</code>.</li>
 <li><code>config/autoware/</code> holds parameter overrides for Autoware packages.</li>
@@ -1969,7 +1969,7 @@ openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w
 </ul>
 <p>The deployment's name is its key in <code>openadkit.json</code>, here <code>my-kit</code>;
 <code>deployment.json</code> does not repeat it. Renaming the directory changes nothing.</p>
-<h2 id="pin-your-base">Pin Your Base<a class="headerlink" href="#pin-your-base" title="Permanent link">#</a></h2>
+<h2 id="pin-the-release">Pin the Release<a class="headerlink" href="#pin-the-release" title="Permanent link">#</a></h2>
 <p><code>openadkit new</code> from an installed release writes its version, such as
 <code>"extends": "v2.0.0"</code>; the kit then runs with that release's own launcher.
 From a source checkout it writes the checkout's path. To move to another

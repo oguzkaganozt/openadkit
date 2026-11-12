@@ -1184,10 +1184,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pin-the-base" class="md-nav__link">
+  <a href="#pin-the-release" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pin the Base
+        Pin the Release
       
     </span>
   </a>
@@ -1195,10 +1195,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#base-a-deployment" class="md-nav__link">
+  <a href="#choose-a-base-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Base a Deployment
+        Choose a Base Deployment
       
     </span>
   </a>
@@ -1952,10 +1952,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pin-the-base" class="md-nav__link">
+  <a href="#pin-the-release" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pin the Base
+        Pin the Release
       
     </span>
   </a>
@@ -1963,10 +1963,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#base-a-deployment" class="md-nav__link">
+  <a href="#choose-a-base-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Base a Deployment
+        Choose a Base Deployment
       
     </span>
   </a>
@@ -2108,7 +2108,7 @@
 validated and upgraded. A kit owns its differences; Open AD Kit owns the base
 CLI, images and deployments. Start one with <code>openadkit new</code>
 (<a href="../create-a-kit/">Create a Kit</a>).</p>
-<h2 id="pin-the-base">Pin the Base<a class="headerlink" href="#pin-the-base" title="Permanent link">#</a></h2>
+<h2 id="pin-the-release">Pin the Release<a class="headerlink" href="#pin-the-release" title="Permanent link">#</a></h2>
 <p>In the kit's <code>openadkit.json</code>, <code>kind</code> is <code>kit</code> and <code>extends</code> names a published
 release tag or, for development, the path of a source checkout. Manifests use
 <code>schemaVersion: 2</code>; older ones are rejected.</p>
@@ -2124,7 +2124,7 @@ release tag or, for development, the path of a source checkout. Manifests use
   only look at starts no program and no download.</li>
 <li><strong>One level of <code>extends</code>:</strong> a kit extends Open AD Kit, not another kit.</li>
 </ul>
-<h2 id="base-a-deployment">Base a Deployment<a class="headerlink" href="#base-a-deployment" title="Permanent link">#</a></h2>
+<h2 id="choose-a-base-deployment">Choose a Base Deployment<a class="headerlink" href="#choose-a-base-deployment" title="Permanent link">#</a></h2>
 <p>Each kit deployment names a <code>base</code> deployment of the pinned release in its
 <code>deployment.json</code>.</p>
 <ul>
@@ -2156,7 +2156,7 @@ files in order (later files win):</p>
 </ol>
 <p>Shell exports do not override values set in these files. The CLI adds the ROS
 distro, the host UID and GID, the overlay mount paths, <code>OPENADKIT_BASE_ROOT</code>
-(the base's root) and <code>OPENADKIT_BASE_DEPLOYMENT</code> (the directory of the <code>base</code>
+(the release's root) and <code>OPENADKIT_BASE_DEPLOYMENT</code> (the directory of the <code>base</code>
 deployment); a release's component and external images stay pinned. Inside the
 containers, the ROS and DDS defaults come from the base services'
 <code>runtime.env</code>.</p>
@@ -2309,7 +2309,7 @@ release tests this path: the example kit drives with four such packages.</p>
 <p>Autoware's defaults describe a passenger car. Review these for your vehicle.
 The first two are in your packages. The others belong to Autoware packages, so
 change them with <a href="#2-config-overrides">config overrides</a>; their package and
-path depend on the base's Autoware version, so look them up in its images and
+path depend on the release's Autoware version, so look them up in its images and
 check <code>run</code>'s override warnings.</p>
 <table>
 <thead>
