@@ -40,6 +40,8 @@ openadkit stop
 
 ## Deployments
 
+A deployment is a ready-to-run Autoware stack for one task. Open AD Kit ships five; `openadkit list` prints them in your terminal.
+
 | Deployment | What it runs | Requires |
 |---|---|---|
 | [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map<br>`--gpu` plans with the Diffusion Planner | |
@@ -47,8 +49,6 @@ openadkit stop
 | [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data, sensing to localization<br>`--gpu` runs CenterPoint on CUDA | |
 | [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Closed-loop driving in the CARLA simulator<br>`--node` [splits it across two hosts](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (experimental) | NVIDIA GPU<br>amd64, Humble |
 | [`safety-island-simulation`](https://autowarefoundation.github.io/openadkit/deployments/safety-island-simulation/) | Planning Simulation controlled by the Safety Island | amd64 |
-
-`openadkit list` prints this catalog in your terminal.
 
 ## Create a Kit
 
