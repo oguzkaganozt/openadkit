@@ -69,8 +69,8 @@ A release needs the evidence cells of both distros to pass its
 [gate](evidence.md), and a distro is supported only while it is
 supported upstream. Changing the default takes a reviewed manifest change and
 passing evidence; a release never falls back to another distro by itself.
-Evidence runs on amd64, so an image build alone does not prove runtime behavior
-on arm64.
+Evidence runs on amd64 and arm64 hosts; the CUDA images, which are amd64-only,
+are checked by hand.
 
 ### ROS Package Snapshot
 
