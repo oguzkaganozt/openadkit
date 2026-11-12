@@ -2088,7 +2088,7 @@ shows. Map blobs and camera images are not routed.</p>
 <li><strong>In CI:</strong> both role views of each deployment validate, and Scenario
   Simulation's split evidence cell runs its two roles on one hosted runner.
   The sample scenario passes over Zenoh, and the scenario role's ROS domain
-  sees only the bridged topics, no Autoware roles. CARLA is exempt from CI
+  sees only the bridged topics, no Autoware nodes. CARLA is exempt from CI
   evidence.</li>
 <li><strong>By hand, on a lab pair:</strong> sample scenarios pass, and a CARLA goal
   reaches <code>ArrivedGoal</code> over the bridge.</li>
@@ -2185,7 +2185,7 @@ topic. CI cannot run CARLA: check its allowlist against the live graph of a
 two-host run after an Autoware update.</p>
 <h2 id="latency-and-timing">Latency and Timing<a class="headerlink" href="#latency-and-timing" title="Permanent link">#</a></h2>
 <p>Cross-host simulation is timing sensitive. With a large round-trip time the
-TF stream jitters and control roles log transform or collision-detector
+TF stream jitters and control nodes log transform or collision-detector
 warnings even when scenarios still pass. Keep both hosts on the same lab LAN;
 WAN and VPN links are best-effort and are not the supported setup.</p>
 <h2 id="lifecycle-notes">Lifecycle Notes<a class="headerlink" href="#lifecycle-notes" title="Permanent link">#</a></h2>

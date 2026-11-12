@@ -2348,8 +2348,8 @@ openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulatio
 <li><strong><code>fetch --force</code></strong> replaces the data even when it is complete, and is the
   way to repair incomplete data.</li>
 <li><strong><code>clean</code></strong> lists what it deletes and asks first; <code>--yes</code> skips the question,
-  as scripts need. It deletes all the data the deployment uses, so a kit or a
-  deployment on a base also deletes the base's data (the list says so). The
+  as scripts need. It deletes all the data the deployment uses, so a kit
+  deployment also deletes its base's data (the list says so). The
   next <code>run</code> or <code>fetch</code> downloads it again.</li>
 </ul>
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file, and
