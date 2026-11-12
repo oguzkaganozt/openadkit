@@ -62,7 +62,7 @@ runs:
     - name: Image metadata
       if: inputs.common-check != 'true'
       id: meta
-      uses: docker/metadata-action@v6
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ${{ inputs.image-repo || env.IMAGE_REPO }}
         bake-target: docker-metadata-action-${{ inputs.target }}
@@ -74,7 +74,7 @@ runs:
     - name: Common development image metadata
       if: inputs.publish == 'true' && inputs.target == 'universe-common'
       id: meta-devel
-      uses: docker/metadata-action@v6
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ${{ env.IMAGE_REPO }}
         bake-target: docker-metadata-action-universe-common-devel
@@ -86,7 +86,7 @@ runs:
     - name: Restore BuildKit cache mounts
       if: inputs.ccache == 'true'
       id: cache
-      uses: actions/cache/restore@v6
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: cache-mounts
         key: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
@@ -94,7 +94,7 @@ runs:
 
     - name: Arm post-step cache save
       if: inputs.save-ccache == 'true'
-      uses: actions/cache@v6
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: cache-mounts
         key: ${{ steps.recipe.outputs.cache_prefix }}${{ github.sha }}
@@ -102,7 +102,7 @@ runs:
 
     - name: Inject ccache mounts
       if: inputs.ccache == 'true'
-      uses: reproducible-containers/buildkit-cache-dance@v3
+      uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723 # v3.4.0
       with:
         cache-map: |
           {"cache-mounts/ccache": {"id": "ccache-${{ inputs.ros-distro }}", "target": "/home/aw/.ccache", "uid": "1000", "gid": "1000"}}
@@ -110,7 +110,7 @@ runs:
         skip-extraction: ${{ inputs.save-ccache != 'true' || steps.cache.outputs.cache-hit == 'true' }}
 
     - name: Build image
-      uses: docker/bake-action@v7
+      uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
       env:
         ROS_DISTRO: ${{ inputs.ros-distro }}
         UPSTREAM_TAG: ${{ fromJSON(inputs.prepared).upstream_tag }}
