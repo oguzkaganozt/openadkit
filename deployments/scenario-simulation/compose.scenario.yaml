@@ -52,7 +52,7 @@ services:
     volumes:
       - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ${OUTPUT_HOST_PATH}:${OUTPUT_DIRECTORY}
-      - ${SCENARIO_HOST_DIR}:/scenarios:ro
+      - ${SCENARIO_HOST_PATH}:/scenarios:ro
       - ${MAP_PATH}:/autoware_map:ro
     command:
       - bash
