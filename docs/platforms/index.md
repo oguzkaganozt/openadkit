@@ -4,10 +4,6 @@
 development and simulation. **Platforms** are edge targets on automotive
 operating systems such as AutoSD.
 
-Open AD Kit is the first [SOAFEE](https://www.soafee.io/) blueprint, co-developed
-with SOAFEE and the [eSync Alliance](https://esyncalliance.org/); DENSO's AVP
-blueprint and Red Hat's AutoSD blueprint build on it.
-
 - [AutoSD](autosd.md) — the upstream preview of Red Hat In-Vehicle OS:
   Quadlet units for Podman and systemd, generated from Compose (experimental)
 - [Hardware](hardware.md) — host requirements and boards
@@ -30,6 +26,6 @@ documented as if it worked. Host requirements and boards are on the
 | Jazzy images | **Supported** | A release needs the Humble and the Jazzy evidence cells to pass; Humble is the default |
 | CARLA Simulation | **Supported** | Humble, amd64, NVIDIA GPU; exempt from CI evidence, checked by hand |
 | [AutoSD](autosd.md) with Podman and Quadlet | **Experimental** | Component images, generated from Compose; Planning Simulation only |
-| [EWAOL](https://ewaol.docs.arm.com/en/latest/) | **Unsupported** | Arm's Yocto framework and the original SOAFEE reference implementation; no assets in this repository |
+| [EWAOL](https://ewaol.docs.arm.com/en/latest/) | **Unsupported** | Arm's Yocto framework; no assets in this repository |
 
 Other Linux distributions may work but are not tested.
