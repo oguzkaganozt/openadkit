@@ -5,7 +5,7 @@
    design tokens below so light/dark stay in sync and pages only use a small,
    shared vocabulary of classes:
 
-     .oak-hero-lead / .oak-hero-meta   landing hero
+     .oak-hero-lead                    landing hero
      .oak-card-grid / .oak-card        linked content cards
      .oak-component-grid / -item       compact definition grid
      .oak-quickstart                   numbered step navigation
@@ -439,7 +439,16 @@
 .oak-card-grid--start {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.8rem;
-  margin-top: 1rem;
+  margin-top: 0.6rem;
+}
+
+/* The landing page starts higher, so the hero and the cards share one screen. */
+.md-main__inner:has(.oak-card-grid--start) {
+  margin-top: 0.4rem;
+}
+
+.md-typeset .oak-hero-lead + h2.oak-eyebrow {
+  margin-top: 1.1rem;
 }
 
 @media screen and (min-width: 60em) {
@@ -448,15 +457,36 @@
   }
 }
 
+/* The icon sits beside the title, so a card is as tall as its text needs. */
 .oak-card-grid--start .oak-card {
-  padding: 1rem 1.05rem 1.1rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  column-gap: 0.6rem;
+  align-items: center;
+  padding: 0.9rem 1rem 0.9rem;
+}
+
+.oak-card-grid--start .oak-card > p {
+  grid-column: 1 / -1;
+}
+
+.oak-card-grid--start .oak-card > p:first-child,
+.oak-card-grid--start .oak-card > .oak-card-title {
+  grid-column: auto;
+  margin: 0;
+}
+
+.oak-card-grid--start .oak-card > p:nth-child(3) {
+  align-self: start;
+  margin-top: 0.55rem;
 }
 
 .oak-card-grid--start .oak-card .oak-card-icon,
 .oak-card-grid--start .oak-card .twemoji.oak-card-icon {
   width: 1.8rem;
   height: 1.8rem;
-  margin-bottom: 0.65rem;
+  margin: 0;
 }
 
 .oak-card-grid--start .oak-card .oak-card-icon svg {
@@ -465,7 +495,6 @@
 }
 
 .oak-card-grid--start .oak-card .oak-card-title {
-  margin-bottom: 0.3rem;
   font-size: 0.88rem;
 }
 
@@ -476,8 +505,8 @@
 
 /* The buttons line up at the bottom of cards of equal height. */
 .oak-card-grid--start .oak-card p:has(> .md-button) {
-  margin-top: auto;
-  padding-top: 0.7rem;
+  align-self: end;
+  padding-top: 0.6rem;
 }
 
 .oak-card-grid--start .oak-card .md-button {
@@ -843,13 +872,6 @@
   color: var(--oak-fg-muted);
   font-size: 0.95rem;
   line-height: 1.6;
-}
-
-.oak-hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 0.5rem;
 }
 
 .md-typeset h2.oak-eyebrow {
