@@ -66,7 +66,7 @@ openadkit run --verify      # start, wait until ready, run the verify step
 ## Documentation
 
 - [**Overview**](https://autowarefoundation.github.io/openadkit/overview/) — what Open AD Kit is and how it is put together
-- [**CLI & Maintenance**](https://autowarefoundation.github.io/openadkit/getting-started/cli/) — every command, configuration, upgrades and cleanup
+- [**CLI & Maintenance**](https://autowarefoundation.github.io/openadkit/getting-started/cli/) — every command, settings, upgrades and cleanup
 - [**Troubleshooting**](https://autowarefoundation.github.io/openadkit/getting-started/troubleshooting/) — Docker, data, GPU, visualizer and network
 - [**Components**](https://autowarefoundation.github.io/openadkit/components/) — the container images and what each one runs
 - [**Platforms**](https://autowarefoundation.github.io/openadkit/platforms/) — support tiers, AutoSD and host requirements

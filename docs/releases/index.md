@@ -7,7 +7,8 @@ the canonical source for published versions, release notes and provenance
 metadata. Each stable release publishes:
 
 - a versionless `openadkit` installer
-- the versioned `openadkit-vX.Y.Z.tar.gz` bundle: the CLI and the deployments
+- the versioned `openadkit-vX.Y.Z.tar.gz` bundle: the CLI and the catalog of
+  deployments
 - `release-plan.json` and `release-metadata.json`: the pinned Autoware release,
   ROS distros, image tags and digests, the BOM, the passing evidence summary
   and the CI exemptions

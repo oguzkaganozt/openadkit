@@ -264,9 +264,9 @@ does not yet accept external kits.
 
 ## Upgrade Without Losing Your Work
 
-Install the new base next to the old version, update `extends`, rebuild your
+Install the new release next to the old one, update `extends`, rebuild your
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host settings, downloaded data and output directories
-are outside the base release, and `openadkit upgrade` does not change a kit's
+are outside the release, and `openadkit upgrade` does not change a kit's
 `extends`. See [Settings](../getting-started/cli.md#settings) and
 [Downloaded Data](../getting-started/cli.md#downloaded-data).

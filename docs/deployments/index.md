@@ -1,7 +1,7 @@
 # Deployments
 
-A deployment is a ready-to-run Autoware stack for one task. New users should
-start with Planning Simulation.
+A deployment is a ready-to-run Autoware stack for one task. The deployments a
+release ships are its catalog. New users should start with Planning Simulation.
 
 | Deployment | Purpose | GPU | Architectures | CI evidence |
 |------------|---------|-----|---------------|-------------|

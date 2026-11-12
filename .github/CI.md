@@ -10,7 +10,7 @@ data and behavior contracts; local actions own repeated execution recipes.
 | CI image tags, Bake execution and ccache restore/save/prune | `actions/build-image/` |
 | Source lock import, Buildx and registry login | `actions/setup-build-env/` |
 | Image metadata capture, inventory coverage, scan rows and artifact validation | `scripts/images.py` |
-| Validation and evidence cell plans (roles, checks) and the kit inventory | `scripts/validation_matrix.py` |
+| Validation and evidence cell plans (roles, checks) and the catalog inventory | `scripts/validation_matrix.py` |
 | Executing one evidence cell: validate/start/cleanup and the L0–L3 checks it names | `scripts/evidence/run_cell.sh` |
 | Cell payloads, the run summary and its report | `scripts/evidence/` |
 | External release checks and sequencing | `scripts/validate_release.sh` |
@@ -45,7 +45,7 @@ both validation and promotion.
 Release packaging and evidence staging assemble the kit through one
 `release_plan.py --stage` step, so evidence runs the tree the release ships;
 evidence adds only the example kits. The bundle, the release plan and the
-evidence subjects all read one kit inventory.
+evidence subjects all read one catalog inventory.
 
 Each evidence matrix row is the complete cell plan: identity, the role list in
 manifest order and the deployment's verify step. L1 is `openadkit run`, which

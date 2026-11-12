@@ -56,7 +56,7 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 <div class="oak-link-list" markdown="1">
 
 - [**Overview**](overview.md) — What Open AD Kit is and how it is put together
-- [**CLI & Maintenance**](getting-started/cli.md) — Every command, configuration, upgrades and cleanup
+- [**CLI & Maintenance**](getting-started/cli.md) — Every command, settings, upgrades and cleanup
 - [**Troubleshooting**](getting-started/troubleshooting.md) — Docker, data, GPU, visualizer and network
 - [**Components**](components/index.md) — The container images and what each one runs
 - [**Releases**](releases/index.md) — What a release ships, promises and proves

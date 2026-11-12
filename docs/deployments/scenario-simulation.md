@@ -27,7 +27,7 @@ initialize; the runner then executes the scenario and writes the results to
 
 --8<-- "includes/visualizer-remote-access.md"
 
-## Configure
+## Settings
 
 Set these in the host settings file,
 `~/.config/openadkit/scenario-simulation.env`:

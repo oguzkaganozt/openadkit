@@ -1,6 +1,6 @@
 # {{name}}
 
-An Open AD Kit kit on top of `{{base}}` from Open AD Kit {{version}}.
+A kit on top of `{{base}}` from Open AD Kit {{version}}.
 
 | File | What it holds |
 | --- | --- |

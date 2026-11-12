@@ -19,7 +19,7 @@ without an NVIDIA GPU, and all arm64 hosts, run the CPU images.
 
 On a host below the recommended size Autoware may not keep up in real time;
 Scenario Simulation can then run slower than real time with
-[`GLOBAL_REAL_TIME_FACTOR`](../deployments/scenario-simulation.md#configure).
+[`GLOBAL_REAL_TIME_FACTOR`](../deployments/scenario-simulation.md#settings).
 
 ## Boards
 

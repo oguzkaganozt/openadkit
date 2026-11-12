@@ -17,7 +17,7 @@ community-based; there is no response-time or service-level guarantee.
 For a bug report, include `openadkit version --json`, the deployment, ROS
 distro, host architecture, Docker/Compose versions, reproduction steps, and
 relevant logs. Remove credentials and personal or sensitive data first.
-For a kit, also include the pinned base version and the result of
+For a kit, also include the pinned release version and the result of
 `openadkit validate <deployment> --json`.
 
 ## Supported versions and configurations
@@ -34,7 +34,7 @@ CI**, not a passing test. See the
 [evidence policy](https://autowarefoundation.github.io/openadkit/releases/evidence/)
 and [platform matrix](https://autowarefoundation.github.io/openadkit/platforms/).
 
-Use the documented extension points and the base release's matching devel
+Use the documented extension points and the pinned release's matching devel
 image for custom ROS packages. Replacing base images or commands requires your
 own runtime evidence.
 
