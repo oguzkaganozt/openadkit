@@ -2006,7 +2006,11 @@ and topology:</p>
 <p>Each cell runs these levels on a fresh stack, started with
 <code>openadkit run --no-visualizer</code>:</p>
 <ul>
-<li><strong>L0:</strong> manifests and Compose configuration validate.</li>
+<li><strong>L0:</strong> manifests and Compose configuration validate. One cell per distro
+  also checks that the images' launch files read every launch argument the
+  deployments pass, the exempt deployments included: <code>ros2 launch</code> ignores an
+  argument it does not know, so a renamed Autoware argument would otherwise do
+  nothing without any error.</li>
 <li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
   ROS interfaces are present and its topics publish.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
