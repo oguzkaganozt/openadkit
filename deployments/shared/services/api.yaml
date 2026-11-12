@@ -1,21 +1,13 @@
 # API — the Autoware API and default ADAPI surface.
 services:
   api:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${API_IMAGE:?set by the openadkit CLI}
     container_name: autoware-api
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
     volumes:
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
       - ../checks:/openadkit/checks:ro
     # Healthy once Autoware is ready (READINESS_CHECKS in settings.env), which
     # `openadkit run` waits for. Without checks it is healthy once it runs.
@@ -31,4 +23,3 @@ services:
       scenario_simulation:=${SCENARIO_SIMULATION}
       use_sim_time:=${USE_SIM_TIME}
       vehicle_model:=${VEHICLE_MODEL}
-    restart: on-failure

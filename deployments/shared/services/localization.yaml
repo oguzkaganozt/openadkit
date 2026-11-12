@@ -1,24 +1,14 @@
 # Localization — determines the vehicle's position on the map.
 services:
   localization:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${LOCALIZATION_MAPPING_IMAGE:?set by the openadkit CLI}
     container_name: autoware-localization
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
-    volumes:
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch autoware_launch component_localization.launch.xml
       system_run_mode:=${SYSTEM_RUN_MODE}
       use_sim_time:=${USE_SIM_TIME}
       vehicle_model:=${VEHICLE_MODEL}
-    restart: on-failure

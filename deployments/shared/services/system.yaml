@@ -3,21 +3,12 @@
 # (autoware-main.yaml by default, autoware-carla.yaml for carla-simulation).
 services:
   system:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${VEHICLE_SYSTEM_IMAGE:?set by the openadkit CLI}
     container_name: autoware-system
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
-    volumes:
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch autoware_launch tier4_system_component.launch.xml
       diagnostic_graph_aggregator_graph_path:=/tmp/openadkit/autoware_launch/share/autoware_launch/config/system/diagnostics/${SYSTEM_DIAGNOSTICS_GRAPH:-autoware-main.yaml}
@@ -26,4 +17,3 @@ services:
       sensor_model:=${SENSOR_MODEL}
       system_run_mode:=${SYSTEM_RUN_MODE}
       use_sim_time:=${USE_SIM_TIME}
-    restart: on-failure

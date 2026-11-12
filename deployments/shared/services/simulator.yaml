@@ -1,22 +1,14 @@
 # Simulator — the built-in dummy simulator behind the planning stack.
 services:
   simulator:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}
     container_name: autoware-simulator
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
     volumes:
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ../launch/component.launch.py:/openadkit/launch/component.launch.py:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch /openadkit/launch/component.launch.py component:=tier4_simulator_component
       initial_engage_state:=${INITIAL_ENGAGE_STATE}
@@ -30,4 +22,3 @@ services:
       use_sim_time:=${USE_SIM_TIME}
       vehicle_info_param_file:=/tmp/openadkit/vehicle_description/config/vehicle_info.param.yaml
       vehicle_model:=${VEHICLE_MODEL}
-    restart: on-failure

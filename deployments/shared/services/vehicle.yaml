@@ -1,21 +1,12 @@
 # Vehicle — bridges vehicle commands to the vehicle or simulator.
 services:
   vehicle:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${VEHICLE_SYSTEM_IMAGE:?set by the openadkit CLI}
     container_name: autoware-vehicle
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
-    volumes:
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch tier4_vehicle_launch vehicle.launch.xml
       launch_vehicle_interface:=${LAUNCH_VEHICLE_INTERFACE}
@@ -24,4 +15,3 @@ services:
       use_sim_time:=${USE_SIM_TIME}
       vehicle_id:=${VEHICLE_ID}
       vehicle_model:=${VEHICLE_MODEL}
-    restart: on-failure

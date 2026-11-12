@@ -2,22 +2,14 @@
 # Variant flags (GPU models, CARLA extras) come from settings.env / settings.gpu.env.
 services:
   perception:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${SENSING_PERCEPTION_IMAGE:?set by the openadkit CLI}
     container_name: autoware-perception
-    network_mode: host
-    init: true
-    ipc: host
     pid: service:map
-    env_file:
-      - ../runtime.env
     volumes:
       - ${DATA_PATH}:/autoware_data:rw
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     command: >
       ros2 launch autoware_launch component_perception.launch.xml
       data_path:=/autoware_data
@@ -27,4 +19,3 @@ services:
       pointcloud_container_name:=${POINTCLOUD_CONTAINER_NAME}
       use_sim_time:=${USE_SIM_TIME}
       vehicle_model:=${VEHICLE_MODEL}
-    restart: on-failure

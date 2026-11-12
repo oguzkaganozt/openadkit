@@ -6,16 +6,14 @@
 # NOVNC_CERT and NOVNC_KEY name its files, mounted into this service.
 services:
   visualizer:
+    extends:
+      file: base.yaml
+      service: autoware
     image: ${VISUALIZER_IMAGE:?set by the openadkit CLI}
     container_name: autoware-visualizer
-    network_mode: host
-    init: true
-    ipc: host
     # No pid: service:map. RViz runs without ros2 launch, so it has no
     # launch_ros_<PID> node to keep unique, and a split simulator node has no
     # map service to join.
-    env_file:
-      - ../runtime.env
     environment:
       - RVIZ_CONFIG=${RVIZ_CONFIG}
       - USE_SIM_TIME=${USE_SIM_TIME}
@@ -31,10 +29,3 @@ services:
       - XAUTHORITY=/tmp/.Xauthority
     volumes:
       - ${XAUTHORITY:-/dev/null}:/tmp/.Xauthority:ro
-      - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      # Integrator layer, applied by the image's entrypoint hook (components/shared/entrypoint).
-      - ${OPENADKIT_CONFIG_SHARED:?set by the openadkit CLI}:/openadkit/config/shared:ro
-      - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
-      - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
-    restart: on-failure
