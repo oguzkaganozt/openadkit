@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://autowarefoundation.github.io/openadkit/kits/integrator-guide/">
       
       
-        <link rel="prev" href="../create-a-kit/">
+        <link rel="prev" href="../develop-and-debug/">
       
       
         <link rel="next" href="../reference-designs/">
@@ -1009,6 +1009,8 @@
       
         
       
+        
+      
     
     
     
@@ -1072,6 +1074,34 @@
     
   
     Create a Kit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../develop-and-debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Develop and Debug
   
 
     
@@ -2210,7 +2240,8 @@ deliberately to test this devel/runtime boundary, then publishes <code>/acme/pro
 <h3 id="4-extra-services">4. Extra Services<a class="headerlink" href="#4-extra-services" title="Permanent link">#</a></h3>
 <p>Include the base's Compose file through <code>OPENADKIT_BASE_DEPLOYMENT</code>, then
 define your services under <code>services:</code>. Keep communicating ROS services on the
-base ROS domain and middleware.</p>
+base ROS domain and middleware, and give each one <code>init: true</code>
+(<a href="../develop-and-debug/#the-development-loop">Develop and Debug</a>).</p>
 <p>An extra Open AD Kit runtime service loads the kit workspace by mounting
 <code>${OPENADKIT_OVERLAY_WS}</code> at <code>/openadkit/overlay_ws:ro</code>, as the example kit's
 <code>acme-probe</code> does. It needs no image of its own: a runtime image and the
@@ -2386,7 +2417,7 @@ are outside the base release, and <code>openadkit upgrade</code> does not change
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../create-a-kit/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Create a Kit">
+          <a href="../develop-and-debug/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Develop and Debug">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2396,7 +2427,7 @@ are outside the base release, and <code>openadkit upgrade</code> does not change
                 Previous
               </span>
               <div class="md-ellipsis">
-                Create a Kit
+                Develop and Debug
               </div>
             </div>
           </a>
