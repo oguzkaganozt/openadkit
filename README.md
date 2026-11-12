@@ -15,7 +15,7 @@
 
 ## Quickstart
 
-From nothing to a driving Autoware on Ubuntu. No GPU needed.
+From nothing to a driving Autoware on Ubuntu. No GPU needed. The [full Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/) has the details.
 
 > [!NOTE]
 > **v2.0.0 is not published yet.** Until it is, [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
@@ -37,8 +37,6 @@ openadkit run planning-simulation
 # 5. Stop
 openadkit stop
 ```
-
-Stuck, or want the details? See the full [Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/).
 
 ## Deployments
 
