@@ -2139,8 +2139,8 @@ containers, the ROS and DDS defaults come from the base services'
 <span class="w">    </span><span class="nt">update_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20.0</span>
 </code></pre></div>
 <p>On each start, the entrypoint hook copies the package share directory into
-<code>/tmp/openadkit/&lt;package&gt;/share/&lt;package&gt;</code>. It applies the shared,
-base-deployment and kit-deployment layers in that order. YAML mappings merge
+<code>/tmp/openadkit/&lt;package&gt;/share/&lt;package&gt;</code>. It applies the base deployment's
+layer, then the kit deployment's. YAML mappings merge
 recursively; scalars and lists replace the old value. Launch substitutions such
 as <code>$(var ...)</code> stay intact. Non-YAML files replace their counterpart.</p>
 <p>The copied prefixes go first on <code>AMENT_PREFIX_PATH</code>, and base launch arguments
