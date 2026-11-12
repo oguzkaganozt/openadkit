@@ -5,9 +5,62 @@
 # follower would; domain_bridge carries the topics of the Safety Island's
 # released bridge-config.yaml between the two domains.
 include:
-  - ${OPENADKIT_BASE_DEPLOYMENT}/docker-compose.yaml
+  - ../shared/services/map-check.yaml
+  - ../shared/services/map.yaml
+  - ../shared/services/planning.yaml
+  - ../shared/services/vehicle.yaml
+  - ../shared/services/system.yaml
+  - ../shared/services/control.yaml
+  - ../shared/services/simulator.yaml
+  - ../shared/services/perception-simulation.yaml
+  - ../shared/services/api.yaml
+  - ../shared/services/visualizer.yaml
 
 services:
+  map:
+    depends_on:
+      map-check:
+        condition: service_completed_successfully
+
+  planning:
+    depends_on:
+      - map
+
+  vehicle:
+    depends_on:
+      - map
+
+  system:
+    depends_on:
+      - map
+
+  control:
+    depends_on:
+      - map
+      - planning
+      - system
+
+  simulator:
+    depends_on:
+      map:
+        condition: service_started
+      system:
+        condition: service_started
+      vehicle:
+        condition: service_started
+
+  perception-simulation:
+    depends_on:
+      - map
+
+  api:
+    depends_on:
+      - map
+
+  visualizer:
+    depends_on:
+      - map
+
   safety-island-bridge:
     image: ${API_IMAGE:?set by the openadkit CLI}
     container_name: safety-island-bridge
@@ -15,14 +68,14 @@ services:
     init: true
     ipc: host
     env_file:
-      - ${OPENADKIT_ROOT}/deployments/shared/runtime.env
+      - ../shared/runtime.env
     environment:
       # The shared config applies to every domain, so both sides of the bridge
       # stay on one interface; the release's domain-2 setting keeps datagrams
       # within what the Safety Island receives.
       CYCLONEDDS_URI: file:///etc/cyclonedds/cyclonedds.xml,file:///safety-island/cyclonedds-domain2.xml
     volumes:
-      - ${OPENADKIT_ROOT}/deployments/shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+      - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ${SAFETY_ISLAND_PATH:?set in settings.env}:/safety-island:ro
       - ./checks:/openadkit/checks:ro
     command: ros2 run domain_bridge domain_bridge /safety-island/bridge-config.yaml

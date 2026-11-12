@@ -1787,29 +1787,18 @@ def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypat
     assert overlay_workspace(kit, "custom", monkeypatch, tmp_path) == str(kit / "overlay_ws")
 
 
-def on_top(root, name="on-top", base="example"):
-    """A catalog deployment on another of the same catalog."""
-    directory = root / "deployments" / name
+def test_only_a_kit_deployment_names_a_base(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    directory = root / "deployments/on-top"
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "On top", "base": base,
+        "schemaVersion": 2, "description": "On top", "base": "example",
         "compose": {"files": ["docker-compose.yaml"]},
     }))
     (directory / "docker-compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
-    edit_kit(root, lambda document: document["deployments"].update({name: {"path": f"deployments/{name}"}}))
-    return directory
-
-
-def test_a_catalog_deployment_can_build_on_another(tmp_path):
-    root, base = runtime_tree(tmp_path)
-    directory = on_top(root)
-    kit = cli_catalog.load_kit(root)
-    deployment = cli_catalog.get_deployment(root, kit, "on-top")
-    assert deployment.base.directory == base and deployment.requirements == deployment.base.requirements
-    assert deployment.overlay_paths["OPENADKIT_OVERLAY_WS"] == directory / "overlay_ws"
-    on_top(root, "on-on-top", base="on-top")
-    with pytest.raises(cli_manifest.OpenADKitError, match="base deployment on-top has a base of its own"):
-        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-on-top")
+    edit_kit(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))
+    with pytest.raises(cli_manifest.OpenADKitError, match="unknown manifest field\\(s\\): base"):
+        cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
 
 
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
@@ -1817,12 +1806,12 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
     document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
     document["requirements"]["gpuArchitectures"] = ["amd64"]
     root, _ = runtime_tree(tmp_path, document=document)
-    directory = on_top(root)
+    kit_root = extending_kit(tmp_path, root)
 
     def on_top_with(requirements):
-        path = directory / "deployment.json"
+        path = kit_root / "deployments/custom/deployment.json"
         path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
-        return cli_catalog.get_deployment(root, cli_catalog.load_kit(root), "on-top")
+        return cli_catalog.get_deployment(kit_root, cli_catalog.load_kit(kit_root), "custom")
 
     # Only what it names changes; without a GPU mode the GPU-only data goes too.
     deployment = on_top_with({"architectures": ["amd64"], "gpu": "none"})
@@ -1853,18 +1842,6 @@ def test_safety_island_simulation_runs_where_its_release_does():
     deployment = cli_catalog.get_deployment(ROOT, kit, "safety-island-simulation")
     assert deployment.requirements == {"architectures": ["amd64"], "rosDistros": ["humble", "jazzy"], "gpu": "none"}
     assert not any(item.get("gpu") for item in deployment.data)
-
-
-def test_a_released_deployment_is_intact_only_with_its_base(tmp_path):
-    root, base = runtime_tree(tmp_path, release=True)
-    directory = on_top(root)
-    edit_kit(root, lambda document: document["deployments"]["on-top"].update(
-        checksum=cli_catalog.deployment_checksum(directory)))
-    kit = cli_catalog.load_kit(root)
-    deployment = cli_catalog.get_deployment(root, kit, "on-top")
-    assert cli_catalog.deployment_integrity(root, deployment, kit) == "intact"
-    (base / "settings.env").write_text("MAP_PATH=/elsewhere\n")
-    assert cli_catalog.deployment_integrity(root, deployment, kit) == "modified"
 
 
 def test_base_deployment_keeps_its_own_overlay(tmp_path, monkeypatch):

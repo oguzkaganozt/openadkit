@@ -239,7 +239,7 @@ class Deployment:
         self.overlay_paths: dict[str, Path | None] = {
             "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
-            "OPENADKIT_OVERLAY_WS": (root if base and base.root != root else directory) / "overlay_ws",
+            "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
         }
         self.kit_environment = {
             "OPENADKIT_ROOT": str(base.root),
@@ -342,8 +342,6 @@ def _load_kit_deployment(
             f"unknown base deployment: {base_name}; "
             f"available: {available_deployments(base_kit)}"
         )
-    if declares_base(base_root, base_kit, base_name):
-        raise OpenADKitError(f"base deployment {base_name} has a base of its own")
     base = get_deployment(base_root, base_kit, base_name)
 
     compose = validate_compose(manifest.get("compose"), ALLOWED_KIT_COMPOSE_KEYS, base.compose["waitTimeout"])
@@ -504,12 +502,6 @@ def available_deployments(kit: Kit) -> str:
     return ", ".join(kit.deployments)
 
 
-def declares_base(root: Path, kit: Kit, name: str) -> bool:
-    directory = root.joinpath(*safe_relative(kit.deployments[name].path, "deployment path").parts)
-    manifest = directory / "deployment.json"
-    return manifest.is_file() and not manifest.is_symlink() and "base" in load_json(manifest)
-
-
 def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
     available = available_deployments(kit)
     if not NAME_RE.fullmatch(name):
@@ -526,9 +518,6 @@ def get_deployment(root: Path, kit: Kit, name: str) -> Deployment:
     if kit.base is not None:
         assert kit.base_root is not None
         deployment = _load_kit_deployment(root, directory, kit.base, kit.base_root, name)
-    elif declares_base(root, kit, name):
-        # A deployment on another of the same catalog, as a kit's is on the Open AD Kit it extends.
-        deployment = _load_kit_deployment(root, directory, kit, root, name)
     else:
         deployment = _load_base_deployment(root, directory, name)
     return deployment
@@ -576,6 +565,4 @@ def deployment_integrity(
         for name in deployment.shared
     ):
         return "modified"
-    if deployment.base is not None and deployment.base.root == root:
-        return deployment_integrity(root, deployment.base, kit)
     return "intact"

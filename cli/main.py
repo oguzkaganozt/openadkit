@@ -22,7 +22,6 @@ from catalog import (
     Deployment,
     Kit,
     available_deployments,
-    declares_base,
     deployment_integrity,
     get_deployment,
     install_root,
@@ -76,8 +75,6 @@ def create_kit(root: Path, kit: Kit, name: str, base: str, destination: Path) ->
         raise OpenADKitError(f"invalid kit name {name}: use lowercase letters, digits and -")
     if base not in kit.deployments:
         raise OpenADKitError(f"{base} is not a deployment of this Open AD Kit; available: {available_deployments(kit)}")
-    if declares_base(root, kit, base):
-        raise OpenADKitError(f"{base} builds on another deployment; a kit builds on one without a base")
     target = destination.resolve() / name
     if target.exists() or target.is_symlink():
         raise OpenADKitError(f"{target} already exists")
