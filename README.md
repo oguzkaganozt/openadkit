@@ -10,7 +10,6 @@ One CLI runs them the same way on every host.
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://autowarefoundation.github.io/openadkit/)
 [![Autoware Discord](https://img.shields.io/discord/953808765935816715?logo=discord&logoColor=white&style=flat&label=Autoware)](https://discord.gg/Q94UsPvReQ)
-[![Autoware](https://img.shields.io/badge/Linkedin-Autoware-0a66c2?logo=linkedin&logoColor=white&style=flat)](https://www.linkedin.com/company/the-autoware-foundation/)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/images/readme-hero-dark.svg">
@@ -19,7 +18,7 @@ One CLI runs them the same way on every host.
 
 </div>
 
-Open AD Kit ships simulation deployments today; vehicle integration is planned. It integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) with the deployed stack, and it is the first [SOAFEE](https://www.soafee.io/) blueprint for the software-defined vehicle.
+Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stage of the driving pipeline is its own image, so a deployment runs only what its task needs, and [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) joins the same stack. The aim is one reproducible path from simulation to in-vehicle systems.
 
 ## Quickstart
 
