@@ -123,12 +123,14 @@ def edit_manifest(root, change):
     path.write_text(json.dumps(document))
 
 
-def fake_docker(tmp_path, *, projects=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
+def fake_docker(tmp_path, *, projects=(), stopped=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
                 services=("app", "acme")):
     """One stateful stub shared by runtime and kit subprocess tests."""
     calls = tmp_path / "docker-calls"
     live = tmp_path / "projects.json"
     live.write_text(json.dumps([{"Name": name, "Status": "running(1)"} for name in projects]))
+    # Projects whose containers are left but none runs: `compose ls` lists them only with --all.
+    left = [{"Name": name, "Status": "exited(1)"} for name in stopped]
     service_lines = "\n".join(services)
     executable(tmp_path / "bin/docker", f'''#!/usr/bin/env python3
 import json, os, sys
@@ -160,6 +162,8 @@ if text == "info --format {{{{json .Runtimes}}}}":
     print({runtimes!r})
 elif text == "compose ls --format json":
     print(live.read_text())
+elif text == "compose ls --all --format json":
+    print(json.dumps(json.loads(live.read_text()) + {left!r}))
 elif text == "ps -aq":
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
 elif args[0] == "compose" and "ps" in args and "--services" in args:
@@ -258,9 +262,12 @@ def release_bin(tmp_path, version="v1.2.3", *, bad_checksum=False, member=None):
             else:
                 info.size = len(payload)
                 archive.addfile(info, io.BytesIO(payload))
+    # A later release may list more bundles; the installer takes the one it knows by name.
     (release / "release-metadata.json").write_text(json.dumps({
-        "openadkit_version": version, "autoware_base_version": "1.9.0", "bundles": [{"name": bundle.name,
-        "sha256": "0" * 64 if bad_checksum else hashlib.sha256(bundle.read_bytes()).hexdigest()}],
+        "openadkit_version": version, "autoware_base_version": "1.9.0", "bundles": [
+            {"name": f"{root_name}-extra.tar.gz", "sha256": "f" * 64},
+            {"name": bundle.name,
+             "sha256": "0" * 64 if bad_checksum else hashlib.sha256(bundle.read_bytes()).hexdigest()}],
     }))
     bin_dir = release / "bin"
     executable(bin_dir / "curl", f'''#!/usr/bin/env python3
@@ -709,6 +716,20 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
     path = kit_root / "deployments/custom/deployment.json"
     path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "acme"}}))
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == {"service": "acme"}
+
+
+def test_a_kit_that_leaves_out_its_bases_verify_service_has_no_verify_step(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest() | {"verify": {"service": "runner"}})
+    kit = extending_kit(tmp_path, root)
+    fake_docker(tmp_path, services=("app", "acme"))
+    assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
+    result = run_cli(root, "run", "custom", "--pull", "never", "--verify", directory=kit)
+    assert result.returncode != 0 and "custom declares no verify step" in result.stderr
+    # A verify step the kit names itself is checked like a base's.
+    path = kit / "deployments/custom/deployment.json"
+    path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "runner"}}))
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode != 0 and "unknown Compose service(s): runner" in result.stderr
 
 
 @pytest.mark.parametrize(("verify", "message"), [
@@ -1183,6 +1204,27 @@ def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     assert result.returncode == 0 and "nothing is running" in result.stdout
 
 
+def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    edit_manifest(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
+    shutil.copytree(root / "deployments/example", root / "deployments/other")
+    calls = fake_docker(tmp_path, stopped=["openadkit-other"])
+    result = run_cli(root, "status")
+    assert result.returncode == 0 and "== other (stopped)" in result.stdout
+    assert "remove the stopped containers with: openadkit stop" in result.stdout
+    # Its containers keep their fixed names: another deployment cannot start over them.
+    result = run_cli(root, "run", "example", "--pull", "never")
+    assert result.returncode != 0 and "openadkit-other left stopped containers" in result.stderr
+    assert not any("up" in row["args"] for row in recorded(calls))
+    # The same deployment starts again in place.
+    assert run_cli(root, "run", "other", "--pull", "never").returncode == 0
+    fake_docker(tmp_path, stopped=["openadkit-other"])
+    calls.write_text("")
+    assert run_cli(root, "stop", directory=tmp_path).returncode == 0
+    assert ["compose", "--project-name", "openadkit-other", "down", "--remove-orphans"] in [
+        row["args"] for row in recorded(calls)]
+
+
 def test_status_gives_the_visualizer_address_only_when_it_runs(tmp_path):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path, projects=["openadkit-example"], services=("map", "visualizer"))
@@ -1202,9 +1244,12 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
         {"Id": "b", "Config": {"Labels": {"com.docker.compose.service": "acme"}},
          "Mounts": [{"Destination": "/openadkit/overlay_ws"}]},
         {"Id": "c", "Config": {"Labels": {"com.docker.compose.service": "carla"}}, "Mounts": []},
+        # In planning's process namespace, which ends when planning is recreated.
+        {"Id": "d", "Config": {"Labels": {"com.docker.compose.service": "bridge"}}, "Mounts": [],
+         "HostConfig": {"PidMode": "container:a"}},
     ]
     calls = fake_docker(tmp_path, projects=["openadkit-example"], containers=containers,
-                        services=("acme", "carla", "planning"))
+                        services=("acme", "bridge", "carla", "planning"))
     # A stack this CLI did not start cannot be recreated as it was.
     result = run_cli(root, "restart")
     assert result.returncode != 0 and "start it again with openadkit run" in result.stderr
@@ -1219,15 +1264,20 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
         return up[up.index("--force-recreate") + 1:], result.stdout
 
     # From any directory: the services that take config overrides, as run started them.
+    # A service in the process namespace of a recreated one is recreated with it.
     services, output = recreated()
-    assert services == ["acme", "planning"] and "kept running: carla" in output
+    assert services == ["acme", "bridge", "planning"] and "kept running: carla" in output
     # A settings change recreates the services it changes, here one without config.
     services, output = recreated(FAKE_CHANGED="carla")
-    assert services == ["acme", "carla", "planning"] and "kept running" not in output
+    assert services == ["acme", "bridge", "carla", "planning"] and "kept running" not in output
+    calls.write_text("")
+    assert run_cli(root, "restart", "acme", directory=tmp_path).returncode == 0
+    up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
+    assert up[up.index("--force-recreate") + 1:] == ["acme"]
     calls.write_text("")
     assert run_cli(root, "restart", "--all").returncode == 0
     up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
-    assert up[up.index("--force-recreate") + 1:] == ["acme", "carla", "planning"]
+    assert up[up.index("--force-recreate") + 1:] == ["acme", "bridge", "carla", "planning"]
     result = run_cli(root, "restart", "planning", "--all")
     assert result.returncode != 0 and "or pass --all" in result.stderr
     # stop forgets how the stack was started.

@@ -21,7 +21,8 @@ Open AD Kit is licensed under **Apache License 2.0**. All contributions are acce
    certifies the [Developer Certificate of Origin](https://developercertificate.org/);
    a PR without it is not merged
 3. **Run the [local checks](#local-checks)** that match your change, and
-   preview docs with `make -C docs serve`
+   preview docs with `make -C docs serve`. The docs site documents the latest
+   stable release, so a docs change reaches it with the next one
 4. **Open a PR** against `main` with a clear description. Its title follows
    [Conventional Commits](https://www.conventionalcommits.org/) (`feat(cli): ...`,
    with `!` for a breaking change): PRs are squash-merged, so the title becomes

@@ -22,6 +22,9 @@ number promises.
 - **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
   a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
   used.
+- **The `release` environment** exists in the repository settings: the publish
+  job runs in it, so the reviewers required there approve each release. With
+  immutable releases enabled, a published release and its tag cannot change.
 - **A successful build** of `build-all-images` exists on that branch; stable
   releases and pre-releases both come from it. The build summary shows its
   `build_tag`. The release ships the CLI and deployments of that build's
@@ -36,6 +39,10 @@ number promises.
 - **Highlights** for a minor or major release are in
   `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
   candidates open with them; the rest of the notes is generated.
+- **The docs on `main`** describe the release: a stable release publishes the
+  site from `main` as it is then. For the first stable release, remove the
+  "not published yet" notes first, from `README.md` and
+  `docs/includes/first-release-note.md` with the two lines that include it.
 
 ## Workflow
 
@@ -58,16 +65,27 @@ flowchart LR
 2. **package-bundles**: writes the immutable release plan and the runtime bundle
    for both distros.
 3. **publish**: writes the notes and metadata from the validated plan, attests
-   the bundle, installer, plan and metadata, and creates the draft with its
+   the bundle, installer and metadata, and creates the draft with its
    assets. It then creates the image release tags and, for stable releases, the
    latest aliases (see
    [Tag Reference](../releases/container-images.md#tag-reference)), and
    publishes the draft, which creates the Git tag. A published release cannot
    be changed: a bad one is followed by the next version.
-4. **deploy-docs**: republishes the docs when the latest aliases moved.
+4. **deploy-docs**: publishes the docs site from `main` when the latest
+   aliases moved.
 
-The release plan (`release-plan.json`) attached to each GitHub Release records
-the exact image digests, aliases, assets, and checksums of that release.
+The release plan records the exact image digests, aliases and assets of the
+release for the jobs after it; it stays in the workflow run. The release itself
+publishes `release-metadata.json`.
+
+## The Docs Site
+
+The site documents the latest stable release. A push to `main` does not
+publish it: a docs change reaches the site with the next stable release, and a
+pull request shows its own preview. To publish a fix in between, dispatch
+[`deploy-docs.yaml`](https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/deploy-docs.yaml),
+which builds the site from `main`; do that only while `main` documents nothing
+the latest release lacks.
 
 A fork can rehearse a release with the same workflow: it promotes its own
 build in its own registry namespace and publishes in the fork. Validation only

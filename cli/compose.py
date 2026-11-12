@@ -106,11 +106,12 @@ def live_projects() -> set[str]:
     return set(live_project_files())
 
 
-def live_project_files() -> dict[str, list[str]]:
-    """Live Open AD Kit Compose projects, with the Compose files each started from."""
+def _project_files(*, stopped: bool) -> dict[str, list[str]]:
+    """Open AD Kit Compose projects, with the Compose files each started from:
+    the live ones, or with `stopped` every one that still has containers."""
     require_docker()
     result = docker(
-        ["docker", "compose", "ls", "--format", "json"],
+        ["docker", "compose", "ls", *(["--all"] if stopped else []), "--format", "json"],
         check=False,
         trace=False,
     )
@@ -124,7 +125,7 @@ def live_project_files() -> dict[str, list[str]]:
         raise OpenADKitError("could not parse Compose project list") from error
     if not isinstance(projects, list):
         raise OpenADKitError("could not parse Compose project list")
-    live: dict[str, list[str]] = {}
+    found: dict[str, list[str]] = {}
     for project in projects:
         if not isinstance(project, dict):
             continue
@@ -133,10 +134,33 @@ def live_project_files() -> dict[str, list[str]]:
         if not isinstance(name, str) or not isinstance(status, str):
             continue
         state = status.lower().split("(", 1)[0].strip()
-        if name.startswith(PROJECT_PREFIX) and state in LIVE_PROJECT_STATES:
+        if name.startswith(PROJECT_PREFIX) and (stopped or state in LIVE_PROJECT_STATES):
             files = project.get("ConfigFiles")
-            live[name] = [item for item in files.split(",") if item] if isinstance(files, str) else []
-    return live
+            found[name] = [item for item in files.split(",") if item] if isinstance(files, str) else []
+    return found
+
+
+def live_project_files() -> dict[str, list[str]]:
+    """Live Open AD Kit Compose projects, with the Compose files each started from."""
+    return _project_files(stopped=False)
+
+
+def stopped_project_files() -> dict[str, list[str]]:
+    """Open AD Kit Compose projects with containers but none running: a start
+    that failed, or a Docker that restarted under the stack. Their containers
+    keep their fixed names, which another deployment's would collide with."""
+    live = live_project_files()
+    return {name: files for name, files in _project_files(stopped=True).items() if name not in live}
+
+
+def _started_here(deployment: Deployment, role: str | None, projects: dict[str, list[str]]) -> bool:
+    """Whether the project of this role started from the deployment's own
+    entry Compose file. Compose that reports no files keeps the name as the
+    only evidence."""
+    files = projects.get(deployment.project_name(role))
+    if files is None:
+        return False
+    return not files or Path(files[0]).resolve() == deployment.compose_files(False, role)[0].resolve()
 
 
 def other_projects(deployment: Deployment) -> list[str]:
@@ -145,20 +169,22 @@ def other_projects(deployment: Deployment) -> list[str]:
     A project is named after its deployment only, so another kit's deployment
     of the same name has the same project name as one of these. A project is this deployment's only
     when it started from its own entry Compose file; otherwise `run`
-    would replace another stack in place. Compose that reports no files keeps
-    the name as the only evidence. stop, status and logs still go by name, so
+    would replace another stack in place. stop, status and logs still go by name, so
     a stack started from an older release stays reachable after an upgrade.
     """
     live = live_project_files()
-    own = set()
-    for role in (None, *deployment.roles):
-        name = deployment.project_name(role)
-        if name not in live:
-            continue
-        entry = deployment.compose_files(False, role)[0].resolve()
-        if not live[name] or Path(live[name][0]).resolve() == entry:
-            own.add(name)
+    own = {
+        deployment.project_name(role) for role in (None, *deployment.roles)
+        if _started_here(deployment, role, live)
+    }
     return sorted(set(live) - own)
+
+
+def stopped_other_projects(deployment: Deployment, role: str | None) -> list[str]:
+    """Stopped projects other than the one this run starts again in place."""
+    stopped = stopped_project_files()
+    own = {deployment.project_name(role)} if _started_here(deployment, role, stopped) else set()
+    return sorted(set(stopped) - own)
 
 
 def live_roles(deployment: Deployment) -> list[str | None]:
@@ -244,9 +270,14 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
     # but may leave their side of the base out (one service layer of it).
     inherited = set(deployment.base.one_shot_services()) if deployment.base else set()
     unknown = sorted(set(deployment.one_shot_services(selection.role)) - configured - inherited)
-    # A role may leave the verify service to another role; the whole graph must have it.
-    if deployment.verify and selection.role is None and deployment.verify["service"] not in configured:
-        unknown.append(deployment.verify["service"])
+    if deployment.verify and deployment.verify["service"] not in configured:
+        if deployment.verify_inherited:
+            # As with the inherited one-shot services: a kit that leaves out
+            # the service of its base's verify step has no verify step.
+            deployment.verify = None
+        elif selection.role is None:
+            # A role may leave the verify service to another role; the whole graph must have it.
+            unknown.append(deployment.verify["service"])
     if unknown:
         raise OpenADKitError(
             "manifest references unknown Compose service(s): " + ", ".join(unknown)
@@ -285,6 +316,7 @@ def run_report(
     the overlay workspace are hashed for their content, so two runs with the
     same digests started the same thing. Written to the results as run.json.
     """
+    ready_seconds = round(time.monotonic() - started, 1)
     services = json.loads(model).get("services") or {}
     mounted = selection.injections
     return {
@@ -303,7 +335,7 @@ def run_report(
         },
         # What the services source; build products and logs are not.
         "overlaySha256": deployment_checksum(Path(mounted["OPENADKIT_OVERLAY_WS"]), exclude_dirs=("build", "log")),
-        "readySeconds": round(time.monotonic() - started, 1),
+        "readySeconds": ready_seconds,
     }
 
 

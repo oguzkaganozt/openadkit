@@ -131,7 +131,7 @@ jobs:
           name: validated-release-${{ inputs.build_tag }}
           path: release-input
 
-      - name: Install Docker Compose v5.2+
+      - name: Install Docker Compose 5.0+
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash .github/scripts/install-compose.sh
@@ -222,7 +222,6 @@ jobs:
           subject-path: |
             dist/openadkit
             dist/openadkit-${{ inputs.version }}.tar.gz
-            release-plan.json
             release-metadata.json
 
       - name: Create the draft release

@@ -637,6 +637,14 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     conflict = compose.live_state_conflict(deployment, selection)
     if conflict:
         raise OpenADKitError(conflict)
+    # A start that failed, or a Docker that restarted, leaves containers that
+    # no longer run but keep their names; they stay until stop, for their logs.
+    leftover = compose.stopped_other_projects(deployment, selection.role)
+    if leftover:
+        raise OpenADKitError(
+            f"{', '.join(leftover)} left stopped containers on this host; "
+            "remove them with openadkit stop before starting this deployment"
+        )
     protect_outdated_data(deployment, selection)
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
@@ -706,7 +714,7 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
             raise OpenADKitError("clean deletes data; pass --yes to confirm without a terminal")
         if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
             print("nothing deleted")
-            return 1
+            return 0
     data.remove_installed_data(deployment, selection)
     return 0
 
@@ -715,17 +723,29 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
 
 
 def status_command(args: argparse.Namespace) -> int:
+    """status and stop: what runs here, and what a stopped stack left behind."""
     projects = live.running_projects(args.role)
-    if not projects:
+    stopped = live.stopped_projects(args.role)
+    if not projects and not stopped:
         print("nothing is running" if args.role is None else f"role {args.role} is not running here")
         return 0
+    several = len(projects) + len(stopped) > 1
     for project in projects:
-        if len(projects) > 1:
-            print(f"== {live.display_name(project)}")
+        if several:
+            print(f"== {live.display_name(project)}", flush=True)
         if args.command == "status":
             live.status(project)
         else:
             live.stop(project)
+    for project in stopped:
+        if several or args.command == "status":
+            print(f"== {live.display_name(project)} (stopped)", flush=True)
+        if args.command == "status":
+            live.status_stopped(project)
+        else:
+            live.stop(project)
+    if stopped and args.command == "status":
+        print("remove the stopped containers with: openadkit stop")
     return 0
 
 
@@ -763,6 +783,8 @@ def restart_command(args: argparse.Namespace) -> int:
         services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
     if not services:
         raise OpenADKitError(f"{live.display_name(project)} has no service that takes config overrides or an overlay workspace to restart")
+    if not args.all_services:
+        services |= live.pid_followers(project, services)
     compose.recreate(deployment, selection, services)
     print(f"restarted: {', '.join(sorted(services))}")
     kept = sorted(running - services)

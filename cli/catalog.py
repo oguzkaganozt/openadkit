@@ -225,6 +225,8 @@ class Deployment:
         self.data: list[dict[str, Any]] = manifest["data"]
         self.shared: list[str] = manifest["shared"]
         self.verify: dict[str, Any] | None = manifest["verify"]
+        # A kit deployment that names no verify step runs its base's.
+        self.verify_inherited = False
         # Why CI cannot produce evidence for this deployment, if it cannot.
         self.evidence_exemption: str | None = manifest["evidence"].get("exempt")
         self.project = f"openadkit-{self.name}"
@@ -349,6 +351,7 @@ def _load_kit_deployment(
     # Without a GPU mode it never mounts the data only that mode uses.
     base_data = [item for item in base.data if requirements["gpu"] != "none" or not item.get("gpu")]
 
+    own_verify = validate_verify(manifest.get("verify"))
     own_data = validate_data(manifest.get("data", []), {}, directory)
     destinations = {item["destinationEnv"] for item in base.data}
     clashing = sorted(destinations & {item["destinationEnv"] for item in own_data})
@@ -370,9 +373,10 @@ def _load_kit_deployment(
         "shared": [],
         "evidence": dict(base.manifest["evidence"]),
         # The base's verify step runs on top of this layer unless it names its own.
-        "verify": validate_verify(manifest.get("verify")) or base.verify,
+        "verify": own_verify or base.verify,
     }
     deployment = Deployment(root, directory, merged, base=base)
+    deployment.verify_inherited = own_verify is None
     deployment.compose_files(False)
     deployment.env_files()
     return deployment

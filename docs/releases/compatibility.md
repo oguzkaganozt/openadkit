@@ -6,7 +6,11 @@ This page lists what that promise covers. Within one major version:
 - **A patch release** (`v2.0.1`) fixes bugs and keeps every item below working.
 - **A minor release** (`v2.1.0`) adds features and may move to a newer Autoware
   release. It keeps every item below working. JSON output and manifests can
-  gain new fields, which readers should ignore.
+  gain new fields, which readers should ignore. The CLI itself rejects a
+  manifest field it does not know, so a manifest that uses a new field needs
+  the CLI of the release that added it: a kit's pinned release runs its
+  commands, while `list`, `version` and Tab completion read it with the
+  `openadkit` you called.
 - **A major release** (`v3.0.0`) is the only one that removes or changes an item
   below. Its release notes list each change under **Breaking changes**.
 
@@ -87,12 +91,11 @@ See [CLI & Maintenance](../getting-started/cli.md).
 
 - The versionless installer and its `install`, `upgrade`, `uninstall` and
   `setup` commands.
-- The `openadkit-vX.Y.Z.tar.gz` bundle and the fields of `release-plan.json`,
-  which carries `schemaVersion`.
+- The `openadkit-vX.Y.Z.tar.gz` bundle.
 - These fields of `release-metadata.json`, which the installer and
   [Verify a Release](verification.md) read: `openadkit_version`,
-  `autoware_base_version`, `bundles`, `release_plan_sha256`, `evidence` and
-  `bom`.
+  `autoware_base_version`, `bundles`, `evidence` and `bom`. A release may list
+  more bundles there; the installer takes the one named after the version.
 
 ## Experimental
 
