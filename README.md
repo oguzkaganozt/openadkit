@@ -1,23 +1,17 @@
-<div align="center">
-
 # Open AD Kit
-
-**The deployment layer for the Autoware ecosystem.**
-
-[Autoware](https://github.com/autowarefoundation/autoware) provides the autonomy stack; Open AD Kit makes it deployable.<br>
-Focused container images and ready-to-run deployments, with [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) alongside.<br>
-One CLI runs them the same way on every host.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://autowarefoundation.github.io/openadkit/)
 [![Autoware Discord](https://img.shields.io/discord/953808765935816715?logo=discord&logoColor=white&style=flat&label=Autoware)](https://discord.gg/Q94UsPvReQ)
 
+**The deployment layer for the Autoware ecosystem.**
+
+[Autoware](https://github.com/autowarefoundation/autoware) provides the autonomy stack; Open AD Kit makes it deployable. It packages Autoware into focused container images and ready-to-run deployments, with [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) alongside. One CLI runs them the same way on every host.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/images/readme-hero-dark.svg">
-  <img src="docs/assets/images/readme-hero-light.svg" width="880" alt="One command, openadkit run planning-simulation, starts Autoware as separate containers that talk over ROS 2: localization-mapping, planning, control, vehicle-system, simulator, visualizer and api. One reproducible path from simulation to in-vehicle systems.">
+  <img src="docs/assets/images/readme-hero-light.svg" width="100%" alt="One command, openadkit run planning-simulation, starts Autoware as separate containers that talk over ROS 2: localization-mapping, planning, control, vehicle-system, simulator, visualizer and api. One reproducible path from simulation to in-vehicle systems.">
 </picture>
-
-</div>
 
 ## Quickstart
 
