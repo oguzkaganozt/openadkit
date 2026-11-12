@@ -117,8 +117,10 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
   CMake caches record the paths they were configured with.
 - `--install-base` and `--build-base` stay fixed: the services source
   `install/` where they mount the workspace.
-- A source checkout pins no devel image: set `DEVEL_IMAGE` to the matching
-  `universe-common-devel` digest from the build's metadata.
+- A source checkout pins no devel image: export `DEVEL_IMAGE` in your shell,
+  set to the `universe-common-devel` image of the build your runtime images
+  come from. For a local build that is its
+  [local tag](../development/build-from-source.md#build-and-run-locally).
 
 #### Run
 

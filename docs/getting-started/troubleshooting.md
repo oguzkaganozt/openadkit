@@ -47,7 +47,7 @@ replaces data the CLI installed; remove data you placed yourself, then run
 
 ### NVIDIA Container Toolkit not detected
 
-- Install it with `openadkit setup --gpu --check`.
+- Install it with `openadkit setup --gpu`.
 - Check the GPU: `nvidia-smi` and `nvidia-ctk --version`.
 - Restart Docker: `sudo systemctl restart docker`.
 

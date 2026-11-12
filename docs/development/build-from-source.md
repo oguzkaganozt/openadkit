@@ -51,7 +51,7 @@ git clone https://github.com/autowarefoundation/openadkit.git
 cd openadkit
 
 # 2. Install host dependencies
-./openadkit setup --check
+./openadkit setup
 ```
 
 --8<-- "includes/docker-group-activation.md"
@@ -97,6 +97,14 @@ docker buildx bake -f components/docker-bake.hcl --load planning-simulation
   with `--set <target>.tags=...`. To use other images, set the `*_IMAGE`
   variables in the host settings file, `~/.config/openadkit/<deployment>.env`.
 - For Jazzy, build with `ROS_DISTRO=jazzy` and run with `--ros-distro jazzy`.
+- To build a [kit](../kits/create-a-kit.md)'s overlay workspace against these
+  images, load the devel image too and name its local tag for
+  `openadkit build`, here on amd64 and Humble:
+
+    ```bash
+    docker buildx bake -f components/docker-bake.hcl --load universe-common-devel
+    export DEVEL_IMAGE={{ registry }}:universe-common-devel-amd64-humble
+    ```
 
 Other useful targets:
 

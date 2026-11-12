@@ -14,7 +14,7 @@ GPU:
 
 ```bash
 cd ../..
-./openadkit setup --gpu --check
+./openadkit setup --gpu
 ./openadkit run logging-simulation --gpu
 ```
 

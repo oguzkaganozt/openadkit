@@ -75,13 +75,21 @@ holds the CLI and the deployments; images and sample data are pulled on demand.
 ## 2. Set Up the Host {: #set-up-the-host }
 
 ```bash
-openadkit setup --check
+openadkit setup
 ```
 
-Run setup as your normal user; it asks for `sudo` only for host changes. It
-installs Docker when the host has none and never replaces an existing engine.
-Add `--gpu` for NVIDIA deployments: it also installs the NVIDIA Container
-Toolkit and the OpenGL/Vulkan libraries CARLA needs.
+Run setup as your normal user; it asks for `sudo` only for host changes:
+
+- missing base packages such as `git` and `curl`
+- Docker, when the host has none; it never replaces an existing engine
+- your user's membership of the `docker` group
+- the kernel's UDP buffer limits, which DDS needs for sensor data
+  (`/etc/sysctl.d/99-openadkit-dds.conf`)
+
+It then runs a test container to confirm that Docker works; `--no-check` skips
+that on a host that cannot pull it. Add `--gpu` for NVIDIA deployments: it also
+installs the NVIDIA Container Toolkit and the OpenGL/Vulkan libraries CARLA
+needs, and tests the GPU in a container.
 
 --8<-- "includes/docker-group-activation.md"
 

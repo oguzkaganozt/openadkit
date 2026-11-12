@@ -86,7 +86,8 @@ own filesystem. A backtrace then shows your source lines, such as
 `main (...) at /openadkit/overlay_ws/src/my_package/src/my_node.cpp:24`.
 
 The Autoware services share one process namespace, so `autoware-map` as the
-container reaches the processes of all of them.
+container reaches the processes of all of them. The visualizer keeps its own
+namespace, so name its own container for it.
 
 ## Editor Support
 

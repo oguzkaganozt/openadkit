@@ -31,4 +31,13 @@ nvidia_gl_libraries_present || { echo "present library reported missing under pi
 rename() { mv "${work}/ldconfig" "${work}/ldconfig.present"; mv "${work}/ldconfig-silent" "${work}/ldconfig"; }
 rename
 if nvidia_gl_libraries_present; then echo "absent library reported present" >&2; exit 1; fi
+
+# setup checks the host by default: --no-check skips it, and the old --check,
+# which other commands use for "report only", is refused before any change.
+setup_script="${SETUP:-${root}/cli/setup.sh}"
+help=$(bash "${setup_script}" setup --help)
+grep -q -- '--no-check' <<<"${help}" || { echo "setup --help does not name --no-check" >&2; exit 1; }
+status=0
+bash "${setup_script}" setup --check >/dev/null 2>&1 || status=$?
+[[ ${status} -eq 2 ]] || { echo "setup --check exited ${status}, expected a usage error" >&2; exit 1; }
 echo "setup helper probes pass"

@@ -12,6 +12,8 @@ metadata. Each stable release publishes:
 - `release-metadata.json`: the pinned Autoware release, ROS distros, image
   digests, the BOM, the bundle's checksum, the passing evidence summary and
   the CI exemptions
+- `autoware-lock.repos` and `upstream-images.json`: the Autoware sources and
+  the upstream images the build started from
 - build provenance for the installer, bundle and metadata
 
 The release notes open with the highlights and the install command, list the

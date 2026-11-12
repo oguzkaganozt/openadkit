@@ -35,11 +35,10 @@ jq -r --arg name "openadkit-$VERSION.tar.gz" \
   | sha256sum --check
 ```
 
-Review the metadata: `.openadkit_version`, `.release_sha` and
-`.default_ros_distro` name the requested version, promoted commit and default
-distro, `.bom` the pinned Autoware release and image digests, and `.evidence`
-the passing cells, with the `url` of the evidence run the release gate
-accepted. `.evidence_exempt` lists the CI exemptions.
+Review the metadata: `.openadkit_version` names the requested version, `.bom`
+the pinned Autoware release and image digests, and `.evidence` the tested
+commit (`source_sha`), the passing cells, the CI exemptions (`exempt`) and the
+`url` of the evidence run the release gate accepted.
 
 After verification, install with the downloaded `openadkit` or follow the
 [Quickstart](../getting-started/index.md). Evidence is bounded to the tested

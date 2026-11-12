@@ -5,7 +5,7 @@ GPU with at least 4 GB of VRAM is recommended; CPU mode works but is much
 slower.
 
 Complete the [Quickstart](../getting-started/index.md) setup first. For GPU
-mode, run `openadkit setup --gpu --check`.
+mode, run `openadkit setup --gpu`.
 
 ## Run
 
