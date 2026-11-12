@@ -194,7 +194,7 @@ RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/s
 RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
     bash /tmp/check-linked-libs.sh
 
-# Integrator layer (components/shared/entrypoint): on every start, layer config overrides
+# Kit layer (components/shared/entrypoint): on every start, layer config overrides
 # and the overlay workspace on top of Autoware, after the upstream entrypoint
 # has sourced ROS and switched to the aw user.
 COPY components/shared/entrypoint/openadkit-hook.sh components/shared/entrypoint/overlay.py /opt/openadkit/
