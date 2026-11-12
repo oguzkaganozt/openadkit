@@ -13,12 +13,12 @@ One CLI runs them the same way on every host.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/images/readme-hero-dark.svg">
-  <img src="docs/assets/images/readme-hero-light.svg" width="880" alt="One command, openadkit run planning-simulation, starts Autoware as separate containers that talk over ROS 2: localization-mapping, planning, control, vehicle-system, simulator, visualizer and api.">
+  <img src="docs/assets/images/readme-hero-light.svg" width="880" alt="One command, openadkit run planning-simulation, starts Autoware as separate containers that talk over ROS 2: localization-mapping, planning, control, vehicle-system, simulator, visualizer and api. One reproducible path from simulation to in-vehicle systems.">
 </picture>
 
 </div>
 
-Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stage of the driving pipeline is its own image, so a deployment runs only what its task needs, and [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) joins the same stack. The aim is one reproducible path from simulation to in-vehicle systems.
+Autoware provides the autonomy stack; Open AD Kit makes it deployable. Each stage of the driving pipeline is its own image, so a deployment runs only what its task needs, and [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) joins the same stack.
 
 ## Quickstart
 
