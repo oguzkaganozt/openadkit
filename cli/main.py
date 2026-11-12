@@ -841,7 +841,7 @@ ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "cle
 INSTALL_USAGE = {
     "install": "openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]",
     "upgrade": "openadkit upgrade [--check]",
-    "setup": "openadkit setup [--gpu] [--check]",
+    "setup": "openadkit setup [--gpu] [--no-check]",
     "uninstall": "openadkit uninstall [--all]",
 }
 
@@ -855,7 +855,7 @@ def build_parser() -> OpenADKitParser:
             "examples:\n"
             "  openadkit install --version vX.Y.Z\n"
             "  openadkit upgrade\n"
-            "  openadkit setup --check\n"
+            "  openadkit setup\n"
             "  openadkit list\n"
             "  openadkit run planning-simulation\n"
             "  openadkit run logging-simulation --gpu\n"
