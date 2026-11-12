@@ -100,8 +100,8 @@ replace hosted build/scan/evidence or real two-host SIL acceptance.
 ## Testing Deployments
 
 Before merging deployment-related changes, verify the Compose files. A
-deployment carries one complete `settings.env` for Compose interpolation (one
-with a `base` carries only its differences). A deployment that declares
+deployment carries one complete `settings.env` for Compose interpolation (a kit
+deployment carries only its differences). A deployment that declares
 `gpuFiles` also carries `settings.gpu.env`, loaded after `settings.env` when
 `--gpu` is set. The shared `deployments/shared/runtime.env` is loaded inside
 containers via `env_file:` and is not passed on the command line.

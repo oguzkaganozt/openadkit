@@ -9,7 +9,7 @@ The commands you need after the first run. `openadkit --help` and
 |---------|--------------|
 | [`list`, `run`](#run-a-deployment) | List the deployments, and start one and wait until it is ready |
 | [`status`, `logs`, `shell`, `record`](#runtime-controls) | Inspect the running deployment and record its topics |
-| [`restart`](#restart) | Apply changed settings, config and overlay workspaces |
+| [`restart`](#restart) | Apply changed settings, config overrides and overlay workspaces |
 | [`stop`](#runtime-controls) | Stop and remove the running deployment |
 | [`validate`, `config`](#validate-before-running) | Check a deployment, or print its Compose model, without starting it |
 | [`fetch`, `clean`](#downloaded-data) | Download or delete a deployment's data |
@@ -49,7 +49,7 @@ returns once the deployment is ready.
 
 Every run writes `results/run.json` in the deployment's output directory: the
 version, distro and images it started, the digest of the resolved Compose
-model, content digests of the config layers and overlay workspace it mounts,
+model, content digests of the config overrides and overlay workspace it mounts,
 how long it took to be ready and, with `--verify`, the step's result.
 
 ## Runtime Controls
@@ -58,7 +58,7 @@ how long it took to be ready and, with `--verify`, the step's result.
 openadkit status
 openadkit logs --follow
 openadkit logs map planning        # only these services
-openadkit restart                  # apply changed settings, config and overlay workspaces
+openadkit restart                  # apply changed settings, config overrides and overlay workspaces
 openadkit restart --all            # recreate the whole deployment
 openadkit shell                    # a shell in the api service with ROS sourced
 openadkit shell planning ros2 node list
@@ -88,9 +88,9 @@ before localization starts.
 ### Restart
 
 `restart` recreates services as `run` started them, with the current settings,
-config and overlay workspace, and keeps to the same readiness checks.
+config overrides and overlay workspace, and keeps to the same readiness checks.
 
-- With no service, it recreates every service that takes Open AD Kit config or
+- With no service, it recreates every service that takes config overrides or
   an overlay workspace, and every service whose settings changed. A changed
   parameter file, a rebuilt workspace or a new `settings.env` value applies
   without restarting a simulator such as CARLA; `restart` names the services it
@@ -173,9 +173,9 @@ openadkit clean planning-simulation             # delete, after asking
 - **`fetch --force`** replaces the data even when it is complete, and is the
   way to repair incomplete data.
 - **`clean`** lists what it deletes and asks first; `--yes` skips the question,
-  as scripts need. It deletes all the data the deployment uses, so a kit
-  deployment also deletes its base's data (the list says so). The
-  next `run` or `fetch` downloads it again.
+  as scripts need. It deletes all the data the deployment uses, including data that
+  other deployments share, such as a kit deployment's base; the list names
+  them. The next `run` or `fetch` downloads it again.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file, and
 `clean` and `--force` only delete or replace marked data. Data that was already

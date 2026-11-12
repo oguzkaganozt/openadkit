@@ -35,7 +35,7 @@ CI**, not a passing test. See the
 and [platform matrix](https://autowarefoundation.github.io/openadkit/platforms/).
 
 Use the documented extension points and the pinned release's matching devel
-image for custom ROS packages. Replacing base images or commands requires your
+image for custom ROS packages. Replacing component images or commands requires your
 own runtime evidence.
 
 Open AD Kit makes no functional-safety certification, ASIL, roadworthiness or

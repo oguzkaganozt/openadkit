@@ -54,7 +54,7 @@ files in order (later files win):
 2. Base `settings.gpu.env`, when GPU mode is selected
 3. Kit `settings.env`, if present
 4. Kit `settings.gpu.env`, if present and GPU mode is selected
-5. `~/.config/openadkit/<kit-deployment>.env`, if present
+5. The host settings file, `~/.config/openadkit/<kit-deployment>.env`, if present
 
 Shell exports do not override values set in these files. The CLI adds the ROS
 distro, the host UID and GID, the overlay mount paths, `OPENADKIT_ROOT`
@@ -139,7 +139,7 @@ visible in every service. Whether your code runs depends on what starts it:
 
 #### Without a Kit
 
-To try a workspace with a reference deployment, without writing a kit, mount it
+To try a workspace with a catalog deployment, without writing a kit, mount it
 with `--ws`:
 
 ```bash
@@ -173,8 +173,8 @@ workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 
-To replace one side of a base that runs as split-host roles, include only the
-other side's Compose file instead of the base's `compose.yaml`. For
+To replace one role of a base that runs as split-host roles, include only the
+other role's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends
 on a CARLA service. The base's `oneShotServices` that the kit's services leave
@@ -188,7 +188,7 @@ references. A name matching a component image variable replaces that
 component; other names supply images for new services. Use `${NAME:?}` in
 Compose to require the declared reference.
 
-A replaced base image needs your own runtime evidence: pinning alone does not
+A replaced component image needs your own runtime evidence: pinning alone does not
 prove that it honors the entrypoint, launch or parameter interfaces.
 
 ## A New Vehicle

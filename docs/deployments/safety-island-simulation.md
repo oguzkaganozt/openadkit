@@ -24,7 +24,7 @@ openadkit run safety-island-simulation
 --8<-- "includes/ros-distro.md"
 
 `run` downloads the sample map and the pinned Safety Island release, then
-starts Planning Simulation with two more services:
+starts Planning Simulation's services and two more:
 
 | Service | What it runs |
 |---------|--------------|
@@ -57,7 +57,7 @@ the Safety Island's control command.
 openadkit run safety-island-simulation --verify
 ```
 
-`--verify` runs Planning Simulation's drive-to-goal check on top, as the
+`--verify` runs the same drive-to-goal check as Planning Simulation, as the
 deployment's evidence cells do on Humble and Jazzy.
 
 ## Stop and Recover

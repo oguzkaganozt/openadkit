@@ -42,7 +42,7 @@ passed the promoted build. Packaging reparses image records and rechecks that
 summary against the build and commit. Registry preflight remains at
 both validation and promotion.
 
-Release packaging and evidence staging assemble the kit through one
+Release packaging and evidence staging assemble the release tree through one
 `release_plan.py --stage` step, so evidence runs the tree the release ships;
 evidence adds only the example kits. The bundle, the release plan and the
 evidence subjects all read one catalog inventory.

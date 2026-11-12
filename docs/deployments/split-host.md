@@ -71,7 +71,8 @@ openadkit fetch carla-simulation      # Autoware host only
 
 ## Configure the Bridge Endpoints
 
-Create or edit `~/.config/openadkit/<deployment>.env` on each host. Use the
+Create or edit the host settings file,
+`~/.config/openadkit/<deployment>.env`, on each host. Use the
 host's LAN IP, not `0.0.0.0`:
 
 | Host | Variables |
@@ -127,7 +128,7 @@ the raw LiDAR already originates.
 Each deployment ships its Zenoh allowlist in
 `deployments/<deployment>/config/zenoh.json5`, mounted into the bridge of
 every role. Entries are full-name regular expressions, not globs. Both hosts
-use the same file, since either side can own an endpoint. Review the list
+use the same file, since either role can own an endpoint. Review the list
 before routing anything new.
 
 - **The visualizer's topics** are on both allowlists: planning and control

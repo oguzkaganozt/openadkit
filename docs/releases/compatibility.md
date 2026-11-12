@@ -72,7 +72,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
 ### Images
 
 - Component image names and the tag scheme: release tags, latest aliases and
-  the devel image a kit builds its overlay in. See
+  the devel image a kit builds its overlay workspace in. See
   [Container Images & Versioning](container-images.md).
 - The image labels `org.opencontainers.image.autoware-base-version` and
   `org.opencontainers.image.ros-snapshot`.

@@ -44,7 +44,7 @@ GPU.
 
 ## Limits
 
-- **Simulation only.** Every base deployment is a simulation, so a kit shows
+- **Simulation only.** Every catalog deployment is a simulation, so a kit shows
   the stack in simulation, not on the vehicle.
 - **A base is required.** A kit deployment builds on a base deployment. A stack
   that does not run the Autoware Universe pipeline, such as
