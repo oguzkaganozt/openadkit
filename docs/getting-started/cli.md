@@ -165,12 +165,13 @@ openadkit fetch planning-simulation --force     # replace
 openadkit clean planning-simulation             # delete, after asking
 ```
 
-- **`run`** downloads missing data but never replaces an existing data
-  directory; `run --force` is not supported.
-- **`fetch --force`** replaces incomplete or outdated data. Data is outdated
-  when the deployment now declares other content for it, for example a map with
-  a new checksum: `run`, `fetch` and `validate --data` then stop and ask for
-  `fetch --force`. `fetch` always includes the GPU data.
+- **`run`** and **`fetch`** download missing data and update outdated data.
+  Data is outdated when the deployment now declares other content for it, for
+  example a map with a new checksum. They update only data the CLI installed,
+  and not while a running container uses it. `fetch` always includes the GPU
+  data; `run --force` is not supported.
+- **`fetch --force`** replaces the data even when it is complete, and is the
+  way to repair incomplete data.
 - **`clean`** lists what it deletes and asks first; `--yes` skips the question,
   as scripts need. It deletes all the data the deployment uses, so a kit or a
   deployment on a base also deletes the base's data (the list says so). The

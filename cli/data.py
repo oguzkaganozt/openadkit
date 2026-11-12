@@ -265,8 +265,9 @@ def check_installed_data(deployment: Deployment, selection: Selection) -> list[d
         target = resolve_destination(resource, selection)
         if validate_dataset(target, resource["requiredFiles"]):
             if is_outdated(target, resource):
+                # run and fetch replace it themselves.
                 status = "outdated"
-                recovery = "fetch-force"
+                recovery = "fetch"
             else:
                 status = "ok"
                 recovery = None
@@ -328,11 +329,9 @@ def validate_install_targets(deployment: Deployment, selection: Selection, force
             if target.is_symlink() or not target.is_dir():
                 raise OpenADKitError(f"unsafe data target: {target}")
             refuse_unmanaged(target, "replace")
-        elif is_outdated(target, resource):
-            raise OpenADKitError(
-                f"data at {target} is from an older {resource['name']}; "
-                f"run: openadkit fetch {deployment.name} --force"
-            )
+        elif validate_dataset(target, resource["requiredFiles"]) and is_outdated(target, resource):
+            # Complete, but installed from an older declaration: install_resource replaces it.
+            continue
         elif not validate_dataset(target, resource["requiredFiles"]):
             if target.is_symlink() or not is_managed(target):
                 # fetch --force refuses these; the operator has to remove them first.
@@ -360,7 +359,9 @@ def install_resource(
     target = resource_destination(resource, selection)
     required = resource["requiredFiles"]
     if target.exists() or target.is_symlink():
-        if not force:
+        if not force and validate_dataset(target, required) and is_outdated(target, resource):
+            print(f"updating data: {target} (the deployment now declares other content)")
+        elif not force:
             if validate_dataset(target, required):
                 print(f"data already present: {target}")
                 return

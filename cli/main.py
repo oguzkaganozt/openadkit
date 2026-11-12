@@ -353,15 +353,15 @@ def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> 
             file=sys.stderr,
         )
     if any(item["recovery"] == "fetch-force" for item in gaps):
-        state = "outdated" if all(item["status"] == "outdated" for item in gaps) else "incomplete"
         print(
-            f"error: installed data is {state}; run: "
+            "error: installed data is incomplete; run: "
             f"openadkit fetch {deployment_name} --force",
             file=sys.stderr,
         )
     elif any(item["recovery"] == "fetch" for item in gaps):
+        state = "outdated" if all(item["status"] == "outdated" for item in gaps) else "missing"
         print(
-            "error: installed data is missing; run: "
+            f"error: installed data is {state}; run: "
             f"openadkit fetch {deployment_name}",
             file=sys.stderr,
         )
@@ -602,12 +602,22 @@ def config_command(root: Path, kit: RuntimeContext, deployment: Deployment, args
     return 0
 
 
+def protect_outdated_data(deployment: Deployment, selection) -> None:
+    """install_data replaces outdated data, which no live container may mount."""
+    compose.require_data_unused(
+        item["destination"] for item in data.check_installed_data(deployment, selection)
+        if item["status"] == "outdated"
+    )
+
+
 def fetch_command(root: Path, kit: RuntimeContext, deployment: Deployment, args: argparse.Namespace) -> int:
     selection = select(root, kit, deployment, args)
     if args.force:
         # Replacing data a live container mounts deletes it under that container.
         compose.require_stopped(deployment)
         compose.require_data_unused(item["destination"] for item in data.check_installed_data(deployment, selection))
+    else:
+        protect_outdated_data(deployment, selection)
     data.install_data(deployment, selection, args.force)
     return 0
 
@@ -630,6 +640,7 @@ def run_command(root: Path, kit: RuntimeContext, deployment: Deployment, args: a
     conflict = compose.live_state_conflict(deployment, selection)
     if conflict:
         raise OpenADKitError(conflict)
+    protect_outdated_data(deployment, selection)
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
     skipped = services & ({"visualizer"} if args.no_visualizer else set())

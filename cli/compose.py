@@ -225,7 +225,7 @@ def require_data_unused(paths: Iterable[Path]) -> None:
                     if source == target or source in target.parents or target in source.parents:
                         raise OpenADKitError(
                             f"data at {target} is in use by {container['Name']}; "
-                            "stop that container before deleting data"
+                            "stop that container before replacing or deleting data"
                         )
     except (ValueError, KeyError, TypeError) as error:
         raise OpenADKitError("could not inspect data usage; refusing cleanup") from error

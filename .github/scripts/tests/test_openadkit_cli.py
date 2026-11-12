@@ -960,7 +960,8 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
 
 
-def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
+@pytest.mark.parametrize("command", [("run", "example", "--pull", "never"), ("fetch", "example")])
+def test_run_and_fetch_replace_data_installed_from_an_older_declaration(tmp_path, command):
     resource = files_resource(tmp_path)
     root, directory = runtime_tree(tmp_path, document=manifest(data=[resource]))
     target = tmp_path / "home/data/map"
@@ -972,7 +973,8 @@ def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
     moved.write_bytes((tmp_path / "dataset.txt").read_bytes())
     resource["files"][0]["url"] = moved.as_uri()
     (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    result = run_cli(root, "run", "example", "--pull", "never")
+    assert result.returncode == 0 and "updating data" not in result.stdout
 
     fixed = tmp_path / "fixed.txt"
     fixed.write_text("fixed upstream")
@@ -980,15 +982,28 @@ def test_data_installed_from_an_older_declaration_needs_fetch_force(tmp_path):
     (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
     result = run_cli(root, "validate", "example", "--data")
     assert result.returncode == 1 and "data dataset: outdated" in result.stdout
-    assert "openadkit fetch example --force" in result.stderr
-    for command in (("run", "example", "--pull", "never"), ("fetch", "example")):
-        result = run_cli(root, *command)
-        assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
+    assert "run: openadkit fetch example" in result.stderr and "--force" not in result.stderr
     assert (target / "required.txt").read_text() == "replacement"
     fake_docker(tmp_path)  # stopped
-    assert run_cli(root, "fetch", "example", "--force").returncode == 0
+    result = run_cli(root, *command)
+    assert result.returncode == 0 and "updating data" in result.stdout, result.stderr
     assert (target / "required.txt").read_text() == "fixed upstream"
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "validate", "example", "--data").returncode == 0
+
+
+def test_outdated_data_is_not_replaced_under_a_live_container(tmp_path):
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    target = tmp_path / "home/data/map"
+    target.mkdir(parents=True)
+    (target / cli_data.MARKER).write_text("{}")  # no source recorded: outdated
+    (target / "required.txt").write_text("keep")
+    container = {"Id": "abc", "Name": "/other", "State": {"Status": "running"},
+                 "Mounts": [{"Type": "bind", "Source": str(target)}]}
+    fake_docker(tmp_path, containers=[container])
+    for command in (("fetch", "example"), ("run", "example", "--pull", "never")):
+        result = run_cli(root, *command)
+        assert result.returncode != 0 and "is in use" in result.stderr
+        assert (target / "required.txt").read_text() == "keep"
 
 
 def test_only_a_marker_naming_the_current_source_is_current(tmp_path):
