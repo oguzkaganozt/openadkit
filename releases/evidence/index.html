@@ -1970,13 +1970,14 @@ evidence run that passed every cell for the promoted build</strong>.</p>
 no release bypass input. The release also requires the latest full scan of the
 build to pass.</p>
 <h2 id="cells-and-levels">Cells and Levels<a class="headerlink" href="#cells-and-levels" title="Permanent link">#</a></h2>
-<p>Evidence cells are enumerated from the deployment manifests, one per ROS distro
-and topology:</p>
+<p>Evidence cells are enumerated from the deployment manifests, one per ROS
+distro, architecture and topology:</p>
 <table>
 <thead>
 <tr>
 <th>Deployment</th>
 <th>Distros</th>
+<th>Architectures</th>
 <th>Topologies</th>
 </tr>
 </thead>
@@ -1984,30 +1985,36 @@ and topology:</p>
 <tr>
 <td>Planning Simulation</td>
 <td>Humble, Jazzy</td>
+<td>amd64, arm64</td>
 <td>Single host; also under Podman and systemd with the <a href="../../platforms/autosd/">AutoSD</a> units</td>
 </tr>
 <tr>
 <td>Scenario Simulation</td>
 <td>Humble, Jazzy</td>
+<td>amd64, arm64</td>
 <td>Single host; two isolated nodes on one host</td>
 </tr>
 <tr>
 <td>Logging Simulation</td>
 <td>Humble, Jazzy</td>
+<td>amd64, arm64</td>
 <td>Single host, in CPU mode</td>
 </tr>
 <tr>
 <td>Safety Island Simulation</td>
 <td>Humble, Jazzy</td>
+<td>amd64</td>
 <td>Single host, with the pinned Safety Island release over <code>domain_bridge</code></td>
 </tr>
 <tr>
 <td><code>example-kit</code></td>
 <td>Humble, Jazzy</td>
+<td>amd64, arm64</td>
 <td>Single host: a kit made with <code>openadkit new</code> on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages</td>
 </tr>
 </tbody>
 </table>
+<p>A cell runs on a hosted runner of its own architecture.</p>
 <p>Each cell runs these levels on a fresh stack, started with
 <code>openadkit run --no-visualizer</code>:</p>
 <ul>
@@ -2032,9 +2039,9 @@ extension point works on the build. It does not verify integrators' own kits.</p
 and blocks the release.</p>
 <h2 id="what-evidence-does-not-cover">What Evidence Does Not Cover<a class="headerlink" href="#what-evidence-does-not-cover" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Other platforms.</strong> Every cell runs on a hosted <code>linux/amd64</code> runner. Images
-  are also built and scanned for arm64, but that is not arm64 runtime evidence,
-  nor two-machine LAN, GPU, HIL or vehicle evidence.</li>
+<li><strong>Other platforms.</strong> Every cell runs on a hosted <code>linux/amd64</code> or
+  <code>linux/arm64</code> runner. That is not two-machine LAN, GPU, board, HIL or vehicle
+  evidence.</li>
 <li><strong>GPU modes.</strong> The cells of Planning and Logging Simulation run their CPU
   modes. The GPU modes (<code>--gpu</code>: the Diffusion Planner on <code>planning-cuda</code>,
   CenterPoint on <code>sensing-perception-cuda</code>) validate in CI (L0) and are checked
