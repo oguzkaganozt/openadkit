@@ -57,7 +57,7 @@ See [Create a Kit](../kits/create-a-kit.md) and the
 
 ### Settings and Paths
 
-- `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_CONFIG_DIR` and
+- `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_SETTINGS_DIR` and
   `OPENADKIT_OUTPUT_DIR`.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.

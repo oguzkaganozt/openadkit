@@ -39,7 +39,7 @@ openadkit stop
   Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
   mode turns on by itself.
 - Put host settings in `~/.config/openadkit/<name>.env`; see
-  [Configuration](../getting-started/cli.md#configuration).
+  [Settings](../getting-started/cli.md#settings).
 
 [CLI & Maintenance](../getting-started/cli.md) covers the other commands.
 

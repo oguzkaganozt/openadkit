@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INSTALL_GPU=false
-RUN_VERIFY=false
+RUN_CHECK=false
 TARGET_USER=${SUDO_USER:-$(id -un)}
 FORCE_DOCKER_INSTALL=${OPENADKIT_CI_FORCE_DOCKER_INSTALL:-false}
 DOCKER_GROUP_ADDED=false
@@ -254,16 +254,16 @@ shift
 while (($#)); do
   case "$1" in
     --gpu) INSTALL_GPU=true ;;
-    --verify) RUN_VERIFY=true ;;
+    --check) RUN_CHECK=true ;;
     -h|--help)
       cat <<'EOF'
-Usage: openadkit setup [--gpu] [--verify]
+Usage: openadkit setup [--gpu] [--check]
 
 Installs the Ubuntu host dependencies needed to run Open AD Kit and raises the
 kernel's UDP buffer limits for DDS.
 
   --gpu     also install the NVIDIA Container Toolkit
-  --verify  run hello-world (and GPU) checks after installing
+  --check   run hello-world (and GPU) checks after installing
 EOF
       exit 0
       ;;
@@ -327,7 +327,7 @@ if [[ $INSTALL_GPU == true ]]; then
   install_gpu
 fi
 
-if [[ $RUN_VERIFY == true ]]; then
+if [[ $RUN_CHECK == true ]]; then
   docker_run run --rm hello-world >/dev/null
   if [[ $INSTALL_GPU == true ]]; then
     command -v nvidia-smi >/dev/null 2>&1 || fail "nvidia-smi is unavailable"

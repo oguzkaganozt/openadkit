@@ -167,7 +167,7 @@ def compose_context(tmp_path, monkeypatch):
     # and without it Docker falls back to the runner's older plugin.
     monkeypatch.setenv("DOCKER_CONFIG", os.environ.get("DOCKER_CONFIG") or str(Path.home() / ".docker"))
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("OPENADKIT_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setenv("OPENADKIT_SETTINGS_DIR", str(tmp_path / "config"))
     monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("ZENOH_LISTEN", "tcp/127.0.0.1:7447")
     monkeypatch.setenv("ZENOH_PEER", "tcp/127.0.0.1:7447")
@@ -217,7 +217,7 @@ def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
     [kit] = validation_matrix.make_example_kits(ROOT, tmp_path)
     assert json.loads((kit / "openadkit.json").read_text())["extends"] == str(ROOT)
     directory = kit
-    # Documented site settings, used by the shared services and runtime.env.
+    # Documented host settings, used by the shared services and runtime.env.
     (directory / "settings.env").write_text(
         "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
     )

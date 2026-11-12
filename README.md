@@ -28,7 +28,7 @@ curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/downl
   | bash -s -- install
 
 # 2. Prepare the host
-openadkit setup --verify
+openadkit setup --check
 
 # 3. Start Autoware
 openadkit run planning-simulation

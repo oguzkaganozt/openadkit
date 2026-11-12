@@ -15,7 +15,7 @@ Complete the [Quickstart](../getting-started/index.md) setup with GPU
 support:
 
 ```bash
-openadkit setup --gpu --verify
+openadkit setup --gpu --check
 ```
 
 ## Run

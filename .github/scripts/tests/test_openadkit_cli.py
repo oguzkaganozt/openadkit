@@ -32,7 +32,7 @@ PIN = f"registry.example/image@sha256:{'a' * 64}"
 OTHER_PIN = f"registry.example/custom@sha256:{'b' * 64}"
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 ISOLATED_ENV = (
-    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_CONFIG_DIR", "OPENADKIT_STATE_DIR",
+    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_SETTINGS_DIR", "OPENADKIT_STATE_DIR",
     "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "OPENADKIT_INSTALL_DIR", "COMPOSE_FILE", "XDG_DATA_HOME",
 )
 
@@ -211,7 +211,7 @@ def recorded(calls):
     return [json.loads(line) for line in calls.read_text().splitlines()] if calls.exists() else []
 
 
-def site_config(root, text, name="example"):
+def host_settings(root, text, name="example"):
     path = root.parent / f"home/.config/openadkit/{name}.env"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -542,7 +542,7 @@ def test_uninstall_refuses_unsafe_state(tmp_path, unsafe):
 def test_image_and_env_priority_reaches_compose(tmp_path, release):
     root, directory = runtime_tree(tmp_path, release=release, document=manifest(gpu=True),
                                    config="API_IMAGE=base\nVALUE=base\n")
-    site_config(root, f"API_IMAGE={OTHER_PIN}\nVALUE=site\n")
+    host_settings(root, f"API_IMAGE={OTHER_PIN}\nVALUE=site\n")
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example", "--gpu", API_IMAGE="shell", VALUE="shell")
     assert result.returncode == 0, result.stderr
@@ -747,7 +747,7 @@ def test_run_can_leave_out_the_visualizer(tmp_path, headless):
 def test_run_prints_https_only_for_a_site_certificate(tmp_path):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path, services=("app", "visualizer"))
-    site_config(root, "NOVNC_CERT=/certs/novnc.crt\nNOVNC_KEY=/certs/novnc.key\n")
+    host_settings(root, "NOVNC_CERT=/certs/novnc.crt\nNOVNC_KEY=/certs/novnc.key\n")
     result = run_cli(root, "run", "example")
     assert result.returncode == 0, result.stderr
     assert "visualizer: https://localhost:6080/vnc.html" in result.stdout
@@ -815,7 +815,7 @@ def test_a_required_setting_may_be_built_on_a_shell_variable(tmp_path, monkeypat
     monkeypatch.setenv("MY_TOKEN", "secret")
     monkeypatch.delenv("ROLE_TOKEN", raising=False)
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
-    site_config(root, "ROLE_TOKEN=${MY_TOKEN}\n")
+    host_settings(root, "ROLE_TOKEN=${MY_TOKEN}\n")
     kit = cli_catalog.load_kit(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     selection = cli_settings.resolve(deployment, kit, "humble", role="secondary")
@@ -1546,7 +1546,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
         path.mkdir()
-    site_config(root, "VALUE=site\n", name="custom")
+    host_settings(root, "VALUE=site\n", name="custom")
     context = cli_catalog.load_kit(kit)
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"

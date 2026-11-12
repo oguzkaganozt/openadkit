@@ -131,7 +131,7 @@ def ensure_no_symlink_components(path: Path) -> None:
         if current.is_symlink() and current.lstat().st_uid not in (0, os.getuid()):
             raise OpenADKitError(
                 f"data path goes through another user's symlink: {current}; "
-                "set the real path in the deployment's site configuration"
+                "set the real path in the deployment's host settings file"
             )
         if current.exists() and not current.is_dir():
             raise OpenADKitError(f"data path component is not a directory: {current}")

@@ -128,7 +128,7 @@ includes the CenterPoint models.
 `--ros-distro`, `--gpu`, `--role` and `--ws`;
 [AutoSD](../platforms/autosd.md) builds on it.
 
-## Configuration
+## Settings
 
 A deployment reads its settings from environment files, in this order (later
 files win):
@@ -151,7 +151,7 @@ services. To change a node parameter instead, use a
 
 | Directory | Default | Override |
 | --- | --- | --- |
-| Host settings | `~/.config/openadkit` | `OPENADKIT_CONFIG_DIR` (or `XDG_CONFIG_HOME`) |
+| Host settings | `~/.config/openadkit` | `OPENADKIT_SETTINGS_DIR` (or `XDG_CONFIG_HOME`) |
 | Results and recordings | `~/openadkit-output/<name>/{results,recordings}` | `OPENADKIT_OUTPUT_DIR` |
 | Installed releases | `~/.local/share/openadkit` | `OPENADKIT_INSTALL_DIR` |
 

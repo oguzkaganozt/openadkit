@@ -373,7 +373,7 @@ def print_run_next_steps(
         print(live.visualizer_address(tls))
         print(
             "password: REMOTE_PASSWORD (default openadkit; override in "
-            f"{deployment.site_config})"
+            f"{deployment.host_settings})"
         )
     if output:
         print(f"output: {output}")
@@ -836,7 +836,7 @@ def build_parser() -> OpenADKitParser:
             "examples:\n"
             "  openadkit install --version vX.Y.Z\n"
             "  openadkit upgrade\n"
-            "  openadkit setup --verify\n"
+            "  openadkit setup --check\n"
             "  openadkit list\n"
             "  openadkit run planning-simulation\n"
             "  openadkit run logging-simulation --gpu\n"

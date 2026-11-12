@@ -59,23 +59,23 @@ export OPENADKIT_OUTPUT_DIR="${out}/output"
 # Cell logs show every docker command the CLI runs.
 export OPENADKIT_VERBOSE=1
 export OPENADKIT_STATE_DIR="${out}/state"
-# Read no host settings either: a site file, or an inherited kit selection,
+# Read no host settings either: a host settings file, or an inherited kit selection,
 # would change the deployment, its data, or its DDS settings under the cell.
-export OPENADKIT_CONFIG_DIR="${out}/config"
+export OPENADKIT_SETTINGS_DIR="${out}/config"
 unset OPENADKIT_KIT OPENADKIT_DELEGATED
-mkdir -p "${OPENADKIT_CONFIG_DIR}"
+mkdir -p "${OPENADKIT_SETTINGS_DIR}"
 scenario_output="${OPENADKIT_OUTPUT_DIR}/${deployment}/results"
 # A 4-vCPU runner cannot run Autoware main in real time: the ego drives late
 # and the samples take three times as long as on 16 vCPUs, past the wall-clock
 # timeout. Half speed gives Autoware the CPU a larger host has per simulated
 # second, so the cell checks the scenarios rather than the runner's size.
 if [ "${scenario}" = true ]; then
-    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
+    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
 fi
 # The same holds for a replayed recording: at a tenth of its speed sensing and
 # perception keep up, and the rosbag waits longer for a slow start.
 if [ "${deployment}" = logging-simulation ]; then
-    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_CONFIG_DIR}/${deployment}.env"
+    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
 fi
 
 # Several roles on one host: each gets its own project, logs and Zenoh endpoint.

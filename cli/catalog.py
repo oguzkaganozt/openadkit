@@ -63,9 +63,9 @@ def _user_root(override: str, xdg: str, fallback: str) -> Path:
     return Path(base) / "openadkit"
 
 
-def config_root() -> Path:
-    """Site settings: one ``<deployment>.env`` per deployment."""
-    return _user_root("OPENADKIT_CONFIG_DIR", "XDG_CONFIG_HOME", ".config")
+def settings_root() -> Path:
+    """Host settings: one ``<deployment>.env`` per deployment."""
+    return _user_root("OPENADKIT_SETTINGS_DIR", "XDG_CONFIG_HOME", ".config")
 
 
 def state_root() -> Path:
@@ -254,9 +254,9 @@ class Deployment:
         return self.project if role is None else f"{self.project}_{role}"
 
     @property
-    def site_config(self) -> Path:
+    def host_settings(self) -> Path:
         """Host settings for this deployment; loaded last, kept across upgrades."""
-        return config_root() / f"{self.name}.env"
+        return settings_root() / f"{self.name}.env"
 
     @property
     def output_directory(self) -> Path:
@@ -284,13 +284,13 @@ class Deployment:
         return bool(self.gpu_files)
 
     def env_files(self, gpu: bool = False) -> list[Path]:
-        """Base env files, then this deployment's, then the host's site file."""
+        """Base env files, then this deployment's, then the host settings file."""
         result = [path for layer in self.env_layers for path in layer.files(gpu)]
-        site = self.site_config
-        if site.exists():
-            if not site.is_file():
-                raise OpenADKitError(f"site configuration is not a regular file: {site}")
-            result.append(site)
+        host_file = self.host_settings
+        if host_file.exists():
+            if not host_file.is_file():
+                raise OpenADKitError(f"host settings file is not a regular file: {host_file}")
+            result.append(host_file)
         return result
 
     def compose_files(self, gpu: bool, role: str | None = None) -> list[Path]:

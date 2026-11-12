@@ -100,7 +100,7 @@ def running_services(project: str) -> list[str]:
 
 
 def visualizer_address(tls: bool) -> str:
-    """Plain HTTP unless the site gives noVNC its own certificate."""
+    """Plain HTTP unless the host settings give noVNC its own certificate."""
     return f"visualizer: {'https' if tls else 'http'}://localhost:6080/vnc.html"
 
 

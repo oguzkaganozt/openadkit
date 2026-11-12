@@ -46,7 +46,7 @@ replaces data the CLI installed; remove data you placed yourself, then run
 
 ### NVIDIA Container Toolkit not detected
 
-- Install it with `openadkit setup --gpu --verify`.
+- Install it with `openadkit setup --gpu --check`.
 - Check the GPU: `nvidia-smi` and `nvidia-ctk --version`.
 - Restart Docker: `sudo systemctl restart docker`.
 
@@ -91,7 +91,7 @@ nstat -az UdpRcvbufErrors     # a growing count means drops
 
 DDS stays on loopback by default. To reach other hosts, set
 `CYCLONEDDS_NETWORK_INTERFACE` to the exact LAN or VPN interface name in your
-[host settings file](cli.md#configuration)
+[host settings file](cli.md#settings)
 (`~/.config/openadkit/<deployment>.env`):
 
 ```bash

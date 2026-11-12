@@ -100,7 +100,7 @@ def configuration_environment(deployment: Deployment, gpu: bool = False) -> dict
 
     Compose interpolation uses the same file order. A shell export of
     MAP_PATH would otherwise install data somewhere other than the mount.
-    Host overrides belong in the site configuration, which is loaded last.
+    Host overrides belong in the host settings file, which is loaded last.
     """
     return dict(_env_file_settings(tuple(deployment.env_files(gpu))))
 
@@ -117,7 +117,7 @@ def _compose_environment(deployment: Deployment, gpu: bool, injections: dict[str
     """Environment Compose uses to interpolate the deployment.
 
     Compose prefers the process environment over ``--env-file``, so a shell
-    export would otherwise hide ``settings.gpu.env`` and the site configuration.
+    export would otherwise hide ``settings.gpu.env`` and the host settings file.
     Drop shell values for names the env files define and let Compose read
     the files itself, so quoting and ``$VAR`` expansion follow Compose rules.
     CLI injections (distro and component images) still win.
@@ -263,6 +263,6 @@ def resolve(
     if missing:
         raise OpenADKitError(
             f"required environment variable(s) are missing: {', '.join(missing)}\n"
-            f"set them in {deployment.site_config}"
+            f"set them in {deployment.host_settings}"
         )
     return Selection(distro, gpu, role, injections, environment)

@@ -5,7 +5,7 @@ simulator, then set a route in RViz in your browser. No GPU is required; with
 an NVIDIA GPU, `--gpu` plans with Autoware 2.0's Diffusion Planner.
 
 Complete the [Quickstart](../getting-started/index.md) setup first. For GPU
-mode, run `openadkit setup --gpu --verify`.
+mode, run `openadkit setup --gpu --check`.
 
 ## Run
 

@@ -268,5 +268,5 @@ Install the new base next to the old version, update `extends`, rebuild your
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host settings, downloaded data and output directories
 are outside the base release, and `openadkit upgrade` does not change a kit's
-`extends`. See [Configuration](../getting-started/cli.md#configuration) and
+`extends`. See [Settings](../getting-started/cli.md#settings) and
 [Downloaded Data](../getting-started/cli.md#downloaded-data).
