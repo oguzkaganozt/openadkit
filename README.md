@@ -15,7 +15,7 @@
 
 ## Quickstart
 
-From nothing to a driving Autoware on Ubuntu 22.04 or 24.04. No GPU needed.
+From nothing to a driving Autoware on Ubuntu. No GPU needed.
 
 > [!NOTE]
 > **v2.0.0 is not published yet.** Until it is, [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
