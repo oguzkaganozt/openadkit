@@ -1899,10 +1899,11 @@ openadkit<span class="w"> </span>run<span class="w"> </span>logging-simulation<s
 <p><code>run</code> downloads the sample map and rosbag, and with <code>--gpu</code> also the CenterPoint
 models (to <code>~/autoware_data/lidar_centerpoint</code>). The rosbag starts playing once
 sensing subscribes to its LiDAR topic.</p>
-<p><code>run</code> returns once the services have started and stay up. This deployment
-declares no readiness check of Autoware itself and is
-<a href="../../releases/evidence/#ci-exemptions">exempt from CI evidence</a>, so watch
-<code>openadkit status</code> and the visualizer for localization to initialize.</p>
+<p><code>run</code> returns once the stack is ready: the services stay up and the AD API can
+initialize localization. <code>openadkit run logging-simulation --verify</code> then
+follows the replay: it passes once localization is initialized and the pose and
+the tracked objects keep arriving. Every release runs that check in CPU mode;
+the GPU mode is checked by hand on a GPU host.</p>
 <p>The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than
 with a full recording.</p>

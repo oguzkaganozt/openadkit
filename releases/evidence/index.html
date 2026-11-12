@@ -1992,6 +1992,11 @@ and topology:</p>
 <td>Single host; two isolated nodes on one host</td>
 </tr>
 <tr>
+<td>Logging Simulation</td>
+<td>Humble, Jazzy</td>
+<td>Single host, in CPU mode</td>
+</tr>
+<tr>
 <td>Safety Island Simulation</td>
 <td>Humble, Jazzy</td>
 <td>Single host, with the pinned Safety Island release over <code>domain_bridge</code></td>
@@ -2014,8 +2019,9 @@ and topology:</p>
 <li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
   ROS interfaces are present and its topics publish.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
-  Planning Simulation ego arrives at its goal, or the scenarios pass, plus the
-  split-node checks.</li>
+  Planning Simulation ego arrives at its goal, the scenarios pass, or
+  localization and tracking follow the replayed rosbag, plus the split-node
+  checks.</li>
 <li><strong>L3:</strong> the example kit only: the development loop on the running stack. Its
   C++ package changes, <code>openadkit build</code> builds it, <code>openadkit restart</code> from
   another directory recreates the services, and the stack publishes the change.</li>
@@ -2029,21 +2035,23 @@ and blocks the release.</p>
 <li><strong>Other platforms.</strong> Every cell runs on a hosted <code>linux/amd64</code> runner. Images
   are also built and scanned for arm64, but that is not arm64 runtime evidence,
   nor two-machine LAN, GPU, HIL or vehicle evidence.</li>
-<li><strong>GPU modes.</strong> Planning Simulation's cells run its CPU mode. Its GPU mode
-  (<code>--gpu</code>, the Diffusion Planner on <code>planning-cuda</code>) validates in CI (L0) and
-  is checked by hand on a GPU host.</li>
+<li><strong>GPU modes.</strong> The cells of Planning and Logging Simulation run their CPU
+  modes. The GPU modes (<code>--gpu</code>: the Diffusion Planner on <code>planning-cuda</code>,
+  CenterPoint on <code>sensing-perception-cuda</code>) validate in CI (L0) and are checked
+  by hand on a GPU host.</li>
 <li><strong>Real-time behavior.</strong> A 4-vCPU hosted runner cannot run Autoware in real
   time: the ego drives late, and the bundled samples take about three times as
   long as on a 16-vCPU host. The Scenario Simulation cells therefore run at
   half speed (<code>GLOBAL_REAL_TIME_FACTOR=0.5</code>, with <code>GLOBAL_TIMEOUT=400</code>
   wall-clock seconds) through the cell's host settings file, so they test the
-  scenarios rather than the runner's size.</li>
+  scenarios rather than the runner's size. The Logging Simulation cells replay
+  the rosbag at a tenth of its speed (<code>ROSBAG_RATE=0.1</code>) for the same reason.</li>
 </ul>
 <h2 id="ci-exemptions">CI Exemptions<a class="headerlink" href="#ci-exemptions" title="Permanent link">#</a></h2>
-<p>CARLA Simulation requires a GPU, and Logging Simulation has no hosted evidence
-cell yet. Their deployment manifests carry a reasoned <code>evidence.exempt</code> entry.
-They remain in the bundle, are listed in the release metadata and notes, and
-the CLI warns when they run. <strong>An exemption is not runtime evidence.</strong></p>
+<p>CARLA Simulation requires a GPU, which the hosted runners do not have. Its
+deployment manifest carries a reasoned <code>evidence.exempt</code> entry. It remains in
+the bundle, is listed in the release metadata and notes, and the CLI warns when
+it runs. <strong>An exemption is not runtime evidence.</strong></p>
 <p>Adding an exemption is a reviewed source change, not a release-time override.
 Do not use it to hide a known failure in a normally tested cell.</p>
 <h2 id="autoware-and-ros-distro-decisions">Autoware and ROS Distro Decisions<a class="headerlink" href="#autoware-and-ros-distro-decisions" title="Permanent link">#</a></h2>
