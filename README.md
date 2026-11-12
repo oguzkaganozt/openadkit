@@ -4,6 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/autowarefoundation/openadkit?label=release)](https://github.com/autowarefoundation/openadkit/releases)
 [![ROS 2](https://img.shields.io/badge/ROS%202-Humble%20%7C%20Jazzy-22314E?logo=ros&logoColor=white)](https://autowarefoundation.github.io/openadkit/platforms/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://autowarefoundation.github.io/openadkit/)
 
 **The deployment layer for the Autoware ecosystem.**
 
@@ -63,8 +64,6 @@ openadkit run --verify      # start, wait until ready, run the end-to-end check
 ```
 
 ## Documentation
-
-Everything is on the [documentation site](https://autowarefoundation.github.io/openadkit/). Good places to start:
 
 - [**Overview**](https://autowarefoundation.github.io/openadkit/overview/) — what Open AD Kit is and how it is put together
 - [**CLI & Maintenance**](https://autowarefoundation.github.io/openadkit/getting-started/cli/) — every command, configuration, upgrades and cleanup
