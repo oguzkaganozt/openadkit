@@ -6,7 +6,7 @@
 
 **The deployment layer for the Autoware ecosystem.**
 
-[Autoware](https://github.com/autowarefoundation/autoware) provides the autonomy stack; Open AD Kit makes it deployable. It packages Autoware into focused container images and ready-to-run deployments, with [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) alongside. One CLI runs them the same way on every host.
+[Autoware](https://github.com/autowarefoundation/autoware) provides the autonomy stack; Open AD Kit makes it deployable. It packages the stack into focused container images and ready-to-run deployments, with [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/) alongside. One CLI runs them the same way on every host.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/images/readme-hero-dark.svg">
@@ -31,8 +31,8 @@ openadkit setup --verify
 # 3. Start Autoware
 openadkit run planning-simulation
 
-# 4. Drive: open http://localhost:6080/vnc.html, sign in with "openadkit"
-#    and set a goal. The vehicle plans the route and drives it.
+# 4. Drive: open http://localhost:6080/vnc.html (password: openadkit), set an
+#    initial pose and a goal. The vehicle plans the route and drives it.
 
 # 5. Stop
 openadkit stop
@@ -40,11 +40,11 @@ openadkit stop
 
 ## Deployments
 
-A deployment is a ready-to-run Autoware stack for one task. Open AD Kit ships five; `openadkit list` prints them in your terminal.
+A deployment is a ready-to-run Autoware stack for one task. `openadkit list` prints them in your terminal.
 
 | Deployment | What it runs | Requires |
 |---|---|---|
-| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map<br>`--gpu` plans with the Diffusion Planner | |
+| [`planning-simulation`](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/) | Plan and follow a route on a sample map<br>`--gpu` plans with the Diffusion Planner (experimental) | |
 | [`scenario-simulation`](https://autowarefoundation.github.io/openadkit/deployments/scenario-simulation/) | Predefined traffic scenarios in Scenario Simulator<br>`--node` [splits it across two hosts](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (experimental) | |
 | [`logging-simulation`](https://autowarefoundation.github.io/openadkit/deployments/logging-simulation/) | Replay recorded sensor data, sensing to localization<br>`--gpu` runs CenterPoint on CUDA | |
 | [`carla-simulation`](https://autowarefoundation.github.io/openadkit/deployments/carla-simulation/) | Closed-loop driving in the CARLA simulator<br>`--node` [splits it across two hosts](https://autowarefoundation.github.io/openadkit/deployments/split-host/) (experimental) | NVIDIA GPU<br>amd64, Humble |
