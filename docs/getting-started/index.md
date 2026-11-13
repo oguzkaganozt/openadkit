@@ -89,7 +89,8 @@ Run setup as your normal user; it asks for `sudo` only for host changes:
 It then runs a test container to confirm that Docker works; `--no-check` skips
 that on a host that cannot pull it. Add `--gpu` for NVIDIA deployments: it also
 installs the NVIDIA Container Toolkit and the OpenGL/Vulkan libraries CARLA
-needs, and tests the GPU in a container.
+needs, and tests the GPU in a container. It does not install the NVIDIA driver:
+install one first, so that `nvidia-smi` works on the host.
 
 --8<-- "includes/docker-group-activation.md"
 
@@ -116,8 +117,9 @@ To open RViz on your own desktop instead of the browser, see
 In RViz, follow the [Autoware planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle) to:
 
 1. Set an **initial pose** for the ego vehicle
-2. Set a **goal pose** on the map
-3. Watch the vehicle plan and drive the route
+2. Set a **goal pose** on the map; Autoware plans the route
+3. Press **AUTO** in the **OperationMode** section of the AutowareStatePanel; the
+   vehicle drives the route
 
 ## When You Are Done
 

@@ -59,6 +59,6 @@ def define_env(env):
             distros = ", ".join(img.get("ros_distros", global_distros))
             arches = ", ".join(p.rsplit("/", 1)[-1] for p in img["platforms"])
             rows.append(
-                f"| `{target}` | `{registry}:{target}` | {distros} | {arches} |"
+                f"| `{target}` | `{registry}:{target}-<distro>` | {distros} | {arches} |"
             )
         return "\n".join(rows)
