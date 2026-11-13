@@ -84,8 +84,12 @@ def build_matrices(inventory):
         for p, d in common_pairs
     ]}
 
+    # A multi-arch image for each published one; the components build on the
+    # unpublished ones per architecture.
     manifest_include = []
     for image in images:
+        if not image.get("release", True):
+            continue
         arches = " ".join(platform_label(p) for p in image["platforms"])
         for distro in image_distros(image, distros):
             manifest_include.append({

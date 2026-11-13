@@ -28,8 +28,9 @@ the same patterns with `-jazzy` (for example `planning-jazzy`).
 - **Reproducible deployments**: use a release tag (`vX.Y.Z`) or a digest.
 - **Latest stable for a distro**: use `<target>-<ros_distro>`.
 - **Never** pin per-architecture tags such as `universe-common-amd64-humble`:
-  CI moves them with every build of `main`, and publishes them only for the
-  common images its own builds start from.
+  CI moves them with every build of `main`, and pushes them only for the
+  common images its own builds start from. `universe-common`, the runtime base
+  of the component images, is not released; `universe-common-devel` is.
 - **Source checkout**: `./openadkit` runs `<target>-<arch>-<ros_distro>`, the
   tags of a [local build](../development/build-from-source.md), not published
   images.

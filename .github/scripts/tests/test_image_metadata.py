@@ -110,3 +110,10 @@ def test_the_run_page_summary_names_the_build_and_each_image():
     })
     assert "Build `1-1` · Autoware 2.0.0 (`6f91fff`) · Open AD Kit `5e3837a`" in text
     assert "| `api` | humble | amd64, arm64 | `sha256:aaaaaaaaaaaa` |" in text
+
+
+def test_an_unreleased_image_is_left_out_of_what_a_build_publishes():
+    inventory = {"ros_distros": ["humble"], "images": [
+        {"target": "base", "platforms": ["linux/amd64"], "release": False},
+        {"target": "app", "platforms": ["linux/amd64"]}]}
+    assert [row["target"] for row in images.inventory_images(inventory, "ghcr.io/example/openadkit")] == ["app"]

@@ -45,6 +45,6 @@ while read -r target distro; do
         --tag "${CI_REPO}:${target}-${distro}-${BUILD_TAG}" \
         --tag "${CI_REPO}:${target}-${distro}-pr${PR_NUMBER}" \
         "${source}" >&2
-done < <(jq -r '.ros_distros as $default | .images[] | .target as $target
+done < <(jq -r '.ros_distros as $default | .images[] | select(.release != false) | .target as $target
     | (.ros_distros // $default)[] | "\($target) \(.)"' "${inventory}")
 echo "${built}"
