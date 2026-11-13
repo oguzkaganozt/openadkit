@@ -136,7 +136,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ROS_DISTRO
 
 USER root
-ENV AUTOWARE_RUNTIME=1
 
 # Every package installed from here on, in this image and the component images
 # on it, leaves out what only a compiler reads (headers, static libraries).
@@ -194,9 +193,8 @@ RUN --mount=type=bind,source=components/shared/security-refresh.sh,target=/tmp/s
 RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/check-linked-libs.sh \
     bash /tmp/check-linked-libs.sh
 
-# Kit layer (components/shared/entrypoint): on every start, layer config overrides
-# and the overlay workspace on top of Autoware, after the upstream entrypoint
-# has sourced ROS and switched to the aw user.
-COPY components/shared/entrypoint/openadkit-hook.sh components/shared/entrypoint/overlay.py /opt/openadkit/
-ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]
+# On every start: run as the host user, source ROS and Autoware, and layer the
+# kit's config overrides and overlay workspace on top (components/shared/entrypoint).
+COPY components/shared/entrypoint/entrypoint.sh components/shared/entrypoint/overlay.py /opt/openadkit/
+ENTRYPOINT ["/opt/openadkit/entrypoint.sh"]
 CMD ["/bin/bash"]

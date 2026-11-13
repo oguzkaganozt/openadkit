@@ -84,6 +84,9 @@ See [CLI & Maintenance](../getting-started/cli.md).
 - Component image names and the tag scheme: release tags, latest aliases and
   the devel image a kit builds its overlay workspace in. See
   [Container Images & Versioning](container-images.md).
+- The images' entrypoint, `/opt/openadkit/entrypoint.sh`: it runs the command
+  as the host user (`HOST_UID`, `HOST_GID`) with ROS, Autoware and the kit
+  layer sourced.
 - The image labels `org.autoware.openadkit.ros-snapshot`,
   `org.autoware.openadkit.autoware-version`, `org.autoware.openadkit.autoware-ref`
   and `org.autoware.openadkit.autoware-lock-sha256`.

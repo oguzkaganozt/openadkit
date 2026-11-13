@@ -160,7 +160,7 @@ def test_stages_pin_ros_snapshot_and_runtime_checks_linked_libraries(path):
     pin = 'bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check'
     assert devel.index(pin) < devel.index("colcon build")
     assert runtime.index(pin) < runtime.index("bash /tmp/security-refresh.sh") < runtime.index("bash /tmp/check-linked-libs.sh") < runtime.index("COPY components/shared/entrypoint/")
-    assert 'ENTRYPOINT ["/docker-entrypoint.sh", "/opt/openadkit/openadkit-hook.sh"]' in runtime
+    assert 'ENTRYPOINT ["/opt/openadkit/entrypoint.sh"]' in runtime
 
 
 @pytest.fixture

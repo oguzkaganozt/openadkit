@@ -147,6 +147,6 @@ RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD ["bash", "-c", "if [ \"${REMOTE_DISPLAY:-true}\" = false ]; then exit 0; fi; exec 3<>/dev/tcp/127.0.0.1/6080 && exec 4<>/dev/tcp/127.0.0.1/5999"]
 
-USER aw
-# The kit-layer hook from universe-common runs first (components/shared/entrypoint).
-ENTRYPOINT ["/opt/openadkit/openadkit-hook.sh", "/usr/local/bin/visualizer_entrypoint.sh"]
+# universe-common's entrypoint runs first: it switches to the host user and
+# sources ROS, Autoware and the kit layer (components/shared/entrypoint).
+ENTRYPOINT ["/opt/openadkit/entrypoint.sh", "/usr/local/bin/visualizer_entrypoint.sh"]
