@@ -89,3 +89,30 @@ is the baseline. A marker that is absent from the repository, such as one
 inherited with a fork's `gh-pages`, is not comparable and also uses the
 default-branch head as the baseline. PR previews do not replace the production
 marker.
+
+## Evidence runs
+
+- **Input:** `build_tag`, `<run_id>-<run_attempt>`, whose `build-metadata-<build_tag>`
+  artifact must be available in the repository.
+- **What it tests:** the workflow checks out the build's `openadkit_sha` and takes
+  the image digests from the same metadata, never latest aliases. It stages the
+  release tree with the step that assembles release bundles, so the cells run the
+  tree a release of that build ships, plus the example kit that the staged CLI's
+  `openadkit new` makes, with `.github/scripts/evidence/example-kit` on top.
+- **How it runs:** hosted runners execute the L0–L3 cells, retry a failed cell
+  once, and aggregate every expected cell; a missing cell fails the run.
+- **Output:** per-cell diagnostics and the `evidence-summary-<build_tag>`
+  artifact, which the release gate reads.
+
+Cells use `schemaVersion: 1`, and the summary (`schemaVersion: 3`) carries them
+as written. Readers accept only these versioned payloads: a cell without
+`schemaVersion: 1` and `metrics` is rejected. Read timings from `metrics`
+rather than from top-level fields. Source and config checksums leave out the
+`build`, `install` and `log` products of a workspace.
+
+## Split-host allowlists
+
+Scenario Simulation's split evidence cell checks that every topic on its Zenoh
+allowlist exists in one of the two role graphs, so an Autoware rename fails CI
+instead of silently stopping a topic. CI cannot run CARLA, so its allowlist is
+checked by hand against a two-host run after an Autoware update.

@@ -143,6 +143,20 @@ pins the Autoware release a branch builds on its official images. CI builds
 runs the evidence cells after each build. A weekly scan of `main`'s latest build
 opens a GitHub issue when it fails.
 
-A pull request builds only the images its changes affect; see
-[Testing a Pull Request](evidence-workflow.md#testing-a-pull-request). Releases
-promote one of these builds; see the [Release Process](release-process.md).
+### Testing a Pull Request
+
+A pull request that changes an image's inputs builds the affected images, amd64
+only, for both distros. A pull request from this repository pushes them to the
+CI package `openadkit-ci`, completes the build there with its base branch's
+other images, copied by digest, and runs the amd64
+[evidence cells](../releases/evidence.md#cells-and-levels) on that build before
+merge. A fork's pull request cannot push: its images stop at the build and scan,
+and run in the cells after merge.
+
+A change that rebuilds no image, such as a deployment setting, the CLI or a
+check, runs the cells against its base branch's latest successful build. A
+dispatch of `evidence.yaml` with `source_ref` tests another branch or commit.
+The cells take the deployments, CLI and checks from the tested commit and the
+images from the build. A pull request's run is never release evidence.
+
+Releases promote one of these builds; see the [Release Process](release-process.md).

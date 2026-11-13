@@ -13,15 +13,11 @@ is required.
 - No GPU mode: the deployment's diagnostics graph belongs to the rule-based
   planner. `validate` and `run` refuse arm64 and `--gpu`.
 
-Complete the [Quickstart](../getting-started/index.md) setup first.
-
 ## Run
 
 ```bash
 openadkit run safety-island-simulation
 ```
-
---8<-- "includes/ros-distro.md"
 
 `run` downloads the sample map and the pinned Safety Island release, then
 starts Planning Simulation's services and two more:
@@ -44,11 +40,9 @@ Two messages are expected:
 - The `safety-island` container logs `Waiting for ... data` until localization
   is initialized.
 
-## Open the Visualizer
+## Drive
 
---8<-- "includes/visualizer-remote-access.md"
-
-In RViz, set an initial pose and a goal pose, then engage. The vehicle follows
+Open the [visualizer](index.md#open-the-visualizer). In RViz, set an initial pose and a goal pose, then engage. The vehicle follows
 the Safety Island's control command.
 
 ## Verify
@@ -59,13 +53,3 @@ openadkit run safety-island-simulation --verify
 
 `--verify` runs the same drive-to-goal check as Planning Simulation, as the
 deployment's evidence cells do on Humble and Jazzy.
-
-## Stop and Recover
-
-```bash
-openadkit stop
-```
-
-To replace missing data, run
-`openadkit fetch safety-island-simulation --force`. For other issues, see
-[Troubleshooting](../getting-started/troubleshooting.md).

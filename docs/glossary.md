@@ -39,7 +39,7 @@ it.
 | [**Config override**](kits/kit-guide.md#2-config-overrides) | Parameter and file differences under `config/autoware/`, merged over a package's configuration on every start; not a copy of the full file. `restart` applies them. |
 | [**Overlay workspace**](kits/kit-guide.md#3-overlay-workspace) | Your ROS packages in `overlay_ws/`, built in the release's devel image and sourced on top of Autoware. |
 | **Integrator** | The person or organization that builds a kit. |
-| [**Reference Design**](kits/reference-designs.md) | An Autoware Reference Design: a Deployment Profile and a Reference Software Stack that others can reproduce. A kit holds its software stack. |
+| [**Reference Design**](kits/kit-guide.md#reference-designs) | An Autoware Reference Design: a Deployment Profile and a Reference Software Stack that others can reproduce. A kit holds its software stack. |
 
 ## Evidence
 

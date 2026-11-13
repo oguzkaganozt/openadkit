@@ -44,7 +44,7 @@ def broken_links(files: list[Path], site: Path, url: str) -> list[str]:
 def main() -> int:
     site = ROOT / "site"
     if not (site / "index.html").is_file():
-        raise SystemExit("no built site; run: make -C docs build")
+        raise SystemExit("no built site; run: mkdocs build")
     tracked = subprocess.run(
         ["git", "-C", str(ROOT), "ls-files", "*.md"], capture_output=True, text=True, check=True
     ).stdout.split()

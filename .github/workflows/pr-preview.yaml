@@ -20,9 +20,6 @@ on:
       - "**/*.jpg"
       - "docs/assets/**"
       - "docs/overrides/**"
-      - "docs/.pages"
-      - "docs/**/.pages"
-      - "**/*.pages"
       - ".github/actions/build-docs/**"
       - ".github/workflows/pr-preview.yaml"
 

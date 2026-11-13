@@ -10,12 +10,9 @@ openadkit build                 # compiles what changed, in the release's devel 
 openadkit restart my-node       # recreates the service that runs it
 ```
 
-- `build` is incremental: a second build compiles only what changed.
-- `restart <service>` recreates only that service. Without a name it recreates
-  every service that takes config overrides or the overlay workspace, and every
-  service whose settings changed.
-- `restart` returns once the service's healthcheck passes and the services
-  have stayed up for 10 seconds.
+`build` compiles only what changed, and `restart <service>` recreates only that
+service; [CLI & Maintenance](../getting-started/cli.md#runtime-controls) says what
+`restart` without a name recreates.
 
 Give a service of your own `init: true`, as the Autoware services have. Without
 it the node is PID 1 and ignores the stop signal, and every stop and restart
@@ -48,10 +45,8 @@ openadkit shell api ros2 topic echo --once /my/topic
 openadkit record /my/topic /tf
 ```
 
-- `shell` opens a shell, or runs one command, in a running service with ROS and
-  your overlay workspace sourced. Without a service name it uses `api`.
-- `record` writes a bag to `~/openadkit-output/<deployment>/recordings`; `--all`
-  records every topic.
+See [Runtime Controls](../getting-started/cli.md#runtime-controls) for each
+command; `record` writes to `~/openadkit-output/<deployment>/recordings`.
 
 ## Attach a Debugger
 
@@ -88,8 +83,3 @@ own filesystem. A backtrace then shows your source lines, such as
 The Autoware services share one process namespace, so `autoware-map` as the
 container reaches the processes of all of them. The visualizer keeps its own
 namespace, so name its own container for it.
-
-## Editor Support
-
-An editor on the host does not see the Autoware and ROS headers, which exist
-only in the devel image, so it cannot complete or check your code against them.

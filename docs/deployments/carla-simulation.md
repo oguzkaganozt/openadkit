@@ -36,19 +36,12 @@ To run Autoware and CARLA on separate hosts, see
 `config/sensor_mapping.yaml` enables LiDAR, IMU, and GNSS. Camera entries are
 available but commented out.
 
-## Open the Visualizer
+## Drive
 
---8<-- "includes/visualizer-remote-access.md"
-
-In RViz, set a goal with **2D Goal Pose** and select **Auto**.
+Open the [visualizer](index.md#open-the-visualizer). In RViz, set a goal with **2D Goal Pose** and select **Auto**.
 
 ## Stop and Recover
 
-```bash
-openadkit stop
-```
-
 Run `stop` also after a failed start, to release the GPU. If autonomous mode is
 unavailable, inspect `/system/command_mode/availability` and
-`/diagnostics_graph/status`. For other issues, see
-[Troubleshooting](../getting-started/troubleshooting.md).
+`/diagnostics_graph/status`. See [Stop and Recover](index.md#stop-and-recover) for the rest.

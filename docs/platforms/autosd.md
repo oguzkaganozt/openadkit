@@ -97,7 +97,3 @@ The Autoware stack needs at least 16 GB of memory in the virtual machine. Log in
 as `root` with the password you hashed in
 [Generate a Deployment](#generate-a-deployment), here `password`, which is for
 this demo only.
-
-## Boards
-
-- [R-Car X5H](https://github.com/autowarefoundation/openadkit-rcar-x5h): AutoSD 10 image for the R-Car X5H board, kept in its own repository.

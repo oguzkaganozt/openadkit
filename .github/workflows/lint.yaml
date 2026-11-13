@@ -40,15 +40,12 @@ on:
       - '.markdownlintignore'
       - '.yamllint.yaml'
       - 'mkdocs.yaml'
-      - 'docs/Makefile'
       - 'docs/macros.py'
       - 'docs/requirements.txt'
       - 'docs/assets/**'
       - 'docs/overrides/**'
       - 'docs/**/*.yaml'
       - 'docs/**/*.yml'
-      - 'docs/.pages'
-      - 'docs/**/.pages'
       - '.github/workflows/lint.yaml'
 
 concurrency:
@@ -201,9 +198,12 @@ jobs:
           done
           exit "${fail}"
 
-      - name: Smoke-test Dockerized docs build
+      - name: Build the docs site
+        env:
+          NO_MKDOCS_2_WARNING: 1
         run: |
-          make -C docs build
+          pip install -r docs/requirements.txt
+          mkdocs build
           test -f site/index.html
 
       - name: Check the docs-site links in READMEs against the built site
