@@ -40,10 +40,7 @@ ALLOWED_BASE_KEYS = {
 ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
 # A kit (kind "kit"): its own deployments on top of one pinned Open AD Kit.
 ALLOWED_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
-ALLOWED_KIT_DEPLOYMENT_KEYS = {
-    "schemaVersion", "description", "base", "compose", "requirements", "data", "verify",
-}
-ALLOWED_KIT_COMPOSE_KEYS = {"files", "oneShotServices", "waitTimeout"}
+ALLOWED_KIT_DEPLOYMENT_KEYS = {"description", "base", "waitTimeout", "requirements", "data", "verify"}
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
 VERSION_RE = re.compile(
@@ -52,12 +49,10 @@ VERSION_RE = re.compile(
 )
 ALLOWED_DEPLOYMENT_REF_KEYS = {"path", "checksum"}
 ALLOWED_BASE_DEPLOYMENT_KEYS = {
-    "schemaVersion",
     "description",
-    "compose",
+    "waitTimeout",
     "requirements",
     "data",
-    "shared",
     "roles",
     "evidence",
     "verify",
@@ -65,19 +60,16 @@ ALLOWED_BASE_DEPLOYMENT_KEYS = {
 # What `run --verify` runs once the deployment is ready: a command in a running
 # service, or, without one, that service's own exit.
 ALLOWED_VERIFY_KEYS = {"service", "command"}
-ALLOWED_BASE_COMPOSE_KEYS = {
-    "files",
-    "gpuFiles",
-    "oneShotServices",
-    "waitTimeout",
-}
-ALLOWED_ROLE_KEYS = {
-    "files",
-    "oneShotServices",
-    "requiredEnv",
-    "requiredFiles",
-    "rosDomainId",
-}
+ALLOWED_ROLE_KEYS = {"requiredEnv", "rosDomainId"}
+# A deployment's Compose files go by name: its entry file, its GPU mode's
+# overlay, and for a split-host role, the role's file plus the Zenoh bridge
+# and its allowlist when the deployment has them.
+ENTRY_COMPOSE_FILE = "compose.yaml"
+GPU_COMPOSE_FILE = "compose.gpu.yaml"
+ZENOH_COMPOSE_FILE = "compose.zenoh.yaml"
+ZENOH_ALLOWLIST = "config/zenoh.json5"
+# The one directory of shared services, settings and checks.
+SHARED_DIRECTORY = "shared"
 # Linux keeps DDS ports for domains 0-101 clear of the ephemeral port range.
 MAX_ROS_DOMAIN_ID = 101
 ALLOWED_REQUIREMENT_KEYS = {
@@ -305,43 +297,26 @@ def validate_data(data: Any, roles: dict[str, Any], directory: Path) -> list[dic
     return data
 
 
-# Compose's own default file name, used when a deployment names no files.
-DEFAULT_COMPOSE_FILES = ["compose.yaml"]
-
-
-def validate_compose(value: Any, allowed: set[str], wait_timeout: int) -> dict[str, Any]:
-    """A deployment's compose section, with what it leaves out empty and
-    compose.yaml as its files by default."""
-    if value is None:
-        value = {}
-    if not isinstance(value, dict):
-        raise OpenADKitError("compose must be an object")
-    reject_unknown(value, allowed, "compose")
-    compose: dict[str, Any] = {
-        field: require_string_list(value.get(field, []), f"compose.{field}")
-        for field in ("gpuFiles", "oneShotServices")
+def compose_layout(directory: Path, wait_timeout: int, *, gpu: bool = True) -> dict[str, Any]:
+    """A deployment's Compose files, by name, and how long its services may
+    take to become ready."""
+    gpu_file = directory / GPU_COMPOSE_FILE
+    return {
+        "files": [ENTRY_COMPOSE_FILE],
+        "gpuFiles": [GPU_COMPOSE_FILE] if gpu and (gpu_file.exists() or gpu_file.is_symlink()) else [],
+        "waitTimeout": wait_timeout,
     }
-    compose["files"] = require_string_list(value.get("files", DEFAULT_COMPOSE_FILES), "compose.files")
-    if not compose["files"]:
-        raise OpenADKitError("compose.files must not be empty")
-    compose["waitTimeout"] = validate_wait_timeout(value.get("waitTimeout", wait_timeout))
-    return compose
 
 
 def read_deployment_manifest(directory: Path, allowed_keys: set[str], name: str) -> dict[str, Any]:
-    """The part every deployment manifest shares: location and schema. The
-    name is the deployment's key in openadkit.json; the file does not repeat it."""
+    """The part every deployment manifest shares. The name is the deployment's
+    key in openadkit.json, and its schemaVersion is that file's: neither repeats here."""
     if directory.is_symlink() or not directory.is_dir():
         raise OpenADKitError(f"unsafe deployment directory: {directory}")
     manifest = load_json(
         ensure_safe_existing(directory, "deployment.json", "deployment manifest")
     )
     reject_unknown(manifest, allowed_keys, "manifest")
-    if manifest.get("schemaVersion") != SCHEMA_VERSION:
-        raise OpenADKitError(
-            f"unsupported deployment schemaVersion {manifest.get('schemaVersion')!r} "
-            f"(expected {SCHEMA_VERSION})"
-        )
     require_string(manifest.get("description"), "description")
     manifest["name"] = name
     return manifest
@@ -361,7 +336,7 @@ def validate_verify(value: Any) -> dict[str, Any] | None:
 
 def validate_wait_timeout(value: Any) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-        raise OpenADKitError("compose.waitTimeout must be a positive integer")
+        raise OpenADKitError("waitTimeout must be a positive integer")
     return value
 
 
@@ -411,16 +386,10 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
     """A base deployment.json, checked and with its defaults filled in."""
     manifest = read_deployment_manifest(directory, ALLOWED_BASE_DEPLOYMENT_KEYS, name)
 
-    shared = require_string_list(manifest.get("shared", []), "shared")
-    for shared_name in shared:
-        if not NAME_RE.fullmatch(shared_name):
-            raise OpenADKitError(f"invalid shared deployment asset name: {shared_name}")
-        shared_directory = root / "deployments" / shared_name
-        if shared_directory.is_symlink() or not shared_directory.is_dir():
-            raise OpenADKitError(
-                f"missing or unsafe shared deployment assets: {shared_name}"
-            )
-    manifest["shared"] = shared
+    shared_directory = root / "deployments" / SHARED_DIRECTORY
+    if shared_directory.is_symlink():
+        raise OpenADKitError(f"unsafe shared deployment assets: {shared_directory}")
+    manifest["shared"] = [SHARED_DIRECTORY] if shared_directory.is_dir() else []
 
     requirements = manifest.get("requirements")
     if not isinstance(requirements, dict):
@@ -456,7 +425,7 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
             )
     manifest["requirements"] = requirements
 
-    manifest["compose"] = validate_compose(manifest.get("compose"), ALLOWED_BASE_COMPOSE_KEYS, 300)
+    manifest["compose"] = compose_layout(directory, validate_wait_timeout(manifest.get("waitTimeout", 300)))
 
     roles = manifest.get("roles", {})
     if not isinstance(roles, dict):
@@ -469,20 +438,14 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
         if not isinstance(role, dict):
             raise OpenADKitError(f"{where} must be an object")
         reject_unknown(role, ALLOWED_ROLE_KEYS, where)
-        role["files"] = require_string_list(
-            role.get("files"), f"{where}.files", nonempty=True
-        )
-        role["oneShotServices"] = require_string_list(
-            role.get("oneShotServices", []), f"{where}.oneShotServices"
-        )
+        role["files"] = [f"compose.{role_name}.yaml"]
+        zenoh = directory / ZENOH_COMPOSE_FILE
+        if zenoh.exists() or zenoh.is_symlink():
+            role["files"].append(ZENOH_COMPOSE_FILE)
+            ensure_safe_existing(directory, ZENOH_ALLOWLIST, "Zenoh allowlist")
         role["requiredEnv"] = require_string_list(
             role.get("requiredEnv", []), f"{where}.requiredEnv"
         )
-        role["requiredFiles"] = require_string_list(
-            role.get("requiredFiles", []), f"{where}.requiredFiles"
-        )
-        for file_name in role["requiredFiles"]:
-            ensure_safe_existing(directory, file_name, "required role file")
         invalid_role_env = [
             item for item in role["requiredEnv"] if not ENV_NAME_RE.fullmatch(item)
         ]

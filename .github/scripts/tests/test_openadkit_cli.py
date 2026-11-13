@@ -67,17 +67,14 @@ def run_cli(root, *args, directory=None, **env):
 
 def manifest(*, data=None, gpu=False, roles=False):
     document = {
-        "schemaVersion": 2, "description": "Test deployment",
-        "compose": {"files": ["compose.yaml"], "gpuFiles": ["gpu.yaml"] if gpu else [],
-                    "oneShotServices": [], "waitTimeout": 1},
+        "description": "Test deployment", "waitTimeout": 1,
         "requirements": {"architectures": ["amd64", "arm64"], "rosDistros": ["humble", "jazzy"],
                          "gpu": "optional" if gpu else "none"},
         "data": data or [],
     }
     if roles:
         document["roles"] = {
-            name: {"rosDomainId": domain, "files": [f"compose.{name}.yaml"],
-                   "oneShotServices": [], "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
+            name: {"rosDomainId": domain, "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
             for name, domain in (("primary", 1), ("secondary", 2))
         }
     return document
@@ -93,11 +90,13 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     document = document or manifest()
     (directory / "deployment.json").write_text(json.dumps(document))
     (directory / "settings.env").write_text(config)
-    files = document["compose"]["files"] + document["compose"]["gpuFiles"]
-    files += [file for role in document.get("roles", {}).values() for file in role["files"]]
+    # A deployment's Compose files go by name; an optional GPU mode has an overlay.
+    gpu = document["requirements"]["gpu"] == "optional"
+    files = ["compose.yaml", *(["compose.gpu.yaml"] if gpu else [])]
+    files += [f"compose.{role}.yaml" for role in document.get("roles", {})]
     for file in files:
         (directory / file).write_text("services:\n  app:\n    image: busybox:1.36.1\n")
-    if document["compose"]["gpuFiles"]:
+    if gpu:
         (directory / "settings.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
     context = {
         "schemaVersion": 2, "kind": "release" if release else "source",
@@ -191,7 +190,10 @@ elif "config --hash" in text:
     for name in {service_lines!r}.split():
         print(name, "new" if name in changed else "same")
 elif "config --format json" in text:
-    print('{{"services": {{}}}}')
+    # Services with restart: "no" run once and exit.
+    once = os.environ.get("FAKE_ONE_SHOT", "").split(",")
+    print(json.dumps({{"services": {{name: {{"restart": "no"}} if name in once else {{}}
+                                    for name in {service_lines!r}.split()}}}}))
 elif "config --services" in text:
     print({service_lines!r})
 elif "config --quiet" in text:
@@ -230,7 +232,7 @@ def extending_kit(tmp_path, root, *, extends=None, external_images=None):
         "deployments": {"custom": {"path": "deployments/custom"}}, "externalImages": external_images or {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "Kit deployment", "base": "example",
+        "description": "Kit deployment", "base": "example",
     }))
     (directory / "settings.env").write_text("VALUE=kit\n")
     (directory / "compose.yaml").write_text(
@@ -653,8 +655,9 @@ def test_every_run_records_what_it_started(tmp_path):
     result = run_cli(root, "run", "example")
     assert result.returncode == 0, result.stderr
     record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
-    # The fake model has no services; its digest still identifies it.
-    assert record["images"] == {} and record["modelSha256"] == hashlib.sha256(b'{"services": {}}\n').hexdigest()
+    # The fake model's service names no image; its digest still identifies the model.
+    model = json.dumps({"services": {"app": {}}}) + "\n"
+    assert record["images"] == {"app": None} and record["modelSha256"] == hashlib.sha256(model.encode()).hexdigest()
     assert record["role"] is None and record["gpu"] is False and "verify" not in record
     # What the services mount from the host is identified by its content.
     assert set(record["configSha256"]) == {"base", "deployment"}
@@ -850,21 +853,27 @@ def test_several_live_roles_stop_together_but_take_one_target_otherwise(tmp_path
         "openadkit-example_primary", "openadkit-example_secondary"]
 
 
-@pytest.mark.parametrize("unsafe", ["missing", "symlink", "escape"])
-def test_required_role_files_are_checked_before_compose(tmp_path, unsafe):
-    document = manifest(roles=True)
-    document["roles"]["primary"]["requiredFiles"] = ["../outside" if unsafe == "escape" else "allowlist.json"]
-    root, directory = runtime_tree(tmp_path, document=document)
+@pytest.mark.parametrize("unsafe", ["missing", "symlink"])
+def test_a_role_with_a_zenoh_bridge_needs_its_allowlist_before_compose(tmp_path, unsafe):
+    root, directory = runtime_tree(tmp_path, document=manifest(roles=True))
+    (directory / "compose.zenoh.yaml").write_text("services: {}\n")
     if unsafe == "symlink":
         outside = tmp_path / "outside"
         outside.write_text("{}")
-        (directory / "allowlist.json").symlink_to(outside)
+        (directory / "config").mkdir()
+        (directory / "config/zenoh.json5").symlink_to(outside)
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example", "--role", "primary")
     assert result.returncode != 0
-    assert {"missing": "missing required role file", "symlink": "symlinked required role file",
-            "escape": "safe relative path"}[unsafe] in result.stderr
+    assert {"missing": "missing Zenoh allowlist", "symlink": "symlinked Zenoh allowlist"}[unsafe] in result.stderr
     assert recorded(calls) == []
+    # With it, a role runs its own file and the bridge.
+    if unsafe == "missing":
+        (directory / "config").mkdir()
+        (directory / "config/zenoh.json5").write_text("{}")
+        deployment = cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
+        assert deployment.compose_files(False, "secondary") == [
+            directory / "compose.secondary.yaml", directory / "compose.zenoh.yaml"]
 
 
 def files_resource(tmp_path, *, env="MAP_PATH", name="dataset", **extra):
@@ -1073,7 +1082,7 @@ def test_rerun_counts_only_restarts_since_up(monkeypatch):
                "gone vehicle 0 dead 0 none\n")
     monkeypatch.setattr(cli_compose, "docker",
                         lambda *_, **__: subprocess.CompletedProcess([], 0, stdout=inspect))
-    deployment = type("Deployment", (), {"one_shot_services": staticmethod(lambda role: {"init", "rosbag"})})()
+    deployment = type("Deployment", (), {"one_shots": {(None, False): {"init", "rosbag"}}})()
     selection = cli_settings.Selection("humble", False, None, {}, {})
     assert cli_compose.failed_services(deployment, selection, [], {"kept": 1}) == [
         "map", "planning", "rosbag", "system", "vehicle"]
@@ -1595,7 +1604,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     deployment = cli_catalog.get_deployment(kit, context, "custom")
     assert deployment.requirements["gpu"] == "optional" and deployment.data[0]["name"] == "dataset"
     selection = cli_settings.resolve(deployment, context, "humble", True)
-    assert deployment.compose_files(True) == [directory / "compose.yaml", base / "gpu.yaml"]
+    assert deployment.compose_files(True) == [directory / "compose.yaml", base / "compose.gpu.yaml"]
     assert selection.environment["VALUE"] == "site" and selection.environment["BASE_GPU"] == "1"
     assert selection.injections["API_IMAGE"] == OTHER_PIN
     assert selection.injections["OPENADKIT_BASE_DEPLOYMENT"] == str(base)
@@ -1611,25 +1620,31 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     assert (bom["images"] is not None) is release
 
 
-def test_kit_may_leave_out_the_base_side_its_inherited_one_shot_services_belong_to(tmp_path):
-    document = manifest()
-    document["compose"]["oneShotServices"] = ["loader"]
-    root, _ = runtime_tree(tmp_path, document=document)
+def test_one_shot_services_are_those_compose_does_not_restart(tmp_path):
+    root, _ = runtime_tree(tmp_path)
     kit = extending_kit(tmp_path, root)
-    calls = fake_docker(tmp_path, services=("app", "acme"))
-    # The base itself must still define its one-shot services.
-    result = run_cli(root, "validate", "example")
-    assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
-    assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
+    calls = fake_docker(tmp_path, services=("app", "loader", "acme"))
+    # A run starts each one-shot service afresh, the base's and the kit's alike.
+    assert run_cli(root, "run", "custom", directory=kit, FAKE_ONE_SHOT="loader,acme").returncode == 0
+    removed = [row["args"][-1] for row in recorded(calls) if "rm" in row["args"]]
+    assert removed == ["acme", "loader"]
+    # Without restart: "no" there is none.
+    calls.write_text("")
     assert run_cli(root, "run", "custom", directory=kit).returncode == 0
     assert not any("rm" in row["args"] for row in recorded(calls))
-    # A kit's own one-shot service is checked like a base's.
-    path = kit / "deployments/custom/deployment.json"
-    document = json.loads(path.read_text())
-    document["compose"] = {"oneShotServices": ["probe"]}
-    path.write_text(json.dumps(document))
-    result = run_cli(root, "validate", "custom", directory=kit)
-    assert result.returncode != 0 and "unknown Compose service(s): probe" in result.stderr
+
+
+def test_a_manifest_holds_only_what_the_files_do_not_say(tmp_path):
+    for field, value in (("schemaVersion", 2), ("shared", ["shared"]), ("compose", {"files": ["compose.yaml"]})):
+        document = manifest() | {field: value}
+        root, _ = runtime_tree(tmp_path / field, document=document)
+        with pytest.raises(cli_manifest.OpenADKitError, match=f"unknown manifest field\\(s\\): {field}"):
+            cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
+    document = manifest(roles=True)
+    document["roles"]["primary"]["files"] = ["compose.primary.yaml"]
+    root, _ = runtime_tree(tmp_path / "roles", document=document)
+    with pytest.raises(cli_manifest.OpenADKitError, match="unknown roles.primary field\\(s\\): files"):
+        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
 
 
 @pytest.mark.parametrize("installed", [False, True])
@@ -1650,7 +1665,7 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
     deployment = json.loads((kit / "deployment.json").read_text())
     # The name lives once, in openadkit.json; Compose files default to compose.yaml.
-    assert deployment == {"schemaVersion": 2, "description": "example with this kit's layer on top", "base": "example"}
+    assert deployment == {"description": "example with this kit's layer on top", "base": "example"}
     assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
@@ -1853,11 +1868,11 @@ def test_restart_ignores_a_one_shot_service_that_failed_before_it(monkeypatch):
     monkeypatch.setattr(cli_compose, "docker", docker)
 
     class Deployment:
-        def one_shot_services(self, role):
-            return ["scenario-simulator", "loader"]
+        one_shots = {(None, False): {"scenario-simulator", "loader"}}
 
     class Selection:
         role = None
+        gpu = False
 
     # "old" existed before this up, which left it as it was; "new" failed after it.
     assert cli_compose.failed_services(Deployment(), Selection(), list(rows), {"old": 0}) == ["loader"]
@@ -1902,8 +1917,7 @@ def test_only_a_kit_deployment_names_a_base(tmp_path):
     directory = root / "deployments/on-top"
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "On top", "base": "example",
-        "compose": {"files": ["compose.yaml"]},
+        "description": "On top", "base": "example",
     }))
     (directory / "compose.yaml").write_text("services:\n  extra:\n    image: busybox:1.36.1\n")
     edit_manifest(root, lambda document: document["deployments"].update({"on-top": {"path": "deployments/on-top"}}))

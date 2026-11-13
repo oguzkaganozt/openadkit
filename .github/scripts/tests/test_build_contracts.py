@@ -230,8 +230,7 @@ def test_safety_island_simulation_keeps_planning_simulations_stack():
 
     base, standalone = (json.loads((path / "deployment.json").read_text(encoding="utf-8")) for path in (planning, island))
     assert standalone["verify"] == base["verify"]
-    assert standalone["compose"]["oneShotServices"] == base["compose"]["oneShotServices"]
-    assert standalone["compose"]["waitTimeout"] == base["compose"]["waitTimeout"]
+    assert standalone["waitTimeout"] == base["waitTimeout"]
     assert [item for item in base["data"] if not item.get("gpu")] == standalone["data"][:1]
 
 
@@ -260,8 +259,7 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
         "deployments": {"world": {"path": "deployments/world"}}, "externalImages": {},
     }))
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "Own simulator",
-        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
+        "description": "Own simulator", "base": "carla-simulation",
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "compose.yaml").write_text(
@@ -288,8 +286,7 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     directory = kit / "deployments/manual"
     directory.mkdir()
     (directory / "deployment.json").write_text(json.dumps({
-        "schemaVersion": 2, "description": "Drive by hand",
-        "base": "carla-simulation", "compose": {"files": ["compose.yaml"]},
+        "description": "Drive by hand", "base": "carla-simulation",
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "compose.yaml").write_text(

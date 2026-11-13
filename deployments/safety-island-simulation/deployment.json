@@ -1,12 +1,6 @@
 {
-  "schemaVersion": 2,
   "description": "Planning Simulation controlled by the Safety Island",
-  "shared": ["shared"],
-  "compose": {
-    "files": ["compose.yaml"],
-    "oneShotServices": ["map-check"],
-    "waitTimeout": 600
-  },
+  "waitTimeout": 600,
   "verify": {
     "service": "api",
     "command": ["python3", "/openadkit/checks/drive_to_goal.py"]

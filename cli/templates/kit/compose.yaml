@@ -2,21 +2,16 @@
 include:
   - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml
 
-# Add services here. One that runs your overlay packages uses an Open AD Kit
-# image and mounts the workspace:
+# Add services here. One that runs your overlay packages extends the services'
+# shared base, which gives it the host network, the DDS settings, the config
+# overrides and the overlay workspace, and adds an Open AD Kit image:
 #
 #   my-node:
+#     extends:
+#       file: ${OPENADKIT_ROOT}/deployments/shared/services/base.yaml
+#       service: autoware
 #     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
-#     network_mode: host
-#     init: true
-#     ipc: host
-#     env_file:
-#       - ${OPENADKIT_ROOT}/deployments/shared/runtime.env
-#     volumes:
-#       - ${OPENADKIT_ROOT}/deployments/shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-#       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
 #     command: ros2 run my_package my_node
-#     restart: on-failure
 #
 # A healthcheck on a service makes `openadkit run` wait for it to pass.
 services: {}

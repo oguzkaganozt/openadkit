@@ -8,8 +8,8 @@ CLI, the images and the catalog. Start one with `openadkit new`
 ## Pin the Release
 
 In the kit's `openadkit.json`, `kind` is `kit` and `extends` names a published
-release tag or, for development, the path of a source checkout. Manifests use
-`schemaVersion: 2`; older ones are rejected.
+release tag or, for development, the path of a source checkout. The kit's
+`openadkit.json` has `schemaVersion: 2`; older ones are rejected.
 
 - **The pinned release runs the kit.** The CLI finds it under
   `~/.local/share/openadkit/openadkit-<tag>` (`OPENADKIT_INSTALL_DIR` to
@@ -183,10 +183,8 @@ To replace one role of a base that runs as split-host roles, include only the
 other role's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes
 `${OPENADKIT_BASE_DEPLOYMENT}/compose.autoware.yaml`: no service in it depends
-on a CARLA service. The base's `oneShotServices` that the kit's services leave
-out are skipped; the kit's own must exist. The same holds for the verify step:
-a kit that leaves out the service of its base's verify step has none, until it
-names its own.
+on a CARLA service. A kit that leaves out the service of its base's verify step
+has none, until it names its own.
 
 ### 5. Image Replacement
 

@@ -39,9 +39,13 @@ This page lists what that promise covers. Within one major version:
 
 ### Manifests
 
-- `openadkit.json` (the release manifest, or a kit's kit manifest) and the
-  deployment manifest `deployment.json` at `schemaVersion: 2`: their fields
-  and what they mean. A deployment is named by its key in `openadkit.json`.
+- `openadkit.json` (the release manifest, or a kit's kit manifest) at
+  `schemaVersion: 2`, and the deployment manifest `deployment.json`: their
+  fields and what they mean. A deployment is named by its key in
+  `openadkit.json`, and its Compose files by convention: `compose.yaml`,
+  `compose.gpu.yaml` for the GPU mode, and `compose.<role>.yaml` with
+  `compose.zenoh.yaml` for a split-host role. A service with
+  `restart: "no"` is a one-shot service.
 
 ### Kits
 

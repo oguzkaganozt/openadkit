@@ -5,7 +5,6 @@
 # This file selects the stack and owns its topology: depends_on and any
 # deployment-specific mounts or overrides.
 include:
-  - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
   - ../shared/services/planning.yaml
   - ../shared/services/vehicle.yaml
@@ -17,11 +16,6 @@ include:
   - ../shared/services/visualizer.yaml
 
 services:
-  map:
-    depends_on:
-      map-check:
-        condition: service_completed_successfully
-
   planning:
     depends_on:
       - map

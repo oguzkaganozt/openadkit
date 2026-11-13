@@ -1,27 +1,14 @@
 {
-  "schemaVersion": 2,
   "description": "Autoware driving in the CARLA simulator",
   "evidence": {"exempt": "Needs an NVIDIA GPU; the CI runners have none."},
-  "shared": ["shared"],
-  "compose": {
-    "files": ["compose.yaml"],
-    "gpuFiles": [],
-    "oneShotServices": ["map-check", "carla-map-loader"],
-    "waitTimeout": 480
-  },
+  "waitTimeout": 480,
   "roles": {
     "autoware": {
       "rosDomainId": 1,
-      "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
-      "requiredFiles": ["config/zenoh.json5"],
-      "oneShotServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "carla": {
       "rosDomainId": 2,
-      "files": ["compose.carla.yaml", "compose.zenoh.yaml"],
-      "requiredFiles": ["config/zenoh.json5"],
-      "oneShotServices": ["carla-map-loader"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
   },

@@ -10,7 +10,6 @@ from typing import Any
 
 from manifest import (
     ALLOWED_BASE_KEYS,
-    ALLOWED_KIT_COMPOSE_KEYS,
     ALLOWED_KIT_DEPLOYMENT_KEYS,
     ALLOWED_KIT_KEYS,
     DEVEL_IMAGE_TARGET,
@@ -21,6 +20,7 @@ from manifest import (
     VERSION_RE,
     DeploymentRef,
     OpenADKitError,
+    compose_layout,
     ensure_safe_existing,
     load_json,
     narrow_requirements,
@@ -34,10 +34,10 @@ from manifest import (
     require_string,
     safe_relative,
     sha256_file,
-    validate_compose,
     validate_data,
     validate_deployment_manifest,
     validate_verify,
+    validate_wait_timeout,
 )
 
 
@@ -213,8 +213,8 @@ class Deployment:
         base: Deployment | None = None,
     ) -> None:
         self.root = root
-        # Kept for provenance and the inherited one-shot services.
-        # Runtime layers below are resolved once; they never delegate to base.
+        # Kept for provenance. Runtime layers below are resolved once; they
+        # never delegate to base.
         self.base = base
         self.directory = directory
         self.manifest = manifest
@@ -227,6 +227,8 @@ class Deployment:
         self.verify: dict[str, Any] | None = manifest["verify"]
         # A kit deployment that names no verify step runs its base's.
         self.verify_inherited = False
+        # Services that run once and exit, read from each Compose model (compose.one_shot_services).
+        self.one_shots: dict[tuple[str | None, bool], set[str]] = {}
         # Why CI cannot produce evidence for this deployment, if it cannot.
         self.evidence_exemption: str | None = manifest["evidence"].get("exempt")
         self.project = f"openadkit-{self.name}"
@@ -308,11 +310,6 @@ class Deployment:
             )
         return files
 
-    def one_shot_services(self, role: str | None = None) -> list[str]:
-        if role is None:
-            return list(self.compose["oneShotServices"])
-        return list(self.roles[role]["oneShotServices"])
-
 
 def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
     manifest = validate_deployment_manifest(root, directory, name)
@@ -346,7 +343,10 @@ def _load_kit_deployment(
         )
     base = get_deployment(extended_root, extended, base_name)
 
-    compose = validate_compose(manifest.get("compose"), ALLOWED_KIT_COMPOSE_KEYS, base.compose["waitTimeout"])
+    # A kit's GPU mode is its base's: it adds no GPU overlay of its own.
+    compose = compose_layout(
+        directory, validate_wait_timeout(manifest.get("waitTimeout", base.compose["waitTimeout"])), gpu=False
+    )
     requirements = narrow_requirements(base.requirements, manifest.get("requirements"))
     # Without a GPU mode it never mounts the data only that mode uses.
     base_data = [item for item in base.data if requirements["gpu"] != "none" or not item.get("gpu")]
@@ -363,10 +363,7 @@ def _load_kit_deployment(
     merged = {
         "name": manifest["name"],
         "description": manifest["description"],
-        "compose": {
-            **compose,
-            "oneShotServices": list(dict.fromkeys(base.compose["oneShotServices"] + compose["oneShotServices"])),
-        },
+        "compose": compose,
         "roles": {},
         "requirements": requirements,
         "data": base_data + own_data,

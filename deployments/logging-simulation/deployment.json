@@ -1,13 +1,5 @@
 {
-  "schemaVersion": 2,
   "description": "Recorded sensor data replayed through sensing, perception and localization",
-  "shared": ["shared"],
-  "compose": {
-    "files": ["compose.yaml"],
-    "gpuFiles": ["compose.gpu.yaml"],
-    "oneShotServices": ["map-check", "rosbag"],
-    "waitTimeout": 300
-  },
   "verify": {
     "service": "api",
     "command": ["python3", "/openadkit/checks/follow_replay.py"]

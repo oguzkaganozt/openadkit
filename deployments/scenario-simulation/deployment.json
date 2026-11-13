@@ -1,29 +1,16 @@
 {
-  "schemaVersion": 2,
   "description": "Autoware driving test scenarios in Scenario Simulator",
-  "shared": ["shared"],
-  "compose": {
-    "files": ["compose.yaml"],
-    "gpuFiles": [],
-    "oneShotServices": ["map-check", "scenario-simulator"],
-    "waitTimeout": 600
-  },
+  "waitTimeout": 600,
   "verify": {
     "service": "scenario-simulator"
   },
   "roles": {
     "autoware": {
       "rosDomainId": 1,
-      "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
-      "requiredFiles": ["config/zenoh.json5"],
-      "oneShotServices": ["map-check"],
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "scenario": {
       "rosDomainId": 2,
-      "files": ["compose.scenario.yaml", "compose.zenoh.yaml"],
-      "requiredFiles": ["config/zenoh.json5"],
-      "oneShotServices": ["scenario-simulator"],
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
   },

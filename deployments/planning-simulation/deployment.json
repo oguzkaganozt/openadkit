@@ -1,13 +1,6 @@
 {
-  "schemaVersion": 2,
   "description": "Autoware planning and control in the built-in simulator",
-  "shared": ["shared"],
-  "compose": {
-    "files": ["compose.yaml"],
-    "gpuFiles": ["compose.gpu.yaml"],
-    "oneShotServices": ["map-check"],
-    "waitTimeout": 600
-  },
+  "waitTimeout": 600,
   "verify": {
     "service": "api",
     "command": ["python3", "/openadkit/checks/drive_to_goal.py"]

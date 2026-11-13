@@ -17,13 +17,12 @@ Without `--role`, the deployment runs on one host as usual.
 
 ## How It Works
 
-Each role runs two Compose files, named in the manifest: `compose.<role>.yaml`
-holds the role's services, and `compose.zenoh.yaml` adds the Zenoh bridge with
-the deployment's `config/zenoh.json5` allowlist. The CLI only selects the
-role's files and passes its `rosDomainId` as
-`OPENADKIT_ROS_DOMAIN_ID`; it adds no service of its own. The allowlist is one
-of the role's `requiredFiles`, so a missing or symlinked file fails validation
-before any container starts.
+Each role runs two Compose files, found by name: `compose.<role>.yaml` holds
+the role's services, and `compose.zenoh.yaml` adds the Zenoh bridge with the
+deployment's `config/zenoh.json5` allowlist. The manifest gives each role its
+`rosDomainId`, which the CLI passes as `OPENADKIT_ROS_DOMAIN_ID`, and the
+variables it needs (`requiredEnv`); the CLI adds no service of its own. A
+missing or symlinked allowlist fails validation before any container starts.
 
 Each role is isolated: its own Compose project
 (`openadkit-<deployment>_<role>`), container names and ROS domain. The roles

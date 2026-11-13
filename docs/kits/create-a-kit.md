@@ -23,8 +23,8 @@ my-kit/
 - `openadkit.json` pins the Open AD Kit release (`extends`), lists extra images you pin
   (`externalImages`), and points the `my-kit` deployment at `"."`, this same
   directory.
-- `deployment.json` names the base deployment. Compose reads
-  `compose.yaml` unless `compose.files` names others. Architecture, ROS
+- `deployment.json` names the base deployment; Compose reads `compose.yaml`.
+  Architecture, ROS
   distro, GPU, downloads and the verify step are inherited; `requirements` may
   narrow the first three.
 - `compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml`;

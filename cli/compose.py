@@ -265,24 +265,30 @@ def render(deployment: Deployment, selection: Selection) -> set[str]:
         .stdout.splitlines()
     )
     # The Compose project is the deployment: every configured service is meant
-    # to run. Only the one-shot services are cross-checked, so a typo in a
-    # oneShotServices entry still fails fast. A kit inherits its base's one-shot services
-    # but may leave their side of the base out (one service layer of it).
-    inherited = set(deployment.base.one_shot_services()) if deployment.base else set()
-    unknown = sorted(set(deployment.one_shot_services(selection.role)) - configured - inherited)
+    # to run, and the manifest names one only for its verify step.
     if deployment.verify and deployment.verify["service"] not in configured:
         if deployment.verify_inherited:
-            # As with the inherited one-shot services: a kit that leaves out
-            # the service of its base's verify step has no verify step.
+            # A kit that leaves out the service of its base's verify step has no verify step.
             deployment.verify = None
         elif selection.role is None:
             # A role may leave the verify service to another role; the whole graph must have it.
-            unknown.append(deployment.verify["service"])
-    if unknown:
-        raise OpenADKitError(
-            "manifest references unknown Compose service(s): " + ", ".join(unknown)
-        )
+            raise OpenADKitError(
+                f"manifest references unknown Compose service(s): {deployment.verify['service']}"
+            )
     return configured
+
+
+def one_shot_services(deployment: Deployment, selection: Selection) -> set[str]:
+    """Services that do their work and exit: those with restart: "no" in the
+    Compose model, which other services wait on with service_completed_successfully.
+    Read once per command."""
+    key = (selection.role, selection.gpu)
+    if key not in deployment.one_shots:
+        model = json.loads(run_compose(deployment, selection, ["config", "--format", "json"]).stdout or "{}")
+        deployment.one_shots[key] = {
+            name for name, service in (model.get("services") or {}).items() if service.get("restart") == "no"
+        }
+    return deployment.one_shots[key]
 
 
 def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
@@ -413,7 +419,7 @@ def failed_services(
         container, service, restarts, state, exit_code, health = line.split()
         # One-shot services may finish, but not fail. One that failed before
         # this `up`, which left its container as it was, is no news.
-        if service in deployment.one_shot_services(selection.role):
+        if service in one_shot_services(deployment, selection):
             if state == "exited" and exit_code != "0" and container not in baseline:
                 failed.add(service)
             continue
@@ -465,9 +471,7 @@ def start(
     pull = ["pull", "--policy", "missing"]
     run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
 
-    for service in deployment.one_shot_services(selection.role):
-        if service not in services:
-            continue
+    for service in sorted(one_shot_services(deployment, selection) & services):
         run_compose(deployment, selection, ["rm", "--stop", "--force", service], show=True)
 
     up(deployment, selection, ["--remove-orphans", *scale_to_zero(skipped)])
