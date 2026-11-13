@@ -33,8 +33,8 @@ openadkit logs --follow
 openadkit stop
 ```
 
-- Add `--ros-distro jazzy` to `validate`, `fetch`, `run` or `build` to select
-  Jazzy; Humble is the default.
+- Add `--ros-distro jazzy` to `validate`, `run` or `build` to select Jazzy;
+  Humble is the default. `fetch` takes no distro: the data is the same for both.
 - Add `--gpu` for the optional GPU mode of Planning Simulation (the Diffusion
   Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
   mode turns on by itself.

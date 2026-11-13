@@ -1,6 +1,6 @@
-# Bash completion for openadkit and its short name, adkit.
+# Bash completion for openadkit.
 #
-# `openadkit install` links this file as both commands into
+# `openadkit install` links this file into
 # ~/.local/share/bash-completion/completions, where bash-completion loads it on
 # the first Tab. Deployment names come from `list --json`: the kit around the
 # current directory, or else the active release, as the command resolves them.
@@ -32,10 +32,7 @@ _openadkit() {
         --ros-distro)
             mapfile -t COMPREPLY < <(compgen -W "humble jazzy" -- "${cur}")
             return ;;
-        --pull)
-            mapfile -t COMPREPLY < <(compgen -W "missing always never" -- "${cur}")
-            return ;;
-        --output | --destination | --ws)
+        --output | --ws)
             mapfile -t COMPREPLY < <(compgen -d -- "${cur}")
             return ;;
         --role)
@@ -46,15 +43,15 @@ _openadkit() {
 
     local options=""
     case ${command} in
-        install) options="--version --destination --force --help" ;;
+        install) options="--version --force --help" ;;
         upgrade) options="--check --help" ;;
         setup) options="--gpu --no-check --help" ;;
         uninstall) options="--all --help" ;;
         list | version) options="--json --verbose --help" ;;
         validate) options="--ros-distro --gpu --role --ws --data --json --verbose --help" ;;
         config) options="--ros-distro --gpu --role --ws --verbose --help" ;;
-        fetch) options="--ros-distro --force --verbose --help" ;;
-        run) options="--ros-distro --gpu --role --ws --pull --no-visualizer --verify --verbose --help" ;;
+        fetch) options="--force --verbose --help" ;;
+        run) options="--ros-distro --gpu --role --ws --no-visualizer --verify --verbose --help" ;;
         build) options="--ros-distro --verbose --help" ;;
         new) options="--base --verbose --help" ;;
         clean) options="--yes --verbose --help" ;;
@@ -85,7 +82,7 @@ _openadkit() {
     for ((index = 2; index < COMP_CWORD; index++)); do
         word=${COMP_WORDS[index]}
         case ${word} in
-            --ros-distro | --role | --pull | --output | --ws) ((index++)) ;;
+            --ros-distro | --role | --output | --ws) ((index++)) ;;
             -*) ;;
             *) return ;;
         esac
@@ -93,4 +90,4 @@ _openadkit() {
     mapfile -t COMPREPLY < <(compgen -W "$(_openadkit_deployments "${COMP_WORDS[0]}")" -- "${cur}")
 }
 
-complete -F _openadkit openadkit adkit
+complete -F _openadkit openadkit

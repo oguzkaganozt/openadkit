@@ -39,8 +39,8 @@ checkouts update with git pull or git checkout instead.
 UNINSTALL_USAGE = """\
 Usage: openadkit uninstall [--all]
 
-Removes the active Open AD Kit release installation, its launcher, the adkit
-short name and Tab completion.
+Removes the active Open AD Kit release installation, its launcher and Tab
+completion.
 Downloaded data is not touched. Refuses while an openadkit-* Compose project
 is still running, because uninstall removes the launcher `openadkit stop` needs.
 
@@ -102,12 +102,11 @@ def launcher_path() -> Path:
     return Path(expand_home("$HOME")) / ".local/bin/openadkit"
 
 
-def shortcut_paths() -> list[Path]:
-    """The short name and the completion links the installer puts beside the launcher."""
+def completion_path() -> Path:
+    """The completion link the installer puts beside the launcher."""
     home = Path(expand_home("$HOME"))
     data = Path(os.environ.get("XDG_DATA_HOME") or home / ".local/share")
-    completions = data / "bash-completion/completions"
-    return [home / ".local/bin/adkit", completions / "openadkit", completions / "adkit"]
+    return data / "bash-completion/completions/openadkit"
 
 
 def active_release(root: Path, command: str) -> str:
@@ -138,7 +137,7 @@ def active_release(root: Path, command: str) -> str:
     if root.name != f"openadkit-{version}":
         raise OpenADKitError(
             f"installed release is not in a versioned directory: {root}; "
-            "use openadkit install --destination"
+            "reinstall it with openadkit install"
         )
     launcher = launcher_path()
     if launcher.exists() and not launcher.is_symlink():
@@ -155,13 +154,15 @@ def active_release(root: Path, command: str) -> str:
 
 
 def installer(root: Path, *arguments: str, capture: bool = False) -> str:
-    """Run this release's launcher installer; its errors already reach stderr."""
+    """Run this release's launcher installer, into the directory that holds
+    root; its errors already reach stderr."""
     sys.stdout.flush()  # Keep our output ahead of the installer's own.
     result = subprocess.run(
         [str(root / "openadkit"), "install", *arguments],
         stdout=subprocess.PIPE if capture else None,
         text=True,
         check=False,
+        env=os.environ | {"OPENADKIT_INSTALL_DIR": str(root.parent)},
     )
     if result.returncode != 0:
         print(result.stdout or "", end="")
@@ -208,7 +209,7 @@ def upgrade(root: Path, arguments: Sequence[str]) -> int:
     # Force replacement so a version directory left behind by a rollback or a
     # previous install is re-verified and reinstalled instead of failing.
     destination = root.parent
-    installer(root, "--version", latest, "--destination", str(destination), "--force", "--no-next-steps")
+    installer(root, "--version", latest, "--force", "--no-next-steps")
     print(
         f"Upgraded {current} -> {latest} "
         f"(previous version kept at {destination / f'openadkit-{current}'})"
@@ -273,7 +274,7 @@ def uninstall(root: Path, arguments: Sequence[str]) -> int:
     # Compare where the links lead, not their text: the installer writes the
     # destination as given, which may end in "/" or pass through a linked HOME.
     shortcuts = [
-        path for path in shortcut_paths()
+        path for path in [completion_path()]
         if path.is_symlink() and path.resolve().is_relative_to(root.resolve())
     ]
     shutil.rmtree(root)

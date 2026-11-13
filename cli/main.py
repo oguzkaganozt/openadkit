@@ -138,8 +138,7 @@ def install_pinned_release(version: str) -> None:
           "(your openadkit stays as it is)", file=sys.stderr, flush=True)
     # stdout stays the command's own, for --json.
     result = subprocess.run(
-        [str(root_path() / "openadkit"), "install", "--version", version,
-         "--destination", str(install_root()), "--no-activate", "--no-next-steps"],
+        [str(root_path() / "openadkit"), "install", "--version", version, "--no-activate", "--no-next-steps"],
         stdout=sys.stderr, check=False,
     )
     if result.returncode != 0:
@@ -397,15 +396,13 @@ def deployment_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) -> None:
-    """The deployment and how to run it; fetch takes only the distro."""
+def selection_arguments(parser: argparse.ArgumentParser) -> None:
+    """The deployment and how to run it."""
     deployment_argument(parser)
     parser.add_argument(
         "--ros-distro", metavar="DISTRO",
         help="ROS distro (default: this Open AD Kit's default, or the deployment's first if it does not run on that)",
     )
-    if not run:
-        return
     parser.add_argument(
         "--gpu", action="store_true",
         help="run in GPU mode, for a deployment with an optional one (one that requires a GPU always uses it)",
@@ -426,16 +423,13 @@ def validate_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def fetch_arguments(parser: argparse.ArgumentParser) -> None:
-    selection_arguments(parser, run=False)
+    # Data destinations do not depend on the distro, so fetch takes none.
+    deployment_argument(parser)
     parser.add_argument("--force", action="store_true", help="replace existing data even if it already validates")
 
 
 def run_arguments(parser: argparse.ArgumentParser) -> None:
     selection_arguments(parser)
-    parser.add_argument(
-        "--pull", choices=("missing", "always", "never"), default="missing",
-        help="image pull policy (default: missing)",
-    )
     parser.add_argument(
         "--no-visualizer", action="store_true", help="start without the visualizer, for hosts nobody watches"
     )
@@ -569,7 +563,7 @@ def select(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.
         deployment.use_workspace(Path(args.ws).expanduser().resolve())
     compose.ensure_runtime_user()
     return settings.resolve(
-        deployment, catalog, args.ros_distro, getattr(args, "gpu", False),
+        deployment, catalog, getattr(args, "ros_distro", None), getattr(args, "gpu", False),
         role=getattr(args, "role", None), data_only=args.command == "fetch",
     )
 
@@ -678,7 +672,7 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
         "skipped": sorted(skipped),
     })
     started = time.monotonic()
-    compose.start(deployment, selection, args.pull, services, skipped)
+    compose.start(deployment, selection, services, skipped)
     report = compose.run_report(deployment, selection, catalog, model, started)
     compose.write_run_report(deployment, report)
     print_run_next_steps(
@@ -877,7 +871,7 @@ ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "cle
 
 # The launcher runs these itself; main.py sees them only from a broken install.
 INSTALL_USAGE = {
-    "install": "openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]",
+    "install": "openadkit install [--version vX.Y.Z] [--force]",
     "upgrade": "openadkit upgrade [--check]",
     "setup": "openadkit setup [--gpu] [--no-check]",
     "uninstall": "openadkit uninstall [--all]",

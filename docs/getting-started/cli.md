@@ -24,7 +24,6 @@ The commands you need after the first run. `openadkit --help` and
 openadkit list                                    # the deployments you can run
 openadkit run planning-simulation
 openadkit run planning-simulation --verify        # then run its verify step
-openadkit run planning-simulation --pull always   # refresh the images first
 openadkit run planning-simulation --no-visualizer
 ```
 
@@ -257,10 +256,9 @@ keeps your host settings in `~/.config/openadkit`, results and recordings in
 - **Docker commands:** commands print what they do in plain terms; add
   `--verbose` (or set `OPENADKIT_VERBOSE=1`) to also see the docker commands
   they run, status queries aside.
-- **Short name and Tab completion:** `openadkit install` also links `adkit`, a
-  short name for the same launcher. Tab completes commands, options and
-  deployment names for both names, from the kit around the current directory
-  or else the active release; bash-completion (installed on Ubuntu by default)
-  loads it from `~/.local/share/bash-completion/completions` in a new shell.
-  The installer leaves an `adkit` or a completion file it did not install
-  alone, and `openadkit uninstall` removes only its own links.
+- **Tab completion:** Tab completes commands, options and deployment names,
+  from the kit around the current directory or else the active release;
+  bash-completion (installed on Ubuntu by default) loads it from
+  `~/.local/share/bash-completion/completions` in a new shell. The installer
+  leaves a completion file it did not install alone, and `openadkit uninstall`
+  removes only its own link.

@@ -118,7 +118,7 @@ role_cli() {
 # Generate the AutoSD units, install them as an image would and start them.
 start_quadlet() {
     local tree="${out}/quadlet" units
-    "${cli}" fetch "${deployment}" --ros-distro "${distro}" || return 1
+    "${cli}" fetch "${deployment}" || return 1
     "${cli}" config "${deployment}" --ros-distro "${distro}" |
         python3 "${script_dir}/../../../platforms/autosd/quadlet.py" --output "${tree}" --without visualizer || return 1
     # Only the two trees, and without their owner or modes: cp -a would give

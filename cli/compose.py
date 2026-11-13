@@ -456,15 +456,14 @@ def check_services_stay_up(
 def start(
     deployment: Deployment,
     selection: Selection,
-    pull_policy: str,
     services: set[str],
     skipped: set[str] | None = None,
 ) -> None:
-    """Start `services` of the rendered set; `skipped` ones get no container."""
+    """Start `services` of the rendered set, pulling the images they miss;
+    `skipped` ones get no container."""
     skipped = skipped or set()
-    if pull_policy != "never":
-        pull = ["pull", "--policy", pull_policy]
-        run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
+    pull = ["pull", "--policy", "missing"]
+    run_compose(deployment, selection, pull + (sorted(services - skipped) if skipped else []), show=True)
 
     for service in deployment.one_shot_services(selection.role):
         if service not in services:
