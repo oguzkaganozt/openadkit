@@ -139,6 +139,8 @@ checkout_release_source() {
 
 # The newest <name> artifact from a completed <workflow> run on the release
 # branch decides: its run must have succeeded and <passed> must accept it.
+# Only this repository's own runs count, not a pull request's: a pull request
+# runs its own code, and one from a fork can name its branch like this one.
 # <eligible> skips artifacts that are not about this release, such as an
 # evidence run that tested another commit against this build's images.
 # Usage: select_latest_artifact <name> <workflow> <file> <eligible> <passed> <dir>
@@ -160,8 +162,10 @@ select_latest_artifact() {
     run_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}" --jq '.workflow_run.id // empty')
     [ -n "${run_id}" ] || continue
     run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" 2>/dev/null) || continue
-    jq -e --arg workflow "${workflow}" --arg branch "${source_branch}" '
-      .path == $workflow and .head_branch == $branch and .status == "completed"' \
+    jq -e --arg workflow "${workflow}" --arg branch "${source_branch}" --arg repo "${GITHUB_REPOSITORY}" '
+      .path == $workflow and .head_branch == $branch and .status == "completed"
+      and .event != "pull_request" and .event != "pull_request_target"
+      and .head_repository.full_name == $repo' \
       <<<"${run_json}" >/dev/null || continue
 
     rm -rf "${dir}"

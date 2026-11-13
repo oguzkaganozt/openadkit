@@ -111,10 +111,12 @@ function "planning_base_paths" {
 }
 
 group "default" {
-  targets = ["universe-common", "component"]
+  targets = ["common", "component"]
 }
 
-group "universe-common" {
+// Named apart from the universe-common target: Bake resolves a name to the
+// group first, which would build the devel image with every universe-common.
+group "common" {
   targets = ["universe-common-devel", "universe-common"]
 }
 

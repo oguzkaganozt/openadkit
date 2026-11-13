@@ -38,6 +38,12 @@ publish() {
     [ "${PUBLISH_LATEST_ALIASES}" != true ] || latest=true
   fi
   gh release edit "${VERSION}" --draft=false --prerelease="${prerelease}" --latest="${latest}"
+  # The repository setting is not readable with the workflow token; the
+  # release itself says whether publishing froze it.
+  if [ "$(gh api "repos/{owner}/{repo}/releases/tags/${VERSION}" --jq '.immutable')" != true ]; then
+    echo "Release ${VERSION} is published but not immutable: turn on immutable releases in the repository settings" >&2
+    exit 1
+  fi
 }
 
 case "${1:-}" in
