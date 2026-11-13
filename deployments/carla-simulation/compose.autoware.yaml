@@ -7,7 +7,6 @@
 # brings its own simulator includes this file, and
 # ../shared/services/visualizer.yaml where it wants RViz.
 include:
-  - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
   - ../shared/services/system.yaml
   - ../shared/services/sensing.yaml
@@ -19,11 +18,6 @@ include:
   - ../shared/services/api.yaml
 
 services:
-  map:
-    depends_on:
-      map-check:
-        condition: service_completed_successfully
-
   # SYSTEM_DIAGNOSTICS_GRAPH=autoware-carla.yaml (settings.env) selects the
   # CARLA diagnostics graph; the shared system definition is unchanged.
   system:

@@ -16,17 +16,13 @@ services:
     # The kit's own C++ node from overlay_ws (extension point 3), built by
     # openadkit build. It runs in an Open AD Kit runtime image, whose
     # entrypoint hook sources the overlay workspace mounted below.
+    # The services' shared base: host network, DDS settings, config overrides
+    # and the overlay workspace.
+    extends:
+      file: ${OPENADKIT_ROOT}/deployments/shared/services/base.yaml
+      service: autoware
     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
-    network_mode: host
-    # Without an init process the node is PID 1 and ignores the stop signal:
-    # every stop and restart then waits ten seconds for Docker to kill it.
-    init: true
-    ipc: host
-    env_file:
-      - ${OPENADKIT_ROOT}/deployments/shared/runtime.env
     volumes:
-      - ${OPENADKIT_ROOT}/deployments/shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
-      - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
       - ./checks:/openadkit/checks:ro
     command: ros2 run acme_probe probe
     # This kit's readiness, which `openadkit run` waits for (checks/example_kit.py).

@@ -22,7 +22,7 @@ it.
 | **Release manifest** | `openadkit.json` of a release or a source checkout: its deployments and the images it pins. |
 | [**Settings**](getting-started/cli.md#settings) | `KEY=value` variables a deployment runs with, mostly Autoware launch arguments and host paths such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings. `run` and `restart` apply them. |
 | [**Host settings**](getting-started/cli.md#settings) | The settings of one host, in `~/.config/openadkit/<deployment>.env`. They are loaded last and survive upgrades. |
-| **One-shot service** | A service that does its work and exits, such as `map-check`. A deployment lists them in `oneShotServices`; they may finish but not fail. |
+| **One-shot service** | A service that does its work and exits, such as the scenario runner. Its Compose service has `restart: "no"`; it may finish but not fail. |
 | [**Role**](deployments/split-host.md) | What one host does in a split-host deployment, such as `autoware` or `scenario`, with its own services, Compose project, ROS domain and Zenoh endpoint. |
 
 ## Kits

@@ -6,7 +6,6 @@
 # This file selects the stack, owns its topology (depends_on), and adds
 # deployment-specific mounts and the rosbag player.
 include:
-  - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
   - ../shared/services/system.yaml
   - ../shared/services/vehicle.yaml
@@ -17,11 +16,6 @@ include:
   - ../shared/services/visualizer.yaml
 
 services:
-  map:
-    depends_on:
-      map-check:
-        condition: service_completed_successfully
-
   system:
     depends_on:
       - map

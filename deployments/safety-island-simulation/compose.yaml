@@ -5,7 +5,6 @@
 # follower would; domain_bridge carries the topics of the Safety Island's
 # released bridge-config.yaml between the two domains.
 include:
-  - ../shared/services/map-check.yaml
   - ../shared/services/map.yaml
   - ../shared/services/planning.yaml
   - ../shared/services/vehicle.yaml
@@ -17,11 +16,6 @@ include:
   - ../shared/services/visualizer.yaml
 
 services:
-  map:
-    depends_on:
-      map-check:
-        condition: service_completed_successfully
-
   planning:
     depends_on:
       - map
