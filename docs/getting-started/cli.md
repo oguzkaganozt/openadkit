@@ -223,8 +223,9 @@ openadkit install --version vOLD
 
 A version that is already installed becomes the active one as it is, without a
 download, so this works offline; `--force` downloads and replaces it. Images of
-a version you no longer use stay in Docker until you remove them, for example
-with `docker image prune --all`. A source checkout updates with `git pull`
+a version you no longer use stay in Docker until you remove them with
+`docker image rm`; `docker image ls ghcr.io/autowarefoundation/openadkit` lists
+them. A source checkout updates with `git pull`
 instead.
 
 ## Uninstall

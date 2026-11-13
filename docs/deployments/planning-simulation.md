@@ -51,8 +51,8 @@ hand on a GPU host.
 
 --8<-- "includes/visualizer-remote-access.md"
 
-In RViz, set an initial pose and a goal pose, then watch the vehicle drive the
-route. See the
+In RViz, set an initial pose and a goal pose, then press **AUTO** in the
+**OperationMode** section of the AutowareStatePanel to drive the route. See the
 [Autoware planning simulation guide](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle)
 for details.
 
