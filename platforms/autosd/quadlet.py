@@ -39,6 +39,11 @@ HEALTH_KEYS = {
 }
 # The CLI's mapping of the container user to the host user; AutoSD has no such user.
 DROPPED_ENVIRONMENT = {"HOST_UID", "HOST_GID"}
+# Compose restart policies and the systemd ones that behave the same.
+RESTART = {"always": "always", "on-failure": "on-failure"}
+# Mount sources that belong to the login session, such as the X11 cookie the
+# visualizer mounts, never go into an image.
+SESSION_PATHS = (Path("/run"), Path("/dev"))
 # AIB embeds a local file in one message that a large file does not fit; it
 # fetches a URL instead. Its runner mounts the working directory at /host.
 EMBEDDED_LIMIT = 1024 * 1024
@@ -89,7 +94,11 @@ def translate(name: str, service: dict[str, Any], services: dict[str, Any], ones
         if condition["condition"] not in ("service_started", "service_completed_successfully"):
             raise TranslationError(f"{name}: depends_on condition {condition['condition']} has no translation")
         target = unit_name(services, dependency)
-        unit += [f"Requires={target}.service", f"After={target}.service"]
+        unit += [f"{'Requires' if condition.get('required', True) else 'Wants'}={target}.service",
+                 f"After={target}.service"]
+        # Compose restarts this service with its dependency; systemd's PartOf= does the same.
+        if condition.get("restart"):
+            unit.append(f"PartOf={target}.service")
 
     # Podman has the flags for these, and they work on every Quadlet version.
     podman_arguments = []
@@ -117,6 +126,8 @@ def translate(name: str, service: dict[str, Any], services: dict[str, Any], ones
     if service.get("init") and not pid:
         container.append("RunInit=true")
     for key, value in sorted((service.get("environment") or {}).items()):
+        if value is None:
+            raise TranslationError(f"{name}: {key} takes its value from the host, which an image does not have")
         if key not in DROPPED_ENVIRONMENT:
             container.append(f"Environment={quote(f'{key}={value}')}")
     for volume in service.get("volumes", []):
@@ -129,10 +140,13 @@ def translate(name: str, service: dict[str, Any], services: dict[str, Any], ones
 
     # Pulling on a host without the embedded images can outlast the default timeout.
     system = ["TimeoutStartSec=0"]
+    restart = service.get("restart")
     if name in oneshots:
         system += ["Type=oneshot", "RemainAfterExit=yes"]
-    elif service.get("restart") not in (None, "no"):
-        system.append(f"Restart={service['restart']}")
+    elif restart not in (None, "no"):
+        if restart not in RESTART:
+            raise TranslationError(f"{name}: restart: {restart} has no translation")
+        system.append(f"Restart={RESTART[restart]}")
 
     sections = {
         "Unit": unit,
@@ -155,6 +169,8 @@ def healthcheck(name: str, health: dict[str, Any] | None) -> list[str]:
     test = health.get("test") or []
     if health.get("disable") or len(test) != 2 or test[0] != "CMD-SHELL":
         raise TranslationError(f"{name}: only a CMD-SHELL healthcheck has a translation")
+    if "\n" in test[1]:
+        raise TranslationError(f"{name}: a healthcheck command of several lines has no translation")
     command = test[1].replace("%", "%%")
     keys = [f"HealthCmd={command}"]
     keys += [f"{key}={health[option]}" for option, key in HEALTH_KEYS.items() if option in health]
@@ -178,6 +194,10 @@ def mounts(services: dict[str, Any]) -> dict[str, Path]:
             if not volume.get("read_only"):
                 raise TranslationError(f"{name}: writable {volume['target']} has no translation")
             source = Path(volume["source"])
+            if session_path(source):
+                raise TranslationError(
+                    f"{name}: {source} belongs to this login session, not to an image; leave {name} out with --without {name}"
+                )
             if found.setdefault(volume["target"], source) != source:
                 raise TranslationError(f"{volume['target']} has two sources")
             if not source.exists():
@@ -185,11 +205,25 @@ def mounts(services: dict[str, Any]) -> dict[str, Path]:
     return found
 
 
+def session_path(source: Path) -> bool:
+    xauthority = os.environ.get("XAUTHORITY")
+    return (
+        any(source.is_relative_to(root) for root in SESSION_PATHS)
+        or source.name == ".Xauthority"
+        or (xauthority is not None and source == Path(xauthority))
+    )
+
+
 def container_image(reference: str) -> dict[str, str]:
+    """The image's repository and its digest, or its tag; a registry port is no tag."""
     source, separator, digest = reference.partition("@")
+    repository, tag = source, ""
+    if ":" in source.rsplit("/", 1)[-1]:
+        repository, tag = source.rsplit(":", 1)
     if separator:
-        return {"source": source.rsplit(":", 1)[0] if ":" in source.rsplit("/", 1)[-1] else source, "digest": digest}
-    repository, _, tag = reference.rpartition(":")
+        return {"source": repository, "digest": digest}
+    if not tag:
+        raise TranslationError(f"{reference} has no tag or digest to embed")
     return {"source": repository, "tag": tag}
 
 
@@ -221,7 +255,12 @@ def manifest(services: dict[str, Any], output: Path, root_password_hash: str) ->
 
 
 def write(model: dict[str, Any], output: Path, without: list[str], root_password_hash: str | None = None) -> None:
-    services = {name: service for name, service in model["services"].items() if name not in without}
+    # A service without a container_name gets Compose's name for it, minus the replica number.
+    project = model.get("name", "openadkit")
+    services = {
+        name: {"container_name": f"{project}-{name}", **service}
+        for name, service in model["services"].items() if name not in without
+    }
     missing = sorted(set(without) - set(model["services"]))
     if missing:
         raise TranslationError(f"no such service to leave out: {', '.join(missing)}")
@@ -234,6 +273,9 @@ def write(model: dict[str, Any], output: Path, without: list[str], root_password
     # Translate first, so a refusal leaves no partial tree behind.
     units = {service["container_name"]: translate(name, service, services, oneshots) for name, service in services.items()}
     sources = mounts(services)
+    if root_password_hash:
+        for service in services.values():
+            container_image(service["image"])
     rootfs = output / "rootfs"
     if output.exists():
         raise TranslationError(f"{output} already exists")

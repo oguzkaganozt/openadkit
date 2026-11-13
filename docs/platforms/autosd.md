@@ -38,9 +38,10 @@ the same way, such as `openadkit config ./my-kit`.
 | `out/rootfs/usr/share/openadkit/` | The bind-mounted files and data, by mount target |
 | `out/image.aib.yml` | Automotive Image Builder manifest that embeds the images and `rootfs/`; written only with `--root-password-hash`, since an image has no default password |
 
-A Compose field the script does not translate stops it instead of being dropped.
-It covers what Planning Simulation uses; writable mounts, for example, have no
-translation yet.
+A Compose field or value the script does not translate stops it instead of
+being dropped. It covers what Planning Simulation uses; writable mounts, for
+example, have no translation yet. A mount of the login session, such as the
+visualizer's X11 cookie, stops it too, so leave the visualizer out.
 
 The units run as root with the deployment's host networking. They use the
 component images, and mapping them onto AutoSD's root and QM partitions is not
@@ -51,23 +52,6 @@ done yet.
     the ego to its goal. CI does not build or boot the image below. An image
     built from these units was driven once by hand: it booted in QEMU with
     SELinux enforcing and no outside network, and the ego arrived at its goal.
-
-## Run on a Podman Host
-
-The tree is what an image would contain, so a host with Podman 4.9 or newer,
-`catatonit` and systemd can run it:
-
-```bash
-sudo cp -a out/rootfs/. /
-sudo systemctl daemon-reload
-sudo systemctl start autoware-api autoware-control autoware-simulated-perception \
-  autoware-planning autoware-simulator autoware-system autoware-vehicle
-systemctl status 'autoware-*'
-journalctl -u autoware-control -f
-```
-
-Quadlet registers each `.container` file as a `.service` unit. The units pull
-their images on first start, which takes a while.
 
 ## Build an Image {: #building-an-autosd-image }
 
@@ -103,32 +87,14 @@ CentOS, or RHEL) with Automotive Image Builder, OSBuild, and QEMU installed.
 
 ## Run the Image
 
-With Automotive Image Builder's runner, `air`, installed:
+Run it with Automotive Image Builder's runner, `air`:
 
 ```bash
 air disk.qcow2
 ```
 
-Or with QEMU directly:
-
-```bash
-/usr/bin/qemu-system-x86_64 \
-  -drive file=/usr/share/OVMF/OVMF_CODE.fd,if=pflash,format=raw,unit=0,readonly=on \
-  -drive file=/usr/share/OVMF/OVMF_VARS.fd,if=pflash,format=raw,unit=1,snapshot=on,readonly=off \
-  -smp 20 \
-  -nographic \
-  -enable-kvm \
-  -m 16384 \
-  -machine q35 \
-  -cpu host \
-  -device virtio-net-pci,netdev=n0,mac=FE:00:e2:0d:ba:4d \
-  -netdev user,id=n0,net=10.0.2.0/24,hostfwd=tcp::2222-:22 \
-  -drive file=disk.qcow2,index=0,media=disk,format=qcow2,if=virtio,id=rootdisk,snapshot=off
-```
-
-`-m 16384` (16 GB) is the minimum for the Autoware stack; use `-m 32768` for
-heavier workloads. `-m 2G` is enough only to boot and explore the OS. Log in as
-`root` with the password you hashed in
+The Autoware stack needs at least 16 GB of memory in the virtual machine. Log in
+as `root` with the password you hashed in
 [Generate a Deployment](#generate-a-deployment), here `password`, which is for
 this demo only.
 

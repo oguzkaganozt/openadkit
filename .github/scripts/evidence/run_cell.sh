@@ -121,7 +121,11 @@ start_quadlet() {
     "${cli}" fetch "${deployment}" --ros-distro "${distro}" || return 1
     "${cli}" config "${deployment}" --ros-distro "${distro}" |
         python3 "${script_dir}/../../../platforms/autosd/quadlet.py" --output "${tree}" --without visualizer || return 1
-    sudo cp -a "${tree}/rootfs/." / || return 1
+    # Only the two trees, and without their owner or modes: cp -a would give
+    # the runner's /, /etc and /usr those of the generated tree.
+    sudo mkdir -p /etc/containers/systemd /usr/share/openadkit || return 1
+    sudo cp -r "${tree}/rootfs/etc/containers/systemd/." /etc/containers/systemd/ || return 1
+    sudo cp -r "${tree}/rootfs/usr/share/openadkit/." /usr/share/openadkit/ || return 1
     units=$(basename -a -s .container "${tree}"/rootfs/etc/containers/systemd/*.container)
     # The map is in the tree too; keep it out of the cell's artifacts.
     rm -rf "${tree}"
