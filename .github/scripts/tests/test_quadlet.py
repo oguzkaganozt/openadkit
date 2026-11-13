@@ -126,9 +126,20 @@ def test_a_large_file_reaches_the_image_builder_by_url(tmp_path, monkeypatch):
     ("ghcr.io/x/oak:tag", {"source": "ghcr.io/x/oak", "tag": "tag"}),
     ("ghcr.io/x/oak:tag@sha256:abc", {"source": "ghcr.io/x/oak", "digest": "sha256:abc"}),
     ("localhost:5000/oak@sha256:abc", {"source": "localhost:5000/oak", "digest": "sha256:abc"}),
+    ("localhost:5000/oak:tag", {"source": "localhost:5000/oak", "tag": "tag"}),
 ])
 def test_image_references(reference, expected):
     assert quadlet.container_image(reference) == expected
+
+
+@pytest.mark.parametrize("reference", ["busybox", "localhost:5000/oak"])
+def test_an_image_without_a_tag_or_digest_is_not_embedded(tmp_path, reference):
+    data = model(tmp_path)
+    data["services"]["map"]["image"] = reference
+    output = tmp_path / "out"
+    with pytest.raises(quadlet.TranslationError, match="no tag or digest"):
+        quadlet.write(data, output, [], PASSWORD_HASH)
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("change, message", [
@@ -140,6 +151,12 @@ def test_image_references(reference, expected):
     (lambda m: m["services"]["map"]["volumes"][0].update(source="/no/such/file"), "does not exist"),
     (lambda m: m["services"]["map"]["depends_on"]["map-check"].update(condition="service_healthy"), "service_healthy"),
     (lambda m: m["services"]["map"].update(healthcheck={"test": ["CMD", "true"]}), "CMD-SHELL healthcheck"),
+    (lambda m: m["services"]["map"].update(healthcheck={"test": ["CMD-SHELL", "a\nb"]}), "several lines"),
+    (lambda m: m["services"]["map"].update(restart="unless-stopped"), "restart: unless-stopped"),
+    (lambda m: m["services"]["map"].update(restart="on-failure:3"), "restart: on-failure:3"),
+    (lambda m: m["services"]["control"]["environment"].update(FROM_HOST=None), "FROM_HOST takes its value"),
+    (lambda m: m["services"]["map"]["volumes"][0].update(source="/run/user/1000/xauth_abc"), "login session"),
+    (lambda m: m["services"]["map"]["volumes"][0].update(source="/dev/null"), "--without map"),
 ])
 def test_what_has_no_translation_stops_and_writes_nothing(tmp_path, change, message):
     data = model(tmp_path)
@@ -148,6 +165,39 @@ def test_what_has_no_translation_stops_and_writes_nothing(tmp_path, change, mess
     with pytest.raises(quadlet.TranslationError, match=message):
         quadlet.write(data, output, [])
     assert not output.exists()
+
+
+def test_dependencies_keep_whether_they_are_required_and_restart_together(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data = model(tmp_path)
+    data["services"]["control"]["depends_on"]["map"].update(restart=True)
+    data["services"]["control"]["depends_on"]["map-check"] = {"condition": "service_started", "required": False}
+    output = tmp_path / "out"
+    quadlet.write(data, output, [])
+    control = unit(output, "autoware-control").splitlines()
+    assert "PartOf=autoware-map.service" in control
+    assert "Wants=autoware-map-check.service" in control and "Requires=autoware-map-check.service" not in control
+
+
+def test_a_service_without_a_container_name_takes_compose_s_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    data = model(tmp_path)
+    del data["services"]["control"]["container_name"]
+    output = tmp_path / "out"
+    quadlet.write(data, output, [])
+    assert "ContainerName=openadkit-example-control" in unit(output, "openadkit-example-control")
+
+
+def test_the_x11_cookie_of_the_session_never_goes_into_the_tree(tmp_path, monkeypatch):
+    cookie = tmp_path / "cookie"
+    cookie.write_text("secret")
+    monkeypatch.setenv("XAUTHORITY", str(cookie))
+    data = model(tmp_path)
+    data["services"]["map"]["volumes"].append(
+        {"type": "bind", "source": str(cookie), "target": "/tmp/.Xauthority", "read_only": True, "bind": {}})
+    with pytest.raises(quadlet.TranslationError, match="login session"):
+        quadlet.write(data, tmp_path / "out", [])
+    assert not (tmp_path / "out").exists()
 
 
 def test_a_healthcheck_keeps_its_timings_and_startup_interval(tmp_path, monkeypatch):
