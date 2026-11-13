@@ -21,9 +21,10 @@ Scenario and CARLA Simulation can also run as
 [split-host](split-host.md) roles, with Autoware on one host and the simulator
 on another over Zenoh (experimental).
 
-## Running a Deployment
+## Every Deployment
 
-Complete the [Quickstart](../getting-started/index.md) setup first.
+Complete the [Quickstart](../getting-started/index.md) setup first, with
+`openadkit setup --gpu` for a GPU mode.
 
 ```bash
 openadkit list
@@ -42,6 +43,16 @@ openadkit stop
   [Settings](../getting-started/cli.md#settings).
 
 [CLI & Maintenance](../getting-started/cli.md) covers the other commands.
+
+### Open the Visualizer
+
+--8<-- "includes/visualizer-remote-access.md"
+
+### Stop and Recover
+
+`openadkit stop` stops and removes the deployment. To replace missing or
+incomplete data, run `openadkit fetch <deployment> --force`. For other issues,
+see [Troubleshooting](../getting-started/troubleshooting.md).
 
 ## Your Own Kit
 

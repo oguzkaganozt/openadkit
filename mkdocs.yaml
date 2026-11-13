@@ -17,9 +17,7 @@ theme:
   features:
     - announce.dismiss
     - content.action.edit
-    - content.code.annotate
     - content.code.copy
-    - content.tabs.link
     - navigation.expand
     - navigation.footer
     - navigation.indexes
@@ -55,13 +53,15 @@ theme:
 extra_css:
   - assets/css/extra.css
 
+# Snippets, the macros module and the theme overrides are no pages.
+exclude_docs: |
+  /includes/
+  /macros.py
+  /requirements.txt
+  /overrides/
+  __pycache__/
+
 plugins:
-  - awesome-pages
-  - exclude:
-      regex:
-        - ^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?jpg|(.*\.)?pages).*$
-        - ^(.*/)?[^.]*$
-        - ^includes/.*\.md$
   - macros:
       # docs/macros.py: variables + catalog-generated tables.
       module_name: docs/macros
@@ -69,14 +69,12 @@ plugins:
   - search
 
 markdown_extensions:
-  - abbr
   - admonition
   - attr_list
   - md_in_html
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - footnotes
   - mdx_truly_sane_lists
   - pymdownx.details
   - pymdownx.highlight
@@ -88,9 +86,41 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
   - toc:
       permalink: "#"
       toc_depth: 3
       title: "On this page"
+
+nav:
+  - Introduction:
+      - index.md
+      - Glossary: glossary.md
+  - Getting Started:
+      - getting-started/index.md
+      - CLI & Maintenance: getting-started/cli.md
+      - Troubleshooting: getting-started/troubleshooting.md
+  - Deployments:
+      - deployments/index.md
+      - Planning Simulation: deployments/planning-simulation.md
+      - Scenario Simulation: deployments/scenario-simulation.md
+      - Logging Simulation: deployments/logging-simulation.md
+      - CARLA Simulation: deployments/carla-simulation.md
+      - Safety Island Simulation: deployments/safety-island-simulation.md
+      - Split-host Simulation: deployments/split-host.md
+  - Kits:
+      - Create a Kit: kits/create-a-kit.md
+      - Develop and Debug: kits/develop-and-debug.md
+      - Kit Guide: kits/kit-guide.md
+  - Components: components/index.md
+  - Platforms:
+      - platforms/index.md
+      - AutoSD: platforms/autosd.md
+  - Releases:
+      - releases/index.md
+      - Container Images & Versioning: releases/container-images.md
+      - Compatibility: releases/compatibility.md
+      - Evidence Policy: releases/evidence.md
+      - Verify a Release: releases/verification.md
+  - Development:
+      - Build from Source: development/build-from-source.md
+      - Release Process: development/release-process.md

@@ -5,8 +5,6 @@ Run predefined traffic scenarios with
 The deployment runs a scenario automatically and writes the results to the host.
 No GPU is required.
 
-Complete the [Quickstart](../getting-started/index.md) setup first.
-
 ## Run
 
 ```bash
@@ -17,15 +15,9 @@ openadkit logs --follow
 To run Autoware on one host and the scenario runner on another, see
 [Split-host Simulation](split-host.md).
 
---8<-- "includes/ros-distro.md"
-
 `run` downloads the Kashiwanoha map. Autoware takes about 90 seconds to
 initialize; the runner then executes the scenario and writes the results to
 `~/openadkit-output/scenario-simulation/results` (`run` prints the path).
-
-## Open the Visualizer
-
---8<-- "includes/visualizer-remote-access.md"
 
 ## Settings
 
@@ -67,12 +59,3 @@ This deployment changes one Autoware parameter with a
 [config override](../kits/kit-guide.md#2-config-overrides): a file that holds
 only the changed value, merged into the upstream parameter file on every start
 (`config/autoware/autoware_default_adapi_universe/config/default_adapi.param.yaml`).
-
-## Stop and Recover
-
-```bash
-openadkit stop
-```
-
-To replace missing map data, run `openadkit fetch scenario-simulation --force`.
-For other issues, see [Troubleshooting](../getting-started/troubleshooting.md).

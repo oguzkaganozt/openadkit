@@ -9,6 +9,23 @@ hide:
 The deployment layer for the <a href="https://github.com/autowarefoundation/autoware">Autoware</a> ecosystem: packaging its software into reproducible deployments, built for the path from simulation to in-vehicle systems.
 </p>
 
+Autoware provides the autonomy stack; Open AD Kit makes it deployable. It splits
+the stack along the driving pipeline into focused container images, so a
+deployment runs only what its task needs, and keeps each deployment the same
+from one host to the next. A [release](releases/index.md) ships the CLI, the
+pinned component images and a catalog of ready-to-run
+[deployments](deployments/index.md). A [kit](kits/create-a-kit.md) holds your
+packages, config overrides and services on top of one of them.
+
+It also integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/),
+which runs on real-time operating systems and automotive hardware in a vehicle;
+Safety Island Simulation runs its POSIX build in a container. Open AD Kit is not
+an OTA service, a Kubernetes stack or a fork of upstream workloads, and it makes
+no ASIL or NCAP certification claim.
+
+![Planning Simulation as separate containers that talk over ROS 2](assets/images/readme-hero-light.svg#only-light)
+![Planning Simulation as separate containers that talk over ROS 2](assets/images/readme-hero-dark.svg#only-dark)
+
 ## Start Here { .oak-eyebrow }
 
 <div class="oak-card-grid oak-card-grid--start" markdown="1">
@@ -44,22 +61,9 @@ The deployment layer for the <a href="https://github.com/autowarefoundation/auto
 
 :material-server-outline:{ .oak-card-icon }
 
-<p class="oak-card-title" role="heading" aria-level="3">Target a platform</p>
-<p>Support tiers, AutoSD with Podman and Quadlet, and host requirements.</p>
+<p class="oak-card-title" role="heading" aria-level="3">Run on a platform</p>
+<p>Support tiers, host requirements and boards, and AutoSD images.</p>
 <a href="platforms/" class="md-button">Platforms</a>
 </div>
-
-</div>
-
-## Explore the Docs { .oak-eyebrow }
-
-<div class="oak-link-list" markdown="1">
-
-- [**Overview**](overview.md) — What Open AD Kit is and how it is put together
-- [**CLI & Maintenance**](getting-started/cli.md) — Every command, settings, upgrades and cleanup
-- [**Troubleshooting**](getting-started/troubleshooting.md) — Docker, data, GPU, visualizer and network
-- [**Components**](components/index.md) — The container images and what each one runs
-- [**Releases**](releases/index.md) — What a release ships, promises and proves
-- [**Development**](development/index.md) — Build from source, contribute and release
 
 </div>

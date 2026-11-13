@@ -2,46 +2,11 @@
 
 From zero to a running Autoware planning simulation in about 10 minutes. No GPU is required.
 
-<nav class="oak-quickstart" aria-label="Quickstart steps">
-  <ol>
-    <li>
-      <a href="#install">
-        <span class="oak-quickstart__number">1</span>
-        <span><strong>Install</strong><small>One command</small></span>
-      </a>
-    </li>
-    <li>
-      <a href="#set-up-the-host">
-        <span class="oak-quickstart__number">2</span>
-        <span><strong>Set up the host</strong><small>Configure dependencies</small></span>
-      </a>
-    </li>
-    <li>
-      <a href="#run-planning-simulation">
-        <span class="oak-quickstart__number">3</span>
-        <span><strong>Run simulation</strong><small>Start planning</small></span>
-      </a>
-    </li>
-    <li>
-      <a href="#open-the-visualizer">
-        <span class="oak-quickstart__number">4</span>
-        <span><strong>Open visualizer</strong><small>Inspect the output</small></span>
-      </a>
-    </li>
-    <li>
-      <a href="#drive">
-        <span class="oak-quickstart__number">5</span>
-        <span><strong>Drive</strong><small>Set a route</small></span>
-      </a>
-    </li>
-  </ol>
-</nav>
-
 ## Prerequisites
 
 - **Ubuntu 22.04 (Jammy) or 24.04 (Noble)** with `sudo` access
 - 8 CPU cores, 16 GB of RAM and 50 GB of storage or more; see
-  [Hardware](../platforms/hardware.md#host-requirements)
+  [Host Requirements](../platforms/index.md#host-requirements)
 - `curl` for the release installer; `python3` and `tar` are preinstalled on
   supported Ubuntu releases
 - A web browser: the visualizer runs in it, so no display server is needed

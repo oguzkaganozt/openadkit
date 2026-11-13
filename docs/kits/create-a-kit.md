@@ -8,6 +8,8 @@ openadkit new my-kit                       # on top of planning-simulation
 openadkit new my-kit --base scenario-simulation
 ```
 
+--8<-- "includes/cli-command-context.md"
+
 ## One Directory, One Deployment
 
 ```text
@@ -20,30 +22,14 @@ my-kit/
 └── overlay_ws/src/
 ```
 
-- `openadkit.json` pins the Open AD Kit release (`extends`), lists extra images you pin
-  (`externalImages`), and points the `my-kit` deployment at `"."`, this same
-  directory.
-- `deployment.json` names the base deployment; Compose reads `compose.yaml`.
-  Architecture, ROS
-  distro, GPU, downloads and the verify step are inherited; `requirements` may
-  narrow the first three.
-- `compose.yaml` includes `${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml`;
-  add your services below it. `OPENADKIT_ROOT` names the release's root, for
-  its shared assets.
-- `settings.env` holds only the values you change, such as `VEHICLE_ID`.
-- `config/autoware/` holds config overrides for Autoware packages.
-- `overlay_ws/src/` holds your ROS packages.
+The kit's `README.md` explains each file. `openadkit.json` pins the release
+(`extends`), and `deployment.json` names the base deployment, whose
+architectures, ROS distros, GPU mode, downloads and verify step the kit
+inherits; `requirements` may narrow the first three. `compose.yaml` includes the
+base's Compose file, with your services below it.
 
 The deployment's name is its key in `openadkit.json`, here `my-kit`;
 `deployment.json` does not repeat it. Renaming the directory changes nothing.
-
-## Pin the Release
-
-`openadkit new` from an installed release writes its version, such as
-`"extends": "v2.0.0"`; the kit then runs with that release's own launcher.
-From a source checkout it writes the checkout's path. To move to another
-release, change `extends`; the next command that acts on the kit, such as
-`validate` or `run`, downloads that release if it is missing.
 
 ## Build, Validate, Run, Stop
 
@@ -67,6 +53,28 @@ runtime or ABI evidence, so finish with `run --verify`.
 Every release tests a kit made this way: the
 [example kit](../releases/evidence.md#cells-and-levels) exercises each
 extension point on Humble and Jazzy.
+
+## Make a Change
+
+A config override changes a parameter without a build. Put the file with only
+the keys you change under `config/autoware/`, at the path it has in its
+package's share directory, then recreate the services that use it:
+
+```bash
+mkdir -p config/autoware/autoware_launch/config/planning/scenario_planning/common
+$EDITOR config/autoware/autoware_launch/config/planning/scenario_planning/common/common.param.yaml
+openadkit restart               # the services with config overrides or settings that changed
+```
+
+A package change needs a build and a restart of the service that runs it:
+
+```bash
+openadkit build
+openadkit restart my-node
+```
+
+[Develop and Debug](develop-and-debug.md) times that loop and shows how to look
+into the running services.
 
 ## Where Changes Go
 

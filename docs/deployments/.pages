@@ -1,8 +1,0 @@
-nav:
-  - index.md
-  - Planning Simulation: planning-simulation.md
-  - Scenario Simulation: scenario-simulation.md
-  - Logging Simulation: logging-simulation.md
-  - CARLA Simulation: carla-simulation.md
-  - Safety Island Simulation: safety-island-simulation.md
-  - Split-host Simulation: split-host.md

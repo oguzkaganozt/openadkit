@@ -21,7 +21,7 @@ Open AD Kit is licensed under **Apache License 2.0**. All contributions are acce
    certifies the [Developer Certificate of Origin](https://developercertificate.org/);
    a PR without it is not merged
 3. **Run the [local checks](#local-checks)** that match your change, and
-   preview docs with `make -C docs serve`. The docs site documents the latest
+   preview docs with `pip install -r docs/requirements.txt && mkdocs serve`. The docs site documents the latest
    stable release, so a docs change reaches it with the next one
 4. **Open a PR** against `main` with a clear description. Its title follows
    [Conventional Commits](https://www.conventionalcommits.org/) (`feat(cli): ...`,
@@ -30,7 +30,7 @@ Open AD Kit is licensed under **Apache License 2.0**. All contributions are acce
 
 Maintainers can branch in this repository instead of a fork. Such a PR also
 runs the evidence cells on its own images before merge; see
-[Testing a Pull Request](https://autowarefoundation.github.io/openadkit/development/evidence-workflow/#testing-a-pull-request).
+[Testing a Pull Request](https://autowarefoundation.github.io/openadkit/development/build-from-source/#testing-a-pull-request).
 
 ## Branches
 

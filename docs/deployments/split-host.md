@@ -17,12 +17,8 @@ Without `--role`, the deployment runs on one host as usual.
 
 ## How It Works
 
-Each role runs two Compose files, found by name: `compose.<role>.yaml` holds
-the role's services, and `compose.zenoh.yaml` adds the Zenoh bridge with the
-deployment's `config/zenoh.json5` allowlist. The manifest gives each role its
-`rosDomainId`, which the CLI passes as `OPENADKIT_ROS_DOMAIN_ID`, and the
-variables it needs (`requiredEnv`); the CLI adds no service of its own. A
-missing or symlinked allowlist fails validation before any container starts.
+Each role runs its own services plus a Zenoh bridge that carries the
+deployment's [allowlist](#allowlist), in its own ROS domain.
 
 Each role is isolated: its own Compose project
 (`openadkit-<deployment>_<role>`), container names and ROS domain. The roles
@@ -38,18 +34,9 @@ commands, transforms, AD API calls, the enabled sensors and what the visualizer
 shows. Map blobs and camera images are not routed.
 
 !!! warning "Evidence scope"
-    - **In CI:** both role views of each deployment validate, and Scenario
-      Simulation's split evidence cell runs its two roles on one hosted runner.
-      The sample scenario passes over Zenoh, and the scenario role's ROS domain
-      sees only the bridged topics, no Autoware nodes. CARLA is exempt from CI
-      evidence.
-    - **By hand, on a lab pair:** sample scenarios pass, and a CARLA goal
-      reaches `ArrivedGoal` over the bridge.
-    - **Open:** bridge restart resilience, and recorded CARLA throughput and
-      latency.
-
-    One-runner evidence is not a general two-host, WAN or vehicle claim; see
-    the [Evidence Policy](../releases/evidence.md).
+    CI runs Scenario Simulation's two roles on one hosted runner; two-host runs
+    and CARLA are checked by hand on a lab pair. See the
+    [Evidence Policy](../releases/evidence.md).
 
 ## Prerequisites
 
@@ -141,10 +128,8 @@ before routing anything new.
   availability on the Autoware host depend on it. Without it the vehicle stays
   in `PLANNING` and the scenario times out.
 
-The split evidence cell checks that every allowlisted topic exists in one of
-the two graphs, so an Autoware rename fails CI instead of silently stopping a
-topic. CI cannot run CARLA: check its allowlist against the live graph of a
-two-host run after an Autoware update.
+After an Autoware update, check the CARLA allowlist against the live graph of a
+two-host run; CI checks Scenario Simulation's.
 
 ## Latency and Timing
 
@@ -162,13 +147,6 @@ WAN and VPN links are best-effort and are not the supported setup.
 - Running a role that is already up updates it in place. Starting the
   single-host deployment while a role is running, or a role while the
   single-host deployment is running, is refused: stop it first.
-- With `--verbose`, the printed Compose command shows the role's files, env
-  files and project name.
-- The visualizer is loopback-only on the simulator host (`WEBSOCKIFY_BIND`);
-  reach it from another desk through an SSH tunnel.
-- Do not restart a single bridge or interface container while the split is
-  running: route churn can leave a bridged topic half-connected. Stop and
-  start the role instead (see [Troubleshooting](#troubleshooting)).
 
 ## Troubleshooting
 

@@ -2,23 +2,9 @@
 
 A release promotes an existing build. It does not rebuild images or relax its
 tests: stable releases and release candidates both require **a successful
-evidence run that passed every cell for the promoted build**.
-
-## What the Gate Checks
-
-Before creating a tag, release validation looks for an
-`evidence-summary-<build_tag>` artifact and accepts it only when:
-
-1. **The run succeeded:** it is a completed, successful run of
-   `.github/workflows/evidence.yaml` on the branch that built the release.
-2. **It tested this build:** the summary names the promoted build tag, and it
-   tested the build's own commit, not another commit against its images.
-3. **Every cell passed:** the summary result is `PASSED`. A cell passes only
-   when every level it runs passes, and a missing expected cell fails the run.
-
-A passing rerun may supersede a failed run; a failed run never counts. There is
-no release bypass input. The release also requires the latest full scan of the
-build to pass.
+evidence run that passed every cell for the promoted build**. The
+[Release Process](../development/release-process.md#what-the-gate-checks) says
+how the release gate checks it.
 
 ## Cells and Levels
 
@@ -86,38 +72,4 @@ it runs. **An exemption is not runtime evidence.**
 Adding an exemption is a reviewed source change, not a release-time override.
 Do not use it to hide a known failure in a normally tested cell.
 
-## Autoware and ROS Distro Decisions
-
-Every release, stable or candidate, is a build of `main` (or of a
-`release/X.Y` branch that fixes an older line) on the Autoware release tag in
-`.github/autoware.ref`. The release records that Autoware version; the build's
-`autoware-lock.repos`, resolved SHA and upstream image digests record the
-input.
-
-- **Autoware:** pin the latest stable Autoware release at the release cut. If
-  it has a blocking issue, keep the previous verified pin and explain the
-  exception, date and follow-up in the release notes. A fix that is already
-  upstream can be
-  [backported](../development/release-process.md#backporting-an-autoware-fix)
-  instead.
-- **ROS distro:** `defaultRosDistro` in the promoted `openadkit.json` selects
-  the default, and the evidence cells of every declared distro must pass. The
-  gate never switches from Humble to Jazzy or drops a failing distro by itself:
-  to change the supported distros, update the manifests in a reviewed change
-  and build and test that revision.
-
-## Metadata and Verification Report
-
-The release workflow seals the selected evidence summary (result, build,
-commit, run URL and cells) in its release plan before packaging.
-`release-metadata.json` publishes that same evidence, the BOM and the CI
-exemptions. The bundle, installer and metadata receive build provenance from
-the release workflow.
-
-The verification table in the release notes shows the passing-cell count,
-readiness time, arrival time and peak memory of that build. A release never
-searches older runs or releases; its notes depend only on its release plan.
-Missing metrics are shown as `-`, never replaced with zeroes.
-
-See [Verify a Release](verification.md) to check a release yourself, and the
-[Evidence Workflow](../development/evidence-workflow.md) for how the cells run.
+See [Verify a Release](verification.md) to check a release yourself.

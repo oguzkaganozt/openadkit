@@ -4,17 +4,12 @@ Run the Autoware planning and control stack on a sample map with the built-in
 simulator, then set a route in RViz in your browser. No GPU is required; with
 an NVIDIA GPU, `--gpu` plans with Autoware 2.0's Diffusion Planner.
 
-Complete the [Quickstart](../getting-started/index.md) setup first. For GPU
-mode, run `openadkit setup --gpu`.
-
 ## Run
 
 ```bash
 openadkit run planning-simulation         # CPU: the rule-based planner
 openadkit run planning-simulation --gpu   # GPU: the Diffusion Planner (amd64 only)
 ```
-
---8<-- "includes/ros-distro.md"
 
 `run` downloads the sample map, pulls the images and starts the stack. The
 sample map is Copyright 2020 TIER IV, Inc. and is provided for demonstration
@@ -47,21 +42,9 @@ hand on a GPU host.
     output, reproduced with upstream's image
     ([autoware_universe#13603](https://github.com/autowarefoundation/autoware_universe/issues/13603)).
 
-## Open the Visualizer
+## Drive
 
---8<-- "includes/visualizer-remote-access.md"
-
-In RViz, set an initial pose and a goal pose, then press **AUTO** in the
+Open the [visualizer](index.md#open-the-visualizer). In RViz, set an initial pose and a goal pose, then press **AUTO** in the
 **OperationMode** section of the AutowareStatePanel to drive the route. See the
 [Autoware planning simulation guide](https://docs.autoware.org/main/simulation/planning-simulation/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle)
 for details.
-
-## Stop and Recover
-
-```bash
-openadkit stop
-```
-
-To replace missing or incomplete map data, run
-`openadkit fetch planning-simulation --force`. For other issues, see
-[Troubleshooting](../getting-started/troubleshooting.md).
