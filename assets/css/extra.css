@@ -7,10 +7,6 @@
 
      .oak-hero-lead                    landing hero
      .oak-card-grid / .oak-card        linked content cards
-     .oak-component-grid / -item       compact definition grid
-     .oak-quickstart                   numbered step navigation
-     .oak-badge--*                     status pills
-     .oak-callout                      key-takeaway panel
 
    Keep new component rules token-based; avoid one-off colors.
    ========================================================================== */
@@ -141,10 +137,8 @@
 }
 
 /* Layout components manage their own width. */
-.md-typeset .oak-quickstart ol,
-.md-typeset .oak-quickstart p,
-.md-typeset .oak-card p,
-.md-typeset .oak-component-item p {
+
+.md-typeset .oak-card p {
   max-width: none;
 }
 
@@ -359,38 +353,13 @@
 /* Type accents. Colors are harmonized with the blue brand accent instead of
    Material's wider rainbow. */
 .md-typeset .admonition.note,
-.md-typeset details.note,
-.md-typeset .admonition.abstract,
-.md-typeset details.abstract {
+.md-typeset details.note {
   --oak-adm-color: var(--oak-note);
 }
 
-.md-typeset .admonition.tip,
-.md-typeset details.tip,
-.md-typeset .admonition.success,
-.md-typeset details.success {
-  --oak-adm-color: var(--oak-tip);
-}
-
 .md-typeset .admonition.warning,
-.md-typeset details.warning,
-.md-typeset .admonition.caution,
-.md-typeset details.caution {
+.md-typeset details.warning {
   --oak-adm-color: var(--oak-warn);
-}
-
-.md-typeset .admonition.info,
-.md-typeset details.info,
-.md-typeset .admonition.example,
-.md-typeset details.example {
-  --oak-adm-color: var(--oak-info);
-}
-
-.md-typeset .admonition.danger,
-.md-typeset details.danger,
-.md-typeset .admonition.failure,
-.md-typeset details.failure {
-  --oak-adm-color: var(--oak-danger);
 }
 
 .md-typeset .admonition .admonition,
@@ -426,14 +395,6 @@
 }
 
 /* Four-card grids read best as a balanced 2x2 block at every width. */
-.oak-card-grid--four,
-.oak-component-grid--four {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.oak-card-grid--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 
 /* The landing page's start cards: compact, four in one row once they fit. */
 .oak-card-grid--start {
@@ -515,20 +476,8 @@
 }
 
 /* Compact index list used on the landing page. */
-.md-typeset .oak-link-list ul {
-  max-width: none;
-  columns: 2;
-  column-gap: 2.5rem;
-  margin: 0.5rem 0 0;
-}
 
-.md-typeset .oak-link-list li {
-  break-inside: avoid;
-  margin-bottom: 0.35rem;
-}
-
-.oak-card,
-.oak-component-item {
+.oak-card {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--oak-border);
@@ -542,19 +491,13 @@
   padding: 1.35rem 1.4rem;
 }
 
-.oak-component-item {
-  padding: 1.1rem 1.2rem;
-}
-
 @media (prefers-reduced-motion: no-preference) {
-  .oak-card:hover,
-  .oak-component-item:hover {
+  .oak-card:hover {
     transform: translateY(-2px);
   }
 }
 
-.oak-card:hover,
-.oak-component-item:hover {
+.oak-card:hover {
   border-color: var(--oak-accent-line);
   box-shadow: var(--oak-shadow-2);
 }
@@ -600,257 +543,17 @@
   fill: var(--oak-accent);
 }
 
-.oak-nav-grid .oak-nav-card p:not(.oak-card-title) {
-  flex-grow: 1;
-}
-
-.oak-nav-grid .oak-nav-card p:has(> .md-button) {
-  margin-top: 1rem;
-  flex-grow: 0;
-}
-
-.oak-nav-grid .oak-nav-card .md-button {
-  align-self: flex-start;
-}
-
-.oak-component-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.9rem;
-  margin: 1.2rem 0 1.6rem;
-}
-
-.oak-component-grid--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.oak-component-item strong {
-  display: block;
-  margin-bottom: 0.3rem;
-  color: var(--oak-fg);
-  font-weight: 600;
-}
-
-.oak-component-item span {
-  display: block;
-  font-size: 0.88em;
-  line-height: 1.6;
-  color: var(--oak-fg-muted);
-}
-
-.oak-component-item strong a {
-  text-decoration: none;
-}
-
-.oak-component-item:hover strong a {
-  color: var(--oak-accent);
-}
-
 /* --------------------------------------------------------------------------
    9. Status badges
    -------------------------------------------------------------------------- */
-.oak-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  padding: 0.15em 0.6em;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 0.7em;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1.5;
-  text-transform: uppercase;
-  white-space: nowrap;
-  vertical-align: 0.05em;
-}
-
-.oak-badge::before {
-  width: 0.45em;
-  height: 0.45em;
-  border-radius: 50%;
-  background: currentcolor;
-  content: "";
-}
-
-.oak-badge--neutral {
-  background-color: var(--oak-surface-alt);
-  border-color: var(--oak-border-strong);
-  color: var(--oak-fg-muted);
-}
-
-.oak-badge--accent {
-  background-color: var(--oak-accent-soft);
-  border-color: var(--oak-accent-line);
-  color: var(--oak-accent);
-}
 
 /* --------------------------------------------------------------------------
    10. Key-takeaway callout
    -------------------------------------------------------------------------- */
-.oak-callout {
-  margin: 1.4rem 0;
-  padding: 0.4rem 1.2rem;
-  border: 1px solid var(--oak-border);
-  border-left: 3px solid var(--oak-accent);
-  border-radius: 0 var(--oak-radius-sm) var(--oak-radius-sm) 0;
-  background: var(--oak-surface-alt);
-}
-
-.oak-callout p {
-  margin: 0.85rem 0;
-}
-
-.oak-callout p + p {
-  border-top: 1px solid var(--oak-border);
-  padding-top: 0.85rem;
-}
-
-.oak-callout p strong:first-child {
-  color: var(--oak-fg);
-}
 
 /* --------------------------------------------------------------------------
    11. Quickstart progress navigation
    -------------------------------------------------------------------------- */
-.oak-quickstart {
-  margin: 1.6rem 0 2.6rem;
-}
-
-.md-typeset .oak-quickstart ol:not([hidden]) {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.md-typeset .oak-quickstart li {
-  position: relative;
-  min-width: 0;
-  margin: 0;
-}
-
-.oak-quickstart li:not(:last-child)::after {
-  position: absolute;
-  z-index: 0;
-  top: 1.15rem;
-  right: -1.15rem;
-  left: 1.15rem;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--oak-border-strong);
-  content: "";
-}
-
-.oak-quickstart a {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: flex-start;
-  width: max-content;
-  max-width: 100%;
-  color: inherit;
-  border-bottom: 0;
-}
-
-.md-typeset .oak-quickstart a,
-.md-typeset .oak-quickstart a:hover,
-.md-typeset .oak-quickstart a:focus-visible {
-  text-decoration: none;
-}
-
-.oak-quickstart__number {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  flex: none;
-  width: 2.3rem;
-  height: 2.3rem;
-  place-items: center;
-  border: 1.5px solid var(--oak-border-strong);
-  border-radius: 50%;
-  background: var(--oak-surface);
-  color: var(--oak-fg-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.oak-quickstart strong,
-.oak-quickstart small {
-  display: block;
-}
-
-.oak-quickstart strong {
-  color: var(--oak-fg);
-  font-size: 0.85rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.md-typeset .oak-quickstart small {
-  margin-top: 0.1rem;
-  color: var(--oak-fg-subtle);
-  font-size: 0.72rem;
-  line-height: 1.4;
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .oak-quickstart a,
-  .oak-quickstart__number {
-    transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
-  }
-
-  .oak-quickstart a:hover .oak-quickstart__number,
-  .oak-quickstart a:focus-visible .oak-quickstart__number {
-    transform: translateY(-1px);
-  }
-}
-
-.oak-quickstart a:hover .oak-quickstart__number,
-.oak-quickstart a:focus-visible .oak-quickstart__number {
-  border-color: var(--oak-accent);
-  background: var(--oak-accent);
-  box-shadow: 0 4px 10px var(--oak-accent-soft);
-  color: #fff;
-}
-
-.oak-quickstart a:hover strong,
-.oak-quickstart a:focus-visible strong {
-  color: var(--oak-accent);
-}
-
-.oak-quickstart a:focus-visible {
-  outline: none;
-  border-radius: var(--oak-radius-sm);
-  box-shadow: var(--oak-ring);
-}
-
-@media screen and (max-width: 768px) {
-  .md-typeset .oak-quickstart ol:not([hidden]) {
-    grid-template-columns: 1fr;
-    gap: 0.9rem;
-  }
-
-  .oak-quickstart li:not(:last-child)::after {
-    top: 2.3rem;
-    right: auto;
-    bottom: -0.9rem;
-    left: 1.15rem;
-    width: 2px;
-    height: auto;
-  }
-
-  .oak-quickstart a {
-    flex-direction: row;
-    align-items: center;
-  }
-}
 
 /* --------------------------------------------------------------------------
    12. Landing hero
@@ -1077,21 +780,12 @@
    15. Responsive
    -------------------------------------------------------------------------- */
 @media screen and (max-width: 768px) {
-  .oak-card-grid,
-  .oak-card-grid--four,
-  .oak-card-grid--three,
-  .oak-component-grid,
-  .oak-component-grid--three,
-  .oak-component-grid--four {
+  .oak-card-grid {
     grid-template-columns: 1fr;
   }
 
   .oak-card {
     padding: 1.2rem;
-  }
-
-  .md-typeset .oak-link-list ul {
-    columns: 1;
   }
 }
 
