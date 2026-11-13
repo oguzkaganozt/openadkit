@@ -65,8 +65,11 @@ def build_images(metadata: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def inventory_images(inventory: dict[str, Any], repo: str) -> list[dict[str, Any]]:
+    """The images a build publishes: what its metadata, scan and release cover.
+    An image with "release": false is only a base the other images build on."""
     return [{"repo": repo, "target": image["target"], "ros_distro": distro, "platforms": image["platforms"]}
-            for image in inventory["images"] for distro in image.get("ros_distros", inventory["ros_distros"])]
+            for image in inventory["images"] if image.get("release", True)
+            for distro in image.get("ros_distros", inventory["ros_distros"])]
 
 
 def scan_rows(metadata: dict[str, Any]) -> list[dict[str, Any]]:

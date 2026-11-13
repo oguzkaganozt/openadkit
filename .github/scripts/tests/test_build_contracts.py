@@ -32,6 +32,10 @@ def test_inventory_bake_and_runtime_catalog_agree():
     kit = json.loads((ROOT / "openadkit.json").read_text())
     assert set(kit["componentImages"].values()) == {image["target"] for image in INVENTORY["images"] if image["stage"] == "component"}
     resolved = matrices.build_matrices(INVENTORY)
+    # universe-common is the components' runtime base, built per architecture and never published.
+    assert {row["target"] for row in resolved["manifest_matrix"]["include"]} == {
+        image["target"] for image in INVENTORY["images"] if image.get("release", True)}
+    assert "universe-common" not in {row["target"] for row in resolved["manifest_matrix"]["include"]}
     index = {(row["target"], row["ros-distro"]): row["arches"] for row in resolved["manifest_matrix"]["include"]}
     assert index[("planning", "humble")] == "amd64 arm64"
     assert index[("control", "humble")] == "amd64 arm64"

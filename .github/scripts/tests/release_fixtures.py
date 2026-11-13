@@ -34,7 +34,7 @@ def build_images():
         {"repo": "ghcr.io/example/openadkit", "target": image["target"], "ros_distro": distro,
          "ref": f"ghcr.io/example/openadkit:{image['target']}-{distro}-{BUILD_TAG}",
          "digest": DIGEST, "platforms": image["platforms"]}
-        for image in inventory["images"]
+        for image in inventory["images"] if image.get("release", True)
         for distro in image.get("ros_distros", inventory["ros_distros"])
     ]
 

@@ -2,7 +2,7 @@
   "ros_distros": ["humble", "jazzy"],
   "images": [
     {"target": "universe-common-devel", "stage": "common", "platforms": ["linux/amd64", "linux/arm64"]},
-    {"target": "universe-common", "stage": "common", "platforms": ["linux/amd64", "linux/arm64"]},
+    {"target": "universe-common", "stage": "common", "platforms": ["linux/amd64", "linux/arm64"], "release": false},
     {"target": "sensing-perception", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"target": "sensing-perception-cuda", "stage": "component", "platforms": ["linux/amd64"]},
     {"target": "localization-mapping", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
