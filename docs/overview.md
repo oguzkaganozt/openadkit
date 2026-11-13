@@ -10,7 +10,7 @@ Open AD Kit packages the [Autoware](https://github.com/autowarefoundation/autowa
 
 Autoware provides the autonomy stack; Open AD Kit makes it deployable. It packages upstream software into composable images, defines deployments, integrates target platforms, and maintains the build, test and release tooling that keeps a deployment the same from one host to the next.
 
-It also integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/), which runs on real-time operating systems and automotive hardware rather than in a container. [Supported Platforms](platforms/index.md) covers the support tiers.
+It also integrates [Autoware Safety Island](https://autowarefoundation.github.io/autoware-safety-island/), which runs on real-time operating systems and automotive hardware in a vehicle; Safety Island Simulation runs its POSIX build in a container. [Supported Platforms](platforms/index.md) covers the support tiers.
 
 A [release](releases/index.md) ships the CLI, the pinned component images and a catalog of ready-to-run [deployments](deployments/index.md). A [kit](kits/create-a-kit.md) holds your packages, parameters and services on top of one of them. It is also the form in which an Autoware Reference Design can publish its software stack; see [Reference Designs](kits/reference-designs.md).
 

@@ -1,8 +1,7 @@
 # Verify a Release
 
 Verify downloaded files before executing the installer. The full check needs
-a recent GitHub CLI with `gh attestation`, and `jq`; releases before v2.0.0
-may lack these attestations and metadata fields.
+a recent GitHub CLI with `gh attestation`, and `jq`.
 
 ## Provenance and Checksums
 

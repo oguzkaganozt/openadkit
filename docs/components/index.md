@@ -111,7 +111,7 @@ Set these in the [host settings file](../getting-started/cli.md#settings):
 
 | Variable | Default | Values | Description |
 |----------|---------|--------|-------------|
-| `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz configuration inside the container; the default is the copy with config overrides applied |
+| `RVIZ_CONFIG` | <code>/tmp/<wbr>openadkit/<wbr>autoware_launch/<wbr>share/<wbr>autoware_launch/<wbr>rviz/<wbr>autoware.rviz</code> | Path | RViz configuration inside the container: the deployment's (`autoware.rviz`, or `scenario_simulator.rviz` in Scenario Simulation), with config overrides applied |
 | `REMOTE_DISPLAY` | `true` | `true`, `false` | RViz in the browser; `false` opens RViz on your own desktop instead, using the session's `DISPLAY` and `XAUTHORITY` |
 | `REMOTE_PASSWORD` | `openadkit` | String | noVNC password, required when `REMOTE_DISPLAY=true`. The deployments set this default; the image itself has none |
 | `WEBSOCKIFY_BIND` | `127.0.0.1` | IP address | noVNC bind address. `0.0.0.0` exposes noVNC on every interface of the host: put an authenticated reverse proxy in front of it |

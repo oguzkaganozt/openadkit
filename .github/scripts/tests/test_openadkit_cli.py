@@ -785,7 +785,7 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
     name, other = ("example", "custom") if target == "base" else ("custom", "example")
     calls = fake_docker(tmp_path, projects=[f"openadkit-{other}"])
     result = run_cli(root, "run", name, directory=root if target == "base" else kit)
-    assert result.returncode != 0 and f"openadkit-{other} is already running" in result.stderr
+    assert result.returncode != 0 and f"error: {other} is already running" in result.stderr
     assert not (tmp_path / "home/data").exists()
     assert not any("up" in row["args"] or "pull" in row["args"] for row in recorded(calls))
 
@@ -1213,7 +1213,7 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
     assert "remove the stopped containers with: openadkit stop" in result.stdout
     # Its containers keep their fixed names: another deployment cannot start over them.
     result = run_cli(root, "run", "example")
-    assert result.returncode != 0 and "openadkit-other left stopped containers" in result.stderr
+    assert result.returncode != 0 and "error: other left stopped containers" in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
     # The same deployment starts again in place.
     assert run_cli(root, "run", "other").returncode == 0
@@ -1666,7 +1666,8 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     deployment = json.loads((kit / "deployment.json").read_text())
     # The name lives once, in openadkit.json; Compose files default to compose.yaml.
     assert deployment == {"description": "example with this kit's layer on top", "base": "example"}
-    assert (kit / "config/autoware").is_dir() and (kit / "overlay_ws/src").is_dir()
+    # Each directory holds a README, so a clone of the kit keeps it.
+    assert (kit / "config/autoware/README.md").is_file() and (kit / "overlay_ws/src/README.md").is_file()
     assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
         loaded = cli_catalog.load_catalog(kit)

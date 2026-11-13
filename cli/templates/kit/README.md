@@ -8,7 +8,7 @@ A kit on top of `{{base}}` from Open AD Kit {{version}}.
 | `deployment.json` | Its base deployment and, optionally, its Compose files (default `compose.yaml`), narrower `requirements` and own `verify` step |
 | `settings.env` | Values that differ from the base |
 | `compose.yaml` | Includes the base; add your services here |
-| `config/autoware/` | Parameter overrides: `<package>/<path in its share directory>`, with only the keys you change |
+| `config/autoware/` | Config overrides: `<package>/<path in its share directory>`, with only the keys you change |
 | `overlay_ws/src/` | Your ROS packages |
 
 ```bash

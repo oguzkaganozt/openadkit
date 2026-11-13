@@ -12,8 +12,8 @@ openadkit restart my-node       # recreates the service that runs it
 
 - `build` is incremental: a second build compiles only what changed.
 - `restart <service>` recreates only that service. Without a name it recreates
-  every service that takes config overrides, which a changed copy of an Autoware
-  package needs.
+  every service that takes config overrides or the overlay workspace, and every
+  service whose settings changed.
 - `restart` returns once the service's healthcheck passes and the services
   have stayed up for 10 seconds.
 

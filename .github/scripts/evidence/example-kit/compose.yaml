@@ -16,10 +16,10 @@ services:
     # The kit's own C++ node from overlay_ws (extension point 3), built by
     # openadkit build. It runs in an Open AD Kit runtime image, whose
     # entrypoint hook sources the overlay workspace mounted below.
-    # The services' shared base: host network, DDS settings, config overrides
+    # What every Autoware service shares: host network, DDS settings, config overrides
     # and the overlay workspace.
     extends:
-      file: ${OPENADKIT_ROOT}/deployments/shared/services/base.yaml
+      file: ${OPENADKIT_ROOT}/deployments/shared/services/autoware.yaml
       service: autoware
     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
     volumes:

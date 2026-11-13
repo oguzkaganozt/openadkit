@@ -22,7 +22,7 @@ services:
     # Runtime env (RMW_IMPLEMENTATION, ROS_DOMAIN_ID, CYCLONEDDS_URI,
     # CYCLONEDDS_NETWORK_INTERFACE=lo). Without the URI the interface pin is a
     # no-op and DDS would leak onto the LAN. Native include resolves these paths
-    # relative to this shared fragment, not the deployment entrypoint.
+    # relative to this shared fragment, not the deployment's compose.yaml.
     env_file:
       - ./runtime.env
     environment:

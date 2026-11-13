@@ -54,7 +54,7 @@ A deployment is a ready-to-run Autoware stack for one task. `openadkit list` pri
 
 ## Create a Kit
 
-A kit holds only your differences from a deployment: your ROS packages, parameter overrides and extra services. [Create a Kit](https://autowarefoundation.github.io/openadkit/kits/create-a-kit/) covers the layout and each extension point.
+A kit holds only your differences from a deployment: your ROS packages, config overrides and extra services. [Create a Kit](https://autowarefoundation.github.io/openadkit/kits/create-a-kit/) covers the layout and each extension point.
 
 ```bash
 openadkit new my-kit        # on top of planning-simulation

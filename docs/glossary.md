@@ -11,14 +11,16 @@ it.
 | [**Latest alias**](releases/container-images.md#tag-reference) | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests never move. |
 | [**Digest pin**](releases/container-images.md#choosing-a-tag) | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
 
-## Releases and Deployments
+## Deployments
 
 | Term | Meaning |
 |------|---------|
 | [**Release**](releases/index.md) | One version of Open AD Kit, such as `v2.0.0`: the CLI, the pinned component images and the catalog. |
 | [**Catalog**](deployments/index.md) | The deployments a release ships. `openadkit list` prints it. |
 | [**Deployment**](deployments/index.md) | A named, ready-to-run stack for one task, such as Planning Simulation: a deployment manifest, settings and Compose files. A *catalog deployment* is one of the release's; a *kit deployment* is one of a kit's. |
-| **Deployment manifest** | `deployment.json`: what the CLI needs to run a deployment. Compose files, requirements, data downloads, one-shot services and the verify step. |
+| **Deployment manifest** | `deployment.json`: what the CLI needs to run a deployment and its Compose files do not say: requirements, data downloads, roles and the verify step. |
+| [**Verify step**](getting-started/cli.md#run-a-deployment) | The check `openadkit run --verify` runs once a deployment is ready: a command in one of its services, or that service's own exit. |
+| [**Launcher**](getting-started/cli.md) | The `openadkit` command: it finds the release or kit to run and hands the command to its CLI. |
 | **Release manifest** | `openadkit.json` of a release or a source checkout: its deployments and the images it pins. |
 | [**Settings**](getting-started/cli.md#settings) | `KEY=value` variables a deployment runs with, mostly Autoware launch arguments and host paths such as `MAP_PATH`: `settings.env`, then `settings.gpu.env` with `--gpu`, then the host settings. `run` and `restart` apply them. |
 | [**Host settings**](getting-started/cli.md#settings) | The settings of one host, in `~/.config/openadkit/<deployment>.env`. They are loaded last and survive upgrades. |
@@ -39,7 +41,7 @@ it.
 | **Integrator** | The person or organization that builds a kit. |
 | [**Reference Design**](kits/reference-designs.md) | An Autoware Reference Design: a Deployment Profile and a Reference Software Stack that others can reproduce. A kit holds its software stack. |
 
-## Releases and Evidence
+## Evidence
 
 | Term | Meaning |
 |------|---------|
@@ -52,4 +54,4 @@ it.
 
 | Term | Meaning |
 |------|---------|
-| [**Mixed criticality**](platforms/index.md) | Running safety-critical and non-critical workloads on separately qualified execution environments. Here, the Safety Island's real-time hardware beside the containerized stack; the containers on one host share its network and are not isolated by criticality. |
+| [**Mixed criticality**](platforms/autosd.md) | Running safety-critical and non-critical workloads on separately qualified execution environments. Here, the Safety Island's real-time hardware beside the containerized stack; the containers on one host share its network and are not isolated by criticality. |

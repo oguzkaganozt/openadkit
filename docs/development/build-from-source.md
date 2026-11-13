@@ -9,7 +9,8 @@ do not need this: `openadkit run` pulls the published images (see
 - Ubuntu 22.04 or 24.04 (`openadkit setup` supports Ubuntu only; elsewhere,
   install Docker with Buildx and Compose yourself)
 - Git; step 3 installs the tools that import the Autoware sources
-- Disk space for several multi-gigabyte images
+- Disk space for several multi-gigabyte images: `universe-common-devel` alone
+  takes about 10 GB
 
 The component Dockerfiles build on upstream Autoware images from GHCR and
 compile their package sets from a local `autoware/src` tree (step 4 below).

@@ -38,7 +38,7 @@ openadkit stop
 - Add `--gpu` for the optional GPU mode of Planning Simulation (the Diffusion
   Planner) or Logging Simulation (CenterPoint). CARLA needs a GPU, so its GPU
   mode turns on by itself.
-- Put host settings in `~/.config/openadkit/<name>.env`; see
+- Put host settings in `~/.config/openadkit/<deployment>.env`; see
   [Settings](../getting-started/cli.md#settings).
 
 [CLI & Maintenance](../getting-started/cli.md) covers the other commands.

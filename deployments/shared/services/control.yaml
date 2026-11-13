@@ -2,7 +2,7 @@
 services:
   control:
     extends:
-      file: base.yaml
+      file: autoware.yaml
       service: autoware
     image: ${CONTROL_IMAGE:?set by the openadkit CLI}
     container_name: autoware-control

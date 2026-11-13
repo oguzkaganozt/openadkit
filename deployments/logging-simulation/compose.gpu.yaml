@@ -1,4 +1,4 @@
-# GPU overlay for logging simulation — swap sensing/perception onto the CUDA
+# GPU mode of logging simulation — swap sensing/perception onto the CUDA
 # images and reserve the GPU. Model flags come from settings.gpu.env.
 services:
   sensing:

@@ -2,7 +2,7 @@
 services:
   localization:
     extends:
-      file: base.yaml
+      file: autoware.yaml
       service: autoware
     image: ${LOCALIZATION_MAPPING_IMAGE:?set by the openadkit CLI}
     container_name: autoware-localization

@@ -1,4 +1,4 @@
-# Config override (extension point 2). Overlay lists replace, so this is the
+# Config override (extension point 2). Override lists replace, so this is the
 # whole default preset; the one difference is trajectory_follower_mode: none,
 # because the Safety Island publishes the follower's control command.
 launch:

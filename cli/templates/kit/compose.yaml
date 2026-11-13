@@ -3,12 +3,12 @@ include:
   - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml
 
 # Add services here. One that runs your overlay packages extends the services'
-# shared base, which gives it the host network, the DDS settings, the config
+# shared definition, which gives it the host network, the DDS settings, the config
 # overrides and the overlay workspace, and adds an Open AD Kit image:
 #
 #   my-node:
 #     extends:
-#       file: ${OPENADKIT_ROOT}/deployments/shared/services/base.yaml
+#       file: ${OPENADKIT_ROOT}/deployments/shared/services/autoware.yaml
 #       service: autoware
 #     image: ${PLANNING_IMAGE:?set by the openadkit CLI}
 #     command: ros2 run my_package my_node
