@@ -61,9 +61,10 @@ services:
     depends_on:
       - map
 
-  # Logging-only service.
+  # Logging-only service. The sensing image has rosbag2 and the message types
+  # of the sensor data.
   rosbag:
-    image: ${AUTOWARE_UNIVERSE_IMAGE:?pinned in openadkit.json externalImages}
+    image: ${SENSING_PERCEPTION_IMAGE:?set by the openadkit CLI}
     container_name: autoware-rosbag
     network_mode: host
     init: true

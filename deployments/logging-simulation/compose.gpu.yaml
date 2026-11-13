@@ -14,6 +14,9 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+  # The bag plays from the image sensing runs, so GPU mode pulls no CPU image for it.
+  rosbag:
+    image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}
   perception:
     image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}
     # The CLI installs the CenterPoint models here; mount the same path.
