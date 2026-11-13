@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import compose
-from catalog import expand_home, root_path
+from catalog import data_root, expand_home, root_path
 from manifest import VERSION_RE, OpenADKitError
 
 KEPT_RELEASE_RE = re.compile(r"^openadkit-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$")
@@ -153,16 +153,29 @@ def active_release(root: Path, command: str) -> str:
     return version
 
 
+def beside(root: Path) -> dict[str, str]:
+    """The environment that makes the installer install next to root: under
+    OPENADKIT_HOME's releases/, or the data home's openadkit/."""
+    environment = dict(os.environ)
+    releases = root.parent
+    if releases.name == "releases":
+        environment["OPENADKIT_HOME"] = str(releases.parent)
+    else:
+        environment.pop("OPENADKIT_HOME", None)
+        environment["XDG_DATA_HOME"] = str(releases.parent)
+    return environment
+
+
 def installer(root: Path, *arguments: str, capture: bool = False) -> str:
-    """Run this release's launcher installer, into the directory that holds
-    root; its errors already reach stderr."""
+    """Run this release's launcher installer, next to the release at root; its
+    errors already reach stderr."""
     sys.stdout.flush()  # Keep our output ahead of the installer's own.
     result = subprocess.run(
         [str(root / "openadkit"), "install", *arguments],
         stdout=subprocess.PIPE if capture else None,
         text=True,
         check=False,
-        env=os.environ | {"OPENADKIT_INSTALL_DIR": str(root.parent)},
+        env=beside(root),
     )
     if result.returncode != 0:
         print(result.stdout or "", end="")
@@ -300,8 +313,7 @@ def uninstall(root: Path, arguments: Sequence[str]) -> int:
             pass
 
     log(
-        f"uninstalled {version}; downloaded data under ~/autoware_map and "
-        "~/autoware_data was kept"
+        f"uninstalled {version}; downloaded data under {data_root()} was kept"
     )
     return 0
 

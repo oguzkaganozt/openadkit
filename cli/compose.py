@@ -14,7 +14,14 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
-from catalog import Catalog, Deployment, deployment_checksum, state_root
+from catalog import (
+    Catalog,
+    Deployment,
+    ci_build,
+    deployment_checksum,
+    host_architecture,
+    state_root,
+)
 from manifest import OpenADKitError
 from settings import Selection, compose_process_environment, docker_environment
 
@@ -310,6 +317,35 @@ def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
             if not source.exists():
                 source.mkdir(parents=True)
     return result.stdout
+
+
+def require_local_images(
+    catalog: Catalog, selection: Selection, model: str, services: set[str]
+) -> None:
+    """A source checkout runs its own local build, so it pulls none of those
+    images: a missing one would come from a registry, built from other code.
+    OPENADKIT_BUILD names a CI build to pull instead."""
+    if catalog.pinned or ci_build() is not None:
+        return
+    targets = {
+        catalog.source_image(target, selection.ros_distro, host_architecture()): target
+        for target in catalog.component_images.values()
+    }
+    used = {
+        service.get("image")
+        for name, service in (json.loads(model).get("services") or {}).items()
+        if name in services
+    }
+    missing = sorted(
+        targets[image] for image in used & set(targets)
+        if docker(["docker", "image", "inspect", "--format", "{{.Id}}", image], check=False, trace=False).returncode
+    )
+    if missing:
+        raise OpenADKitError(
+            f"this source checkout has no local build of {', '.join(missing)}; build them with "
+            f"`docker buildx bake -f components/docker-bake.hcl --load {' '.join(missing)}`, "
+            "or set OPENADKIT_BUILD=<image repository>:<build tag> to run a CI build's images"
+        )
 
 
 def run_report(

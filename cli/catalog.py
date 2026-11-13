@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import platform
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -54,29 +56,51 @@ def expand_home(value: str) -> str:
     return value
 
 
-def _user_root(override: str, xdg: str, fallback: str) -> Path:
+def openadkit_home() -> Path | None:
+    """OPENADKIT_HOME, when set: one directory for everything Open AD Kit keeps,
+    such as for a run isolated from the user's own files."""
+    raw = os.environ.get("OPENADKIT_HOME")
+    if not raw:
+        return None
+    home = Path(expand_home(raw)).expanduser()
+    if not home.is_absolute():
+        raise OpenADKitError(f"OPENADKIT_HOME must be an absolute path: {raw}")
+    return home
+
+
+def _user_root(part: str, xdg: str, fallback: str) -> Path:
     """An Open AD Kit root outside the release, so upgrades keep it."""
-    explicit = os.environ.get(override)
-    if explicit:
-        return Path(explicit).expanduser()
+    home = openadkit_home()
+    if home is not None:
+        return home / part
     base = os.environ.get(xdg) or str(Path(expand_home("$HOME")) / fallback)
     return Path(base) / "openadkit"
 
 
+def _home_root(part: str, default: str) -> Path:
+    """A root the user looks into, under the home directory by default."""
+    home = openadkit_home()
+    return home / part if home is not None else Path(expand_home("$HOME")) / default
+
+
 def settings_root() -> Path:
     """Host settings: one ``<deployment>.env`` per deployment."""
-    return _user_root("OPENADKIT_SETTINGS_DIR", "XDG_CONFIG_HOME", ".config")
+    return _user_root("settings", "XDG_CONFIG_HOME", ".config")
 
 
 def state_root() -> Path:
     """The CLI's own files, such as the empty directory for an absent layer."""
-    return _user_root("OPENADKIT_STATE_DIR", "XDG_STATE_HOME", ".local/state")
+    return _user_root("state", "XDG_STATE_HOME", ".local/state")
 
 
 def output_root() -> Path:
     """What runs produce, where the user looks: ``<deployment>/{results,recordings}``."""
-    explicit = os.environ.get("OPENADKIT_OUTPUT_DIR")
-    return Path(explicit).expanduser() if explicit else Path(expand_home("$HOME")) / "openadkit-output"
+    return _home_root("output", "openadkit-output")
+
+
+def data_root() -> Path:
+    """Downloaded data, which the deployments' data paths build on."""
+    return _home_root("data", "autoware_data")
 
 
 def root_path() -> Path:
@@ -91,12 +115,37 @@ def root_path() -> Path:
     return root.resolve()
 
 
+def host_architecture() -> str:
+    machine = platform.machine().lower()
+    if machine in ("x86_64", "amd64"):
+        return "amd64"
+    if machine in ("aarch64", "arm64"):
+        return "arm64"
+    return machine
+
+
+# A tag of a CI build (<run id>-<attempt>) or of a release (vX.Y.Z).
+BUILD_TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+
+
+def ci_build() -> tuple[str, str] | None:
+    """OPENADKIT_BUILD=<image repository>:<build tag>: the one build a source
+    checkout takes every image from, instead of a local build's."""
+    raw = os.environ.get("OPENADKIT_BUILD")
+    if not raw:
+        return None
+    repository, separator, tag = raw.rpartition(":")
+    if not separator or not repository or "/" in tag or not BUILD_TAG_RE.fullmatch(tag):
+        raise OpenADKitError(
+            "OPENADKIT_BUILD must be <image repository>:<build tag>, such as "
+            f"ghcr.io/autowarefoundation/openadkit:123456789-1; got {raw}"
+        )
+    return repository, tag
+
+
 def install_root() -> Path:
-    """Where `openadkit install` puts versioned releases."""
-    explicit = os.environ.get("OPENADKIT_INSTALL_DIR")
-    if explicit:
-        return Path(explicit).expanduser()
-    return Path(expand_home("$HOME")) / ".local/share/openadkit"
+    """Where `openadkit install` puts versioned releases; the launcher computes the same."""
+    return _user_root("releases", "XDG_DATA_HOME", ".local/share")
 
 
 @dataclass(frozen=True)
@@ -127,8 +176,21 @@ class Catalog:
         return self.image_repository is None
 
     def devel_image(self, ros_distro: str) -> str | None:
-        """The devel image of the build the runtime images come from, if pinned."""
-        return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
+        """The devel image of the build the runtime images come from: the one
+        a release pins, or in a source checkout the local build's, or that of
+        the CI build OPENADKIT_BUILD names."""
+        if self.image_repository is None:
+            return self.images.get(ros_distro, {}).get(DEVEL_IMAGE_TARGET)
+        return self.source_image(DEVEL_IMAGE_TARGET, ros_distro, host_architecture())
+
+    def source_image(self, target: str, ros_distro: str, architecture: str) -> str:
+        """A source checkout's image of target: its local build's tag, or the
+        one of the CI build OPENADKIT_BUILD names."""
+        build = ci_build()
+        if build is not None:
+            repository, tag = build
+            return f"{repository}:{target}-{ros_distro}-{tag}"
+        return f"{self.image_repository}:{target}-{architecture}-{ros_distro}"
 
     def bom(self) -> dict[str, Any]:
         """What this catalog runs: Autoware, component images and external images."""
@@ -162,9 +224,7 @@ class Catalog:
         }
         if self.image_repository is not None:
             return {
-                name: (
-                    f"{self.image_repository}:{target}-{architecture}-{ros_distro}"
-                )
+                name: self.source_image(target, ros_distro, architecture)
                 for name, target in applicable.items()
             }
 

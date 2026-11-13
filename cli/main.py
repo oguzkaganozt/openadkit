@@ -496,7 +496,7 @@ def record_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--all", action="store_true", dest="all_topics", help="record every topic")
     parser.add_argument(
         "--output", metavar="DIRECTORY",
-        help="where bags go (default: ~/openadkit-output/<deployment>/recordings)",
+        help="where bags go (default: <deployment>/recordings in the output directory)",
     )
 
 
@@ -533,16 +533,13 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
     if not (workspace / "src").is_dir():
         raise OpenADKitError(f"{workspace} has no src/ to build")
     ros_distro = args.ros_distro or build_ros_distro(root, catalog)
-    image = os.environ.get("DEVEL_IMAGE") or catalog.devel_image(ros_distro)
+    image = catalog.devel_image(ros_distro)
     if not image and catalog.images and ros_distro not in catalog.images:
         raise OpenADKitError(
             f"this Open AD Kit does not support ROS distro {ros_distro}; expected {', '.join(sorted(catalog.images))}"
         )
     if not image:
-        raise OpenADKitError(
-            f"this Open AD Kit pins no {ros_distro} devel image; set DEVEL_IMAGE to the "
-            "universe-common-devel image of the build your runtime images come from"
-        )
+        raise OpenADKitError(f"this release pins no {ros_distro} devel image to build a workspace in")
     compose.build_overlay(workspace, image, ros_distro, args.colcon)
     return 0
 
@@ -664,6 +661,7 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     data.install_data(deployment, selection, force=False)
     model = compose.create_writable_mounts(deployment, selection)
     skipped = services & ({"visualizer"} if args.no_visualizer else set())
+    compose.require_local_images(catalog, selection, model, services - skipped)
     compose.write_run_state(deployment.project_name(selection.role), {
         "schemaVersion": 1,
         "cli": str(root_path()),

@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import functools
 import os
-import platform
 import subprocess
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from catalog import Catalog, Deployment, default_ros_distro, state_root
+from catalog import (
+    Catalog,
+    Deployment,
+    data_root,
+    default_ros_distro,
+    host_architecture,
+    state_root,
+)
 from manifest import OpenADKitError
 
 # Compose settings the CLI passes itself; a shell export must not change them.
@@ -68,15 +74,6 @@ def host_user_environment() -> dict[str, str]:
     ``HOST_UID``/``HOST_GID``; the upstream scenario runner uses them as ``user:``.
     """
     return {"OPENADKIT_UID": str(os.getuid()), "OPENADKIT_GID": str(os.getgid())}
-
-
-def host_architecture() -> str:
-    machine = platform.machine().lower()
-    if machine in ("x86_64", "amd64"):
-        return "amd64"
-    if machine in ("aarch64", "arm64"):
-        return "arm64"
-    return machine
 
 
 @dataclass(frozen=True)
@@ -168,6 +165,8 @@ def _injections(deployment: Deployment, distro: str, role: str | None) -> dict[s
     injections = {
         "ROS_DISTRO": distro,
         "OPENADKIT_RESULTS_DIR": str(deployment.output_directory / "results"),
+        # The deployments' data paths build on it (settings.env).
+        "OPENADKIT_DATA_DIR": str(data_root()),
         **host_user_environment(),
         **deployment.kit_environment,
         **_overlay_mounts(deployment),

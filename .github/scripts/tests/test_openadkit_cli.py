@@ -32,8 +32,8 @@ PIN = f"registry.example/image@sha256:{'a' * 64}"
 OTHER_PIN = f"registry.example/custom@sha256:{'b' * 64}"
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 ISOLATED_ENV = (
-    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_SETTINGS_DIR", "OPENADKIT_STATE_DIR",
-    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "OPENADKIT_INSTALL_DIR", "COMPOSE_FILE", "XDG_DATA_HOME",
+    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_HOME",
+    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "COMPOSE_FILE", "XDG_DATA_HOME",
 )
 
 
@@ -192,12 +192,15 @@ elif "config --hash" in text:
 elif "config --format json" in text:
     # Services with restart: "no" run once and exit.
     once = os.environ.get("FAKE_ONE_SHOT", "").split(",")
-    print(json.dumps({{"services": {{name: {{"restart": "no"}} if name in once else {{}}
+    image = {{"image": os.environ["FAKE_IMAGE"]}} if os.environ.get("FAKE_IMAGE") else {{}}
+    print(json.dumps({{"services": {{name: ({{"restart": "no"}} if name in once else {{}}) | image
                                     for name in {service_lines!r}.split()}}}}))
 elif "config --services" in text:
     print({service_lines!r})
 elif "config --quiet" in text:
     sys.exit({config})
+elif args[:2] == ["image", "inspect"]:
+    sys.exit(1 if os.environ.get("FAKE_NO_IMAGES") else 0)
 elif args[0] == "compose" and "exec" in args:
     sys.exit(int(os.environ.get("FAKE_EXEC_EXIT", "0")))
 elif args[0] == "run":
@@ -284,11 +287,11 @@ shutil.copyfile(Path({str(release)!r}) / url.rsplit("/", 1)[-1], args[args.index
 
 def install(tmp_path, bin_dir, *args):
     return command(ENTRYPOINT, "install", *args, home=tmp_path / "home", bin_dir=bin_dir,
-                   OPENADKIT_INSTALL_DIR=str(tmp_path / "home/kit"))
+                   OPENADKIT_HOME=str(tmp_path / "home/kit"))
 
 
 def installed(tmp_path, version="v1.2.3"):
-    return tmp_path / f"home/kit/openadkit-{version}/openadkit"
+    return tmp_path / f"home/kit/releases/openadkit-{version}/openadkit"
 
 
 def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
@@ -339,7 +342,7 @@ def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_p
     assert install(tmp_path, release_bin(tmp_path)).returncode == 0
     launcher = tmp_path / "home/.local/bin/openadkit"
     assert command(launcher, "upgrade", home=tmp_path / "home", bin_dir=release_bin(tmp_path, "v1.3.0")).returncode == 0
-    backup = tmp_path / "home/kit/openadkit-v1.2.3-backup"
+    backup = tmp_path / "home/kit/releases/openadkit-v1.2.3-backup"
     backup.mkdir()
     (backup / "notes.txt").write_text("the user's own")
     fake_docker(tmp_path)
@@ -368,8 +371,8 @@ def test_the_install_root_comes_only_from_the_environment(tmp_path):
     home = tmp_path / "home"
     result = command(ENTRYPOINT, "install", "--destination", str(home / "kit"), home=home, bin_dir=release_bin(tmp_path))
     assert result.returncode == 2 and "unknown install option: --destination" in result.stderr
-    result = command(ENTRYPOINT, "install", home=home, bin_dir=tmp_path / "bin", OPENADKIT_INSTALL_DIR="relative")
-    assert result.returncode != 0 and "OPENADKIT_INSTALL_DIR must be an absolute path" in result.stderr
+    result = command(ENTRYPOINT, "install", home=home, bin_dir=tmp_path / "bin", OPENADKIT_HOME="relative")
+    assert result.returncode != 0 and "OPENADKIT_HOME must be an absolute path" in result.stderr
 
 def complete(root, words, directory=None):
     """COMPREPLY for words (the last one being completed), as bash-completion asks."""
@@ -465,11 +468,28 @@ def test_completion_lists_every_command_and_option():
 
 
 def test_install_defaults_to_the_root_kits_resolve_extends_from(tmp_path):
-    root = tmp_path / "releases"
-    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path),
-                     OPENADKIT_INSTALL_DIR=str(root))
+    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path))
     assert result.returncode == 0, result.stderr
-    assert (root / "openadkit-v1.2.3/openadkit").is_file()
+    assert (tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3/openadkit").is_file()
+    # OPENADKIT_HOME puts everything under one directory, the releases included.
+    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path, "v1.3.0"),
+                     OPENADKIT_HOME=str(tmp_path / "oak"))
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "oak/releases/openadkit-v1.3.0/openadkit").is_file()
+
+
+def test_openadkit_home_holds_settings_state_output_and_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("OPENADKIT_HOME", raising=False)
+    assert cli_catalog.data_root() == tmp_path / "home/autoware_data"
+    assert cli_catalog.output_root() == tmp_path / "home/openadkit-output"
+    monkeypatch.setenv("OPENADKIT_HOME", str(tmp_path / "oak"))
+    assert [cli_catalog.settings_root(), cli_catalog.state_root(), cli_catalog.output_root(),
+            cli_catalog.data_root(), cli_catalog.install_root()] == [
+        tmp_path / "oak" / part for part in ("settings", "state", "output", "data", "releases")]
+    monkeypatch.setenv("OPENADKIT_HOME", "relative")
+    with pytest.raises(cli_manifest.OpenADKitError, match="must be an absolute path"):
+        cli_catalog.data_root()
 
 
 @pytest.mark.parametrize(("options", "message"), [
@@ -684,7 +704,7 @@ def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     root, _ = runtime_tree(tmp_path, document=document)
     kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
-    monkeypatch.setenv("OPENADKIT_OUTPUT_DIR", str(tmp_path / "output"))
+    monkeypatch.setenv("OPENADKIT_HOME", str(tmp_path / "oak"))
     captured = []
     monkeypatch.setattr(cli_compose, "run_compose", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
     monkeypatch.setattr(cli_compose, "docker", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
@@ -1650,13 +1670,13 @@ def test_a_manifest_holds_only_what_the_files_do_not_say(tmp_path):
 @pytest.mark.parametrize("installed", [False, True])
 def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     root, _ = runtime_tree(tmp_path, release=True)
-    install = tmp_path / "install"
+    install = tmp_path / "oak/releases"
     if installed:
-        install.mkdir()
+        install.mkdir(parents=True)
         (install / "openadkit-v1.2.3").symlink_to(root)
     work = tmp_path / "work"
     work.mkdir()
-    result = run_cli(root, "new", "my-kit", "--base", "example", directory=work, OPENADKIT_INSTALL_DIR=str(install))
+    result = run_cli(root, "new", "my-kit", "--base", "example", directory=work, OPENADKIT_HOME=str(tmp_path / "oak"))
     assert result.returncode == 0, result.stderr
     kit = work / "my-kit"
     manifest = json.loads((kit / "openadkit.json").read_text())
@@ -1738,9 +1758,9 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     workspace = kit / "overlay_ws"
     (workspace / "src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
-    # A release from before the devel pin: only an explicit image will do.
+    # A release from before the devel pin has nothing to build in.
     result = run_cli(root, "build", directory=kit)
-    assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
+    assert result.returncode != 0 and "pins no humble devel image" in result.stderr
 
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
@@ -1758,25 +1778,24 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 0 and f"openadkit build {workspace}" in result.stderr
-    result = run_cli(root, "build", directory=kit, DEVEL_IMAGE="local/devel:test")
-    assert result.returncode == 0 and "local/devel:test" in recorded(calls)[-1]["args"]
 
     # A build for another image starts clean; the same image builds incrementally.
     (workspace / "build").mkdir(exist_ok=True)
     (workspace / "build/CMakeCache.txt").write_text("old")
     assert run_cli(root, "build", directory=kit).returncode == 0
+    assert devel[:-1] + "e" in recorded(calls)[-1]["args"]
     assert not (workspace / "build/CMakeCache.txt").exists()
     (workspace / "build").mkdir(exist_ok=True)
     (workspace / "build/CMakeCache.txt").write_text("current")
     assert run_cli(root, "build", directory=kit).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "current"
     # A failed first build in an image: its retry continues from what it built.
-    other = {"DEVEL_IMAGE": "local/devel:other"}
-    assert run_cli(root, "build", directory=kit, FAKE_RUN_EXIT="1", **other).returncode != 0
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "f"}))
+    assert run_cli(root, "build", directory=kit, FAKE_RUN_EXIT="1").returncode != 0
     assert not (workspace / "build/CMakeCache.txt").exists()
     (workspace / "build").mkdir()
     (workspace / "build/CMakeCache.txt").write_text("partial")
-    assert run_cli(root, "build", directory=kit, **other).returncode == 0
+    assert run_cli(root, "build", directory=kit).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "partial"
 
     # A build/ and install/ that openadkit build did not make stay as they are.
@@ -1794,7 +1813,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     elsewhere.mkdir()
     result = run_cli(root, "build", str(workspace), directory=elsewhere)
     assert result.returncode == 0, result.stderr
-    assert devel[:-1] + "e" in recorded(calls)[-1]["args"]
+    assert devel[:-1] + "f" in recorded(calls)[-1]["args"]
     # Outside a kit, build needs a path; a path needs a src/.
     result = run_cli(root, "build", directory=elsewhere)
     assert result.returncode != 0 and "openadkit build PATH" in result.stderr
@@ -1821,6 +1840,36 @@ def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     for option in ("--install-base", "--build-base=other"):
         result = run_cli(root, "build", "--", option, "x", directory=kit)
         assert result.returncode != 0 and "cannot change" in result.stderr
+
+
+def test_a_source_checkout_runs_its_local_build_or_one_ci_build(tmp_path, monkeypatch):
+    root, _ = runtime_tree(tmp_path)
+    context = cli_catalog.load_catalog(root)
+    arch = cli_catalog.host_architecture()
+    monkeypatch.delenv("OPENADKIT_BUILD", raising=False)
+    assert context.component_environment("humble", arch, False)["PLANNING_IMAGE"] == f"registry.example/openadkit:planning-{arch}-humble"
+    assert context.devel_image("jazzy") == f"registry.example/openadkit:universe-common-devel-{arch}-jazzy"
+    # One setting points every image, the devel image included, at one CI build.
+    monkeypatch.setenv("OPENADKIT_BUILD", "ghcr.io/me/openadkit:123-1")
+    assert context.component_environment("humble", arch, False)["PLANNING_IMAGE"] == "ghcr.io/me/openadkit:planning-humble-123-1"
+    assert context.devel_image("jazzy") == "ghcr.io/me/openadkit:universe-common-devel-jazzy-123-1"
+    monkeypatch.setenv("OPENADKIT_BUILD", "123-1")
+    with pytest.raises(cli_manifest.OpenADKitError, match="<image repository>:<build tag>"):
+        context.devel_image("humble")
+
+
+def test_a_source_checkout_without_a_local_build_names_both_ways_out(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path, services=("app",))
+    local = f"registry.example/openadkit:planning-{cli_catalog.host_architecture()}-humble"
+    result = run_cli(root, "run", "example", FAKE_IMAGE=local, FAKE_NO_IMAGES="1")
+    assert result.returncode != 0 and "no local build of planning" in result.stderr
+    assert "docker buildx bake" in result.stderr and "OPENADKIT_BUILD" in result.stderr
+    assert run_cli(root, "run", "example", FAKE_IMAGE=local).returncode == 0
+    # A CI build's images are pulled as usual.
+    ci = "ghcr.io/me/openadkit:planning-humble-123-1"
+    assert run_cli(root, "run", "example", FAKE_IMAGE=ci, FAKE_NO_IMAGES="1",
+                   OPENADKIT_BUILD="ghcr.io/me/openadkit:123-1").returncode == 0
 
 
 def test_build_removes_its_container_when_interrupted(tmp_path, monkeypatch):
