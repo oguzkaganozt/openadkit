@@ -502,6 +502,13 @@ def load_catalog(root: Path) -> Catalog:
     )
 
 
+def default_ros_distro(catalog: Catalog, distros: list[str]) -> str:
+    """The Open AD Kit's default distro, or the first of `distros` when they leave it out."""
+    if not distros or catalog.default_ros_distro in distros:
+        return catalog.default_ros_distro
+    return distros[0]
+
+
 def available_deployments(catalog: Catalog) -> str:
     return ", ".join(catalog.deployments)
 

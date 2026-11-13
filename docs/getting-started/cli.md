@@ -111,7 +111,7 @@ config overrides and overlay workspace, and keeps to the same readiness checks.
 
 `shell` sources ROS, Autoware and the overlay workspace like the services'
 entrypoint. Give it a service and a command to run one command instead of an
-interactive shell.
+interactive shell; `shell` then exits with the command's status.
 
 ### Record
 
@@ -126,6 +126,9 @@ stays on the host when the deployment stops.
 ```bash
 openadkit validate planning-simulation --data
 ```
+
+Without `--ros-distro`, a deployment command uses the Open AD Kit's default
+distro, or the deployment's first one when it does not run on that.
 
 `validate` checks the manifest and the Compose configuration without starting
 anything. `--data` also reports each data resource as `ok`, `missing`,

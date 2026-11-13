@@ -31,7 +31,8 @@ This page lists what that promise covers. Within one major version:
     | `2` | Usage error, such as a missing deployment name |
     | `130` | Interrupted |
 
-    `run --verify` exits with the verify step's own status.
+    `run --verify` exits with the verify step's own status, and `shell` with
+    the status of the shell or command it runs.
 
 - Machine-readable output: `list --json`, `version --json`, `validate --json`
   and each run's `results/run.json`. Each carries `schemaVersion`.

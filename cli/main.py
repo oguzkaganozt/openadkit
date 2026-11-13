@@ -22,6 +22,7 @@ from catalog import (
     Catalog,
     Deployment,
     available_deployments,
+    default_ros_distro,
     deployment_integrity,
     get_deployment,
     install_root,
@@ -399,7 +400,10 @@ def deployment_argument(parser: argparse.ArgumentParser) -> None:
 def selection_arguments(parser: argparse.ArgumentParser, *, run: bool = True) -> None:
     """The deployment and how to run it; fetch takes only the distro."""
     deployment_argument(parser)
-    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: this Open AD Kit's default)")
+    parser.add_argument(
+        "--ros-distro", metavar="DISTRO",
+        help="ROS distro (default: this Open AD Kit's default, or the deployment's first if it does not run on that)",
+    )
     if not run:
         return
     parser.add_argument(
@@ -453,7 +457,10 @@ def build_arguments(parser: argparse.ArgumentParser) -> None:
         "workspace", nargs="?", metavar="PATH",
         help="workspace with a src/ directory (default: the kit's overlay_ws)",
     )
-    parser.add_argument("--ros-distro", metavar="DISTRO", help="ROS distro (default: this Open AD Kit's default)")
+    parser.add_argument(
+        "--ros-distro", metavar="DISTRO",
+        help="ROS distro (default: this Open AD Kit's default, or the first that every kit deployment runs on)",
+    )
 
 
 def new_arguments(parser: argparse.ArgumentParser) -> None:
@@ -531,7 +538,7 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
         raise UsageError("name the workspace to build: openadkit build PATH")
     if not (workspace / "src").is_dir():
         raise OpenADKitError(f"{workspace} has no src/ to build")
-    ros_distro = args.ros_distro or catalog.default_ros_distro
+    ros_distro = args.ros_distro or build_ros_distro(root, catalog)
     image = os.environ.get("DEVEL_IMAGE") or catalog.devel_image(ros_distro)
     if not image:
         raise OpenADKitError(
@@ -540,6 +547,16 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
         )
     compose.build_overlay(workspace, image, ros_distro, args.colcon)
     return 0
+
+
+def build_ros_distro(root: Path, catalog: Catalog) -> str:
+    """In a kit, the default distro if every kit deployment runs on it, else
+    the first one they all run on."""
+    if catalog.kind != "kit":
+        return catalog.default_ros_distro
+    supported = [get_deployment(root, catalog, name).requirements["rosDistros"] for name in catalog.deployments]
+    common = [distro for distro in supported[0] if all(distro in distros for distros in supported)] if supported else []
+    return default_ros_distro(catalog, common)
 
 
 # Deployment commands: validate, config, fetch, run and clean.
@@ -750,7 +767,7 @@ def status_command(args: argparse.Namespace) -> int:
 
 
 def logs_command(args: argparse.Namespace) -> int:
-    live.logs(live.running_project(args.role), args.follow, args.services)
+    live.logs(live.running_project(args.role, stopped=True), args.follow, args.services)
     return 0
 
 
@@ -794,8 +811,7 @@ def restart_command(args: argparse.Namespace) -> int:
 
 
 def shell_command(args: argparse.Namespace) -> int:
-    live.shell(live.running_project(args.role), args.service, args.command_args)
-    return 0
+    return live.shell(live.running_project(args.role), args.service, args.command_args)
 
 
 def record_command(args: argparse.Namespace) -> int:
