@@ -137,15 +137,17 @@ def test_a_stable_release_moves_one_alias_per_image_and_distro(tmp_path):
 
 def select_latest(tmp_path, name, workflow, file, runs, eligible, passed, directory):
     """Run the gate's artifact selection against stubbed runs, newest first:
-    (run conclusion, branch, artifact content)."""
+    (run conclusion, branch, artifact content[, event, head repository])."""
     artifacts, run_json = [], {}
-    for index, (conclusion, branch, content) in enumerate(runs):
+    for index, (conclusion, branch, content, *origin) in enumerate(runs):
+        event, repository = origin or ("workflow_dispatch", "example/repo")
         artifact, run = 100 + index, 200 + index
         with zipfile.ZipFile(tmp_path / f"{artifact}.zip", "w") as archive:
             archive.writestr(file, json.dumps(content))
         artifacts.append(f"{artifact}\t2026-10-{30 - index:02d}T00:00:00Z")
         run_json[str(artifact)] = run
-        run_json[str(run)] = {"path": workflow, "head_branch": branch,
+        run_json[str(run)] = {"path": workflow, "head_branch": branch, "event": event,
+                              "head_repository": {"full_name": repository},
                               "status": "completed", "conclusion": conclusion}
     (tmp_path / "runs.json").write_text(json.dumps(run_json))
     executable(tmp_path / "bin/gh", f'''#!/usr/bin/env python3
@@ -189,6 +191,24 @@ def test_evidence_gate_takes_the_newest_run_of_this_release(tmp_path, runs, acce
         summaries, "evidence_is_release", "evidence_passed", "release-input/evidence")
     assert (result.returncode == 0) is accepted, result.stderr
     assert selected.exists() is accepted
+
+
+# A pull request's run is never release evidence, whatever its branch is called
+# and whatever its summary says: it runs the pull request's own code.
+@pytest.mark.parametrize(("event", "repository"), [
+    ("pull_request", "fork/repo"),
+    ("pull_request", "example/repo"),
+    ("workflow_dispatch", "fork/repo"),
+])
+def test_evidence_gate_ignores_pull_request_and_fork_runs(tmp_path, event, repository):
+    forged = passing_summary(build_metadata()) | {"result": "FAILED", "release_evidence": True}
+    genuine = passing_summary(build_metadata()) | {"result": "PASSED", "release_evidence": True}
+    result, selected = select_latest(
+        tmp_path, f"evidence-summary-{BUILD_TAG}", ".github/workflows/evidence.yaml", "evidence-summary.json",
+        [("success", "release/9.8", forged, event, repository), ("success", "release/9.8", genuine)],
+        "evidence_is_release", "evidence_passed", "release-input/evidence")
+    assert result.returncode == 0, result.stderr
+    assert json.loads(selected.read_text())["result"] == "PASSED"
 
 
 # (run conclusion, scan status), newest first; a partial scan is not about the release.
@@ -244,7 +264,7 @@ print(json.dumps({{"manifest": {{"digest": digest}}}}))
     assert all(message in result.stderr for message in messages), result.stderr
 
 
-def run_manager(tmp_path, operation, *, existing, stable=True):
+def run_manager(tmp_path, operation, *, existing, stable=True, immutable=True):
     asset = tmp_path / "bundle.tar.gz"
     asset.write_bytes(b"validated bundle")
     (tmp_path / "release-notes.md").write_text("notes\n")
@@ -263,13 +283,15 @@ if args.startswith("release view"):
     if existing is None:
         sys.exit("release not found")
     print(existing)
+elif args.startswith("api "):
+    print({str(immutable).lower()!r})
 else:
     with open({str(log)!r}, "a") as output:
         output.write(args + "\\n")
 ''')
     result = subprocess.run(["bash", str(ROOT / ".github/scripts/manage_github_release.sh"), operation],
                             cwd=tmp_path, text=True, capture_output=True, timeout=30,
-                            env=os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}"})
+                            env=os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "IMMUTABLE_RETRY_SECONDS": "0"})
     return result, log.read_text().splitlines() if log.exists() else []
 
 
@@ -301,6 +323,11 @@ def test_publishing_marks_a_stable_release_latest(tmp_path, stable, flags):
     result, calls = run_manager(tmp_path, "publish", existing="true", stable=stable)
     assert result.returncode == 0, result.stderr
     assert calls == [f"release edit {VERSION} {flags}"]
+
+
+def test_publishing_fails_when_the_release_is_not_immutable(tmp_path):
+    result, _ = run_manager(tmp_path, "publish", existing="true", immutable=False)
+    assert result.returncode != 0 and "turn on immutable releases" in result.stderr
 
 
 @pytest.mark.parametrize("problem", [None, "source", "conflict", "create", "policy"])

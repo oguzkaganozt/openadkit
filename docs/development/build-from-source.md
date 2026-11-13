@@ -81,7 +81,7 @@ mkdir -p autoware/src/middleware/external
 touch autoware/src/middleware/external/.keep
 
 # 5. Build the shared universe-common layer (~2 hours)
-docker buildx bake -f components/docker-bake.hcl universe-common
+docker buildx bake -f components/docker-bake.hcl common
 
 # 6. Build the Planning Simulation images (~2 hours)
 docker buildx bake -f components/docker-bake.hcl --load planning-simulation

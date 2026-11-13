@@ -38,6 +38,15 @@ publish() {
     [ "${PUBLISH_LATEST_ALIASES}" != true ] || latest=true
   fi
   gh release edit "${VERSION}" --draft=false --prerelease="${prerelease}" --latest="${latest}"
+  # The repository setting is not readable with the workflow token; the
+  # release itself says whether publishing froze it, once GitHub has marked it.
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    [ "$(gh api "repos/{owner}/{repo}/releases/tags/${VERSION}" --jq '.immutable')" != true ] || return 0
+    [ "${attempt}" = 5 ] || sleep "${IMMUTABLE_RETRY_SECONDS:-3}"
+  done
+  echo "Release ${VERSION} is published but not immutable: turn on immutable releases in the repository settings" >&2
+  exit 1
 }
 
 case "${1:-}" in

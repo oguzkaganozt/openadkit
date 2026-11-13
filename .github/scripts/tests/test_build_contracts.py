@@ -27,6 +27,8 @@ def test_inventory_bake_and_runtime_catalog_agree():
     # universe-common-build is CI's unpublished compile base for components.
     assert set(re.findall(r'^target\s+"(?!_|docker-metadata-action-)([\w-]+)"', bake, re.M)) == targets | {"universe-common-build"}
     assert set(re.findall(r'target\s+"docker-metadata-action-([\w-]+)"', bake)) == targets
+    # Bake resolves a name to a group first: a group named like a target hides it.
+    assert not set(re.findall(r'^group\s+"([\w-]+)"', bake, re.M)) & targets
     kit = json.loads((ROOT / "openadkit.json").read_text())
     assert set(kit["componentImages"].values()) == {image["target"] for image in INVENTORY["images"] if image["stage"] == "component"}
     resolved = matrices.build_matrices(INVENTORY)

@@ -23,8 +23,10 @@ number promises.
   a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
   used.
 - **The `release` environment** exists in the repository settings: the publish
-  job runs in it, so the reviewers required there approve each release. With
-  immutable releases enabled, a published release and its tag cannot change.
+  job runs in it, so the reviewers required there approve each release.
+- **Immutable releases** are on in the repository settings: a published
+  release and its tag cannot change. The publish step fails when a release it
+  published is not immutable.
 - **A successful build** of `build-all-images` exists on that branch; stable
   releases and pre-releases both come from it. The build summary shows its
   `build_tag`. The release ships the CLI and deployments of that build's
