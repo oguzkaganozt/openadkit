@@ -160,16 +160,24 @@ Most settings are arguments of Autoware's launch files, such as
 services. To change a node parameter instead, use a
 [config override](../kits/kit-guide.md#2-config-overrides).
 
-| Directory | Default | Override |
+| Directory | Default | With `OPENADKIT_HOME` |
 | --- | --- | --- |
-| Host settings | `~/.config/openadkit` | `OPENADKIT_SETTINGS_DIR` (or `XDG_CONFIG_HOME`) |
-| Results and recordings | `~/openadkit-output/<name>/{results,recordings}` | `OPENADKIT_OUTPUT_DIR` |
-| Installed releases | `~/.local/share/openadkit` | `OPENADKIT_INSTALL_DIR` |
-| Run records, which `restart` reads | `~/.local/state/openadkit` | `OPENADKIT_STATE_DIR` (or `XDG_STATE_HOME`) |
+| Host settings | `~/.config/openadkit` (or under `XDG_CONFIG_HOME`) | `settings/` |
+| Run records, which `restart` reads | `~/.local/state/openadkit` (or under `XDG_STATE_HOME`) | `state/` |
+| Installed releases | `~/.local/share/openadkit` (or under `XDG_DATA_HOME`) | `releases/` |
+| Results and recordings | `~/openadkit-output/<deployment>/{results,recordings}` | `output/` |
+| Downloaded data | `~/autoware_data` | `data/` |
+
+Set `OPENADKIT_HOME` to an absolute path to keep everything Open AD Kit writes
+under that one directory, for example to keep a test run apart from your own
+files.
 
 ## Downloaded Data
 
-Maps, rosbags and models live under `~/autoware_map` and `~/autoware_data`.
+Maps, rosbags and models live under one data directory, `~/autoware_data` (see
+the table above): maps in `maps/`, rosbags in `rosbags/`, models and the Safety
+Island beside them. To move one of them only, set its path in the host settings
+file, such as `MAP_PATH`.
 
 ```bash
 openadkit validate planning-simulation --data   # report
@@ -240,9 +248,8 @@ openadkit uninstall --all    # remove kept versions too
 ```
 
 `uninstall` is for release installs; remove a source checkout with Git. It
-keeps your host settings in `~/.config/openadkit`, run records in
-`~/.local/state/openadkit`, results and recordings in `~/openadkit-output`, and
-downloaded data. The host changes `openadkit setup` made stay too: Docker and its
+keeps your host settings, run records, results, recordings and downloaded data
+(see [Settings](#settings) for where they are). The host changes `openadkit setup` made stay too: Docker and its
 apt source, your `docker` group membership and
 `/etc/sysctl.d/99-openadkit-dds.conf`.
 

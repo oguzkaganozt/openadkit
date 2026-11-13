@@ -306,6 +306,7 @@ jobs:
           path: |
             cells
             cell-output
+            !cell-output/**/home/data
           retention-days: 14
 
   summarize:

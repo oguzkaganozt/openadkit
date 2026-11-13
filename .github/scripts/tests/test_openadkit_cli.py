@@ -32,8 +32,8 @@ PIN = f"registry.example/image@sha256:{'a' * 64}"
 OTHER_PIN = f"registry.example/custom@sha256:{'b' * 64}"
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 ISOLATED_ENV = (
-    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_SETTINGS_DIR", "OPENADKIT_STATE_DIR",
-    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "OPENADKIT_INSTALL_DIR", "COMPOSE_FILE", "XDG_DATA_HOME",
+    "XDG_CONFIG_HOME", "XDG_STATE_HOME", "OPENADKIT_HOME",
+    "OPENADKIT_KIT", "OPENADKIT_DELEGATED", "COMPOSE_FILE", "XDG_DATA_HOME",
 )
 
 
@@ -284,11 +284,11 @@ shutil.copyfile(Path({str(release)!r}) / url.rsplit("/", 1)[-1], args[args.index
 
 def install(tmp_path, bin_dir, *args):
     return command(ENTRYPOINT, "install", *args, home=tmp_path / "home", bin_dir=bin_dir,
-                   OPENADKIT_INSTALL_DIR=str(tmp_path / "home/kit"))
+                   OPENADKIT_HOME=str(tmp_path / "home/kit"))
 
 
 def installed(tmp_path, version="v1.2.3"):
-    return tmp_path / f"home/kit/openadkit-{version}/openadkit"
+    return tmp_path / f"home/kit/releases/openadkit-{version}/openadkit"
 
 
 def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
@@ -339,7 +339,7 @@ def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_p
     assert install(tmp_path, release_bin(tmp_path)).returncode == 0
     launcher = tmp_path / "home/.local/bin/openadkit"
     assert command(launcher, "upgrade", home=tmp_path / "home", bin_dir=release_bin(tmp_path, "v1.3.0")).returncode == 0
-    backup = tmp_path / "home/kit/openadkit-v1.2.3-backup"
+    backup = tmp_path / "home/kit/releases/openadkit-v1.2.3-backup"
     backup.mkdir()
     (backup / "notes.txt").write_text("the user's own")
     fake_docker(tmp_path)
@@ -368,8 +368,8 @@ def test_the_install_root_comes_only_from_the_environment(tmp_path):
     home = tmp_path / "home"
     result = command(ENTRYPOINT, "install", "--destination", str(home / "kit"), home=home, bin_dir=release_bin(tmp_path))
     assert result.returncode == 2 and "unknown install option: --destination" in result.stderr
-    result = command(ENTRYPOINT, "install", home=home, bin_dir=tmp_path / "bin", OPENADKIT_INSTALL_DIR="relative")
-    assert result.returncode != 0 and "OPENADKIT_INSTALL_DIR must be an absolute path" in result.stderr
+    result = command(ENTRYPOINT, "install", home=home, bin_dir=tmp_path / "bin", OPENADKIT_HOME="relative")
+    assert result.returncode != 0 and "OPENADKIT_HOME must be an absolute path" in result.stderr
 
 def complete(root, words, directory=None):
     """COMPREPLY for words (the last one being completed), as bash-completion asks."""
@@ -465,11 +465,28 @@ def test_completion_lists_every_command_and_option():
 
 
 def test_install_defaults_to_the_root_kits_resolve_extends_from(tmp_path):
-    root = tmp_path / "releases"
-    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path),
-                     OPENADKIT_INSTALL_DIR=str(root))
+    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path))
     assert result.returncode == 0, result.stderr
-    assert (root / "openadkit-v1.2.3/openadkit").is_file()
+    assert (tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3/openadkit").is_file()
+    # OPENADKIT_HOME puts everything under one directory, the releases included.
+    result = command(ENTRYPOINT, "install", home=tmp_path / "home", bin_dir=release_bin(tmp_path, "v1.3.0"),
+                     OPENADKIT_HOME=str(tmp_path / "oak"))
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "oak/releases/openadkit-v1.3.0/openadkit").is_file()
+
+
+def test_openadkit_home_holds_settings_state_output_and_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("OPENADKIT_HOME", raising=False)
+    assert cli_catalog.data_root() == tmp_path / "home/autoware_data"
+    assert cli_catalog.output_root() == tmp_path / "home/openadkit-output"
+    monkeypatch.setenv("OPENADKIT_HOME", str(tmp_path / "oak"))
+    assert [cli_catalog.settings_root(), cli_catalog.state_root(), cli_catalog.output_root(),
+            cli_catalog.data_root(), cli_catalog.install_root()] == [
+        tmp_path / "oak" / part for part in ("settings", "state", "output", "data", "releases")]
+    monkeypatch.setenv("OPENADKIT_HOME", "relative")
+    with pytest.raises(cli_manifest.OpenADKitError, match="must be an absolute path"):
+        cli_catalog.data_root()
 
 
 @pytest.mark.parametrize(("options", "message"), [
@@ -684,7 +701,7 @@ def test_verify_waits_for_a_service_without_a_command(tmp_path, monkeypatch):
     root, _ = runtime_tree(tmp_path, document=document)
     kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
-    monkeypatch.setenv("OPENADKIT_OUTPUT_DIR", str(tmp_path / "output"))
+    monkeypatch.setenv("OPENADKIT_HOME", str(tmp_path / "oak"))
     captured = []
     monkeypatch.setattr(cli_compose, "run_compose", lambda *args, **kwargs: subprocess.CompletedProcess([], 0, "c1\n", ""))
     monkeypatch.setattr(cli_compose, "docker", lambda command, **kwargs: captured.append(command) or subprocess.CompletedProcess(command, 0, "3\n", ""))
@@ -1650,13 +1667,13 @@ def test_a_manifest_holds_only_what_the_files_do_not_say(tmp_path):
 @pytest.mark.parametrize("installed", [False, True])
 def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     root, _ = runtime_tree(tmp_path, release=True)
-    install = tmp_path / "install"
+    install = tmp_path / "oak/releases"
     if installed:
-        install.mkdir()
+        install.mkdir(parents=True)
         (install / "openadkit-v1.2.3").symlink_to(root)
     work = tmp_path / "work"
     work.mkdir()
-    result = run_cli(root, "new", "my-kit", "--base", "example", directory=work, OPENADKIT_INSTALL_DIR=str(install))
+    result = run_cli(root, "new", "my-kit", "--base", "example", directory=work, OPENADKIT_HOME=str(tmp_path / "oak"))
     assert result.returncode == 0, result.stderr
     kit = work / "my-kit"
     manifest = json.loads((kit / "openadkit.json").read_text())
