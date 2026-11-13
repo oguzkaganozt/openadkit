@@ -373,8 +373,8 @@ def resolve_tested_commit_step():
     ("workflow_dispatch", "deployments/planning-simulation/settings.env", "false", "false"),
     ("pull_request", "deployments/planning-simulation/settings.env", "false", "false"),
     # A pull request whose images would differ waits for its build.
-    ("pull_request", "components/api/Dockerfile", "false", "true"),
-    ("workflow_dispatch", "components/api/Dockerfile", "false", "false"),
+    ("pull_request", "components/control/Dockerfile", "false", "true"),
+    ("workflow_dispatch", "components/control/Dockerfile", "false", "false"),
 ])
 def test_a_commit_tested_against_other_images_is_not_release_evidence(tmp_path, event, change, release, skip):
     repo = tmp_path / "repo"

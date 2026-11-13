@@ -140,7 +140,7 @@ text = " ".join(args)
 if not ("config --environment" in text and "OPENADKIT_UID" not in os.environ):
     with open({str(calls)!r}, "a") as output:
         env = {{name: value for name, value in os.environ.items()
-               if name.startswith("OPENADKIT_") or name in ("API_IMAGE", "VALUE", "ROS_DISTRO", "CYCLONEDDS_NETWORK_INTERFACE")}}
+               if name.startswith("OPENADKIT_") or name in ("VEHICLE_SYSTEM_IMAGE", "VALUE", "ROS_DISTRO", "CYCLONEDDS_NETWORK_INTERFACE")}}
         output.write(json.dumps({{"args": args, "env": env}}) + "\\n")
 live = Path({str(live)!r})
 if "config --environment" in text:
@@ -537,15 +537,15 @@ def test_uninstall_refuses_unsafe_state(tmp_path, unsafe):
 @pytest.mark.parametrize("release", [False, True])
 def test_image_and_env_priority_reaches_compose(tmp_path, release):
     root, directory = runtime_tree(tmp_path, release=release, document=manifest(gpu=True),
-                                   config="API_IMAGE=base\nVALUE=base\n")
-    host_settings(root, f"API_IMAGE={OTHER_PIN}\nVALUE=site\n")
+                                   config="VEHICLE_SYSTEM_IMAGE=base\nVALUE=base\n")
+    host_settings(root, f"VEHICLE_SYSTEM_IMAGE={OTHER_PIN}\nVALUE=site\n")
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "validate", "example", "--gpu", API_IMAGE="shell", VALUE="shell")
+    result = run_cli(root, "validate", "example", "--gpu", VEHICLE_SYSTEM_IMAGE="shell", VALUE="shell")
     assert result.returncode == 0, result.stderr
     first = recorded(calls)[0]
     assert first["env"].get("VALUE") is None  # Compose, not the shell, loads file-defined values.
     # A release pins its images; a source checkout's env files may set their own.
-    assert first["env"].get("API_IMAGE") == (PIN if release else None)
+    assert first["env"].get("VEHICLE_SYSTEM_IMAGE") == (PIN if release else None)
     env_files = [first["args"][index + 1] for index, arg in enumerate(first["args"]) if arg == "--env-file"]
     assert env_files == [str(directory / "settings.env"), str(directory / "settings.gpu.env"),
                          str(tmp_path / "home/.config/openadkit/example.env")]
@@ -554,8 +554,8 @@ def test_image_and_env_priority_reaches_compose(tmp_path, release):
 @pytest.mark.parametrize("problem", ["mutable", "missing"])
 def test_release_image_failures_prevent_compose(tmp_path, problem):
     root, _ = runtime_tree(tmp_path, release=True)
-    edit_manifest(root, lambda kit: kit["images"]["humble"].update(api="registry.example/api:latest")
-             if problem == "mutable" else kit["images"]["humble"].pop("api"))
+    edit_manifest(root, lambda kit: kit["images"]["humble"].update(control="registry.example/control:latest")
+             if problem == "mutable" else kit["images"]["humble"].pop("control"))
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example")
     assert result.returncode != 0
@@ -1400,12 +1400,12 @@ def test_a_source_checkout_image_setting_resolves_as_compose_resolves_it(tmp_pat
         monkeypatch.delenv(variable, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("REGISTRY", "registry.example/mine")
-    root, directory = runtime_tree(tmp_path, config="API_IMAGE=${REGISTRY}/api:dev\n")
+    root, directory = runtime_tree(tmp_path, config="VEHICLE_SYSTEM_IMAGE=${REGISTRY}/api:dev\n")
     kit = cli_catalog.load_catalog(root)
     deployment = cli_catalog.get_deployment(root, kit, "example")
     selection = cli_settings.resolve(deployment, kit, "humble")
-    assert "API_IMAGE" not in selection.injections
-    assert selection.environment["API_IMAGE"] == "registry.example/mine/api:dev"
+    assert "VEHICLE_SYSTEM_IMAGE" not in selection.injections
+    assert selection.environment["VEHICLE_SYSTEM_IMAGE"] == "registry.example/mine/api:dev"
     # Images the env files leave out still come from the source checkout's prefix.
     assert selection.injections["PLANNING_IMAGE"].startswith("registry.example/openadkit:")
 
@@ -1594,7 +1594,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     root, base = runtime_tree(tmp_path, release=release,
                               document=manifest(gpu=True, data=[files_resource(tmp_path)]), config="VALUE=base\nMAP_PATH=$HOME/data/map\n")
     edit_manifest(root, lambda doc: doc.update(externalImages={"INHERITED_IMAGE": {"ref": PIN}}))
-    kit = extending_kit(tmp_path, root, external_images={"API_IMAGE": {"ref": OTHER_PIN}})
+    kit = extending_kit(tmp_path, root, external_images={"VEHICLE_SYSTEM_IMAGE": {"ref": OTHER_PIN}})
     directory = kit / "deployments/custom"
     (directory / "settings.gpu.env").write_text("VALUE=kit-gpu\n")
     for path in (base / "config", directory / "config", kit / "overlay_ws"):
@@ -1606,7 +1606,7 @@ def test_kit_inherits_pins_gpu_env_and_layers(tmp_path, monkeypatch, release):
     selection = cli_settings.resolve(deployment, context, "humble", True)
     assert deployment.compose_files(True) == [directory / "compose.yaml", base / "compose.gpu.yaml"]
     assert selection.environment["VALUE"] == "site" and selection.environment["BASE_GPU"] == "1"
-    assert selection.injections["API_IMAGE"] == OTHER_PIN
+    assert selection.injections["VEHICLE_SYSTEM_IMAGE"] == OTHER_PIN
     assert selection.injections["OPENADKIT_BASE_DEPLOYMENT"] == str(base)
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "custom", "--gpu", directory=kit)

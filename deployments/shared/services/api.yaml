@@ -4,7 +4,7 @@ services:
     extends:
       file: autoware.yaml
       service: autoware
-    image: ${API_IMAGE:?set by the openadkit CLI}
+    image: ${VEHICLE_SYSTEM_IMAGE:?set by the openadkit CLI}
     container_name: autoware-api
     pid: service:map
     volumes:

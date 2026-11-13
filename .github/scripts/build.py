@@ -39,7 +39,7 @@ PIPELINE_INPUTS = (
     ".github/workflows/build-single-image-distro.yaml",
     ".trivyignore",
 )
-PIPELINE_CHECK_TARGET = "api"
+PIPELINE_CHECK_TARGET = "localization-mapping"
 
 
 def platform_label(platform):

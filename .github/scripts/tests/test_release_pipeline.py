@@ -83,7 +83,7 @@ def test_a_release_pushes_to_the_registry_and_package_the_manifest_names(tmp_pat
 def test_plan_requires_complete_pinned_dual_distro_images(tmp_path, problem):
     images = build_images()
     if problem == "missing":
-        images = [image for image in images if (image["target"], image["ros_distro"]) != ("api", "jazzy")]
+        images = [image for image in images if (image["target"], image["ros_distro"]) != ("control", "jazzy")]
     elif problem == "duplicate":
         images.append(dict(images[0]))
     result, output = write_plan(tmp_path, images=images)

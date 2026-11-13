@@ -9,7 +9,6 @@
     "PLANNING_GPU_IMAGE": "planning-cuda",
     "CONTROL_IMAGE": "control",
     "VEHICLE_SYSTEM_IMAGE": "vehicle-system",
-    "API_IMAGE": "api",
     "VISUALIZER_IMAGE": "visualizer",
     "SIMULATOR_IMAGE": "simulator",
     "SENSING_PERCEPTION_IMAGE": "sensing-perception",

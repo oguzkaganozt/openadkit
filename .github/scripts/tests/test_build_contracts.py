@@ -58,9 +58,9 @@ def test_inventory_bake_and_runtime_catalog_agree():
     # Shared by every image.
     ("components/shared/runtime-deps.sh", {image["target"] for image in INVENTORY["images"]}, {}),
     # The pipeline alone: one small image proves it.
-    (".github/scripts/build.py", {"api"}, {"use_local_common": False}),
-    (".github/workflows/build-single-image-distro.yaml", {"api"}, {}),
-    (".github/actions/build-image/action.yaml", {"api"}, {}),
+    (".github/scripts/build.py", {"localization-mapping"}, {"use_local_common": False}),
+    (".github/workflows/build-single-image-distro.yaml", {"localization-mapping"}, {}),
+    (".github/actions/build-image/action.yaml", {"localization-mapping"}, {}),
     # Copied into the image, unlike the component's own README.
     ("components/visualizer/novnc/README.md", {"visualizer"}, {}),
 ])
@@ -92,7 +92,7 @@ def test_invalid_build_inputs_fail_closed(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize(("target", "publish", "local"), [
     ("universe-common", True, False), ("sensing-perception-cuda", True, False), ("planning-cuda", True, False),
-    ("simulator", True, False), ("api", False, False), ("simulator", False, True),
+    ("simulator", True, False), ("control", False, False), ("simulator", False, True),
 ])
 def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publish, local):
     uri = "docker-image://example/base@sha256:" + "c" * 64
@@ -141,7 +141,7 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
         assert "simulator" not in row["contexts"]
 
 
-@pytest.mark.parametrize(("target", "common_check"), [("universe-common", True), ("api", False)])
+@pytest.mark.parametrize(("target", "common_check"), [("universe-common", True), ("control", False)])
 def test_pull_requests_rebuild_common_from_the_registry_cache_only(target, common_check):
     # A multi-GB hand-over through the Actions cache stalled; each job builds
     # the common images again from main's registry cache instead.
