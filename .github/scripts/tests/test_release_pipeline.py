@@ -291,7 +291,7 @@ else:
 ''')
     result = subprocess.run(["bash", str(ROOT / ".github/scripts/manage_github_release.sh"), operation],
                             cwd=tmp_path, text=True, capture_output=True, timeout=30,
-                            env=os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}"})
+                            env=os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "IMMUTABLE_RETRY_SECONDS": "0"})
     return result, log.read_text().splitlines() if log.exists() else []
 
 
