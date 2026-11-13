@@ -57,7 +57,7 @@ files in order (later files win):
 5. The host settings file, `~/.config/openadkit/<kit-deployment>.env`, if present
 
 Shell exports do not override values set in these files. The CLI adds the ROS
-distro, the host UID and GID, the overlay mount paths, `OPENADKIT_ROOT`
+distro, the host UID and GID, the config override and overlay workspace mounts, `OPENADKIT_ROOT`
 (the release's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
 deployment); a release's component and external images stay pinned. Inside the
 containers, the ROS and DDS defaults come from the base services'
@@ -266,11 +266,11 @@ points work on that build; they do not verify your kit.
 
 A base deployment's CI exemption stays with the kit; an exemption is not
 runtime evidence. The [evidence workflow](../development/evidence-workflow.md)
-does not yet accept external kits.
+does not accept external kits.
 
 ## Upgrade Without Losing Your Work
 
-Install the new release next to the old one, update `extends`, rebuild your
+Update `extends` (the next command downloads that release), rebuild your
 workspace against its devel digest, then validate and run your acceptance
 checks. Your repository, host settings, downloaded data and output directories
 are outside the release, and `openadkit upgrade` does not change a kit's

@@ -31,7 +31,7 @@ my-kit/
   add your services below it. `OPENADKIT_ROOT` names the release's root, for
   its shared assets.
 - `settings.env` holds only the values you change, such as `VEHICLE_ID`.
-- `config/autoware/` holds parameter overrides for Autoware packages.
+- `config/autoware/` holds config overrides for Autoware packages.
 - `overlay_ws/src/` holds your ROS packages.
 
 The deployment's name is its key in `openadkit.json`, here `my-kit`;

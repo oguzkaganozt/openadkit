@@ -3,11 +3,11 @@
 # default (`WEBSOCKIFY_BIND=127.0.0.1`); reach it remotely through an SSH tunnel.
 # To expose noVNC itself, set WEBSOCKIFY_BIND=0.0.0.0 and front the port with an
 # authenticated reverse proxy, or serve HTTPS with your own certificate:
-# NOVNC_CERT and NOVNC_KEY name its files, mounted into this service.
+# NOVNC_CERT and NOVNC_KEY name its files, which a kit mounts into this service.
 services:
   visualizer:
     extends:
-      file: base.yaml
+      file: autoware.yaml
       service: autoware
     image: ${VISUALIZER_IMAGE:?set by the openadkit CLI}
     container_name: autoware-visualizer

@@ -1,8 +1,8 @@
-# CARLA-side services for carla simulation: CARLA, its interface and map
+# The carla role's services for CARLA simulation: CARLA, its interface and map
 # loader, and the visualizer, which split-host runs on this host rather than
 # the edge.
 #
-# Shared by the single-host entry point (compose.yaml) and the
+# Shared by the single-host compose.yaml and the
 # `--role carla` view (this file plus compose.zenoh.yaml). All cross-service
 # edges here are sim-local
 # (carla-interface waits on CARLA and the map loader), so they stay in this

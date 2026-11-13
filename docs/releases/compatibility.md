@@ -57,7 +57,7 @@ What a kit made with `openadkit new` builds on:
 - Each base deployment's Compose files, service names, data destination
   variables (such as `MAP_PATH`), verify step and the settings listed under
   [Settings and Paths](#settings-and-paths).
-- Config overrides under `config/` and the overlay workspace in `overlay_ws/`,
+- Config overrides under `config/autoware/` and the overlay workspace in `overlay_ws/`,
   which the images' entrypoint applies and sources on every start.
 - `externalImages` that replace a component image or add new ones.
 
@@ -67,7 +67,8 @@ See [Create a Kit](../kits/create-a-kit.md) and the
 ### Settings and Paths
 
 - `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_SETTINGS_DIR` and
-  `OPENADKIT_OUTPUT_DIR`.
+  `OPENADKIT_OUTPUT_DIR`, and `DEVEL_IMAGE`, the devel image `openadkit build`
+  uses in place of the pinned one.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.
 - These settings of a deployment's `settings.env` and of the host settings

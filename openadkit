@@ -226,7 +226,7 @@ PY
   INSTALL_STAGE=$(mktemp -d "${destination}/.openadkit-stage.XXXXXXXX")
   tar -xzf "$staged_bundle" -C "$INSTALL_STAGE" --no-same-owner --no-same-permissions
   [[ -x "${INSTALL_STAGE}/${root_name}/openadkit" ]] \
-    || fail 'release bundle is missing its executable entry point'
+    || fail 'release bundle is missing its launcher'
 
   # Re-check immediately before the swap so a concurrent install cannot be
   # silently replaced unless --force was requested.

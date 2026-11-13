@@ -1,10 +1,10 @@
 # Scenario-host services for scenario simulation: the scenario runner and the
 # visualizer, which split-host runs on this host rather than the edge.
 #
-# Shared by the single-host entry point (compose.yaml, which adds
+# Shared by the single-host compose.yaml (which adds
 # pid/depends_on and WAIT_FOR_POINTCLOUD_MAP back) and the `--role scenario`
 # view (this file plus compose.zenoh.yaml). Autoware edges and pid: service:map
-# live in the default entry point, not here: the role view has no Autoware
+# live in the single-host compose.yaml, not here: the role view has no Autoware
 # services and no map.
 include:
   - ../shared/services/visualizer.yaml
@@ -101,8 +101,8 @@ services:
         wait_for_service /api/operation_mode/change_to_autonomous
 
         set -- "$$SCENARIO"
-        if [ -z "$1" ]; then
-          set -- "$(ros2 pkg prefix --share scenario_test_runner)/scenario/sample.yaml"
+        if [ -z "$$1" ]; then
+          set -- "$$(ros2 pkg prefix --share scenario_test_runner)/scenario/sample.yaml"
         fi
         # The runner exits 0 whatever the scenarios did; their JUnit results decide.
         started=$$(date +%s)
@@ -118,7 +118,7 @@ services:
           output_directory:="$$OUTPUT_DIRECTORY" \
           port:="$$SCENARIO_SIMULATOR_PORT" \
           record:="$$RECORD" \
-          scenario:="$1" \
+          scenario:="$$1" \
           sensor_model:="$$SENSOR_MODEL" \
           use_custom_centerline:="$$USE_CUSTOM_CENTERLINE" \
           use_sim_time:="$$USE_SIM_TIME" \

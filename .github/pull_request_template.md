@@ -1,4 +1,5 @@
 - [ ] The docs match the change, or it needs none
+- [ ] Every commit is signed off (`git commit -s`)
 
 <!-- The title becomes the squashed commit and its release-notes line:
      type(scope): summary, with ! after the scope for a breaking change. -->

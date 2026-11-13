@@ -27,8 +27,9 @@ openadkit config planning-simulation \
       --root-password-hash "$(openssl passwd -6 password)"
 ```
 
-Use the `openadkit` of an installed release and `platforms/autosd` from the same
-tag: the release's CLI puts the image digests in the model, so the result is
+Use the `openadkit` of an installed release, and `platforms/autosd` from a
+clone of the repository at the same tag (the release bundle does not include
+it): the release's CLI puts the image digests in the model, so the result is
 pinned. A source checkout names the tags of a local build instead. Kits work
 the same way, such as `openadkit config ./my-kit`.
 
@@ -40,12 +41,11 @@ the same way, such as `openadkit config ./my-kit`.
 
 A Compose field or value the script does not translate stops it instead of
 being dropped. It covers what Planning Simulation uses; writable mounts, for
-example, have no translation yet. A mount of the login session, such as the
+example, have no translation. A mount of the login session, such as the
 visualizer's X11 cookie, stops it too, so leave the visualizer out.
 
 The units run as root with the deployment's host networking. They use the
-component images, and mapping them onto AutoSD's root and QM partitions is not
-done yet.
+component images, and are not mapped onto AutoSD's root and QM partitions.
 
 !!! warning "Evidence scope"
     Evidence runs these units under Podman and systemd on Ubuntu 24.04 and drives

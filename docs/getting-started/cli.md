@@ -145,8 +145,8 @@ A deployment reads its settings from environment files, in this order (later
 files win):
 
 1. `deployments/<name>/settings.env`: the deployment defaults
-2. `deployments/<name>/settings.gpu.env`: GPU settings, loaded only with `--gpu`
-3. `~/.config/openadkit/<name>.env`: your host settings file
+2. `deployments/<name>/settings.gpu.env`: GPU settings, loaded with `--gpu` and for a deployment that requires a GPU
+3. `~/.config/openadkit/<deployment>.env`: your host settings file
 
 Shell exports do not override variables defined in these files. Put host
 settings such as `MAP_PATH` or `REMOTE_PASSWORD` in your host settings file: it
@@ -165,6 +165,7 @@ services. To change a node parameter instead, use a
 | Host settings | `~/.config/openadkit` | `OPENADKIT_SETTINGS_DIR` (or `XDG_CONFIG_HOME`) |
 | Results and recordings | `~/openadkit-output/<name>/{results,recordings}` | `OPENADKIT_OUTPUT_DIR` |
 | Installed releases | `~/.local/share/openadkit` | `OPENADKIT_INSTALL_DIR` |
+| Run records, which `restart` reads | `~/.local/state/openadkit` | `OPENADKIT_STATE_DIR` (or `XDG_STATE_HOME`) |
 
 ## Downloaded Data
 
@@ -180,7 +181,7 @@ openadkit clean planning-simulation             # delete, after asking
   Data is outdated when the deployment now declares other content for it, for
   example a map with a new checksum. They update only data the CLI installed,
   and not while a running container uses it. `fetch` always includes the GPU
-  data; `run --force` is not supported.
+  data.
 - **`fetch --force`** replaces the data even when it is complete, and is the
   way to repair incomplete data.
 - **`clean`** lists what it deletes and asks first; `--yes` skips the question,
@@ -239,8 +240,11 @@ openadkit uninstall --all    # remove kept versions too
 ```
 
 `uninstall` is for release installs; remove a source checkout with Git. It
-keeps your host settings in `~/.config/openadkit`, results and recordings in
-`~/openadkit-output`, and downloaded data.
+keeps your host settings in `~/.config/openadkit`, run records in
+`~/.local/state/openadkit`, results and recordings in `~/openadkit-output`, and
+downloaded data. The host changes `openadkit setup` made stay too: Docker and its
+apt source, your `docker` group membership and
+`/etc/sysctl.d/99-openadkit-dds.conf`.
 
 ## Names, Directories and Output
 

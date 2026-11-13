@@ -58,7 +58,7 @@ flowchart LR
 
 1. **validate**: runs the release gates in
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
-   (version format, build provenance and age, scan results,
+   (version format, the build run and its age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
    digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
    tagged if a gate fails.
@@ -72,7 +72,9 @@ flowchart LR
    publishes the draft, which creates the Git tag. A published release cannot
    be changed: a bad one is followed by the next version.
 4. **deploy-docs**: publishes the docs site from `main` when the latest
-   aliases moved.
+   aliases moved. If it fails after a publish, re-run only the failed job or
+   dispatch `deploy-docs`: re-running all jobs stops at the draft step, since
+   the release is already published.
 
 The release plan records the exact image digests, aliases and assets of the
 release for the jobs after it; it stays in the workflow run. The release itself

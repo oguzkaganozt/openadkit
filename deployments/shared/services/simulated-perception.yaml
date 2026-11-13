@@ -4,7 +4,7 @@
 services:
   simulated-perception:
     extends:
-      file: base.yaml
+      file: autoware.yaml
       service: autoware
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}
     container_name: autoware-simulated-perception

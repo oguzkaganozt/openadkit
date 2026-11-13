@@ -136,7 +136,7 @@ EOF
         scheme=https
     fi
 
-    # Start NoVNC. Under network_mode: host (base deployments) bind to
+    # Start NoVNC. Under network_mode: host (catalog deployments) bind to
     # loopback so noVNC is not exposed on every interface. When a deployment
     # puts the container behind bridge networking with a host port mapping, set
     # WEBSOCKIFY_BIND=0.0.0.0 so Docker's port forwarding can reach websockify

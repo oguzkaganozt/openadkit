@@ -10,8 +10,8 @@ over Zenoh. A deployment keeps its name and declares its **roles** in
 
 - `scenario-simulation`: `--role autoware` on one host, `--role scenario` on
   the other.
-- `carla-simulation`: `--role autoware` on one GPU host, `--role carla` on
-  the other.
+- `carla-simulation`: `--role autoware` on one host, `--role carla` on the
+  other; both need an NVIDIA GPU.
 
 Without `--role`, the deployment runs on one host as usual.
 
@@ -104,7 +104,7 @@ openadkit run scenario-simulation --role scenario   # scenario host
 The runner waits up to `SCENARIO_READY_TIMEOUT` for Autoware over Zenoh before
 it launches the scenario. Results are written on the **scenario** host under
 `~/openadkit-output/scenario-simulation/results`. The visualizer runs there
-too, so RViz takes no CPU or GPU from Autoware on the edge.
+too, so RViz takes no CPU or GPU from Autoware on the Autoware host.
 
 ## CARLA
 
@@ -133,7 +133,7 @@ before routing anything new.
 - **The visualizer's topics** are on both allowlists: planning and control
   output, objects, the vector map marker, `/robot_description` and the AD API
   (`/api/.*`) its panels use. Zenoh sends a topic across only when the other
-  host subscribes to it, so without a visualizer these stay on the edge.
+  host subscribes to it, so without a visualizer these stay on the Autoware host.
 - **CARLA's processed point clouds** cross at 2 Hz (`pub_max_frequencies`);
   the point cloud map is not bridged.
 - **`/sensing/imu/imu_data`** of the simple sensor simulator is on the

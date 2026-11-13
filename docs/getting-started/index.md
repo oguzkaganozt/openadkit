@@ -114,7 +114,7 @@ To open RViz on your own desktop instead of the browser, see
 
 ## 5. Drive {: #drive }
 
-In RViz, follow the [Autoware planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle) to:
+In RViz, follow the [Autoware planning simulation instructions](https://docs.autoware.org/main/simulation/planning-simulation/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle) to:
 
 1. Set an **initial pose** for the ego vehicle
 2. Set a **goal pose** on the map; Autoware plans the route

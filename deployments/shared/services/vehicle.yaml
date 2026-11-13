@@ -2,7 +2,7 @@
 services:
   vehicle:
     extends:
-      file: base.yaml
+      file: autoware.yaml
       service: autoware
     image: ${VEHICLE_SYSTEM_IMAGE:?set by the openadkit CLI}
     container_name: autoware-vehicle

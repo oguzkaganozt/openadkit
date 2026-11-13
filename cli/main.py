@@ -96,8 +96,8 @@ def create_kit(root: Path, catalog: Catalog, name: str, base: str, destination: 
             text = text.replace("{{" + key + "}}", value)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(text, encoding="utf-8")
-    # The deployment's config layer, which every service mounts.
-    (target / "config/autoware").mkdir(parents=True)
+    # The deployment's config overrides, which every service applies, come
+    # with the template's config/autoware/README.md.
     return target
 
 
@@ -377,7 +377,7 @@ def print_run_next_steps(
         )
     if output:
         print(f"output: {output}")
-    print("stop with: openadkit stop")
+    print(f"stop with: openadkit stop{f' --role {role}' if role else ''}")
 
 
 ROLE_HELP = "role from this deployment's manifest (omit for single host; experimental)"
@@ -514,7 +514,7 @@ def version_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> i
 def new_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
     target = create_kit(root, catalog, args.name, args.base, Path.cwd())
     print(f"created: {target}")
-    print(f"next: cd {args.name} && openadkit validate && openadkit run")
+    print(f"next: cd {args.name} && openadkit validate && openadkit run --verify")
     return 0
 
 
@@ -534,6 +534,10 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
         raise OpenADKitError(f"{workspace} has no src/ to build")
     ros_distro = args.ros_distro or build_ros_distro(root, catalog)
     image = os.environ.get("DEVEL_IMAGE") or catalog.devel_image(ros_distro)
+    if not image and catalog.images and ros_distro not in catalog.images:
+        raise OpenADKitError(
+            f"this Open AD Kit does not support ROS distro {ros_distro}; expected {', '.join(sorted(catalog.images))}"
+        )
     if not image:
         raise OpenADKitError(
             f"this Open AD Kit pins no {ros_distro} devel image; set DEVEL_IMAGE to the "
@@ -642,7 +646,7 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     others = compose.other_projects(deployment)
     if others:
         raise OpenADKitError(
-            f"{', '.join(others)} is already running; "
+            f"{', '.join(live.display_name(project) for project in others)} is already running; "
             "stop it with openadkit stop before starting this deployment"
         )
     conflict = compose.live_state_conflict(deployment, selection)
@@ -653,7 +657,7 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     leftover = compose.stopped_other_projects(deployment, selection.role)
     if leftover:
         raise OpenADKitError(
-            f"{', '.join(leftover)} left stopped containers on this host; "
+            f"{', '.join(live.display_name(project) for project in leftover)} left stopped containers on this host; "
             "remove them with openadkit stop before starting this deployment"
         )
     protect_outdated_data(deployment, selection)
@@ -756,7 +760,9 @@ def status_command(args: argparse.Namespace) -> int:
         else:
             live.stop(project)
     if stopped and args.command == "status":
-        print("remove the stopped containers with: openadkit stop")
+        # stop without a role also stops what still runs here.
+        role = stopped[0].partition("_")[2] if len(stopped) == 1 else ""
+        print(f"remove the stopped containers with: openadkit stop{f' --role {role}' if role else ''}")
     return 0
 
 

@@ -1,6 +1,6 @@
-# Autoware-side services for scenario simulation.
+# The Autoware role's services for scenario simulation.
 #
-# Shared by the single-host entry point (compose.yaml) and the
+# Shared by the single-host compose.yaml and the
 # `--role autoware` view (this file plus compose.zenoh.yaml). The scenario
 # runner lives in compose.scenario.yaml.
 include:
@@ -60,7 +60,7 @@ services:
   # topic until Scenario Simulator V2 subscribes transient-local.
   mrm-state-relay:
     extends:
-      file: ../shared/services/base.yaml
+      file: ../shared/services/autoware.yaml
       service: autoware
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}
     container_name: autoware-mrm-state-relay

@@ -393,7 +393,10 @@ def resolve_extends(kit_root: Path, extends: str) -> Path:
     else:
         candidate = (kit_root / Path(extends).expanduser()).resolve()
         if not (candidate / "openadkit.json").is_file():
-            raise OpenADKitError(f"extends does not point to an Open AD Kit: {extends}")
+            raise OpenADKitError(
+                f"extends does not point to an Open AD Kit: {extends}; "
+                "name a release as vX.Y.Z, or give the path of an Open AD Kit"
+            )
     if load_json(candidate / "openadkit.json").get("kind") == "kit":
         raise OpenADKitError(
             f"{candidate} is itself a kit; only one level of extends is supported"
