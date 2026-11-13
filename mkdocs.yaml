@@ -107,17 +107,17 @@ nav:
       - CARLA Simulation: deployments/carla-simulation.md
       - Safety Island Simulation: deployments/safety-island-simulation.md
       - Split-host Simulation: deployments/split-host.md
+      - Components: deployments/components.md
   - Kits:
       - Create a Kit: kits/create-a-kit.md
       - Develop and Debug: kits/develop-and-debug.md
       - Kit Guide: kits/kit-guide.md
-  - Components: components/index.md
   - Platforms:
       - platforms/index.md
       - AutoSD: platforms/autosd.md
   - Releases:
       - releases/index.md
-      - Container Images & Versioning: releases/container-images.md
+      - Container Images: releases/container-images.md
       - Compatibility: releases/compatibility.md
       - Evidence Policy: releases/evidence.md
       - Verify a Release: releases/verification.md

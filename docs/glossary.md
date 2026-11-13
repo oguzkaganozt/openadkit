@@ -7,7 +7,7 @@ it.
 
 | Term | Meaning |
 |------|---------|
-| [**Component image**](components/index.md) | A published container image holding one or more Autoware functions, for example `planning`. |
+| [**Component image**](deployments/components.md) | A published container image holding one or more Autoware functions, for example `planning`. |
 | [**Latest alias**](releases/container-images.md#tag-reference) | An image tag such as `planning-humble` that follows the newest stable release. Release tags (`-vX.Y.Z`) and digests never move. |
 | [**Digest pin**](releases/container-images.md#choosing-a-tag) | An image reference by content hash (`@sha256:…`) instead of a tag, so the same image bits are always used. |
 
