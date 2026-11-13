@@ -12,8 +12,8 @@ release tag or, for development, the path of a source checkout. The kit's
 `openadkit.json` has `schemaVersion: 2`; older ones are rejected.
 
 - **The pinned release runs the kit.** The CLI finds it under
-  `~/.local/share/openadkit/openadkit-<tag>` (`OPENADKIT_INSTALL_DIR` to
-  change) and hands the command to its launcher. A missing version is
+  `~/.local/share/openadkit/openadkit-<tag>` (`releases/` under
+  `OPENADKIT_HOME` when set) and hands the command to its launcher. A missing version is
   downloaded and verified on first use, as a build tool's wrapper does; your
   active `openadkit` stays as it is.
 - **Only the commands that act on a kit do this:** `validate`, `config`,

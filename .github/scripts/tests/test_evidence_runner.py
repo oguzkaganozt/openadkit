@@ -74,7 +74,7 @@ args = sys.argv[1:]
 if args[:2] == ["list", "--json"]:
     print(json.dumps({"deployments": []}))
 elif args[0] == "run" and "--verify" in args:
-    report = Path(os.environ["OPENADKIT_OUTPUT_DIR"], args[1], "results/run.json")
+    report = Path(os.environ["OPENADKIT_HOME"], "output", args[1], "results/run.json")
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
@@ -153,7 +153,7 @@ with Path(os.environ['CALLS']).open('a') as log:
     log.write(json.dumps([args, os.getenv('ZENOH_LISTEN'), os.getenv('ZENOH_PEER')]) + '\\n')
 if args[0] == 'validate': print(json.dumps({'deployment': args[1]}))
 if args[0] == 'run' and '--verify' in args and os.environ['FAILURE'] != 'run':
-    report = Path(os.environ['OPENADKIT_OUTPUT_DIR'], args[1], 'results/run.json')
+    report = Path(os.environ['OPENADKIT_HOME'], 'output', args[1], 'results/run.json')
     report.parent.mkdir(parents=True)
     passed = os.environ['FAILURE'] != 'verify'
     report.write_text(json.dumps({'readySeconds': 1.5, 'verify': {'seconds': 2.5, 'result': 'PASSED' if passed else 'FAILED'}}))
@@ -202,10 +202,9 @@ import json, os, sys
 from pathlib import Path
 args = sys.argv[1:]
 report = {
-    "config": os.environ.get("OPENADKIT_SETTINGS_DIR"),
+    "home": os.environ.get("OPENADKIT_HOME"),
     "kit": os.environ.get("OPENADKIT_KIT"),
     "delegated": os.environ.get("OPENADKIT_DELEGATED"),
-    "state": os.environ.get("OPENADKIT_STATE_DIR"),
     "site_exists": Path(os.environ["HOME"], ".config/openadkit/planning-simulation.env").exists(),
 }
 with Path(os.environ["CALLS"]).open("a") as log:
@@ -213,7 +212,7 @@ with Path(os.environ["CALLS"]).open("a") as log:
 if args[0] == "validate":
     print(json.dumps({"deployment": args[1]}))
 if args[0] == "run" and "--verify" in args:
-    report = Path(os.environ["OPENADKIT_OUTPUT_DIR"], args[1], "results/run.json")
+    report = Path(os.environ["OPENADKIT_HOME"], "output", args[1], "results/run.json")
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
@@ -234,7 +233,7 @@ if args[0] == "run" and "--verify" in args:
     assert result.returncode == 0, result.stderr
     seen = [json.loads(line) for line in calls.read_text().splitlines()]
     assert seen and all(row["kit"] is None and row["delegated"] is None for row in seen)
-    assert all(row["config"] == f"{out}/config" and row["state"] == f"{out}/state" for row in seen)
+    assert all(row["home"] == f"{out}/home" for row in seen)
     # The host settings file is outside the cell's configuration directory.
     assert all(row["site_exists"] for row in seen)
 
@@ -256,7 +255,7 @@ sys.exit(1 if args[0] == 'run' else 0)
     executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
     env = {k: v for k, v in os.environ.items() if k not in ("ZENOH_LISTEN", "ZENOH_PEER", "OPENADKIT_KIT")}
     env.update(PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}", OPENADKIT_CLI=str(cli),
-               HOME=str(tmp_path), OPENADKIT_SETTINGS_DIR=str(tmp_path / 'config'))
+               HOME=str(tmp_path))
     subprocess.run(["bash", str(RUNNER), json.dumps(matrix_cell("scenario-simulation", "split")), str(tmp_path / "out")],
                    env=env, cwd=ROOT, capture_output=True, text=True, timeout=20)
     assert json.loads((tmp_path / "out/cell.json").read_text())["levels"]["L0"]["ok"] is True
@@ -429,7 +428,7 @@ import json, os, sys
 from pathlib import Path
 args = sys.argv[1:]
 if args[0] == "run" and "--verify" in args:
-    report = Path(os.environ["OPENADKIT_OUTPUT_DIR"], args[1], "results/run.json")
+    report = Path(os.environ["OPENADKIT_HOME"], "output", args[1], "results/run.json")
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
@@ -473,7 +472,7 @@ from pathlib import Path
 args = sys.argv[1:]
 if args[0] == 'validate': print(json.dumps({'deployment': args[1]}))
 if args[0] == 'run':
-    report = Path(os.environ['OPENADKIT_OUTPUT_DIR'], args[1], 'results/run.json')
+    report = Path(os.environ['OPENADKIT_HOME'], 'output', args[1], 'results/run.json')
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({'readySeconds': 1, 'verify': {'seconds': 2, 'result': os.environ['VERIFY']}}))
 ''')

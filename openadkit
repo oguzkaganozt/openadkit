@@ -38,7 +38,7 @@ install_usage() {
   cat <<'EOF'
 Usage: openadkit install [--version vX.Y.Z] [--force]
 
-Downloads and verifies an Open AD Kit release bundle into $OPENADKIT_INSTALL_DIR,
+Downloads and verifies an Open AD Kit release bundle into $OPENADKIT_HOME/releases,
 else ~/.local/share/openadkit. A launcher is installed at ~/.local/bin/openadkit,
 with Tab completion.
 A version that is already installed becomes the active one as it is, without a
@@ -270,7 +270,12 @@ PY
 
 install_openadkit() {
   # Kits find the release they extend under the same root (cli/catalog.py).
-  local version=latest destination="${OPENADKIT_INSTALL_DIR:-${HOME}/.local/share/openadkit}" force=false
+  local version=latest destination force=false
+  if [[ -n ${OPENADKIT_HOME:-} ]]; then
+    destination="${OPENADKIT_HOME}/releases"
+  else
+    destination="${XDG_DATA_HOME:-${HOME}/.local/share}/openadkit"
+  fi
   local resolve_only=false announce_next=true activate=true
 
   while (($#)); do
@@ -296,7 +301,7 @@ install_openadkit() {
 
   [[ $version == latest || $version =~ $OPENADKIT_VERSION_RE ]] \
     || usage_fail "invalid release version: ${version}"
-  [[ $destination = /* ]] || fail 'OPENADKIT_INSTALL_DIR must be an absolute path'
+  [[ $destination = /* ]] || fail 'OPENADKIT_HOME must be an absolute path'
   if [[ $version != latest && $force != true && $resolve_only != true ]] \
     && release_is_installed "${destination}/openadkit-${version}"; then
     use_installed_release "$version" "${destination}/openadkit-${version}" "$announce_next" "$activate"
