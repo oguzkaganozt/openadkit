@@ -85,9 +85,10 @@ def display_name(project: str) -> str:
     return project[len(PROJECT_PREFIX):]
 
 
-def running_project(role: str | None) -> str:
-    """The one live project a command acts on."""
-    projects = running_projects(role)
+def running_project(role: str | None, *, stopped: bool = False) -> str:
+    """The one live project a command acts on; with `stopped`, a stack whose
+    containers all stopped too, as after a failed start."""
+    projects = running_projects(role) or (stopped_projects(role) if stopped else [])
     if not projects:
         raise OpenADKitError(f"role {role} is not running here" if role else "nothing is running")
     if len(projects) > 1:
@@ -176,11 +177,13 @@ def pid_followers(project: str, services: set[str]) -> set[str]:
     return followers - services
 
 
-def shell(project: str, service: str, command: list[str]) -> None:
-    """A shell, or one command, in a running service with ROS, Autoware and the overlays sourced."""
+def shell(project: str, service: str, command: list[str]) -> int:
+    """A shell, or one command, in a running service with ROS, Autoware and
+    the overlays sourced. Returns the shell's or the command's exit status."""
     arguments = ["exec"] if sys.stdin.isatty() else ["exec", "-T"]
     arguments += [service, "bash", "-c", SHELL_SETUP + 'exec "$@"', "bash", *(command or ["bash"])]
-    run_project(project, arguments, show=True)
+    command_line = ["docker", "compose", "--project-name", project, *arguments]
+    return docker(command_line, cwd=Path("/"), show=True, check=False).returncode
 
 
 def record(project: str, topics: list[str], output: Path | None) -> Path:

@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from catalog import Catalog, Deployment, state_root
+from catalog import Catalog, Deployment, default_ros_distro, state_root
 from manifest import OpenADKitError
 
 # Compose settings the CLI passes itself; a shell export must not change them.
@@ -232,7 +232,7 @@ def resolve(
     if role is not None and role not in deployment.roles:
         valid = ", ".join(sorted(deployment.roles)) if deployment.roles else "none"
         raise OpenADKitError(f"{deployment.name} has no role {role}\navailable roles: {valid}")
-    distro = ros_distro or catalog.default_ros_distro
+    distro = ros_distro or default_ros_distro(catalog, deployment.requirements["rosDistros"])
     injections = _injections(deployment, distro, role)
     if data_only:
         environment = _resolved(deployment, False, injections)

@@ -1193,6 +1193,9 @@ def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     assert run_cli(root, "shell", "planning", "ros2", "topic", "list", "--include-hidden-topics").returncode == 0
     shell = recorded(calls)[-1]["args"]
     assert shell[3:6] == ["exec", "-T", "planning"] and shell[-4:] == ["ros2", "topic", "list", "--include-hidden-topics"]
+    # A command's exit status is shell's own, with no error of the CLI's.
+    result = run_cli(root, "shell", "planning", "false", FAKE_EXEC_EXIT="3")
+    assert result.returncode == 3 and "error:" not in result.stderr
     for arguments in ((), ("/tf", "--all")):
         result = run_cli(root, "record", *arguments)
         assert result.returncode != 0 and "or pass --all" in result.stderr
@@ -1220,6 +1223,9 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
     assert run_cli(root, "run", "other", "--pull", "never").returncode == 0
     fake_docker(tmp_path, stopped=["openadkit-other"])
     calls.write_text("")
+    # Its logs stay readable until stop removes it.
+    assert run_cli(root, "logs", "map", directory=tmp_path).returncode == 0
+    assert recorded(calls)[-1]["args"] == ["compose", "--project-name", "openadkit-other", "logs", "map"]
     assert run_cli(root, "stop", directory=tmp_path).returncode == 0
     assert ["compose", "--project-name", "openadkit-other", "down", "--remove-orphans"] in [
         row["args"] for row in recorded(calls)]
@@ -1362,6 +1368,7 @@ class SettingsDeployment:
         self.name, self.directory, self.data, self.roles = "example", directory, data, {}
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
+        self.requirements = {"rosDistros": ["humble", "jazzy"]}
 
     def env_files(self, gpu=False):
         return self.files + (self.gpu_files if gpu else [])
@@ -1769,6 +1776,16 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert run_cli(root, "build", directory=kit, **other).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "partial"
 
+    # A build/ and install/ that openadkit build did not make stay as they are.
+    host = tmp_path / "host_ws"
+    for directory in ("src", "build/pkg", "install/pkg"):
+        (host / directory).mkdir(parents=True)
+    calls.write_text("")
+    result = run_cli(root, "build", str(host), directory=kit)
+    assert result.returncode != 0 and "did not come from openadkit build" in result.stderr
+    assert (host / "build/pkg").is_dir() and (host / "install/pkg").is_dir()
+    assert not any(row["args"][:1] == ["run"] for row in recorded(calls))
+
     # A path builds that workspace, with the pins of the kit around it.
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
@@ -1801,6 +1818,62 @@ def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     for option in ("--install-base", "--build-base=other"):
         result = run_cli(root, "build", "--", option, "x", directory=kit)
         assert result.returncode != 0 and "cannot change" in result.stderr
+
+
+def test_build_removes_its_container_when_interrupted(tmp_path, monkeypatch):
+    commands = []
+
+    def docker(command, **_):
+        commands.append(command)
+        if command[:2] == ["docker", "run"]:
+            raise KeyboardInterrupt
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(cli_compose, "docker", docker)
+    monkeypatch.setattr(cli_compose, "require_docker", lambda: None)
+    (tmp_path / "src").mkdir()
+    with pytest.raises(KeyboardInterrupt):
+        cli_compose.build_overlay(tmp_path, "local/devel:test", "humble")
+    name = commands[0][commands[0].index("--name") + 1]
+    assert commands[1] == ["docker", "rm", "--force", name]
+
+
+def test_a_kit_defaults_to_a_distro_it_runs_on(tmp_path):
+    root, _ = runtime_tree(tmp_path, release=True)
+    devel = {distro: f"ghcr.io/example/openadkit:universe-common-devel-{distro}@sha256:" + "d" * 64
+             for distro in ("humble", "jazzy")}
+    edit_manifest(root, lambda doc: [doc["images"][distro].update({"universe-common-devel": image})
+                                     for distro, image in devel.items()])
+    kit = extending_kit(tmp_path, root)
+    path = kit / "deployments/custom/deployment.json"
+    path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": {"rosDistros": ["jazzy"]}}))
+    (kit / "overlay_ws/src").mkdir(parents=True)
+    calls = fake_docker(tmp_path)
+    # The release defaults to humble, which this kit leaves out.
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 0, result.stderr
+    assert run_cli(root, "build", directory=kit).returncode == 0
+    assert devel["jazzy"] in recorded(calls)[-1]["args"]
+
+
+def test_restart_ignores_a_one_shot_service_that_failed_before_it(monkeypatch):
+    rows = {"old": "scenario-simulator", "new": "loader"}
+
+    def docker(command, **_):
+        lines = [f"{container} {service} 0 exited 1 none" for container, service in rows.items()]
+        return subprocess.CompletedProcess(command, 0, "\n".join(lines), "")
+
+    monkeypatch.setattr(cli_compose, "docker", docker)
+
+    class Deployment:
+        def one_shot_services(self, role):
+            return ["scenario-simulator", "loader"]
+
+    class Selection:
+        role = None
+
+    # "old" existed before this up, which left it as it was; "new" failed after it.
+    assert cli_compose.failed_services(Deployment(), Selection(), list(rows), {"old": 0}) == ["loader"]
 
 
 def overlay_workspace(root, name, monkeypatch, tmp_path, workspace=None):

@@ -115,6 +115,10 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
   After a release upgrade or a distro change, `validate` and `run` warn until you
   rebuild, and that rebuild starts from a clean `build/` and `install/`, since
   CMake caches record the paths they were configured with.
+- Without `--ros-distro`, the build uses the Open AD Kit's default distro, or
+  the first one that every kit deployment runs on.
+- A `build/` or `install/` that `openadkit build` did not make, such as a colcon
+  build on the host, stops the build; remove them first.
 - `--install-base` and `--build-base` stay fixed: the services source
   `install/` where they mount the workspace.
 - A source checkout pins no devel image: export `DEVEL_IMAGE` in your shell,

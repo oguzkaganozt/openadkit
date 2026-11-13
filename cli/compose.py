@@ -411,9 +411,10 @@ def failed_services(
     failed = set()
     for line in result.stdout.splitlines():
         container, service, restarts, state, exit_code, health = line.split()
-        # One-shot services may finish, as map-check does, but not fail.
+        # One-shot services may finish, but not fail. One that failed before
+        # this `up`, which left its container as it was, is no news.
         if service in deployment.one_shot_services(selection.role):
-            if state == "exited" and exit_code != "0":
+            if state == "exited" and exit_code != "0" and container not in baseline:
                 failed.add(service)
             continue
         # `up` keeps unchanged containers, and with them earlier restarts.
@@ -664,9 +665,10 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
     """Build a workspace in the devel image, passing `colcon` on to colcon build.
 
     It builds incrementally only on its own last build in this image and
-    distro. Anything else (another image or distro, a build by hand at another
-    path) starts from a clean build and install: CMake caches record the
-    image's paths and the path they were configured at.
+    distro; its build for another image or distro starts from a clean build
+    and install, since CMake caches record the image's paths. A build/ or
+    install/ it did not make, such as a colcon build on the host, is left
+    alone: the build stops and names them.
     """
     fixed = sorted({option for option in FIXED_COLCON_OPTIONS for argument in colcon
                     if argument == option or argument.startswith(f"{option}=")})
@@ -674,19 +676,38 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
         raise OpenADKitError(f"{', '.join(fixed)} cannot change: the services use {OVERLAY_TARGET}/install")
     require_docker()
     stamp = {"image": image, "rosDistro": ros_distro}
-    if read_overlay_stamp(workspace) != stamp:
-        for products in (workspace / "build", workspace / "install"):
-            if products.is_dir() and not products.is_symlink():
-                shutil.rmtree(products)
+    built = read_overlay_stamp(workspace)
+    if built != stamp:
+        products = [path for path in (workspace / "build", workspace / "install")
+                    if path.is_dir() and not path.is_symlink()]
+        if built is None and any(any(path.iterdir()) for path in products):
+            raise OpenADKitError(
+                f"{' and '.join(str(path) for path in products)} did not come from openadkit build; "
+                "remove them to build this workspace"
+            )
+        for path in products:
+            shutil.rmtree(path)
         # The stamp names the image the products belong to, so a failed
         # build's retry continues from what it built.
         (workspace / "install").mkdir()
         (workspace / "install" / OVERLAY_STAMP).write_text(json.dumps(stamp) + "\n", encoding="utf-8")
+    # Ctrl+C ends the docker client but not the build in the container, so
+    # the container is named and removed with it.
+    name = f"openadkit-build-{os.getpid()}"
+    try:
+        build_container(name, workspace, image, colcon)
+    except KeyboardInterrupt:
+        docker(["docker", "rm", "--force", name], check=False, trace=False)
+        raise
+    print(f"built: {workspace}")
+
+
+def build_container(name: str, workspace: Path, image: str, colcon: Sequence[str]) -> None:
     # The image compiles through ccache in the aw home, which only uid
     # 1000 can write; keep HOME and the cache in the container's /tmp.
     docker(
         [
-            "docker", "run", "--rm",
+            "docker", "run", "--rm", "--name", name,
             "--user", f"{os.getuid()}:{os.getgid()}",
             "--env", "HOME=/tmp",
             "--env", "CCACHE_DIR=/tmp/ccache",
@@ -698,7 +719,6 @@ def build_overlay(workspace: Path, image: str, ros_distro: str, colcon: Sequence
         ],
         show=True,
     )
-    print(f"built: {workspace}")
 
 
 def check_overlay_build(deployment: Deployment, selection: Selection, image: str | None) -> str | None:
