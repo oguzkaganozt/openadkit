@@ -49,8 +49,8 @@ version keeps working.
   title pairs the two, `Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do
   `openadkit install` and `openadkit version`.
 - **Pinned inputs.** A release also pins the ROS distros and every image
-  digest, and its images carry
-  `org.opencontainers.image.autoware-base-version`.
+  digest, and its images carry the Autoware version they are built from in
+  `org.autoware.openadkit.autoware-version`.
 - **Backports.** A fix that is upstream but not yet in an Autoware release can
   be [backported](../development/release-process.md#backporting-an-autoware-fix);
   the release notes list it, and the Autoware version stays the tag's.
@@ -81,7 +81,7 @@ same ROS versions, and the build fails if they would differ. The release BOM
 names the snapshot per distro; an image carries it as a label:
 
 ```bash
-docker inspect --format '{{ "{{" }} index .Config.Labels "org.opencontainers.image.ros-snapshot" {{ "}}" }}' \
+docker inspect --format '{{ "{{" }} index .Config.Labels "org.autoware.openadkit.ros-snapshot" {{ "}}" }}' \
   {{ registry }}:planning-humble
 ```
 

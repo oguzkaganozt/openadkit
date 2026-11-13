@@ -103,15 +103,17 @@ def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publ
     if not local:
         prepared.update(devel_context=uri, runtime_context=uri)
     recipe, targets = matrices.bake_recipe(INVENTORY, prepared, target, "humble", "linux/amd64", publish=publish,
-                                           common_check=False, owner="example", source_sha="b" * 40, run_id="123")
+                                           common_check=False, owner="example")
     row = recipe["target"][target]
     assert targets == (["universe-common-build", "universe-common-devel", "universe-common"]
                        if publish and target == "universe-common" else [target])
     common_build = "ghcr.io/example/openadkit-buildcache:universe-common-build-amd64-humble-123-1"
     if publish:
-        # Plain OCI keys, so `docker inspect` reads a label by its documented name.
-        assert row["labels"]["org.opencontainers.image.autoware-lock-sha256"] == "e" * 64
-        assert row["labels"]["org.opencontainers.image.openadkit-sha"] == "b" * 40
+        # The project's own namespace, with plain keys so `docker inspect` reads
+        # a label by its documented name; the OCI keys are metadata-action's.
+        assert row["labels"] == {"org.autoware.openadkit.autoware-version": "1.8.0",
+                                 "org.autoware.openadkit.autoware-ref": "a" * 40,
+                                 "org.autoware.openadkit.autoware-lock-sha256": "e" * 64}
         assert not any('"' in key for key in row["labels"])
         assert row["cache-to"][0].endswith(",mode=max")
         assert (row["contexts"].get("autoware-base-cuda-devel") == uri) is target.endswith("-cuda")
@@ -145,7 +147,7 @@ def test_pull_requests_rebuild_common_from_the_registry_cache_only(target, commo
     # the common images again from main's registry cache instead.
     prepared = {"build_tag": "123-1", "cache_scope": "main", "use_local_common": "true"}
     recipe, _ = matrices.bake_recipe(INVENTORY, prepared, target, "humble", "linux/amd64", publish=False,
-                                     common_check=common_check, owner="example", source_sha="b" * 40, run_id="123")
+                                     common_check=common_check, owner="example")
     assert "type=gha" not in json.dumps(recipe) and "cache-to" not in json.dumps(recipe)
     cache = "type=registry,ref=ghcr.io/example/openadkit-buildcache:universe-common-amd64-humble-main"
     assert cache in recipe["target"][target]["cache-from"]

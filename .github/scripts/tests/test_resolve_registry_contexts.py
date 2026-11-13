@@ -13,18 +13,8 @@ LOCK_SHA256 = "b" * 64
 
 
 def registry_metadata(openadkit_sha, *, matches=True, lock_sha256=LOCK_SHA256):
-    if matches == "same-commit-branch":
-        input_ref = "main"
-        ref_type = "branch"
-        image_autoware_ref = AUTOWARE_REF
-    elif matches:
-        input_ref = "1.8.0"
-        ref_type = "tag"
-        image_autoware_ref = AUTOWARE_REF
-    else:
-        input_ref = "main"
-        ref_type = "branch"
-        image_autoware_ref = "c" * 40
+    # An image of the same Autoware commit matches, whichever ref named it.
+    image_autoware_ref = AUTOWARE_REF if matches else "c" * 40
 
     return json.dumps(
         {
@@ -32,12 +22,10 @@ def registry_metadata(openadkit_sha, *, matches=True, lock_sha256=LOCK_SHA256):
             "image": {
                 "config": {
                     "Labels": {
-                        "org.opencontainers.image.autoware-input-ref": input_ref,
-                        "org.opencontainers.image.autoware-ref-type": ref_type,
-                        "org.opencontainers.image.autoware-ref": image_autoware_ref,
-                        "org.opencontainers.image.autoware-base-version": "1.8.0",
-                        "org.opencontainers.image.autoware-lock-sha256": lock_sha256,
-                        "org.opencontainers.image.openadkit-sha": openadkit_sha,
+                        "org.autoware.openadkit.autoware-ref": image_autoware_ref,
+                        "org.autoware.openadkit.autoware-version": "1.8.0",
+                        "org.autoware.openadkit.autoware-lock-sha256": lock_sha256,
+                        "org.opencontainers.image.revision": openadkit_sha,
                     }
                 }
             },

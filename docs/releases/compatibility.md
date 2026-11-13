@@ -84,8 +84,9 @@ See [CLI & Maintenance](../getting-started/cli.md).
 - Component image names and the tag scheme: release tags, latest aliases and
   the devel image a kit builds its overlay workspace in. See
   [Container Images & Versioning](container-images.md).
-- The image labels `org.opencontainers.image.autoware-base-version` and
-  `org.opencontainers.image.ros-snapshot`.
+- The image labels `org.autoware.openadkit.ros-snapshot`,
+  `org.autoware.openadkit.autoware-version`, `org.autoware.openadkit.autoware-ref`
+  and `org.autoware.openadkit.autoware-lock-sha256`.
 - The Autoware packages that the catalog deployments run and that each image's
   launch files in [Components](../components/index.md) need, with RViz plugins
   in the visualizer image only. They change only with the pinned Autoware
