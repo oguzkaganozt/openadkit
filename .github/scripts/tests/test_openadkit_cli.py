@@ -192,12 +192,15 @@ elif "config --hash" in text:
 elif "config --format json" in text:
     # Services with restart: "no" run once and exit.
     once = os.environ.get("FAKE_ONE_SHOT", "").split(",")
-    print(json.dumps({{"services": {{name: {{"restart": "no"}} if name in once else {{}}
+    image = {{"image": os.environ["FAKE_IMAGE"]}} if os.environ.get("FAKE_IMAGE") else {{}}
+    print(json.dumps({{"services": {{name: ({{"restart": "no"}} if name in once else {{}}) | image
                                     for name in {service_lines!r}.split()}}}}))
 elif "config --services" in text:
     print({service_lines!r})
 elif "config --quiet" in text:
     sys.exit({config})
+elif args[:2] == ["image", "inspect"]:
+    sys.exit(1 if os.environ.get("FAKE_NO_IMAGES") else 0)
 elif args[0] == "compose" and "exec" in args:
     sys.exit(int(os.environ.get("FAKE_EXEC_EXIT", "0")))
 elif args[0] == "run":
@@ -1755,9 +1758,9 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     workspace = kit / "overlay_ws"
     (workspace / "src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
-    # A release from before the devel pin: only an explicit image will do.
+    # A release from before the devel pin has nothing to build in.
     result = run_cli(root, "build", directory=kit)
-    assert result.returncode != 0 and "set DEVEL_IMAGE" in result.stderr
+    assert result.returncode != 0 and "pins no humble devel image" in result.stderr
 
     devel = "ghcr.io/example/openadkit:universe-common-devel-humble@sha256:" + "d" * 64
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel}))
@@ -1775,25 +1778,24 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 0 and f"openadkit build {workspace}" in result.stderr
-    result = run_cli(root, "build", directory=kit, DEVEL_IMAGE="local/devel:test")
-    assert result.returncode == 0 and "local/devel:test" in recorded(calls)[-1]["args"]
 
     # A build for another image starts clean; the same image builds incrementally.
     (workspace / "build").mkdir(exist_ok=True)
     (workspace / "build/CMakeCache.txt").write_text("old")
     assert run_cli(root, "build", directory=kit).returncode == 0
+    assert devel[:-1] + "e" in recorded(calls)[-1]["args"]
     assert not (workspace / "build/CMakeCache.txt").exists()
     (workspace / "build").mkdir(exist_ok=True)
     (workspace / "build/CMakeCache.txt").write_text("current")
     assert run_cli(root, "build", directory=kit).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "current"
     # A failed first build in an image: its retry continues from what it built.
-    other = {"DEVEL_IMAGE": "local/devel:other"}
-    assert run_cli(root, "build", directory=kit, FAKE_RUN_EXIT="1", **other).returncode != 0
+    edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "f"}))
+    assert run_cli(root, "build", directory=kit, FAKE_RUN_EXIT="1").returncode != 0
     assert not (workspace / "build/CMakeCache.txt").exists()
     (workspace / "build").mkdir()
     (workspace / "build/CMakeCache.txt").write_text("partial")
-    assert run_cli(root, "build", directory=kit, **other).returncode == 0
+    assert run_cli(root, "build", directory=kit).returncode == 0
     assert (workspace / "build/CMakeCache.txt").read_text() == "partial"
 
     # A build/ and install/ that openadkit build did not make stay as they are.
@@ -1811,7 +1813,7 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     elsewhere.mkdir()
     result = run_cli(root, "build", str(workspace), directory=elsewhere)
     assert result.returncode == 0, result.stderr
-    assert devel[:-1] + "e" in recorded(calls)[-1]["args"]
+    assert devel[:-1] + "f" in recorded(calls)[-1]["args"]
     # Outside a kit, build needs a path; a path needs a src/.
     result = run_cli(root, "build", directory=elsewhere)
     assert result.returncode != 0 and "openadkit build PATH" in result.stderr
@@ -1838,6 +1840,36 @@ def test_build_hands_the_arguments_after_dashes_to_colcon(tmp_path):
     for option in ("--install-base", "--build-base=other"):
         result = run_cli(root, "build", "--", option, "x", directory=kit)
         assert result.returncode != 0 and "cannot change" in result.stderr
+
+
+def test_a_source_checkout_runs_its_local_build_or_one_ci_build(tmp_path, monkeypatch):
+    root, _ = runtime_tree(tmp_path)
+    context = cli_catalog.load_catalog(root)
+    arch = cli_catalog.host_architecture()
+    monkeypatch.delenv("OPENADKIT_BUILD", raising=False)
+    assert context.component_environment("humble", arch, False)["PLANNING_IMAGE"] == f"registry.example/openadkit:planning-{arch}-humble"
+    assert context.devel_image("jazzy") == f"registry.example/openadkit:universe-common-devel-{arch}-jazzy"
+    # One setting points every image, the devel image included, at one CI build.
+    monkeypatch.setenv("OPENADKIT_BUILD", "ghcr.io/me/openadkit:123-1")
+    assert context.component_environment("humble", arch, False)["PLANNING_IMAGE"] == "ghcr.io/me/openadkit:planning-humble-123-1"
+    assert context.devel_image("jazzy") == "ghcr.io/me/openadkit:universe-common-devel-jazzy-123-1"
+    monkeypatch.setenv("OPENADKIT_BUILD", "123-1")
+    with pytest.raises(cli_manifest.OpenADKitError, match="<image repository>:<build tag>"):
+        context.devel_image("humble")
+
+
+def test_a_source_checkout_without_a_local_build_names_both_ways_out(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path, services=("app",))
+    local = f"registry.example/openadkit:planning-{cli_catalog.host_architecture()}-humble"
+    result = run_cli(root, "run", "example", FAKE_IMAGE=local, FAKE_NO_IMAGES="1")
+    assert result.returncode != 0 and "no local build of planning" in result.stderr
+    assert "docker buildx bake" in result.stderr and "OPENADKIT_BUILD" in result.stderr
+    assert run_cli(root, "run", "example", FAKE_IMAGE=local).returncode == 0
+    # A CI build's images are pulled as usual.
+    ci = "ghcr.io/me/openadkit:planning-humble-123-1"
+    assert run_cli(root, "run", "example", FAKE_IMAGE=ci, FAKE_NO_IMAGES="1",
+                   OPENADKIT_BUILD="ghcr.io/me/openadkit:123-1").returncode == 0
 
 
 def test_build_removes_its_container_when_interrupted(tmp_path, monkeypatch):
