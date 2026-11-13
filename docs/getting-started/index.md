@@ -75,7 +75,7 @@ services, and returns once Autoware is ready.
 --8<-- "includes/visualizer-remote-access.md"
 
 To open RViz on your own desktop instead of the browser, see
-[Visualizer](../components/index.md#visualizer).
+[Visualizer](../deployments/components.md#visualizer).
 
 ## 5. Drive {: #drive }
 
@@ -100,5 +100,5 @@ so the next `run` starts faster.
 - [Deployments](../deployments/index.md) — scenario testing, rosbag replay, CARLA and Safety Island
 - [CLI & Maintenance](cli.md) — runtime controls, settings, upgrades and cleanup
 - [Create a Kit](../kits/create-a-kit.md) — your packages, parameters and services on top of a deployment
-- [Components](../components/index.md) — the images behind what you just ran
+- [Components](../deployments/components.md) — the images behind what you just ran
 - [Troubleshooting](troubleshooting.md) — when something does not start

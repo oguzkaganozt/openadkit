@@ -1,4 +1,4 @@
-# Container Images & Versioning
+# Container Images
 
 Open AD Kit publishes images to the GitHub Container Registry (`{{ registry }}`).
 This page is the reference for image tags, versions, and what "supported" means.
@@ -35,29 +35,6 @@ the same patterns with `-jazzy` (for example `planning-jazzy`).
   tags of a [local build](../development/build-from-source.md), not published
   images.
 
-## Versioning
-
-Open AD Kit versions follow [Semantic Versioning](https://semver.org/) on their
-own, starting at `v2.0.0`: a backward-incompatible change to the CLI, the
-manifests or a deployment raises the major version, and a move to a new
-Autoware release raises at least the minor version. The release notes list what
-breaks, and [Compatibility](compatibility.md) lists what a major
-version keeps working.
-
-- **One Autoware release per release.** Releases come from `main`, which pins
-  one Autoware release in `.github/autoware.ref`. The
-  [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
-  title pairs the two, `Open AD Kit v2.0.1 · Autoware 2.0.0`, and so do
-  `openadkit install` and `openadkit version`.
-- **Pinned inputs.** A release also pins the ROS distros and every image
-  digest, and its images carry the Autoware version they are built from in
-  `org.autoware.openadkit.autoware-version`.
-- **Backports.** A fix that is upstream but not yet in an Autoware release can
-  be [backported](../development/release-process.md#backporting-an-autoware-fix);
-  the release notes list it, and the Autoware version stays the tag's.
-- **Older versions.** A `release/X.Y` branch is created from a release tag only
-  to fix an older version.
-
 ## ROS Distro Support
 
 | Distro | Status |
@@ -89,18 +66,9 @@ docker inspect --format '{{ "{{" }} index .Config.Labels "org.autoware.openadkit
 The snapshot changes only with the upstream Autoware release. Ubuntu packages
 are not pinned, so security updates keep flowing into new builds.
 
-## What "Supported" Means
+## Image Reference
 
-- **Releases**: the latest stable release is supported. Fixes, including CVE
-  remediation, ship in a new release; older releases are not patched.
-- **Platforms**: a path is supported, experimental or unsupported. See
-  [Supported Platforms](../platforms/index.md).
-- **No certification claims**: Open AD Kit makes no safety-certification,
-  functional-safety or production-readiness claim.
+Generated from the image inventory (`.github/image-inventory.json`), so it always
+matches what CI builds. The [Tag Reference](#tag-reference) explains the tag names.
 
-Community help and version coverage are described in
-[SUPPORT.md](https://github.com/autowarefoundation/openadkit/blob/main/.github/SUPPORT.md);
-report security vulnerabilities through the
-[private reporting policy](https://github.com/autowarefoundation/openadkit/blob/main/.github/SECURITY.md).
-
-Maintainers: see the [Release Process](../development/release-process.md).
+{{ component_table() }}

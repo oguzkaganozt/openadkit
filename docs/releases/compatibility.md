@@ -83,7 +83,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
 
 - Component image names and the tag scheme: release tags, latest aliases and
   the devel image a kit builds its overlay workspace in. See
-  [Container Images & Versioning](container-images.md).
+  [Container Images](container-images.md).
 - The images' entrypoint, `/opt/openadkit/entrypoint.sh`: it runs the command
   as the host user (`HOST_UID`, `HOST_GID`), with ROS, Autoware and the overlay
   workspace sourced and the config overrides applied.
@@ -91,7 +91,7 @@ See [CLI & Maintenance](../getting-started/cli.md).
   `org.autoware.openadkit.autoware-version`, `org.autoware.openadkit.autoware-ref`
   and `org.autoware.openadkit.autoware-lock-sha256`.
 - The Autoware packages that the catalog deployments run and that each image's
-  launch files in [Components](../components/index.md) need, with RViz plugins
+  launch files in [Components](../deployments/components.md) need, with RViz plugins
   in the visualizer image only. They change only with the pinned Autoware
   release: when Autoware removes a package, the minor release that moves to
   that Autoware release says so. An image may lose any other package in a minor

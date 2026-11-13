@@ -8,7 +8,7 @@ the images use Autoware's component interfaces between them.
 
 All images build on a shared `universe-common` layer; see
 [Build from Source](../development/build-from-source.md#build-system) for the
-build graph. The [image reference](#image-reference) lists tags and platforms.
+build graph. The [image reference](../releases/container-images.md#image-reference) lists tags and platforms.
 
 The runtime images hold what Autoware runs. They leave out what only a
 compiler reads, such as headers and static libraries, and only the visualizer
@@ -23,8 +23,8 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 | `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
 | `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
 | `control` | `control` | Planning, Scenario, CARLA, Safety Island |
-| `vehicle-system` | `vehicle`, `system`, `api` | All |
-| `simulator` | `simulator`, `simulated-perception`, `carla-interface` | Planning, Scenario, Safety Island; `carla-interface` in CARLA |
+| `vehicle-system` | `vehicle`, `system`, `api`, `safety-island-bridge`, `safety-island` | All; the last two in Safety Island |
+| `simulator` | `simulator`, `simulated-perception`, `mrm-state-relay`, `carla-interface`, `carla-map-loader` | Planning, Scenario, Safety Island; `mrm-state-relay` in Scenario; `carla-*` in CARLA |
 | `visualizer` | `visualizer` | All |
 
 ### Sensing & Perception {: #sensing-perception }
@@ -36,8 +36,8 @@ Sensor preprocessing and object recognition, as two services from one image.
 - **CUDA variant** — `sensing-perception-cuda` builds the same packages with
   CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
   and requires the NVIDIA Container Toolkit. Used by
-  [Logging Simulation](../deployments/logging-simulation.md) (`--gpu`) and
-  [CARLA Simulation](../deployments/carla-simulation.md).
+  [Logging Simulation](logging-simulation.md) (`--gpu`) and
+  [CARLA Simulation](carla-simulation.md).
 
 ### Localization & Mapping {: #localization-mapping }
 
@@ -59,7 +59,7 @@ Launch: `component_planning.launch.xml`
 - **CUDA variant** — `planning-cuda` builds the same packages with CUDA and
   TensorRT, so `planning_setting:=diffusion_planner` runs Autoware 2.0's
   Diffusion Planner. It is amd64-only and requires the NVIDIA Container
-  Toolkit. Used by [Planning Simulation](../deployments/planning-simulation.md)
+  Toolkit. Used by [Planning Simulation](planning-simulation.md)
   (`--gpu`).
 
 ### Control {: #control }
@@ -90,7 +90,7 @@ of real sensors and vehicle hardware.
   occupancy grid map. Launch: `planning_simulator/perception_simulation.launch.xml`
 
 On amd64 the image also carries the CARLA bridge and the CARLA Python client
-that [CARLA Simulation](../deployments/carla-simulation.md) runs in its
+that [CARLA Simulation](carla-simulation.md) runs in its
 `carla-interface` service.
 
 ### Visualizer {: #visualizer }
@@ -125,13 +125,5 @@ commands to CARLA and CARLA sensor data to ROS 2 messages. Launch:
 
 CARLA publishes its Python client for x86_64 only, so only the amd64 simulator
 image has it (Humble and Jazzy);
-[CARLA Simulation](../deployments/carla-simulation.md) is Humble-only and needs
+[CARLA Simulation](carla-simulation.md) is Humble-only and needs
 an NVIDIA GPU.
-
-## Image Reference
-
-Generated from the image inventory (`.github/image-inventory.json`), so it always
-matches what CI builds. Tag names are explained in
-[Container Images & Versioning](../releases/container-images.md).
-
-{{ component_table() }}
