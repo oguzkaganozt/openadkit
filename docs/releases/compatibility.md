@@ -85,8 +85,8 @@ See [CLI & Maintenance](../getting-started/cli.md).
   the devel image a kit builds its overlay workspace in. See
   [Container Images & Versioning](container-images.md).
 - The images' entrypoint, `/opt/openadkit/entrypoint.sh`: it runs the command
-  as the host user (`HOST_UID`, `HOST_GID`) with ROS, Autoware and the kit
-  layer sourced.
+  as the host user (`HOST_UID`, `HOST_GID`), with ROS, Autoware and the overlay
+  workspace sourced and the config overrides applied.
 - The image labels `org.autoware.openadkit.ros-snapshot`,
   `org.autoware.openadkit.autoware-version`, `org.autoware.openadkit.autoware-ref`
   and `org.autoware.openadkit.autoware-lock-sha256`.

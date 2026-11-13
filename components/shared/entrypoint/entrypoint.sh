@@ -4,7 +4,8 @@
 # Started as root, it gives the aw user the host user's ids (HOST_UID and
 # HOST_GID, which the CLI sets), so what the services write to mounted host
 # directories belongs to that user, and runs itself again as aw. As aw it
-# layers the kit over Autoware, then runs the container command.
+# applies the config overrides and the overlay workspace, then runs the
+# container command.
 # /tmp/openadkit is rebuilt on every start, so an override that was removed
 # never lingers:
 #   1. ROS, Autoware and the kit's overlay workspace, if mounted, are sourced;
