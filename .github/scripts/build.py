@@ -12,6 +12,8 @@ import pathlib
 import sys
 
 DEFAULT_INVENTORY = ".github/image-inventory.json"
+# Labels of this project; org.opencontainers.image.* is reserved for the OCI's own keys.
+LABEL_NAMESPACE = "org.autoware.openadkit."
 REPOSITORY = pathlib.Path(__file__).resolve().parents[2]
 
 # What every image is built from: a change to one rebuilds them all.
@@ -198,7 +200,7 @@ def format_outputs(matrices):
 COMPILE_BASE_EPOCH = "0"
 
 
-def bake_recipe(inventory, prepared, target, distro, platform, *, publish, common_check, owner, source_sha, run_id):
+def bake_recipe(inventory, prepared, target, distro, platform, *, publish, common_check, owner):
     """Overlay the local HCL graph, preserving local dependency builds in PRs."""
     images = {image["target"]: image for image in inventory["images"]}
     if target not in images or distro not in image_distros(images[target], inventory["ros_distros"]) or platform not in images[target]["platforms"]:
@@ -232,11 +234,12 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, commo
             contexts["universe-common"] = f"docker-image://ghcr.io/{owner}/openadkit:universe-common-{arch}-{distro}-{build_tag}"
             upstream = json.loads(prepared["upstream_images"])[distro]
             cuda_contexts = {f"autoware-{name}": upstream[name]["uri"] for name in ("base-cuda-runtime", "base-cuda-devel")}
-        labels = {f"org.opencontainers.image.{key.replace('_', '-')}": prepared[key] for key in (
-            "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_base_version", "autoware_lock_sha256",
+        # The Autoware an image is built from, in the project's own label
+        # namespace; metadata-action adds the OCI ones, the commit among them.
+        labels = {f"{LABEL_NAMESPACE}{name}": prepared[key] for name, key in (
+            ("autoware-version", "autoware_base_version"), ("autoware-ref", "autoware_ref"),
+            ("autoware-lock-sha256", "autoware_lock_sha256"),
         )}
-        labels.update({"org.opencontainers.image.build-tag": build_tag, "org.opencontainers.image.run-id": run_id,
-                       "org.opencontainers.image.openadkit-sha": source_sha})
     else:
         for key, name in (("upstream_core_devel", "autoware-core-devel"), ("upstream_base", "autoware-base"),
                           ("devel_context", "universe-common-devel"), ("runtime_context", "universe-common")):
@@ -284,7 +287,6 @@ def write_recipe():
     recipe, targets = bake_recipe(
         inventory, prepared, target, distro, platform,
         publish=publish, common_check=os.environ["COMMON_CHECK"] == "true", owner=owner,
-        source_sha=os.environ["GITHUB_SHA"], run_id=os.environ["GITHUB_RUN_ID"],
     )
     pathlib.Path(".build-recipe.json").write_text(json.dumps(recipe))
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:

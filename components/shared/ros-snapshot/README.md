@@ -18,7 +18,7 @@ against, so the universe-common build stage passes the base image's dpkg
 database and also fails unless each of those is exactly the snapshot's version.
 Every stage therefore installs the ROS versions upstream core was built with, and
 a snapshot from before or after that build cannot build. The images carry the
-date as the `org.opencontainers.image.ros-snapshot` label, and the release notes
+date as the `org.autoware.openadkit.ros-snapshot` label, and the release notes
 and BOM name it per distro.
 
 The snapshot is signed by the vendored `ros-snapshots.asc` (ROS Snapshot

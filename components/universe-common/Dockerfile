@@ -21,7 +21,7 @@ ARG ROS_DISTRO
 # Install ROS packages from the snapshot the upstream images were built from;
 # fails when ROS_SNAPSHOT does not match them (components/shared/ros-snapshot).
 ARG ROS_SNAPSHOT
-LABEL org.opencontainers.image.ros-snapshot="${ROS_SNAPSHOT}"
+LABEL org.autoware.openadkit.ros-snapshot="${ROS_SNAPSHOT}"
 RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snapshot \
     --mount=from=upstream-base,source=/var/lib/dpkg,target=/tmp/base-dpkg \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
@@ -145,7 +145,7 @@ COPY components/shared/dpkg-runtime.cfg /etc/dpkg/dpkg.cfg.d/openadkit-runtime
 # Install ROS packages from the same snapshot as the devel stage; fails when
 # the base image's ROS packages differ from it.
 ARG ROS_SNAPSHOT
-LABEL org.opencontainers.image.ros-snapshot="${ROS_SNAPSHOT}"
+LABEL org.autoware.openadkit.ros-snapshot="${ROS_SNAPSHOT}"
 RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snapshot \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
