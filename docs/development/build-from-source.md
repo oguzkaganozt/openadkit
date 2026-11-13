@@ -95,17 +95,28 @@ docker buildx bake -f components/docker-bake.hcl --load planning-simulation
 - Local builds are tagged `<target>-<arch>-<ros-distro>` (for example
   `planning-amd64-humble`), which is the tag `./openadkit` looks up in a
   source checkout. The arch follows the build host; when cross-building, set tags
-  with `--set <target>.tags=...`. To use other images, set the `*_IMAGE`
-  variables in the host settings file, `~/.config/openadkit/<deployment>.env`.
+  with `--set <target>.tags=...`. A source checkout pulls none of these: `run`
+  stops on a missing one and names the Bake command that builds it.
 - For Jazzy, build with `ROS_DISTRO=jazzy` and run with `--ros-distro jazzy`.
 - To build a [kit](../kits/create-a-kit.md)'s overlay workspace against these
-  images, load the devel image too and name its local tag for
-  `openadkit build`, here on amd64 and Humble:
+  images, load the devel image too; `openadkit build` uses its local tag:
 
     ```bash
     docker buildx bake -f components/docker-bake.hcl --load universe-common-devel
-    export DEVEL_IMAGE={{ registry }}:universe-common-devel-amd64-humble
     ```
+
+### Run a CI Build's Images
+
+To skip the local build, run the images of one CI build instead: every
+component image and the devel image come from that build. The build summary of
+`build-all-images` shows its build tag.
+
+```bash
+export OPENADKIT_BUILD={{ registry }}:<build tag>    # for example 123456789-1
+./openadkit run planning-simulation
+```
+
+A single `*_IMAGE` setting in the host settings file still replaces one image.
 
 Other useful targets:
 
