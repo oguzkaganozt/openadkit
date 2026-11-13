@@ -23,6 +23,14 @@ RUN --mount=type=bind,source=components/shared/ros-snapshot,target=/tmp/ros-snap
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
     bash /tmp/ros-snapshot/ros-snapshot.sh "${ROS_SNAPSHOT}" --check
 
+# Compile through ccache like the CPU images: base-cuda-devel names no compiler
+# launcher, so the ccache mount below stayed empty. nvcc objects are not cached.
+RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ccache
+ENV CC=/usr/lib/ccache/gcc CXX=/usr/lib/ccache/g++ CCACHE_DIR=/home/aw/.ccache
+
 COPY --from=universe-common-devel /opt/autoware /opt/autoware
 RUN chown -R ${USERNAME}:${USERNAME} /opt/autoware
 
@@ -91,11 +99,16 @@ RUN --mount=from=sensing-perception-cuda-devel,source=/opt/autoware,target=/mnt/
     --mount=type=bind,source=components/shared/install-packages.sh,target=/tmp/install-packages.sh \
     bash /tmp/install-packages.sh /mnt/autoware /opt/autoware
 
+# The EGM2008 geoid, as in universe-common: GNSS on a map with an EGM2008
+# vertical datum needs it.
 RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     --mount=type=bind,source=components/shared/runtime-deps.sh,target=/tmp/runtime-deps.sh \
     --mount=type=bind,source=components/shared/runtime-cleanup.sh,target=/tmp/runtime-cleanup.sh \
     --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lists-${ROS_DISTRO},target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends geographiclib-tools && \
+    geographiclib-get-geoids egm2008-1 && \
     bash /tmp/runtime-deps.sh /tmp/autoware/src && \
     bash /tmp/runtime-cleanup.sh
 
