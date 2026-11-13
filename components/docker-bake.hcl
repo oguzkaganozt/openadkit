@@ -123,7 +123,7 @@ group "common" {
 group "component" {
   targets = [
     "sensing-perception", "sensing-perception-cuda", "localization-mapping",
-    "planning", "planning-cuda", "control", "vehicle-system", "api",
+    "planning", "planning-cuda", "control", "vehicle-system",
     "visualizer", "simulator",
   ]
 }
@@ -131,7 +131,7 @@ group "component" {
 group "planning-simulation" {
   targets = [
     "universe-common", "localization-mapping", "planning", "control",
-    "vehicle-system", "api", "visualizer", "simulator",
+    "vehicle-system", "visualizer", "simulator",
   ]
 }
 
@@ -147,7 +147,6 @@ target "docker-metadata-action-planning" { tags = local_tags("planning") }
 target "docker-metadata-action-planning-cuda" { tags = local_tags("planning-cuda") }
 target "docker-metadata-action-control" { tags = local_tags("control") }
 target "docker-metadata-action-vehicle-system" { tags = local_tags("vehicle-system") }
-target "docker-metadata-action-api" { tags = local_tags("api") }
 target "docker-metadata-action-visualizer" { tags = local_tags("visualizer") }
 target "docker-metadata-action-simulator" { tags = local_tags("simulator") }
 
@@ -243,12 +242,6 @@ target "vehicle-system" {
   inherits   = ["_component-base", "docker-metadata-action-vehicle-system"]
   dockerfile = "components/vehicle-system/Dockerfile"
   target     = "vehicle-system"
-}
-
-target "api" {
-  inherits   = ["_component-base", "docker-metadata-action-api"]
-  dockerfile = "components/api/Dockerfile"
-  target     = "api"
 }
 
 target "visualizer" {

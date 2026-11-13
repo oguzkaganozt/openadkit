@@ -23,8 +23,7 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 | `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
 | `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
 | `control` | `control` | Planning, Scenario, CARLA, Safety Island |
-| `vehicle-system` | `vehicle`, `system` | All |
-| `api` | `api` | All |
+| `vehicle-system` | `vehicle`, `system`, `api` | All |
 | `simulator` | `simulator`, `simulated-perception`, `carla-interface` | Planning, Scenario, Safety Island; `carla-interface` in CARLA |
 | `visualizer` | `visualizer` | All |
 
@@ -71,18 +70,15 @@ Launch: `component_control.launch.xml`
 
 ### Vehicle & System {: #vehicle-and-system }
 
-The vehicle interface and the system diagnostics, as two services from one
-image.
+The vehicle interface, the system diagnostics and the AD API, as three services
+from one image. Autoware keeps the AD API with the system packages.
 
 - **`vehicle`** — launch: `tier4_vehicle_launch/vehicle.launch.xml`
 - **`system`** — launch: `tier4_system_component.launch.xml`
-
-### API {: #api }
-
-Runs the [Autoware AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/),
-the external entry point of every deployment: clients initialize localization,
-set a route and change the operation mode through it. Launch:
-`tier4_autoware_api_component.launch.xml`
+- **`api`** {: #api } — the [Autoware AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture-v1/interfaces/ad-api/),
+  the external entry point of every deployment: clients initialize
+  localization, set a route and change the operation mode through it. Launch:
+  `tier4_autoware_api_component.launch.xml`
 
 ### Simulator {: #simulator }
 

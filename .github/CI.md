@@ -28,7 +28,7 @@ branch's other images, copied by digest, and `images.py capture` writes its
 metadata, so `evidence.yaml` runs on it unchanged before merge. A fork's pull
 request loads its images (no push, read-only token) and stops at the scan,
 which applies the release gate's policy. Only pipeline changes (`PIPELINE_INPUTS`
-in `build.py`) build a single image, `api`, which proves the pipeline end to end.
+in `build.py`) build a single image, `localization-mapping`, which proves the pipeline end to end.
 Temporary shared caches stay restricted to same-repository PRs. Published
 builds retain exact upstream contexts, source/lock labels, security-refresh
 stamps and the existing bounded cache policy. The local Bake graph in

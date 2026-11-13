@@ -10,7 +10,6 @@
     {"target": "planning-cuda", "stage": "component", "platforms": ["linux/amd64"]},
     {"target": "control", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"target": "vehicle-system", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
-    {"target": "api", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"target": "visualizer", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]},
     {"target": "simulator", "stage": "component", "platforms": ["linux/amd64", "linux/arm64"]}
   ]
