@@ -281,8 +281,8 @@ shutil.copyfile(Path({str(release)!r}) / url.rsplit("/", 1)[-1], args[args.index
 
 
 def install(tmp_path, bin_dir, *args):
-    return command(ENTRYPOINT, "install", "--destination", tmp_path / "home/kit", *args,
-                   home=tmp_path / "home", bin_dir=bin_dir)
+    return command(ENTRYPOINT, "install", *args, home=tmp_path / "home", bin_dir=bin_dir,
+                   OPENADKIT_INSTALL_DIR=str(tmp_path / "home/kit"))
 
 
 def installed(tmp_path, version="v1.2.3"):
@@ -320,7 +320,6 @@ def test_an_installed_version_becomes_active_without_a_download(tmp_path):
     result = install(tmp_path, offline, "--version", "v1.2.3")
     assert result.returncode == 0 and "v1.2.3 is already installed" in result.stdout, result.stderr
     assert launcher.resolve() == installed(tmp_path) and kept.read_text() == "kept"
-    assert (tmp_path / "home/.local/bin/adkit").resolve() == installed(tmp_path)
     # The latest version, once resolved, is used the same way; --force replaces it.
     marker = installed(tmp_path, "v1.3.0").parent / "marker"
     marker.write_text("kept")
@@ -347,40 +346,28 @@ def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_p
     assert not installed(tmp_path).exists() and not installed(tmp_path, "v1.3.0").exists()
     assert (backup / "notes.txt").read_text() == "the user's own"
 
-def test_install_adds_adkit_and_completion_and_uninstall_removes_only_its_links(tmp_path):
+def test_install_adds_completion_and_uninstall_removes_only_its_link(tmp_path):
     home = tmp_path / "home"
     completions = home / ".local/share/bash-completion/completions"
-    # A completion file of the user's own stays as it is.
-    completions.mkdir(parents=True)
-    (completions / "adkit").write_text("# the user's own\n")
     assert install(tmp_path, release_bin(tmp_path)).returncode == 0
-    short = home / ".local/bin/adkit"
-    assert short.resolve() == installed(tmp_path)
     assert (completions / "openadkit").resolve() == installed(tmp_path).parent / "cli/completion.bash"
-    assert (completions / "adkit").read_text() == "# the user's own\n"
-    # The short name runs the same release (the fixture's main.py prints ok).
-    result = command(short, "list", home=home, bin_dir=tmp_path / "bin")
-    assert result.returncode == 0 and result.stdout == "ok\n"
+    assert not (home / ".local/bin/adkit").exists()
     fake_docker(tmp_path)
     result = command(home / ".local/bin/openadkit", "uninstall", home=home, bin_dir=tmp_path / "bin")
     assert result.returncode == 0, result.stderr
-    assert not short.is_symlink() and not (completions / "openadkit").is_symlink()
-    assert (completions / "adkit").read_text() == "# the user's own\n"
+    assert not (completions / "openadkit").is_symlink()
+    # A completion file of the user's own stays as it is.
+    (completions / "openadkit").write_text("# the user's own\n")
+    assert install(tmp_path, release_bin(tmp_path, "v1.3.0")).returncode == 0
+    assert (completions / "openadkit").read_text() == "# the user's own\n"
 
 
-
-def test_uninstall_removes_links_of_a_destination_given_with_a_trailing_slash(tmp_path):
+def test_the_install_root_comes_only_from_the_environment(tmp_path):
     home = tmp_path / "home"
-    result = command(ENTRYPOINT, "install", "--destination", f"{home / 'kit'}/", home=home,
-                     bin_dir=release_bin(tmp_path))
-    assert result.returncode == 0, result.stderr
-    short = home / ".local/bin/adkit"
-    assert short.resolve() == installed(tmp_path)
-    fake_docker(tmp_path)
-    result = command(home / ".local/bin/openadkit", "uninstall", home=home, bin_dir=tmp_path / "bin")
-    assert result.returncode == 0, result.stderr
-    assert not short.is_symlink()
-    assert not (home / ".local/share/bash-completion/completions/openadkit").is_symlink()
+    result = command(ENTRYPOINT, "install", "--destination", str(home / "kit"), home=home, bin_dir=release_bin(tmp_path))
+    assert result.returncode == 2 and "unknown install option: --destination" in result.stderr
+    result = command(ENTRYPOINT, "install", home=home, bin_dir=tmp_path / "bin", OPENADKIT_INSTALL_DIR="relative")
+    assert result.returncode != 0 and "OPENADKIT_INSTALL_DIR must be an absolute path" in result.stderr
 
 def complete(root, words, directory=None):
     """COMPREPLY for words (the last one being completed), as bash-completion asks."""
@@ -398,7 +385,7 @@ def complete(root, words, directory=None):
 def test_completion_offers_commands_options_and_deployments(tmp_path):
     root, _ = runtime_tree(tmp_path)
     assert {"run", "build", "record"} <= complete(root, ["openadkit", ""])
-    assert complete(root, ["adkit", "bui"]) == {"build"}
+    assert complete(root, ["openadkit", "bui"]) == {"build"}
     assert complete(root, ["openadkit", "run", "--no-"]) == {"--no-visualizer"}
     assert complete(root, ["openadkit", "run", "--ros-distro", ""]) == {"humble", "jazzy"}
     assert complete(root, ["openadkit", "run", "ex"]) == {"example"}
@@ -611,7 +598,7 @@ def test_a_split_role_keeps_dds_on_loopback(tmp_path, role):
     site.write_text("CYCLONEDDS_NETWORK_INTERFACE=eth0\n")
     calls = fake_docker(tmp_path)
     args = ["--role", role] if role else []
-    result = run_cli(root, "run", "example", *args, "--pull", "never", ROLE_TOKEN="token")
+    result = run_cli(root, "run", "example", *args, ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     up = next(row for row in recorded(calls) if "up" in row["args"])
     assert up["env"].get("CYCLONEDDS_NETWORK_INTERFACE") == ("lo" if role else None)
@@ -620,11 +607,11 @@ def test_a_split_role_keeps_dds_on_loopback(tmp_path, role):
 def test_split_role_run_discovery_and_safe_stop(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     calls = fake_docker(tmp_path)
-    blocked = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never")
+    blocked = run_cli(root, "run", "example", "--role", "secondary")
     assert blocked.returncode != 0 and "ROLE_TOKEN" in blocked.stderr
     # Only the settings were read; nothing started.
     assert all("--environment" in row["args"] for row in recorded(calls))
-    result = run_cli(root, "run", "example", "--role", "secondary", "--pull", "never", ROLE_TOKEN="token")
+    result = run_cli(root, "run", "example", "--role", "secondary", ROLE_TOKEN="token")
     assert result.returncode == 0, result.stderr
     rows = recorded(calls)
     up = next(row for row in rows if "up" in row["args"])
@@ -645,7 +632,7 @@ def test_run_verify_runs_the_command_in_its_service_once_ready(tmp_path, exit_co
     document = manifest() | {"verify": {"service": "app", "command": ["python3", "/openadkit/checks/drive_to_goal.py"]}}
     root, _ = runtime_tree(tmp_path, document=document)
     calls = fake_docker(tmp_path, services=("app",))
-    result = run_cli(root, "run", "example", "--verify", "--pull", "never", FAKE_EXEC_EXIT=str(exit_code))
+    result = run_cli(root, "run", "example", "--verify", FAKE_EXEC_EXIT=str(exit_code))
     assert result.returncode == exit_code, result.stderr
     rows = [row["args"] for row in recorded(calls)]
     up = next(index for index, args in enumerate(rows) if "up" in args)
@@ -663,7 +650,7 @@ def test_run_verify_runs_the_command_in_its_service_once_ready(tmp_path, exit_co
 def test_every_run_records_what_it_started(tmp_path):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path, services=("app",))
-    result = run_cli(root, "run", "example", "--pull", "never")
+    result = run_cli(root, "run", "example")
     assert result.returncode == 0, result.stderr
     record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
     # The fake model has no services; its digest still identifies it.
@@ -674,7 +661,7 @@ def test_every_run_records_what_it_started(tmp_path):
     override = root / "deployments/example/config/autoware/pkg/params.yaml"
     override.parent.mkdir(parents=True)
     override.write_text("rate: 1\n")
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "run", "example").returncode == 0
     changed = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
     assert changed["configSha256"]["deployment"] != record["configSha256"]["deployment"]
     assert changed["configSha256"]["base"] == record["configSha256"]["base"]
@@ -684,7 +671,7 @@ def test_every_run_records_what_it_started(tmp_path):
 def test_run_verify_needs_a_verify_step(tmp_path):
     root, _ = runtime_tree(tmp_path)
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "run", "example", "--verify", "--pull", "never")
+    result = run_cli(root, "run", "example", "--verify")
     assert result.returncode != 0 and "example declares no verify step" in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
 
@@ -723,7 +710,7 @@ def test_a_kit_that_leaves_out_its_bases_verify_service_has_no_verify_step(tmp_p
     kit = extending_kit(tmp_path, root)
     fake_docker(tmp_path, services=("app", "acme"))
     assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
-    result = run_cli(root, "run", "custom", "--pull", "never", "--verify", directory=kit)
+    result = run_cli(root, "run", "custom", "--verify", directory=kit)
     assert result.returncode != 0 and "custom declares no verify step" in result.stderr
     # A verify step the kit names itself is checked like a base's.
     path = kit / "deployments/custom/deployment.json"
@@ -783,7 +770,7 @@ def test_incompatible_live_projects_cannot_be_started_over(tmp_path, projects, a
     root, _ = runtime_tree(tmp_path, document=manifest(roles=True))
     edit_manifest(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
     calls = fake_docker(tmp_path, projects=projects)
-    result = run_cli(root, "run", "example", "--pull", "never", *args)
+    result = run_cli(root, "run", "example", *args)
     assert result.returncode != 0 and message in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
 
@@ -794,7 +781,7 @@ def test_run_rejects_live_projects_from_the_other_kit_catalog(tmp_path, target):
     kit = extending_kit(tmp_path, root)
     name, other = ("example", "custom") if target == "base" else ("custom", "example")
     calls = fake_docker(tmp_path, projects=[f"openadkit-{other}"])
-    result = run_cli(root, "run", name, "--pull", "never", directory=root if target == "base" else kit)
+    result = run_cli(root, "run", name, directory=root if target == "base" else kit)
     assert result.returncode != 0 and f"openadkit-{other} is already running" in result.stderr
     assert not (tmp_path / "home/data").exists()
     assert not any("up" in row["args"] or "pull" in row["args"] for row in recorded(calls))
@@ -960,7 +947,7 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     target.mkdir(parents=True)
     calls = fake_docker(tmp_path)
     # Data the CLI did not install: --force would refuse it, so do not advise it.
-    for command in (("run", "example", "--pull", "never"), ("fetch", "example")):
+    for command in (("run", "example"), ("fetch", "example")):
         result = run_cli(root, *command)
         assert result.returncode != 0 and "remove it and run: openadkit fetch example\n" in result.stderr
         assert "--force" not in result.stderr
@@ -968,7 +955,7 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     assert run_cli(root, "run", "example", "--force").returncode == 2
     assert "refusing to replace" in run_cli(root, "fetch", "example", "--force").stderr
     (target / cli_data.MARKER).write_text("{}")
-    result = run_cli(root, "run", "example", "--pull", "never")
+    result = run_cli(root, "run", "example")
     assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
     result = run_cli(root, "fetch", "example", "--force")
     assert result.returncode == 0, result.stderr
@@ -978,23 +965,23 @@ def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     (target / "required.txt").write_text("keep existing")
     assert run_cli(root, "fetch", "example").returncode == 0
     assert (target / "required.txt").read_text() == "keep existing"
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "run", "example").returncode == 0
 
 
-@pytest.mark.parametrize("command", [("run", "example", "--pull", "never"), ("fetch", "example")])
+@pytest.mark.parametrize("command", [("run", "example"), ("fetch", "example")])
 def test_run_and_fetch_replace_data_installed_from_an_older_declaration(tmp_path, command):
     resource = files_resource(tmp_path)
     root, directory = runtime_tree(tmp_path, document=manifest(data=[resource]))
     target = tmp_path / "home/data/map"
     fake_docker(tmp_path)
     assert run_cli(root, "fetch", "example").returncode == 0
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "run", "example").returncode == 0
     # A mirror of the same bytes is the same data.
     moved = tmp_path / "mirror.txt"
     moved.write_bytes((tmp_path / "dataset.txt").read_bytes())
     resource["files"][0]["url"] = moved.as_uri()
     (directory / "deployment.json").write_text(json.dumps(manifest(data=[resource])))
-    result = run_cli(root, "run", "example", "--pull", "never")
+    result = run_cli(root, "run", "example")
     assert result.returncode == 0 and "updating data" not in result.stdout
 
     fixed = tmp_path / "fixed.txt"
@@ -1021,7 +1008,7 @@ def test_outdated_data_is_not_replaced_under_a_live_container(tmp_path):
     container = {"Id": "abc", "Name": "/other", "State": {"Status": "running"},
                  "Mounts": [{"Type": "bind", "Source": str(target)}]}
     fake_docker(tmp_path, containers=[container])
-    for command in (("fetch", "example"), ("run", "example", "--pull", "never")):
+    for command in (("fetch", "example"), ("run", "example")):
         result = run_cli(root, *command)
         assert result.returncode != 0 and "is in use" in result.stderr
         assert (target / "required.txt").read_text() == "keep"
@@ -1186,7 +1173,7 @@ def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     calls = fake_docker(tmp_path, projects=["openadkit-example"])
     assert run_cli(root, "logs", "map", "planning", directory=tmp_path).returncode == 0
     assert recorded(calls)[-1]["args"] == ["compose", "--project-name", "openadkit-example", "logs", "map", "planning"]
-    assert run_cli(root, "run", "example", "--pull", "never").returncode == 0
+    assert run_cli(root, "run", "example").returncode == 0
     assert run_cli(root, "restart", "planning", directory=tmp_path).returncode == 0
     up = next(row["args"] for row in reversed(recorded(calls)) if "up" in row["args"])
     assert up[-3:] == ["--no-deps", "--force-recreate", "planning"]
@@ -1216,11 +1203,11 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
     assert result.returncode == 0 and "== other (stopped)" in result.stdout
     assert "remove the stopped containers with: openadkit stop" in result.stdout
     # Its containers keep their fixed names: another deployment cannot start over them.
-    result = run_cli(root, "run", "example", "--pull", "never")
+    result = run_cli(root, "run", "example")
     assert result.returncode != 0 and "openadkit-other left stopped containers" in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
     # The same deployment starts again in place.
-    assert run_cli(root, "run", "other", "--pull", "never").returncode == 0
+    assert run_cli(root, "run", "other").returncode == 0
     fake_docker(tmp_path, stopped=["openadkit-other"])
     calls.write_text("")
     # Its logs stay readable until stop removes it.
@@ -1259,7 +1246,7 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     # A stack this CLI did not start cannot be recreated as it was.
     result = run_cli(root, "restart")
     assert result.returncode != 0 and "start it again with openadkit run" in result.stderr
-    assert run_cli(root, "run", "example", "--pull", "never", "--no-visualizer").returncode == 0
+    assert run_cli(root, "run", "example", "--no-visualizer").returncode == 0
 
     def recreated(**env):
         calls.write_text("")
@@ -1634,7 +1621,7 @@ def test_kit_may_leave_out_the_base_side_its_inherited_one_shot_services_belong_
     result = run_cli(root, "validate", "example")
     assert result.returncode != 0 and "unknown Compose service(s): loader" in result.stderr
     assert run_cli(root, "validate", "custom", directory=kit).returncode == 0
-    assert run_cli(root, "run", "custom", "--pull", "never", directory=kit).returncode == 0
+    assert run_cli(root, "run", "custom", directory=kit).returncode == 0
     assert not any("rm" in row["args"] for row in recorded(calls))
     # A kit's own one-shot service is checked like a base's.
     path = kit / "deployments/custom/deployment.json"
@@ -1984,7 +1971,7 @@ def test_ws_mounts_a_built_workspace_for_a_deployment_without_one(tmp_path, monk
     (workspace / "install/local_setup.bash").write_text("")
     assert overlay_workspace(root, "example", monkeypatch, tmp_path, workspace) == str(workspace)
     calls = fake_docker(tmp_path)
-    result = run_cli(root, "run", "example", "--ws", str(workspace), "--pull", "never")
+    result = run_cli(root, "run", "example", "--ws", str(workspace))
     assert result.returncode == 0, result.stderr
     up = next(row for row in recorded(calls) if "up" in row["args"])
     assert up["env"]["OPENADKIT_OVERLAY_WS"] == str(workspace)
@@ -2023,10 +2010,10 @@ def test_pinned_kit_uses_its_release_cli_or_fails_with_install_guidance(tmp_path
     else:
         # Offline: the download of the pinned release fails.
         executable(tmp_path / "bin/curl", "#!/usr/bin/env bash\nexit 22\n")
-    result = run_cli(root, "run", "custom", "--pull", "never", directory=kit)
+    result = run_cli(root, "run", "custom", directory=kit)
     assert (result.returncode == 0) is available, result.stderr
     if available:
-        assert record.read_text().strip() == f"{kit}|1|run custom --pull never"
+        assert record.read_text().strip() == f"{kit}|1|run custom"
     else:
         assert "could not install Open AD Kit v1.2.3, which this kit extends" in result.stderr
 

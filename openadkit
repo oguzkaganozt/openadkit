@@ -36,11 +36,11 @@ require_command() {
 
 install_usage() {
   cat <<'EOF'
-Usage: openadkit install [--version vX.Y.Z] [--destination DIRECTORY] [--force]
+Usage: openadkit install [--version vX.Y.Z] [--force]
 
-Downloads and verifies an Open AD Kit release bundle. The default destination is
-$OPENADKIT_INSTALL_DIR, else ~/.local/share/openadkit. A launcher is installed at
-~/.local/bin/openadkit, with adkit as its short name and Tab completion for both.
+Downloads and verifies an Open AD Kit release bundle into $OPENADKIT_INSTALL_DIR,
+else ~/.local/share/openadkit. A launcher is installed at ~/.local/bin/openadkit,
+with Tab completion.
 A version that is already installed becomes the active one as it is, without a
 download; --force downloads and replaces it.
 
@@ -125,22 +125,18 @@ refuse_foreign_launcher() {
   fi
 }
 
-# Point the launcher, adkit and Tab completion at the release in final_root.
+# Point the launcher and Tab completion at the release in final_root.
 activate_release() {
-  local final_root=$1 launcher_dir="${HOME}/.local/bin" link_path completion_dir name
+  local final_root=$1 launcher_dir="${HOME}/.local/bin" link_path completion_dir
   mkdir -p "$launcher_dir"
   link_path="${launcher_dir}/openadkit.new"
   ln -sfn "$final_root/openadkit" "$link_path"
   mv -Tf "$link_path" "${launcher_dir}/openadkit"
-  # adkit, the short name, and Tab completion for both, which bash-completion
-  # loads from this directory on first use.
-  link_beside_launcher "$final_root/openadkit" "${launcher_dir}/adkit"
+  # Tab completion, which bash-completion loads from this directory on first use.
   if [[ -f "$final_root/cli/completion.bash" ]]; then
     completion_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/bash-completion/completions"
     mkdir -p "$completion_dir"
-    for name in openadkit adkit; do
-      link_beside_launcher "$final_root/cli/completion.bash" "${completion_dir}/${name}"
-    done
+    link_beside_launcher "$final_root/cli/completion.bash" "${completion_dir}/openadkit"
   fi
 }
 
@@ -284,11 +280,6 @@ install_openadkit() {
         version=$2
         shift
         ;;
-      --destination)
-        (($# >= 2)) || usage_fail '--destination requires a value'
-        destination=$2
-        shift
-        ;;
       --force) force=true ;;
       # Internal, for `openadkit upgrade` (cli/installation.py): print the
       # verified version the release metadata resolves to, or install without
@@ -305,7 +296,7 @@ install_openadkit() {
 
   [[ $version == latest || $version =~ $OPENADKIT_VERSION_RE ]] \
     || usage_fail "invalid release version: ${version}"
-  [[ $destination = /* ]] || usage_fail 'the install destination must be an absolute path'
+  [[ $destination = /* ]] || fail 'OPENADKIT_INSTALL_DIR must be an absolute path'
   if [[ $version != latest && $force != true && $resolve_only != true ]] \
     && release_is_installed "${destination}/openadkit-${version}"; then
     use_installed_release "$version" "${destination}/openadkit-${version}" "$announce_next" "$activate"
