@@ -75,7 +75,7 @@ Store overrides under
     update_rate: 20.0
 ```
 
-On each start, the entrypoint hook copies the package share directory into
+On each start, the image entrypoint copies the package share directory into
 `/tmp/openadkit/<package>/share/<package>`. It applies the base deployment's
 layer, then the kit deployment's. YAML mappings merge
 recursively; scalars and lists replace the old value. Launch substitutions such
@@ -130,7 +130,7 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
 
 The workspace belongs to the kit: the one `overlay_ws` at the kit root serves
 every deployment of the kit, since they all extend one release and its images.
-Every Autoware service mounts it, and the entrypoint hook sources
+Every Autoware service mounts it, and the image entrypoint sources
 `overlay_ws/install/local_setup.bash` on top of Autoware, so its packages are
 visible in every service. Whether your code runs depends on what starts it:
 
