@@ -1,6 +1,6 @@
 # The Autoware role's services for CARLA simulation.
 #
-# Shared by the single-host compose.yaml (which which restores
+# Shared by the single-host compose.yaml (which restores
 # the carla-interface edges) and the `--role autoware` view (this file plus
 # compose.zenoh.yaml). No service here depends on a CARLA service: the
 # sim-local edges are added back only by the default entry file. A kit that
@@ -9,8 +9,7 @@
 include:
   - ../shared/services/map.yaml
   - ../shared/services/system.yaml
-  - ../shared/services/sensing.yaml
-  - ../shared/services/perception.yaml
+  - ../shared/services/sensing-perception.yaml
   - ../shared/services/localization.yaml
   - ../shared/services/planning.yaml
   - ../shared/services/vehicle.yaml
@@ -24,7 +23,7 @@ services:
     depends_on:
       - map
 
-  sensing:
+  sensing-perception:
     image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}
     runtime: nvidia
     environment:
@@ -32,31 +31,19 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     depends_on:
       - map
-      - system
-
-  perception:
-    image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    depends_on:
-      - map
-      - sensing
       - system
 
   localization:
     depends_on:
       - map
-      - sensing
-      - perception
+      - sensing-perception
       - system
 
   planning:
     depends_on:
       - map
       - localization
-      - perception
+      - sensing-perception
       - system
 
   vehicle:

@@ -19,7 +19,7 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 
 | Image | Services | Deployments |
 |-------|----------|-------------|
-| `sensing-perception` | `sensing`, `perception` | Logging; CARLA runs the CUDA variant |
+| `sensing-perception` | `sensing-perception` | Logging; CARLA runs the CUDA variant |
 | `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
 | `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
 | `control` | `control` | Planning, Scenario, CARLA, Safety Island |
@@ -29,10 +29,12 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 
 ### Sensing & Perception {: #sensing-perception }
 
-Sensor preprocessing and object recognition, as two services from one image.
+Sensor preprocessing and object recognition, as one service.
 
-- **`sensing`** — launch: `component_sensing.launch.xml`
-- **`perception`** — launch: `component_perception.launch.xml`
+- **`sensing-perception`** — launches `component_sensing.launch.xml` and
+  `component_perception.launch.xml` in one process. Perception's nodes run in
+  the point cloud container of sensing's preprocessing, so the two start, fail
+  and restart together.
 - **CUDA variant** — `sensing-perception-cuda` builds the same packages with
   CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
   and requires the NVIDIA Container Toolkit. Used by
@@ -45,7 +47,8 @@ Serves the Lanelet2 and point cloud maps and estimates the vehicle's pose on
 them, as two services from one image.
 
 - **`map`** — launch: `component_map.launch.xml`
-- **`localization`** — launch: `component_localization.launch.xml`
+- **`localization`** — launch: `component_localization.launch.xml`, with a
+  point cloud container of its own
 
 Planning, Scenario and Safety Island Simulation run only `map`: the simulator
 stands in for localization. Logging and CARLA Simulation also run

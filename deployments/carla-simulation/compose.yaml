@@ -1,7 +1,7 @@
 # CARLA simulation — single-host graph.
 #
 # Assembles the shared Autoware and CARLA service files and restores the
-# single-host wiring: vehicle/sensing/visualizer wait on carla-interface. The
+# single-host wiring: vehicle/sensing-perception/visualizer wait on carla-interface. The
 # split views remove those edges: --role autoware / --role carla select
 # compose.<role>.yaml and compose.zenoh.yaml. This file never includes the
 # Zenoh bridge.
@@ -24,7 +24,7 @@ services:
       - map
       - carla-interface
 
-  sensing:
+  sensing-perception:
     depends_on:
       - map
       - carla-interface

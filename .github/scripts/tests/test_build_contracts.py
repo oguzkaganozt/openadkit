@@ -315,6 +315,6 @@ def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, t
     selection = settings.resolve(deployment, compose_context, "humble", True)
     resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")
     result = compose.run_compose(deployment, selection, ["config", "--format", "json"])
-    mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["perception"]["volumes"]}
+    mounts = {item["target"]: item["source"] for item in json.loads(result.stdout)["services"]["sensing-perception"]["volumes"]}
     assert mounts["/autoware_data"] == "/srv/autoware_data"
     assert mounts["/autoware_data/lidar_centerpoint"] == str(data.resolve_destination(resource, selection))
