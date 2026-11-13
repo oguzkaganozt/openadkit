@@ -1,0 +1,28 @@
+# Sensing and perception — sensor preprocessing and object recognition, as one
+# service. Perception loads its nodes into the pointcloud container that
+# sensing's preprocessing runs in, so one launch starts that container and both
+# components: they start, fail and restart together, and a restart never loads
+# a node twice (../launch/component.launch.py).
+# Variant flags (GPU models, CARLA extras) come from settings.env / settings.gpu.env.
+services:
+  sensing-perception:
+    extends:
+      file: autoware.yaml
+      service: autoware
+    image: ${SENSING_PERCEPTION_IMAGE:?set by the openadkit CLI}
+    container_name: autoware-sensing-perception
+    pid: service:map
+    volumes:
+      - ${DATA_PATH}:/autoware_data:rw
+      - ../launch/component.launch.py:/openadkit/launch/component.launch.py:ro
+    command: >
+      ros2 launch /openadkit/launch/component.launch.py component:=component_sensing,component_perception
+      data_path:=/autoware_data
+      launch_pointcloud_container:=true
+      launch_sensing_driver:=${LAUNCH_SENSING_DRIVER}
+      lidar_detection_model:=${LIDAR_DETECTION_MODEL}
+      occupancy_grid_map_method:=${OCCUPANCY_GRID_MAP_METHOD}
+      pointcloud_container_name:=${POINTCLOUD_CONTAINER_NAME}
+      sensor_model:=${SENSOR_MODEL}
+      use_sim_time:=${USE_SIM_TIME}
+      vehicle_model:=${VEHICLE_MODEL}

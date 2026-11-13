@@ -39,11 +39,11 @@ def share(package):
 
 
 def start_files():
-    """The launch file the command names, and what Open AD Kit's wrapper includes."""
+    """The launch file the command names, and the components Open AD Kit's wrapper includes."""
     if len(spec) == 1:
         files = [Path(spec[0])]
-        component = values.get("component")
-        if component and share("autoware_launch"):
+        components = values.get("component", "").split(",")
+        for component in filter(None, components if share("autoware_launch") else []):
             folder = "" if "/" in component else "components/"
             files.append(Path(share("autoware_launch")) / "launch" / f"{folder}{component}.launch.xml")
         return files

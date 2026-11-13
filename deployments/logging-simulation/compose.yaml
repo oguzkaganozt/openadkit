@@ -1,6 +1,6 @@
 # Logging simulation — the live sensing, perception, and localization stack plus
 # a rosbag player. Pair with compose.gpu.yaml to GPU-accelerate
-# sensing/perception.
+# sensing-perception.
 #
 # Service definitions live in ../shared/services/<service>.yaml (one file per service).
 # This file selects the stack, owns its topology (depends_on), and adds
@@ -9,8 +9,7 @@ include:
   - ../shared/services/map.yaml
   - ../shared/services/system.yaml
   - ../shared/services/vehicle.yaml
-  - ../shared/services/sensing.yaml
-  - ../shared/services/perception.yaml
+  - ../shared/services/sensing-perception.yaml
   - ../shared/services/localization.yaml
   - ../shared/services/api.yaml
   - ../shared/services/visualizer.yaml
@@ -28,27 +27,17 @@ services:
     depends_on:
       - map
 
-  sensing:
+  sensing-perception:
     depends_on:
       - map
       - system
       - vehicle
-    volumes:
-      # Shared with perception (models); sensing mounts it only in this stack.
-      - ${DATA_PATH}:/autoware_data:rw
-
-  perception:
-    depends_on:
-      - map
-      - system
-      - sensing
 
   localization:
     depends_on:
       - map
       - system
-      - sensing
-      - perception
+      - sensing-perception
 
   # The AD API initializes localization: its automatic pose initializer starts
   # it from the bag's GNSS, and RViz's 2D Pose Estimate goes through it too.
@@ -61,8 +50,8 @@ services:
     depends_on:
       - map
 
-  # Logging-only service. The sensing image has rosbag2 and the message types
-  # of the sensor data.
+  # Logging-only service. The sensing-perception image has rosbag2 and the
+  # message types of the sensor data.
   rosbag:
     image: ${SENSING_PERCEPTION_IMAGE:?set by the openadkit CLI}
     container_name: autoware-rosbag
@@ -83,9 +72,7 @@ services:
       - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ${ROSBAG_PATH}:/autoware_map/rosbag:ro
     depends_on:
-      sensing:
-        condition: service_started
-      perception:
+      sensing-perception:
         condition: service_started
       localization:
         condition: service_started
