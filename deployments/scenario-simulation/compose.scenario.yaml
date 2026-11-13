@@ -51,6 +51,7 @@ services:
       - VEHICLE_MODEL=${VEHICLE_MODEL}
     volumes:
       - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+      - ../shared/checks/scenario_result.py:/openadkit/checks/scenario_result.py:ro
       - ${OUTPUT_HOST_PATH}:${OUTPUT_DIRECTORY}
       - ${SCENARIO_HOST_PATH}:/scenarios:ro
       - ${MAP_PATH}:/autoware_map:ro
@@ -103,7 +104,9 @@ services:
         if [ -z "$1" ]; then
           set -- "$(ros2 pkg prefix --share scenario_test_runner)/scenario/sample.yaml"
         fi
-        exec ros2 launch scenario_test_runner scenario_test_runner.launch.py \
+        # The runner exits 0 whatever the scenarios did; their JUnit results decide.
+        started=$$(date +%s)
+        ros2 launch scenario_test_runner scenario_test_runner.launch.py \
           architecture_type:="$$ARCHITECTURE_TYPE" \
           global_frame_rate:="$$GLOBAL_FRAME_RATE" \
           global_real_time_factor:="$$GLOBAL_REAL_TIME_FACTOR" \
@@ -120,4 +123,5 @@ services:
           use_custom_centerline:="$$USE_CUSTOM_CENTERLINE" \
           use_sim_time:="$$USE_SIM_TIME" \
           vehicle_model:="$$VEHICLE_MODEL"
+        exec python3 /openadkit/checks/scenario_result.py "$$OUTPUT_DIRECTORY" "$$started"
     restart: "no"

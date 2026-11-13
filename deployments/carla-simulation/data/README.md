@@ -11,3 +11,10 @@ with one line added after the `<osm>` element:
 Autoware's route handler rejects a map without a format version, so a goal
 cannot be routed on the upstream file. `deployment.json` installs this copy
 (`"source"`) and checks its sha256.
+
+## License
+
+Town01 is a CARLA asset, © Computer Vision Center (CVC) at the Universitat
+Autònoma de Barcelona. CARLA distributes its assets under the
+[CC-BY license](https://github.com/carla-simulator/carla#licenses). This copy
+is modified: it adds the `MetaInfo` line above.

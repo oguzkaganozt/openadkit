@@ -3,6 +3,10 @@
 services:
   sensing:
     image: ${SENSING_PERCEPTION_GPU_IMAGE:?set by the openadkit CLI}
+    # CenterPoint runs in sensing's pointcloud container; the CLI installs its
+    # models here.
+    volumes:
+      - ${CENTERPOINT_DATA_PATH}:/autoware_data/lidar_centerpoint:rw
     deploy:
       resources:
         reservations:

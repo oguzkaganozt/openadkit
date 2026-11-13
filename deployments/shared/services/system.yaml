@@ -12,6 +12,7 @@ services:
     command: >
       ros2 launch autoware_launch tier4_system_component.launch.xml
       diagnostic_graph_aggregator_graph_path:=/tmp/openadkit/autoware_launch/share/autoware_launch/config/system/diagnostics/${SYSTEM_DIAGNOSTICS_GRAPH:-autoware-main.yaml}
+      launch_fault_injection:=${LAUNCH_FAULT_INJECTION:-false}
       launch_system_monitor:=${LAUNCH_SYSTEM_MONITOR}
       launch_dummy_diag_publisher:=${LAUNCH_DUMMY_DIAG_PUBLISHER}
       sensor_model:=${SENSOR_MODEL}
