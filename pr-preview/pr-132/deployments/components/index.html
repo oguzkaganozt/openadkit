@@ -1888,8 +1888,8 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 <tbody>
 <tr>
 <td><code>sensing-perception</code></td>
-<td><code>sensing-perception</code></td>
-<td>Logging; CARLA runs the CUDA variant</td>
+<td><code>sensing</code>, <code>perception</code></td>
+<td>Logging, CARLA; CARLA's <code>perception</code> runs the CUDA variant</td>
 </tr>
 <tr>
 <td><code>localization-mapping</code></td>
@@ -1924,25 +1924,25 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 </tbody>
 </table>
 <h3 id="sensing-perception">Sensing &amp; Perception<a class="headerlink" href="#sensing-perception" title="Permanent link">#</a></h3>
-<p>Sensor preprocessing and object recognition, as one service.</p>
+<p>Sensor preprocessing and object recognition, as two services from one image.</p>
 <ul>
-<li><strong><code>sensing-perception</code></strong> — launches <code>component_sensing.launch.xml</code> and
-  <code>component_perception.launch.xml</code> in one process. Perception's nodes run in
-  the point cloud container of sensing's preprocessing, so the two start, fail
-  and restart together.</li>
+<li><strong><code>sensing</code></strong> — launch: <code>component_sensing.launch.xml</code></li>
+<li><strong><code>perception</code></strong> — launch: <code>component_perception.launch.xml</code></li>
 <li><strong>CUDA variant</strong> — <code>sensing-perception-cuda</code> builds the same packages with
   CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
-  and requires the NVIDIA Container Toolkit. Used by
+  and requires the NVIDIA Container Toolkit. <code>perception</code> runs it in
   <a href="../logging-simulation/">Logging Simulation</a> (<code>--gpu</code>) and
-  <a href="../carla-simulation/">CARLA Simulation</a>.</li>
+  <a href="../carla-simulation/">CARLA Simulation</a>; <code>sensing</code> stays on the CPU image.</li>
 </ul>
+<p><code>sensing</code>, <code>perception</code> and <code>localization</code> each run their point cloud nodes in
+a component container of their own, so one service restarts without the others.
+The point cloud crosses between them as a ROS message.</p>
 <h3 id="localization-mapping">Localization &amp; Mapping<a class="headerlink" href="#localization-mapping" title="Permanent link">#</a></h3>
 <p>Serves the Lanelet2 and point cloud maps and estimates the vehicle's pose on
 them, as two services from one image.</p>
 <ul>
 <li><strong><code>map</code></strong> — launch: <code>component_map.launch.xml</code></li>
-<li><strong><code>localization</code></strong> — launch: <code>component_localization.launch.xml</code>, with a
-  point cloud container of its own</li>
+<li><strong><code>localization</code></strong> — launch: <code>component_localization.launch.xml</code></li>
 </ul>
 <p>Planning, Scenario and Safety Island Simulation run only <code>map</code>: the simulator
 stands in for localization. Logging and CARLA Simulation also run
