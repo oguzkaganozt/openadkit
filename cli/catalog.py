@@ -316,9 +316,11 @@ class Deployment:
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
             "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
         }
+        # What a kit's Compose files and settings name their paths with.
         self.kit_environment = {
             "OPENADKIT_ROOT": str(base.root),
             "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
+            "OPENADKIT_KIT": str(root),
         } if base else {}
 
     def project_name(self, role: str | None = None) -> str:

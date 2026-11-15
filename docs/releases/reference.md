@@ -1,0 +1,162 @@
+# Manifest and Output Reference
+
+The fields of the manifests and of the CLI's JSON output that
+[Compatibility](compatibility.md) covers. The CLI rejects a manifest field it
+does not know; a reader of the JSON output ignores a field it does not know.
+
+## Kit Manifest
+
+A kit's `openadkit.json`:
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion` | `2` |
+| `kind` | `kit` |
+| `extends` | The release the kit pins, as `vX.Y.Z`, or the path of a source checkout while developing |
+| `deployments` | The kit's deployments by name; each value is a [deployment entry](#deployment-entry) |
+| `externalImages` | Images the kit uses but does not build, by Compose variable name; see [External Images](#external-images) |
+
+## Deployment Entry
+
+One entry of a kit's `deployments`. A catalog deployment holds the same
+fields, except `base`, in its `deployment.json`.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `base` | Required in a kit | The catalog deployment this one runs, with the kit's files on top |
+| `description` | `<base> with this kit's files on top` | One line, which `openadkit list` shows |
+| `waitTimeout` | The base's; `300` in the catalog | Seconds the services may take to become ready |
+| `requirements` | The base's | Where the deployment runs; see [Requirements](#requirements) |
+| `data` | The base's | What `run` and `fetch` download; see [Data](#data) |
+| `verify` | The base's | What `run --verify` runs; see [Verify Step](#verify-step) |
+
+A catalog deployment may also hold `roles`, the hosts of a
+[split-host](../deployments/split-host.md) deployment (experimental), and
+`evidence.exempt`, the reason it has no hosted
+[evidence cell](evidence.md#ci-exemptions).
+
+### Requirements
+
+| Field | Meaning |
+| --- | --- |
+| `architectures` | `amd64`, `arm64` or both |
+| `rosDistros` | The ROS distros it runs on, such as `humble` and `jazzy` |
+| `gpu` | `none`: no GPU mode. `optional`: `--gpu` selects it. `required`: it always runs with a GPU |
+| `gpuArchitectures` | The architectures of the GPU mode, when fewer than `architectures` |
+
+A kit deployment may name fewer architectures or ROS distros than its base,
+and set `gpu` to `none` or `required` where the base says `optional`. It
+cannot add any.
+
+### Data
+
+`data` is a list of resources. Each is one directory on the host:
+
+| Field | Meaning |
+| --- | --- |
+| `name` | The resource's name, unique in the deployment |
+| `destinationEnv` | The setting that holds the directory's path, such as `MAP_PATH`. One resource per setting; a kit's resource replaces its base's with the same setting |
+| `kind` | `zip`: one archive. `files`: a list of files |
+| `url`, `sha256` | `zip` only: the archive and its checksum |
+| `expectedRoot` | `zip` only: the archive's one top-level directory, whose contents become the resource |
+| `files` | `files` only: the files, each with a `path` in the resource and exactly one of `url` (to download), `source` (a file of the kit or the release, by its path from the manifest's directory) and `content` (the file's text). `url` and `source` need a `sha256` |
+| `requiredFiles` | Paths that must exist, and not be empty, in data the CLI installed |
+| `gpu` | `true`: only the GPU mode uses it |
+| `roles` | Catalog only: the split-host roles that use it |
+
+A URL is `http`, `https` or `file`. The CLI checks every checksum, and
+downloads again when a release declares other content for a resource. A
+directory it did not install is yours and is used as it is; see
+[Downloaded Data](../getting-started/cli.md#downloaded-data).
+
+### Verify Step
+
+| Field | Meaning |
+| --- | --- |
+| `service` | The service that verifies the deployment |
+| `command` | The command `run --verify` runs in that service, as a list of words. Without it, the step is the service's own exit status |
+
+## External Images
+
+Each entry of `externalImages` is named after the Compose variable that
+receives it, and holds one of:
+
+| Field | Meaning |
+| --- | --- |
+| `ref` | One digest-pinned image reference (`…@sha256:…`) for every ROS distro |
+| `distros` | A digest-pinned reference per ROS distro |
+
+A name that matches a component image variable, such as `PLANNING_IMAGE`,
+replaces that component; see
+[Image Replacement](../kits/kit-guide.md#5-image-replacement).
+
+## Release Manifest
+
+The `openadkit.json` of a release, which its packaging writes:
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion`, `kind` | `2` and `release` (`source` in a source checkout) |
+| `version` | The release, as `vX.Y.Z` |
+| `defaultRosDistro` | The ROS distro a command uses without `--ros-distro` |
+| `componentImages` | The component image of each Compose variable, such as `PLANNING_IMAGE` |
+| `images` | The digest-pinned reference of each component image, per ROS distro |
+| `externalImages` | As in a kit |
+| `autoware` | The pinned Autoware release: `version`, `ref` and `lockSha256` |
+| `deployments` | The catalog: each deployment's `path` and the `checksum` of its files |
+| `shared` | The checksum of `deployments/shared` |
+
+The component image variables are `SENSING_PERCEPTION_IMAGE`,
+`LOCALIZATION_MAPPING_IMAGE`, `PLANNING_IMAGE`, `CONTROL_IMAGE`,
+`VEHICLE_SYSTEM_IMAGE`, `SIMULATOR_IMAGE` and `VISUALIZER_IMAGE`, with
+`SENSING_PERCEPTION_GPU_IMAGE` and `PLANNING_GPU_IMAGE` for the GPU mode. A
+kit's Compose files name an image through them.
+
+## JSON Output
+
+Each document carries `schemaVersion`, now `1`.
+
+### `list --json`
+
+`deployments` is a list of:
+
+| Field | Meaning |
+| --- | --- |
+| `name`, `description` | The deployment's name and its one line |
+| `gpu` | `none`, `optional` or `required` |
+| `modified` | `true` when a release's deployment differs from the files it came with, else `false`. `null` in a source checkout and for a kit's deployments, which nothing vouches for |
+| `error` | Only when the deployment cannot be read; `gpu`, `description` and `modified` are then `null` |
+
+### `version --json`
+
+| Field | Meaning |
+| --- | --- |
+| `kind` | `release`, `source` or `kit` |
+| `version` | The release, or `null` in a source checkout |
+| `commit` | The commit of a source checkout, else `null` |
+| `extends` | In a kit, what it pins; else `null` |
+| `bom` | `autoware`, `images` and `externalImages`, as in the release manifest |
+
+### `validate --json`
+
+| Field | Meaning |
+| --- | --- |
+| `deployment` | The deployment's name |
+| `valid` | `false` with an `error` when it cannot run as asked; the fields below are then missing |
+| `base` | A kit deployment's base, else `null` |
+| `rosDistro`, `gpu`, `role` | How it was validated |
+| `dataValid` | With `--data`: whether every resource can be used; else `null` |
+| `data` | With `--data`: each resource's `name` and `status`: `ok`, `missing`, `incomplete`, `outdated`, or `own` for a directory of yours |
+
+### `results/run.json`
+
+| Field | Meaning |
+| --- | --- |
+| `deployment`, `role`, `rosDistro`, `gpu` | What ran |
+| `version`, `extends` | The release, and what a kit pins |
+| `images` | The image of each service |
+| `modelSha256` | The digest of the resolved Compose model |
+| `configSha256` | The content digest of each config override layer: `base`, `kit` and `deployment` |
+| `overlaySha256` | The content digest of the overlay workspace, without its `build` and `log` directories |
+| `readySeconds` | How long the services took to become ready |
+| `verify` | With `--verify`: the step's `service`, `seconds`, `exitCode` and `result`, `PASSED` or `FAILED` |

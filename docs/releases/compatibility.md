@@ -34,13 +34,15 @@ This page lists what that promise covers. Within one major version:
     the status of the shell or command it runs.
 
 - Machine-readable output: `list --json`, `version --json`, `validate --json`
-  and each run's `results/run.json`. Each carries `schemaVersion`.
+  and each run's `results/run.json`, with the fields in the
+  [reference](reference.md#json-output). Each carries `schemaVersion`.
 
 ### Manifests
 
 - `openadkit.json` (the release manifest, or a kit's one manifest) at
   `schemaVersion: 2`, and the release's deployment manifests
-  `deployment.json`: their fields and what they mean. A deployment is named by
+  `deployment.json`: their fields and what they mean, as the
+  [reference](reference.md) lists them. A deployment is named by
   its key in `openadkit.json`, and its Compose files by convention:
   `compose.yaml`, `compose.gpu.yaml` for the GPU mode, and
   `compose.<role>.yaml` with `compose.zenoh.yaml` for a split-host role. A
@@ -61,8 +63,12 @@ What a kit made with `openadkit new` builds on:
   config overrides, the overlay workspace and the healthcheck that fails when a
   process of the service's `ros2 launch` dies, with its record in
   `/tmp/openadkit/died`.
-- The Compose variables `OPENADKIT_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
-  `OPENADKIT_OVERLAY_WS`.
+- The variables the CLI sets for a kit's Compose files and settings:
+  `OPENADKIT_ROOT` (the release), `OPENADKIT_BASE_DEPLOYMENT` (the base's
+  directory), `OPENADKIT_KIT` (the kit's root), `OPENADKIT_OVERLAY_WS`,
+  `OPENADKIT_DATA_DIR` (the data directory), `ROS_DISTRO` and one variable per
+  component image, such as `PLANNING_IMAGE`
+  ([reference](reference.md#release-manifest)).
 - Each base deployment's Compose files, service names, data destination
   variables (such as `MAP_PATH`), verify step and the settings listed under
   [Settings and Paths](#settings-and-paths).
@@ -84,6 +90,13 @@ See [Create a Kit](../kits/create-a-kit.md) and the
   `VEHICLE_ID`, `CYCLONEDDS_NETWORK_INTERFACE`, and the visualizer's
   `REMOTE_DISPLAY`, `REMOTE_PASSWORD`, `RVIZ_CONFIG`, `RVIZ_GPU`,
   `WEBSOCKIFY_BIND`, `NOVNC_CERT` and `NOVNC_KEY`.
+
+- What one release leaves on the host for another: the run records, the
+  marker of the data it installed (`.openadkit-resource.json`) and the build
+  stamp of an overlay workspace. A release reads what any release of the same
+  major version wrote, so two of them can share a host, as a kit that pins an
+  older release needs. `OPENADKIT_KIT` and `OPENADKIT_DELEGATED` hand a kit's
+  command from the `openadkit` you called to the release the kit pins.
 
 See [CLI & Maintenance](../getting-started/cli.md).
 

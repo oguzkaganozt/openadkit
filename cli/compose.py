@@ -761,10 +761,17 @@ def build_container(name: str, workspace: Path, image: str, colcon: Sequence[str
 
 
 def check_overlay_build(deployment: Deployment, selection: Selection, image: str | None) -> str | None:
-    """Warn about an overlay install that build made for another image."""
-    stamp = read_overlay_stamp(deployment.workspace)
+    """Warn about an overlay workspace that holds packages but no build, or
+    an install that build made for another image."""
+    workspace = deployment.workspace
+    stamp = read_overlay_stamp(workspace)
     if stamp is None:
-        return None
+        source = workspace / "src"
+        if (workspace / "install").exists() or not source.is_dir() or next(source.rglob("package.xml"), None) is None:
+            return None
+        warning = f"{workspace} holds packages that are not built; build it: openadkit build {workspace}"
+        print(f"warning: overlay workspace: {warning}", file=sys.stderr)
+        return warning
     if stamp.get("rosDistro") == selection.ros_distro and (not image or stamp.get("image") == image):
         return None
     warning = (

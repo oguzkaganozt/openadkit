@@ -28,7 +28,8 @@ release tag or, for development, the path of a source checkout. The kit's
 Each deployment of a kit names a `base` deployment of the pinned release in
 its entry of the kit's `openadkit.json`:
 `"deployments": { "<name>": { "base": "planning-simulation" } }`. The entry may
-also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`.
+also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`;
+the [reference](../releases/reference.md#deployment-entry) lists their fields.
 
 - **Requirements** (architectures, ROS distros, GPU) are inherited.
   `requirements` may narrow them: fewer architectures or ROS distros, or `gpu`
@@ -54,6 +55,10 @@ another ([Create a Kit](create-a-kit.md#another-deployment-of-the-same-kit)).
 | `overlay_ws/` | Every deployment | Not read |
 | `compose.yaml` | Not read | That deployment's services |
 
+The CLI warns about a `compose.yaml` at the kit root and about a directory
+under `deployments/` that holds a deployment's files but matches no name in
+`openadkit.json`.
+
 The kit root is your vehicle's layer. A setting or a parameter that a
 deployment does not use does no harm there. A Compose file is different: a
 service depends on other services, and not every base has them, so each
@@ -76,11 +81,19 @@ mode is selected:
 4. The host settings file, `~/.config/openadkit/<deployment>.env`, if present
 
 Shell exports do not override values set in these files. The CLI adds the ROS
-distro, the host UID and GID, the config override and overlay workspace mounts, `OPENADKIT_ROOT`
-(the release's root) and `OPENADKIT_BASE_DEPLOYMENT` (the directory of the `base`
-deployment); a release's component and external images stay pinned. Inside the
-containers, the ROS and DDS defaults come from the base services'
-`runtime.env`.
+distro, the host UID and GID, the config override and overlay workspace mounts,
+`OPENADKIT_ROOT` (the release's root), `OPENADKIT_BASE_DEPLOYMENT` (the
+directory of the `base` deployment) and `OPENADKIT_KIT` (the kit's root); a
+release's component and external images stay pinned. Inside the containers, the
+ROS and DDS defaults come from the base services' `runtime.env`.
+
+A setting that names a file of the kit builds its path on `OPENADKIT_KIT`. A
+relative path would resolve inside the release, next to the base's Compose
+file:
+
+```bash
+SCENARIO_HOST_PATH=${OPENADKIT_KIT}/scenarios
+```
 
 ### 2. Config Overrides
 
@@ -207,6 +220,16 @@ each one `init: true`
 ([Develop and Debug](develop-and-debug.md#the-development-loop)). A service
 that is already in the base changes the same way: name it and set only what
 differs.
+
+- **A service that runs `ros2 launch`** also sets `pid: service:map`, as the
+  base's Autoware services do. `ros2 launch` names its own node after its PID,
+  and in separate PID namespaces every launch gets the same one: Autoware then
+  reports the repeated node name as an error, and autonomous mode becomes
+  unavailable.
+- **With `--gpu`**, the base's `compose.gpu.yaml` applies after your
+  `compose.yaml`, so what it sets for a service, such as the CUDA image of
+  `planning`, wins over yours. A kit deployment has no `compose.gpu.yaml` of
+  its own; its `settings.gpu.env` is read.
 
 A service that several deployments of the kit run goes in a file of its own,
 such as `services/ota-agent.yaml` at the kit root, which each of their Compose

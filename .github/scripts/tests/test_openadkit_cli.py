@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import types
 import zipfile
 from pathlib import Path
 
@@ -446,9 +447,11 @@ def test_validate_json_reports_an_invalid_deployment_as_json(tmp_path, name):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path)
     result = run_cli(root, "validate", *name, "--json")
-    assert result.returncode == 1
+    # A missing name is a usage error; it too comes as one JSON document.
+    assert result.returncode == (1 if name else 2)
     document = json.loads(result.stdout)
     assert document["valid"] is False and document["error"]
+    assert name or document["error"] == "deployment name required; available: example"
     valid = json.loads(run_cli(root, "validate", "example", "--json").stdout)
     assert valid["valid"] is True and valid["deployment"] == "example"
     listed = json.loads(run_cli(root, "list", "--json").stdout)["deployments"]
@@ -970,6 +973,20 @@ def test_data_file_takes_exactly_one_of_url_source_and_content(tmp_path):
     resource["files"][0]["source"] = "data/map.txt"
     with pytest.raises(cli_manifest.OpenADKitError, match="exactly one of url, source and content"):
         cli_manifest.validate_data([resource], {}, tmp_path)
+
+
+def test_the_recipe_of_the_data_marker_is_frozen():
+    # Releases on one host share installed data: another recipe would make each
+    # of them take the other's data for outdated and download it again in turns.
+    archive = {"name": "map", "kind": "zip", "destinationEnv": "MAP_PATH", "url": "https://example.com/a.zip",
+               "sha256": "a" * 64, "expectedRoot": "map", "files": []}
+    files = {"name": "map", "kind": "files", "destinationEnv": "MAP_PATH", "files": [
+        {"path": "b.osm", "url": "https://example.com/b.osm", "sha256": "b" * 64},
+        {"path": "a.yaml", "content": "projector_type: Local\n"}]}
+    assert cli_data.source_digest(archive) == "48bdc21d1bd90c55265f864f54d4816771394bda85df61fbc1eb403ef1eb2fe6"
+    assert cli_data.source_digest(files) == "7e6892c3375143b67166e636424e2f4b58e01843ed1ea076978cf70279e7556f"
+    # A mirror of the same bytes is the same data.
+    assert cli_data.source_digest(archive | {"url": "https://mirror.example.com/a.zip"}) == cli_data.source_digest(archive)
 
 
 def test_a_data_file_can_be_written_out_from_the_manifest(tmp_path, monkeypatch):
@@ -2138,6 +2155,7 @@ def test_a_kits_replacement_data_needs_a_directory_of_its_own(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
     kit = extending_kit(tmp_path, root)
     edit_kit_deployment(kit, data=[files_resource(tmp_path, name="my-map")])
+    fake_docker(tmp_path)
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 1
     assert ("data my-map replaces dataset of example, but MAP_PATH still names that deployment's directory; "
@@ -2341,6 +2359,54 @@ def test_reading_a_kit_runs_with_its_pinned_release_once_that_is_installed(tmp_p
     # Help is this CLI's own, as before.
     assert run_cli(root, "list", "--help", directory=kit).returncode == 0
     assert len(record.read_text().splitlines()) == 3
+
+
+def test_a_kit_names_the_files_it_does_not_read(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    fake_docker(tmp_path)
+    assert "warning" not in run_cli(root, "validate", directory=kit).stderr
+    (kit / "compose.yaml").write_text("services: {}\n")
+    misspelled = kit / "deployments/custmo"
+    misspelled.mkdir()
+    (misspelled / "settings.env").write_text("VALUE=lost\n")
+    (kit / "deployments/custom/compose.gpu.yaml").write_text("services: {}\n")
+    # A directory of fragments that several deployments include is the kit's own business.
+    (kit / "deployments/fragments").mkdir()
+    (kit / "deployments/fragments/ota-agent.yaml").write_text("services: {}\n")
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 0, result.stderr
+    warnings = [line for line in result.stderr.splitlines() if line.startswith("warning: this kit does not read ")]
+    assert [line.removeprefix("warning: this kit does not read ").split(":")[0] for line in warnings] == [
+        "compose.yaml at its root", "deployments/custmo/", "deployments/custom/compose.gpu.yaml",
+    ]
+
+
+@NEEDS_COMPOSE
+def test_a_kit_names_its_own_files_by_its_root(tmp_path):
+    # A relative path in a setting would resolve inside the base, where its Compose file is.
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    (kit / "settings.env").write_text("MAP_PATH=${OPENADKIT_KIT}/maps/mine\n")
+    deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+    selection = cli_settings.resolve(deployment, cli_catalog.load_catalog(kit), data_only=True)
+    assert selection.environment["MAP_PATH"] == f"{kit}/maps/mine"
+
+
+def test_a_workspace_with_packages_but_no_build_is_named(tmp_path, capsys):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+    selection = types.SimpleNamespace(ros_distro="humble")
+    package = kit / "overlay_ws/src/my_vehicle_description"
+    package.mkdir(parents=True)
+    assert cli_compose.check_overlay_build(deployment, selection, None) is None
+    (package / "package.xml").write_text("<package/>")
+    assert "holds packages that are not built" in cli_compose.check_overlay_build(deployment, selection, None)
+    assert f"openadkit build {kit / 'overlay_ws'}" in capsys.readouterr().err
+    # A build made by hand, without the CLI's stamp, is the user's to keep right.
+    (kit / "overlay_ws/install").mkdir()
+    assert cli_compose.check_overlay_build(deployment, selection, None) is None
 
 
 def test_validate_json_reports_a_broken_kit_as_json(tmp_path):

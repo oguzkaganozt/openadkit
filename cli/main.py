@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
 import subprocess
@@ -30,7 +31,14 @@ from catalog import (
     resolve_extends,
     root_path,
 )
-from manifest import NAME_RE, VERSION_RE, OpenADKitError, load_json, require_string
+from manifest import (
+    KIT_DEPLOYMENTS_DIRECTORY,
+    NAME_RE,
+    VERSION_RE,
+    OpenADKitError,
+    load_json,
+    require_string,
+)
 from settings import Selection
 
 KIT_TEMPLATE = Path(__file__).resolve().parent / "templates/kit"
@@ -337,6 +345,25 @@ def show_version(root, catalog, *, json_output: bool = False) -> int:
     return 0
 
 
+@functools.cache
+def warn_unread_kit_files(root: Path, deployments: tuple[str, ...]) -> None:
+    """Name the files a kit holds where the CLI does not read them; they
+    would otherwise be ignored without a word."""
+    unread = []
+    if (root / "compose.yaml").exists():
+        unread.append("compose.yaml at its root: a deployment's services go in deployments/<name>/compose.yaml")
+    directory = root / KIT_DEPLOYMENTS_DIRECTORY
+    for candidate in sorted(directory.iterdir()) if directory.is_dir() else []:
+        relative = f"{KIT_DEPLOYMENTS_DIRECTORY}/{candidate.name}"
+        if candidate.name in deployments:
+            if (candidate / "compose.gpu.yaml").exists():
+                unread.append(f"{relative}/compose.gpu.yaml: a kit deployment's GPU mode is its base's")
+        elif any((candidate / name).exists() for name in ("settings.env", "compose.yaml", "config")):
+            unread.append(f"{relative}/: openadkit.json has no deployment of that name")
+    for item in unread:
+        print(f"warning: this kit does not read {item}", file=sys.stderr)
+
+
 def warn_if_modified(root, deployment, catalog) -> None:
     if deployment_modified(root, deployment, catalog):
         print(
@@ -583,6 +610,8 @@ def build_ros_distro(root: Path, catalog: Catalog) -> str:
 def select(root: Path, catalog: Catalog, deployment: Deployment, args: argparse.Namespace) -> Selection:
     """The deployment as this command runs it."""
     warn_if_modified(root, deployment, catalog)
+    if catalog.kind == "kit":
+        warn_unread_kit_files(root, tuple(catalog.deployments))
     if getattr(args, "ws", None):
         deployment.use_workspace(Path(args.ws).expanduser().resolve())
     compose.ensure_runtime_user()
@@ -1001,7 +1030,7 @@ def main() -> int:
         # the deployment is invalid.
         print(json.dumps({"schemaVersion": 1, "deployment": target, "valid": False, "error": str(error)}))
         print(f"error: {error}", file=sys.stderr)
-        return 1
+        return 2 if isinstance(error, UsageError) else 1
 
 
 def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
@@ -1037,8 +1066,9 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
             handler(root, catalog, get_deployment(root, catalog, name), args) for name in catalog.deployments
         )
     if not args.deployment:
-        if getattr(args, "json_output", False):
-            raise OpenADKitError("deployment name required")
+        if json_output:
+            # One JSON document covers one deployment.
+            raise UsageError(f"deployment name required; available: {available_deployments(catalog)}")
         require_deployment_name(args.command)
         list_deployments(root, catalog)
         return 2
