@@ -2033,6 +2033,27 @@ def test_only_a_kit_deployment_names_a_base(tmp_path):
         cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "on-top")
 
 
+def test_a_kits_data_replaces_its_bases_at_the_same_destination(tmp_path):
+    base_data = [files_resource(tmp_path), files_resource(tmp_path, env="ROSBAG_PATH", name="sample-recording")]
+    root, _ = runtime_tree(tmp_path, document=manifest(data=base_data))
+    kit = extending_kit(tmp_path, root)
+
+    def data_with(*resources):
+        edit_kit_deployment(kit, data=list(resources))
+        deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+        return [(item["name"], item["destinationEnv"]) for item in deployment.data]
+
+    # Its own recording instead of the sample; the map stays the base's.
+    own = files_resource(tmp_path, env="ROSBAG_PATH", name="my-drive")
+    assert data_with(own) == [("dataset", "MAP_PATH"), ("my-drive", "ROSBAG_PATH")]
+    # Another destination adds to the base's data.
+    extra = files_resource(tmp_path, env="MODEL_PATH", name="model")
+    assert data_with(extra) == [("dataset", "MAP_PATH"), ("sample-recording", "ROSBAG_PATH"), ("model", "MODEL_PATH")]
+    # A name stays one resource: the staging directory of its download.
+    with pytest.raises(cli_manifest.OpenADKitError, match="reuses the name of a resource of the base deployment that it keeps: dataset"):
+        data_with(files_resource(tmp_path, env="ROSBAG_PATH", name="dataset"))
+
+
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
     gpu_data = files_resource(tmp_path, env="MODEL_PATH", name="model", gpu=True)
     document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
