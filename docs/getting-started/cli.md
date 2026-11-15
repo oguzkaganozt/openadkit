@@ -141,7 +141,8 @@ distro, or the deployment's first one when it does not run on that.
 
 `validate` checks the manifest and the Compose configuration without starting
 anything. `--data` also reports each data resource as `ok`, `missing`,
-`incomplete` or `outdated` and fails on any gap. It follows the same GPU
+`incomplete` or `outdated` and fails on any gap; a directory of your own shows
+as `own`. It follows the same GPU
 selection as `run`: `openadkit validate logging-simulation --gpu --data`
 includes the CenterPoint models.
 
@@ -209,9 +210,11 @@ openadkit clean planning-simulation             # delete, after asking
   next `run` or `fetch` downloads it again.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file, and
-`clean` and `--force` only delete or replace marked data. Data that was already
-there, such as a map you copied yourself, is used when it is complete, but the
-CLI never deletes or replaces it; move or remove it yourself.
+checks, updates and deletes only marked data. A directory you filled yourself,
+such as your own map at `MAP_PATH`, is yours: the deployment uses it as it is,
+whatever its files are called, and `fetch`, `--force` and `clean` leave it
+alone. Name its files in the settings where the deployment has them, such as
+`LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.
 
 `clean` and `fetch --force` refuse while that deployment is running, or while
 any live container mounts the data (including another kit or deployment). If

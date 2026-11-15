@@ -1557,7 +1557,7 @@ def test_clean_lists_what_it_deletes_and_needs_yes_without_a_terminal(tmp_path):
     assert "no data of custom is installed" in run_cli(root, "clean", "custom", directory=kit).stdout
 
 
-@pytest.mark.parametrize("unsafe", ["unmanaged", "file", "symlink", "marker-symlink", "running"])
+@pytest.mark.parametrize("unsafe", ["file", "symlink", "running"])
 def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     resources = [files_resource(tmp_path), files_resource(tmp_path, env="SECOND_PATH", name="second")]
     root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
@@ -1567,17 +1567,12 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
         target.mkdir(parents=True)
         (target / cli_data.MARKER).write_text("{}")
         (target / "required.txt").write_text("keep")
-    if unsafe == "unmanaged":
-        (second / cli_data.MARKER).unlink()
-    elif unsafe == "file":
+    if unsafe == "file":
         shutil.rmtree(second)
         second.write_text("keep")
     elif unsafe == "symlink":
         second.rename(tmp_path / "outside")
         second.symlink_to(tmp_path / "outside")
-    elif unsafe == "marker-symlink":
-        (second / cli_data.MARKER).unlink()
-        (second / cli_data.MARKER).symlink_to(first / cli_data.MARKER)
     fake_docker(tmp_path, projects=["openadkit-example"] if unsafe == "running" else [])
     result = run_cli(root, "clean", "example", "--yes")
     assert result.returncode != 0
@@ -1587,6 +1582,43 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     assert message in result.stderr
     assert (first / "required.txt").read_text() == "keep"
     assert second.exists()
+
+
+@pytest.mark.parametrize("marker", ["none", "symlink"])
+def test_a_directory_the_cli_did_not_install_is_the_users_own(tmp_path, marker):
+    # Their own map, with their own file names: used as it is, never checked, replaced or removed.
+    resources = [files_resource(tmp_path), files_resource(tmp_path, env="SECOND_PATH", name="second")]
+    root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
+                           config="MAP_PATH=$HOME/data/map\nSECOND_PATH=$HOME/data/second\n")
+    installed, own = tmp_path / "home/data/map", tmp_path / "home/data/second"
+    for target in (installed, own):
+        target.mkdir(parents=True)
+        (target / cli_data.MARKER).write_text("{}")
+    (installed / "required.txt").write_text("installed")
+    (installed / cli_data.MARKER).write_text(json.dumps({"source": cli_data.source_digest(resources[0])}))
+    (own / cli_data.MARKER).unlink()
+    (own / "my-own-name.osm").write_text("mine")
+    if marker == "symlink":
+        # A marker that only links to one vouches for nothing.
+        (own / cli_data.MARKER).symlink_to(installed / cli_data.MARKER)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", "example", "--data", "--json")
+    document = json.loads(result.stdout)
+    assert document["dataValid"] is True, result.stderr
+    assert {"name": "second", "status": "own"} in document["data"]
+    assert "data second: your own directory, not checked" in run_cli(root, "validate", "example", "--data").stdout
+    result = run_cli(root, "fetch", "example", "--force")
+    assert result.returncode == 0 and f"using your own data: {own}" in result.stdout, result.stderr
+    result = run_cli(root, "clean", "example", "--yes")
+    assert result.returncode == 0, result.stderr
+    assert str(own) not in result.stdout and not installed.exists()
+    assert (own / "my-own-name.osm").read_text() == "mine"
+    # An empty directory holds nothing to use, and is not the CLI's to replace.
+    (own / "my-own-name.osm").unlink()
+    if marker == "symlink":
+        (own / cli_data.MARKER).unlink()
+    result = run_cli(root, "validate", "example", "--data")
+    assert result.returncode == 1 and "remove it and run: openadkit fetch example" in result.stderr
 
 
 @pytest.mark.parametrize(("name", "status", "shared"), [("custom", "running", True), ("example", "paused", True),

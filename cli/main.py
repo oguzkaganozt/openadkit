@@ -351,8 +351,13 @@ def warn_if_modified(root, deployment, catalog) -> None:
         )
 
 
+# Data a deployment can run with: what the CLI installed and still declares,
+# and the user's own directory, which it does not check.
+DATA_USABLE = ("ok", "own")
+
+
 def report_data_gaps(deployment_name: str, results: list[dict[str, object]]) -> None:
-    gaps = [item for item in results if item["status"] != "ok"]
+    gaps = [item for item in results if item["status"] not in DATA_USABLE]
     if not gaps:
         return
     for item in gaps:
@@ -608,7 +613,7 @@ def validate_command(root: Path, catalog: Catalog, deployment: Deployment, args:
             "rosDistro": selection.ros_distro,
             "gpu": selection.gpu,
             "role": selection.role,
-            "dataValid": None if results is None else all(item["status"] == "ok" for item in results),
+            "dataValid": None if results is None else all(item["status"] in DATA_USABLE for item in results),
             "data": [{"name": item["name"], "status": item["status"]} for item in results or []],
         }))
     else:
@@ -616,8 +621,9 @@ def validate_command(root: Path, catalog: Catalog, deployment: Deployment, args:
         gpu = "with GPU" if selection.gpu else "without GPU"
         print(f"{deployment.name} is valid (ROS 2 {selection.ros_distro.capitalize()}, {gpu}{role})")
         for item in results or []:
-            print(f"  data {item['name']}: {item['status']} ({item['destination']})")
-    if results is not None and any(item["status"] != "ok" for item in results):
+            status = "your own directory, not checked" if item["status"] == "own" else item["status"]
+            print(f"  data {item['name']}: {status} ({item['destination']})")
+    if results is not None and any(item["status"] not in DATA_USABLE for item in results):
         report_data_gaps(deployment.name, results)
         return 1
     return 0
@@ -731,7 +737,11 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
     installed = data.check_installed_data(deployment, selection)
     compose.require_stopped(deployment)
     compose.require_data_unused(item["destination"] for item in installed)
-    present = {item["destination"]: item["name"] for item in installed if item["destination"].is_dir()}
+    # The user's own directories stay: clean deletes only what the CLI installed.
+    present = {
+        item["destination"]: item["name"] for item in installed
+        if item["destination"].is_dir() and item["status"] != "own"
+    }
     if not present:
         print(f"no data of {deployment.name} is installed")
         return 0

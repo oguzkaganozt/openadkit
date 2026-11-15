@@ -42,6 +42,12 @@ def is_managed(target: Path) -> bool:
     return target.is_dir() and not marker.is_symlink() and marker.is_file()
 
 
+def is_own(target: Path) -> bool:
+    """A directory with files that the CLI did not install: the user's own
+    data. It is used as it is, and never checked, replaced or removed."""
+    return not target.is_symlink() and target.is_dir() and not is_managed(target) and any(target.iterdir())
+
+
 def source_digest(resource: dict[str, Any]) -> str:
     """Identify the content a resource declares, so a changed declaration shows.
 
@@ -263,7 +269,15 @@ def check_installed_data(deployment: Deployment, selection: Selection) -> list[d
     results: list[dict[str, Any]] = []
     for resource in selected_resources(deployment, selection):
         target = resolve_destination(resource, selection)
-        if validate_dataset(target, resource["requiredFiles"]):
+        recovery: str | None
+        if is_own(target):
+            status = "own"
+            recovery = None
+        elif target.is_symlink() or (target.exists() and not is_managed(target)):
+            # Nothing to use and nothing the CLI may replace: the operator removes it first.
+            status = "incomplete"
+            recovery = "remove"
+        elif validate_dataset(target, resource["requiredFiles"]):
             if is_outdated(target, resource):
                 # run and fetch replace it themselves.
                 status = "outdated"
@@ -271,10 +285,6 @@ def check_installed_data(deployment: Deployment, selection: Selection) -> list[d
             else:
                 status = "ok"
                 recovery = None
-        elif target.is_symlink() or (target.exists() and not is_managed(target)):
-            # fetch --force refuses these; the operator has to remove them first.
-            status = "incomplete"
-            recovery = "remove"
         elif target.is_dir():
             status = "incomplete"
             recovery = "fetch-force"
@@ -301,6 +311,8 @@ def remove_installed_data(deployment: Deployment, selection: Selection) -> list[
         if target in seen:
             continue
         seen.add(target)
+        if is_own(target):
+            continue
         if target.is_symlink():
             raise OpenADKitError(f"refusing to remove symlinked data: {target}")
         refuse_unmanaged(target, "remove")
@@ -323,7 +335,7 @@ def validate_install_targets(deployment: Deployment, selection: Selection, force
         if target in destinations:
             raise OpenADKitError(f"multiple data resources target the same path: {target}")
         destinations.add(target)
-        if not (target.exists() or target.is_symlink()):
+        if not (target.exists() or target.is_symlink()) or is_own(target):
             continue
         if force:
             if target.is_symlink() or not target.is_dir():
@@ -358,6 +370,9 @@ def install_resource(
 ) -> None:
     target = resource_destination(resource, selection)
     required = resource["requiredFiles"]
+    if is_own(target):
+        print(f"using your own data: {target}")
+        return
     if target.exists() or target.is_symlink():
         if not force and validate_dataset(target, required) and is_outdated(target, resource):
             print(f"updating data: {target} (the deployment now declares other content)")
