@@ -214,11 +214,16 @@ openadkit clean planning-simulation             # delete, after asking
   next `run` or `fetch` downloads it again.
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file, and
-checks, updates and deletes only marked data. A directory you filled yourself,
-such as your own map at `MAP_PATH`, is yours: the deployment uses it as it is,
-whatever its files are called, and `fetch`, `--force` and `clean` leave it
-alone. Name its files in the settings where the deployment has them, such as
-`LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.
+checks, updates and deletes only marked data. A directory that holds files and
+no marker is yours, such as your own map at `MAP_PATH`: the deployment uses it
+as it is, whatever its files are called, and `fetch`, `--force` and `clean`
+leave it alone. Name its files in the settings where the deployment has them,
+such as `LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.
+
+A path that does not exist, or an empty directory, counts as missing: the CLI
+downloads the sample data there, and says so first when the path is outside
+the data directory. Copy your own data in before the first `run`, and check
+the path for a typo when you see that line.
 
 `clean` and `fetch --force` refuse while that deployment is running, or while
 any live container mounts the data (including another kit or deployment). If
@@ -288,7 +293,9 @@ apt source, your `docker` group membership and
   Autoware release it pins; in a source checkout, the commit.
 - **Scripting:** `list`, `version` and `validate` accept `--json`.
   `validate --json` prints one JSON document also when the deployment is
-  invalid (`"valid": false` with the `"error"`).
+  invalid (`"valid": false` with the `"error"`), and covers one deployment: in
+  a kit with several, name one. The [reference](../releases/reference.md#json-output)
+  lists the fields.
 - **Docker commands:** commands print what they do in plain terms; add
   `--verbose` (or set `OPENADKIT_VERBOSE=1`) to also see the docker commands
   they run, status queries aside.

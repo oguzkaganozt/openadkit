@@ -38,8 +38,8 @@ ROSBAG_FORMAT=mcap                              # sqlite3 by default
 ROSBAG_READY_TOPIC=/sensing/lidar/top/pointcloud_raw_ex
 ```
 
-The CLI uses your directory as it is: it never checks it, downloads into it,
-replaces it or removes it. The recording starts once something
+The CLI uses a directory that holds your files as it is: it never checks it,
+downloads into it, replaces it or removes it. The recording starts once something
 subscribes to `ROSBAG_READY_TOPIC`, so name a topic of yours that sensing
 reads. A recording of another vehicle needs that vehicle's map (`MAP_PATH`)
 and its vehicle and sensor kit packages, which a

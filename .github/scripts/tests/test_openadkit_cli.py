@@ -471,7 +471,9 @@ def test_the_json_output_has_the_fields_the_reference_lists(tmp_path):
 
     listed = output("list", "--json")
     assert set(listed) == {"schemaVersion", "deployments"}
-    assert set(listed["deployments"][0]) == {"name", "description", "gpu", "modified"}
+    assert set(listed["deployments"][0]) == {"name", "description", "requirements", "modified"}
+    # As in the manifest: one name for one thing.
+    assert set(listed["deployments"][0]["requirements"]) == {"architectures", "rosDistros", "gpu"}
     version = output("version", "--json")
     assert set(version) == {"schemaVersion", "kind", "version", "commit", "extends", "bom"}
     assert set(version["bom"]) == {"autoware", "images", "externalImages"}
@@ -1073,16 +1075,19 @@ def test_env_file_compose_refuses_is_a_cli_error(tmp_path):
 def test_only_explicit_fetch_force_replaces_managed_data(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
     target = tmp_path / "home/data/map"
-    target.mkdir(parents=True)
+    target.parent.mkdir(parents=True)
+    target.write_text("not a directory")
     calls = fake_docker(tmp_path)
-    # Data the CLI did not install: --force would refuse it, so do not advise it.
+    # Not data the CLI installed: --force would refuse it, so do not advise it.
     for command in (("run", "example"), ("fetch", "example")):
         result = run_cli(root, *command)
         assert result.returncode != 0 and "remove it and run: openadkit fetch example\n" in result.stderr
         assert "--force" not in result.stderr
     assert not any("up" in row["args"] for row in recorded(calls))
     assert run_cli(root, "run", "example", "--force").returncode == 2
-    assert "refusing to replace" in run_cli(root, "fetch", "example", "--force").stderr
+    assert "unsafe data target" in run_cli(root, "fetch", "example", "--force").stderr
+    target.unlink()
+    target.mkdir()
     (target / cli_data.MARKER).write_text("{}")
     result = run_cli(root, "run", "example")
     assert result.returncode != 0 and "openadkit fetch example --force" in result.stderr
@@ -1678,12 +1683,21 @@ def test_a_directory_the_cli_did_not_install_is_the_users_own(tmp_path, marker):
     assert result.returncode == 0, result.stderr
     assert str(own) not in result.stdout and not installed.exists()
     assert (own / "my-own-name.osm").read_text() == "mine"
-    # An empty directory holds nothing to use, and is not the CLI's to replace.
+    # An empty directory holds nothing to use and nothing to lose: it counts as missing.
     (own / "my-own-name.osm").unlink()
     if marker == "symlink":
         (own / cli_data.MARKER).unlink()
     result = run_cli(root, "validate", "example", "--data")
-    assert result.returncode == 1 and "remove it and run: openadkit fetch example" in result.stderr
+    assert result.returncode == 1 and "installed data is missing; run: openadkit fetch example" in result.stderr
+    # fetch says what goes into a path outside the data directory, which may be a typo.
+    result = run_cli(root, "fetch", "example")
+    assert result.returncode == 0, result.stderr
+    assert f"SECOND_PATH names {own}, which holds nothing: installing second there" in result.stdout
+    assert cli_data.is_managed(own) and (own / "required.txt").is_file()
+    # clean deletes what the CLI installed, and nothing else it only lists.
+    (own / cli_data.MARKER).unlink()
+    result = run_cli(root, "clean", "example", "--yes")
+    assert result.returncode == 0 and str(own) not in result.stdout and (own / "required.txt").is_file()
 
 
 @pytest.mark.parametrize(("name", "status", "shared"), [("custom", "running", True), ("example", "paused", True),
@@ -1723,7 +1737,7 @@ def test_fetch_checks_every_destination_before_download(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
                            config="MAP_PATH=$HOME/data/map\nSECOND_PATH=relative\n")
     result = run_cli(root, "fetch", "example")
-    assert result.returncode != 0 and "must be absolute" in result.stderr
+    assert result.returncode != 0 and "SECOND_PATH must be an absolute path, not relative" in result.stderr
     assert not (tmp_path / "home/data").exists()
 
 
@@ -2394,8 +2408,9 @@ def test_reading_a_kit_runs_with_its_pinned_release_once_that_is_installed(tmp_p
         result = run_cli(root, *args, directory=kit)
         assert result.returncode == 0, result.stderr
     assert record.read_text().splitlines() == ["list", "list --json", "version"]
-    # Help is this CLI's own, as before.
-    assert run_cli(root, "list", "--help", directory=kit).returncode == 0
+    # Help is this CLI's own, also the deployment list that the top-level help ends with.
+    for args in (["list", "--help"], ["run", "--help"], ["--help"]):
+        assert run_cli(root, *args, directory=kit).returncode == 0
     assert len(record.read_text().splitlines()) == 3
 
 
@@ -2437,6 +2452,8 @@ def test_a_kit_names_the_files_it_does_not_read(tmp_path):
     misspelled.mkdir()
     (misspelled / "settings.env").write_text("VALUE=lost\n")
     (kit / "deployments/custom/compose.gpu.yaml").write_text("services: {}\n")
+    (kit / "deployments/custom/compose.yml").write_text("services: {}\n")
+    (kit / "deployments/custom/overlay_ws").mkdir()
     # A directory of fragments that several deployments include is the kit's own business.
     (kit / "deployments/fragments").mkdir()
     (kit / "deployments/fragments/ota-agent.yaml").write_text("services: {}\n")
@@ -2445,7 +2462,40 @@ def test_a_kit_names_the_files_it_does_not_read(tmp_path):
     warnings = [line for line in result.stderr.splitlines() if line.startswith("warning: this kit does not read ")]
     assert [line.removeprefix("warning: this kit does not read ").split(":")[0] for line in warnings] == [
         "compose.yaml at its root", "deployments/custmo/", "deployments/custom/compose.gpu.yaml",
+        "deployments/custom/compose.yml", "deployments/custom/overlay_ws",
     ]
+
+
+def test_the_kit_variable_in_the_shell_redirects_nothing(tmp_path):
+    # A kit's files read OPENADKIT_KIT; exported by hand, it must not choose the kit of every command.
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", "example", directory=tmp_path, OPENADKIT_KIT=str(kit))
+    assert result.returncode == 0 and "example is valid" in result.stdout, result.stderr
+    result = run_cli(root, "validate", directory=kit, OPENADKIT_KIT=str(tmp_path / "nowhere"))
+    assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
+
+
+def test_a_kit_reports_the_open_ad_kit_it_extends_as_its_version(tmp_path):
+    root, _ = runtime_tree(tmp_path, release=True)
+    kit = extending_kit(tmp_path, root)
+    subprocess.run(["git", "init", "-q", str(kit)], check=True)
+    version = json.loads(run_cli(root, "version", "--json", directory=kit).stdout)
+    # The release it runs, as run.json says; never the commit of the kit's own repository.
+    assert (version["kind"], version["version"], version["commit"]) == ("kit", "v1.2.3", None)
+
+
+def test_validate_checks_every_deployment_of_a_kit_past_a_broken_one(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    edit_manifest(kit, lambda document: document["deployments"].update(
+        {"a-broken": {"base": "nowhere"}, "second": {"base": "example"}}))
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 1
+    assert "error: a-broken: unknown base deployment: nowhere" in result.stderr
+    assert "custom is valid" in result.stdout and "second is valid" in result.stdout
 
 
 @NEEDS_COMPOSE

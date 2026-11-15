@@ -69,8 +69,8 @@ What a kit made with `openadkit new` builds on:
   `OPENADKIT_DATA_DIR` (the data directory), `ROS_DISTRO` and one variable per
   component image, such as `PLANNING_IMAGE`
   ([reference](reference.md#release-manifest)).
-- Each base deployment's Compose files, service names, data destination
-  variables (such as `MAP_PATH`), verify step and the settings listed under
+- Each base deployment's service names, data destination variables (such as
+  `MAP_PATH`), verify step and the settings listed under
   [Settings and Paths](#settings-and-paths).
 - Config overrides under `config/autoware/` and the overlay workspace in `overlay_ws/`,
   which the images' entrypoint applies and sources on every start.
@@ -81,8 +81,7 @@ See [Create a Kit](../kits/create-a-kit.md) and the
 
 ### Settings and Paths
 
-- `OPENADKIT_HOME` and the directories under it, `OPENADKIT_VERBOSE`, and
-  `OPENADKIT_BUILD`, the CI build a source checkout runs.
+- `OPENADKIT_HOME` and the directories under it.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.
 - These settings of a deployment's `settings.env` and of the host settings
@@ -95,8 +94,8 @@ See [Create a Kit](../kits/create-a-kit.md) and the
   marker of the data it installed (`.openadkit-resource.json`) and the build
   stamp of an overlay workspace. A release reads what any release of the same
   major version wrote, so two of them can share a host, as a kit that pins an
-  older release needs. `OPENADKIT_KIT` and `OPENADKIT_DELEGATED` hand a kit's
-  command from the `openadkit` you called to the release the kit pins.
+  older release needs. The same holds for how the `openadkit` you called hands
+  a kit's command to the release the kit pins.
 
 See [CLI & Maintenance](../getting-started/cli.md).
 
@@ -108,9 +107,8 @@ See [CLI & Maintenance](../getting-started/cli.md).
 - The images' entrypoint, `/opt/openadkit/entrypoint.sh`: it runs the command
   as the host user (`HOST_UID`, `HOST_GID`), with ROS, Autoware and the overlay
   workspace sourced and the config overrides applied.
-- The image labels `org.autoware.openadkit.ros-snapshot`,
-  `org.autoware.openadkit.autoware-version`, `org.autoware.openadkit.autoware-ref`
-  and `org.autoware.openadkit.autoware-lock-sha256`.
+- The image labels `org.autoware.openadkit.ros-snapshot` and
+  `org.autoware.openadkit.autoware-version`.
 - The Autoware packages that the catalog deployments run and that each image's
   launch files in [Components](../deployments/components.md) need, with RViz plugins
   in the visualizer image only. They change only with the pinned Autoware
@@ -152,4 +150,7 @@ release:
 - The other settings in `settings.env`. Most are arguments of Autoware's launch
   files and follow the pinned Autoware release; `READINESS_CHECKS` holds the
   arguments of the readiness check.
-- Environment variables, files and image internals that this page does not list.
+- What a developer or CI uses to run a source checkout, such as
+  `OPENADKIT_BUILD`.
+- Environment variables, image labels, files and image internals that this
+  page does not list.

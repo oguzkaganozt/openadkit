@@ -52,10 +52,11 @@ def find_kit(start: Path) -> Path | None:
     """The extending kit (kind "kit") around the working directory, if any.
 
     Like git, the nearest openadkit.json wins; it is a kit only when its kind
-    is "kit". OPENADKIT_KIT names the kit directly.
+    is "kit". A CLI that took the command over from another one is told the
+    kit: the variable alone, which a kit's own files also read, names nothing.
     """
     explicit = os.environ.get("OPENADKIT_KIT")
-    if explicit:
+    if explicit and os.environ.get("OPENADKIT_DELEGATED"):
         return Path(explicit).resolve()
     for directory in (start, *start.parents):
         manifest = directory / "openadkit.json"
@@ -142,6 +143,8 @@ def run_with(cli_root: Path, environment: dict[str, str] | None = None) -> None:
     launcher = cli_root / "openadkit"
     if not launcher.is_file():
         raise OpenADKitError(f"{cli_root} has no openadkit launcher")
+    sys.stdout.flush()
+    sys.stderr.flush()
     os.execve(launcher, [str(launcher), *sys.argv[1:]], os.environ | (environment or {}) | {"OPENADKIT_DELEGATED": "1"})
 
 
@@ -187,7 +190,9 @@ class OpenADKitParser(argparse.ArgumentParser):
         if self.help_inventory != "catalog":
             return
         try:
-            root, catalog = load_catalog_around(Path.cwd(), act=False)
+            # Help is this CLI's own: it never hands over to print a list.
+            root = find_kit(Path.cwd()) or root_path()
+            catalog = load_catalog(root)
         except OpenADKitError:
             return
         print(file=file)
@@ -230,7 +235,7 @@ def list_deployments(
                 {
                     "name": name,
                     "modified": deployment_modified(root, deployment, catalog),
-                    "gpu": deployment.requirements["gpu"],
+                    "requirements": deployment.requirements,
                     "description": deployment.manifest["description"],
                 }
             )
@@ -239,7 +244,7 @@ def list_deployments(
                 {
                     "name": name,
                     "modified": None,
-                    "gpu": None,
+                    "requirements": None,
                     "description": None,
                     "error": str(error).replace("\n", " "),
                 }
@@ -251,7 +256,7 @@ def list_deployments(
     rows = [
         (
             str(entry["name"]),
-            "" if entry["gpu"] is None else gpu.get(str(entry["gpu"]), str(entry["gpu"])),
+            "" if entry["requirements"] is None else gpu[entry["requirements"]["gpu"]],  # type: ignore[index]
             str(entry.get("error") or entry.get("description") or ""),
         )
         for entry in entries
@@ -292,12 +297,14 @@ def autoware_line(autoware: dict[str, Any]) -> str:
 
 
 def show_version(root, catalog, *, json_output: bool = False) -> int:
-    if catalog.kind == "release":
-        version = catalog.version
+    # A kit reports the Open AD Kit it extends: its own repository is not one.
+    described, described_root = (catalog.extended, catalog.extended_root) if catalog.extended else (catalog, root)
+    if described.kind == "release":
+        version = described.version
         commit = None
     else:
         result = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            ["git", "-C", str(described_root), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
             check=False,
@@ -351,6 +358,10 @@ def warn_unread_kit_files(root: Path, deployments: tuple[str, ...]) -> None:
         if candidate.name in deployments:
             if (candidate / "compose.gpu.yaml").exists():
                 unread.append(f"{relative}/compose.gpu.yaml: a kit deployment's GPU mode is its base's")
+            if (candidate / "compose.yml").exists():
+                unread.append(f"{relative}/compose.yml: the file is named compose.yaml")
+            if (candidate / "overlay_ws").exists():
+                unread.append(f"{relative}/overlay_ws: the kit's packages go in overlay_ws at its root")
         elif any((candidate / name).exists() for name in ("settings.env", "compose.yaml", "config")):
             unread.append(f"{relative}/: openadkit.json has no deployment of that name")
     for item in unread:
@@ -762,7 +773,7 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
     # The user's own directories stay: clean deletes only what the CLI installed.
     present = {
         item["destination"]: item["name"] for item in installed
-        if item["destination"].is_dir() and item["status"] != "own"
+        if data.is_managed(item["destination"])
     }
     if not present:
         print(f"no data of {deployment.name} is installed")
@@ -970,6 +981,20 @@ def build_parser() -> OpenADKitParser:
     return parser
 
 
+def handle_each(handler: Callable[..., int], root: Path, catalog: Catalog, args: argparse.Namespace) -> list[int]:
+    """Run a command on every deployment of a kit: one that fails does not hide the next."""
+    results = []
+    for name in catalog.deployments:
+        try:
+            results.append(handler(root, catalog, get_deployment(root, catalog, name), args))
+        except UsageError:
+            raise
+        except OpenADKitError as error:
+            print(f"error: {name}: {error}", file=sys.stderr)
+            results.append(1)
+    return results
+
+
 def command_and_target(parser: OpenADKitParser, arguments: list[str]) -> tuple[str | None, str | None]:
     """The command and the deployment or workspace it names, read before parsing."""
     words = iter(arguments)
@@ -1059,9 +1084,7 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
     json_output = getattr(args, "json_output", False)
     if not args.deployment and catalog.kind == "kit" and args.command in ALL_DEPLOYMENTS_COMMANDS and not json_output:
         # Checking a kit, or fetching its data, covers each of its deployments.
-        return max(
-            handler(root, catalog, get_deployment(root, catalog, name), args) for name in catalog.deployments
-        )
+        return max(handle_each(handler, root, catalog, args))
     if not args.deployment:
         if kit_argument:
             # From outside the kit, only its directory names a deployment.
