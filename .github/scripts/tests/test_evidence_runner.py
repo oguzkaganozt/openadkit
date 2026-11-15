@@ -11,6 +11,14 @@ from release_fixtures import ROOT, executable
 import validation_matrix
 
 RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
+# A Docker with no container, except the map: it answers the cell's last check
+# as a service with a killed node, unhealthy and still running.
+DOCKER = '''#!/usr/bin/env bash
+if [ "$1" = inspect ] && [ "${!#}" = autoware-map ]; then echo "${MAP_STATE-running unhealthy}"; fi
+if [ "$1" = ps ] && [ -n "${UNHEALTHY:-}" ]; then echo id; fi
+if [ "$1" = inspect ] && [ "${!#}" = id ]; then echo "/${UNHEALTHY} unhealthy"; fi
+exit 0
+'''
 
 
 def matrix_cell(deployment, role="", launch_arguments=False):
@@ -78,7 +86,7 @@ elif args[0] == "run" and "--verify" in args:
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
                         "OPENADKIT_CLI": str(tmp_path / "bin/openadkit")}
@@ -159,7 +167,7 @@ if args[0] == 'run' and '--verify' in args and os.environ['FAILURE'] != 'run':
     report.write_text(json.dumps({'readySeconds': 1.5, 'verify': {'seconds': 2.5, 'result': 'PASSED' if passed else 'FAILED'}}))
 sys.exit(1 if args[0] == os.environ['FAILURE'] or (args[0] == 'run' and os.environ['FAILURE'] == 'verify') else 0)
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     calls = tmp_path / "calls"
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli),
@@ -216,7 +224,7 @@ if args[0] == "run" and "--verify" in args:
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     home = tmp_path / "home"
     site = home / ".config/openadkit/planning-simulation.env"
     site.parent.mkdir(parents=True)
@@ -252,7 +260,7 @@ if args[0] == 'validate':
     print(json.dumps({{'deployment': args[1]}}))
 sys.exit(1 if args[0] == 'run' else 0)
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     env = {k: v for k, v in os.environ.items() if k not in ("ZENOH_LISTEN", "ZENOH_PEER", "OPENADKIT_KIT")}
     env.update(PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}", OPENADKIT_CLI=str(cli),
                HOME=str(tmp_path))
@@ -432,7 +440,7 @@ if args[0] == "run" and "--verify" in args:
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({"readySeconds": 1, "verify": {"seconds": 1, "result": "PASSED"}}))
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     executable(tmp_path / "bin/uname", f"#!/usr/bin/env bash\necho {machine}\n")
     out = tmp_path / "out"
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}",
@@ -461,6 +469,39 @@ def test_allowlists_name_their_topics_and_a_rename_is_caught():
         "/clock_old", "/api", "/planning/trajectory"]
 
 
+@pytest.mark.parametrize(("environment", "ok", "logged"), [
+    ({}, True, "after killing a node of the map: running unhealthy"),
+    # The map's healthcheck missed the death of its node, or the map stopped.
+    ({"MAP_STATE": "running healthy"}, False, "after killing a node of the map: running healthy"),
+    ({"MAP_STATE": "exited unhealthy"}, False, "after killing a node of the map: exited unhealthy"),
+    # A node of another service died during the checks.
+    ({"UNHEALTHY": "autoware-planning"}, False, "/autoware-planning unhealthy"),
+])
+def test_a_cell_fails_l1_when_a_node_died_or_a_death_does_not_show(tmp_path, environment, ok, logged):
+    cli = tmp_path / "bin/openadkit"
+    executable(cli, '''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+args = sys.argv[1:]
+if args[0] == 'validate': print(json.dumps({'deployment': args[1]}))
+if args[0] == 'run':
+    report = Path(os.environ['OPENADKIT_HOME'], 'output', args[1], 'results/run.json')
+    report.parent.mkdir(parents=True)
+    report.write_text(json.dumps({'readySeconds': 1, 'verify': {'seconds': 2, 'result': 'PASSED'}}))
+''')
+    executable(tmp_path / "bin/docker", DOCKER)
+    # The cell waits a minute for the map to turn unhealthy; the test does not.
+    executable(tmp_path / "bin/sleep", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/date", "#!/usr/bin/env bash\necho $(( $(/usr/bin/date +%s%N) / 1000000 ))\n")
+    env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli)} | environment
+    result = subprocess.run(["bash", str(RUNNER), json.dumps(matrix_cell("planning-simulation")), str(tmp_path / "out")],
+                            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30)
+    report = json.loads((tmp_path / "out/cell.json").read_text())
+    assert report["levels"]["L1"]["ok"] is ok and report["levels"]["L2"]["ok"] is True
+    assert (result.returncode == 0) is (report["result"] == "PASSED") is ok, result.stderr
+    assert logged in (tmp_path / "out/health.log").read_text()
+
+
 @pytest.mark.parametrize(("verify", "loop", "l3"), [
     ("PASSED", 0, True), ("PASSED", 1, False), ("FAILED", 0, None),
 ])
@@ -476,7 +517,7 @@ if args[0] == 'run':
     report.parent.mkdir(parents=True)
     report.write_text(json.dumps({'readySeconds': 1, 'verify': {'seconds': 2, 'result': os.environ['VERIFY']}}))
 ''')
-    executable(tmp_path / "bin/docker", "#!/usr/bin/env bash\nexit 0\n")
+    executable(tmp_path / "bin/docker", DOCKER)
     # The kit's loop gets the CLI and the distro, and runs in the kit.
     executable(tmp_path / "checks/dev_loop.sh", f'#!/usr/bin/env bash\necho "$@" > called\nexit {loop}\n')
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli), "VERIFY": verify}

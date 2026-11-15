@@ -163,5 +163,6 @@ RUN --mount=type=bind,source=components/shared/check-linked-libs.sh,target=/tmp/
 # On every start: run as the host user, source ROS and Autoware, and layer the
 # kit's config overrides and overlay workspace on top (components/shared/entrypoint).
 COPY components/shared/entrypoint/entrypoint.sh components/shared/entrypoint/overlay.py /opt/openadkit/
+COPY components/shared/entrypoint/health/ /opt/openadkit/health/
 ENTRYPOINT ["/opt/openadkit/entrypoint.sh"]
 CMD ["/bin/bash"]

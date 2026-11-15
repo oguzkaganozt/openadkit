@@ -30,7 +30,10 @@ Each cell runs these levels on a fresh stack, started with
   argument it does not know, so a renamed Autoware argument would otherwise do
   nothing without any error.
 - **L1:** `openadkit run` returns: the deployment's healthchecks pass, so its
-  ROS interfaces are present and its topics publish.
+  ROS interfaces are present and its topics publish. After the other checks,
+  no service has turned unhealthy, so no node died during them. The cell then
+  kills one node of the map service and checks that the service turns
+  unhealthy while it keeps running.
 - **L2:** the deployment's verify step passes (`openadkit run --verify`): the
   Planning Simulation ego arrives at its goal, the scenarios pass, or
   localization and tracking follow the replayed rosbag, plus the split-role

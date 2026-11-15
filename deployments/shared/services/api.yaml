@@ -11,8 +11,9 @@ services:
       - ../checks:/openadkit/checks:ro
     # Healthy once Autoware is ready (READINESS_CHECKS in settings.env), which
     # `openadkit run` waits for. Without checks it is healthy once it runs.
+    # As in every Autoware service, a node that died comes first.
     healthcheck:
-      test: ["CMD-SHELL", ". /opt/ros/${ROS_DISTRO}/setup.sh && . /opt/autoware/setup.sh && exec python3 /openadkit/checks/readiness.py ${READINESS_CHECKS:-}"]
+      test: ["CMD-SHELL", "! cat /tmp/openadkit/died 2>/dev/null && . /opt/ros/${ROS_DISTRO}/setup.sh && . /opt/autoware/setup.sh && exec python3 /openadkit/checks/readiness.py ${READINESS_CHECKS:-}"]
       start_period: 10m
       start_interval: 5s
       interval: 1m

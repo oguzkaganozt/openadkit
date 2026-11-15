@@ -10,6 +10,8 @@ set -uo pipefail
 #       cell runs several roles on one host.
 #   L3: for a kit with checks/dev_loop.sh, the development loop on the running
 #       stack: change its package, build, restart, and see the change.
+#   Then, as part of L1: no service turned unhealthy during the checks, and
+#       the map service does once one of its nodes is killed, while it keeps running.
 #
 # The cell is one row of the evidence matrix (validation_matrix.py), which
 # derives what to run and check from the manifests; this runner only executes
@@ -354,6 +356,48 @@ if [ "${l2_ok}" = true ] && [ -n "${kit}" ] && [ -f checks/dev_loop.sh ]; then
         l3_ok=false
         result="FAILED"
     fi
+fi
+
+# --- L1, at the end: no node died, and a node that dies shows ----------------
+# A service turns unhealthy when one of its nodes dies
+# (components/shared/entrypoint/health). None may have during the checks above.
+# Then one node of the map is killed: the map must turn unhealthy and keep
+# running. One only: a launch whose processes are all gone exits.
+container_health() {
+    local name ids=() format='{{.Name}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
+    if [ "${backend}" = quadlet ]; then
+        format='{{.Name}} {{.State.Health.Status}}'
+        mapfile -t ids < <(sudo podman ps -q --filter name=autoware-)
+    else
+        for name in "${projects[@]}"; do
+            mapfile -t -O "${#ids[@]}" ids < <(docker ps -q --filter "label=com.docker.compose.project=${name}")
+        done
+    fi
+    [ "${#ids[@]}" -eq 0 ] || "${engine[@]}" inspect -f "${format}" "${ids[@]}"
+}
+map_state() {
+    "${engine[@]}" inspect -f '{{.State.Status}} {{.State.Health.Status}}' autoware-map 2>/dev/null
+}
+
+if [ "${l1_ok}" = true ]; then
+    {
+        echo "after the checks:"
+        container_health | tee "${out}/.health"
+        if grep -q ' unhealthy$' "${out}/.health"; then
+            l1_ok=false
+        fi
+        rm -f "${out}/.health"
+        # shellcheck disable=SC2016 # Expanded in the container.
+        "${engine[@]}" exec autoware-map bash -c \
+            'pkill -KILL -o -P "$(pgrep -f "[p]ython3 .*/ros2 launch .*component:=component_map")"'
+        deadline=$(( $(date +%s) + 60 ))
+        until [ "$(map_state)" = "running unhealthy" ] || [ "$(date +%s)" -ge "${deadline}" ]; do
+            sleep 1
+        done
+        echo "after killing a node of the map: $(map_state)"
+        [ "$(map_state)" = "running unhealthy" ] || l1_ok=false
+    } >"${out}/health.log" 2>&1
+    [ "${l1_ok}" = true ] || result="FAILED"
 fi
 
 # --- artifacts ---------------------------------------------------------------

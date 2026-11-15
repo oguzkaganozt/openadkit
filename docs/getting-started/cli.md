@@ -89,6 +89,16 @@ mrm          normal
 A line reads `no data` while nothing publishes that state yet, for example
 before localization starts.
 
+When a node of an Autoware service dies, the service keeps running with its
+other nodes and turns `unhealthy`. `status` then names the process:
+
+```text
+perception is unhealthy: multi_object_tracker_node-4 died with exit code -9
+```
+
+`openadkit restart perception` starts the service again. See
+[A Service Is Unhealthy](troubleshooting.md#a-service-is-unhealthy).
+
 ### Restart
 
 `restart` recreates services as `run` started them, with the current settings,
