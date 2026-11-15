@@ -1,6 +1,5 @@
 # Logging simulation — the live sensing, perception, and localization stack plus
-# a rosbag player. Pair with compose.gpu.yaml to GPU-accelerate
-# sensing/perception.
+# a rosbag player. Pair with compose.gpu.yaml to GPU-accelerate perception.
 #
 # Service definitions live in ../shared/services/<service>.yaml (one file per service).
 # This file selects the stack, owns its topology (depends_on), and adds
@@ -33,9 +32,6 @@ services:
       - map
       - system
       - vehicle
-    volumes:
-      # Shared with perception (models); sensing mounts it only in this stack.
-      - ${DATA_PATH}:/autoware_data:rw
 
   perception:
     depends_on:

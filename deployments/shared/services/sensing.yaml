@@ -1,6 +1,4 @@
 # Sensing — captures and preprocesses raw sensor data.
-# Only the mount shared by every deployment lives here; logging-simulation adds
-# its ${DATA_PATH} bind in its own override.
 services:
   sensing:
     extends:
@@ -11,7 +9,7 @@ services:
     pid: service:map
     command: >
       ros2 launch autoware_launch component_sensing.launch.xml
-      launch_pointcloud_container:=${LAUNCH_POINTCLOUD_CONTAINER_SENSING}
+      launch_pointcloud_container:=true
       launch_sensing_driver:=${LAUNCH_SENSING_DRIVER}
       pointcloud_container_name:=${POINTCLOUD_CONTAINER_NAME}
       sensor_model:=${SENSOR_MODEL}
