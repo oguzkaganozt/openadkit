@@ -2361,6 +2361,34 @@ def test_reading_a_kit_runs_with_its_pinned_release_once_that_is_installed(tmp_p
     assert len(record.read_text().splitlines()) == 3
 
 
+def test_a_failed_start_names_the_unhealthy_service_and_its_reason(monkeypatch):
+    # Compose only says "container autoware-map is unhealthy".
+    def container(service, status, output=""):
+        return {"Config": {"Labels": {"com.docker.compose.service": service}},
+                "State": {"Health": {"Status": status, "Log": [{"Output": "old\n"}, {"Output": output}]}}}
+
+    inspected = [container("map", "unhealthy", "pointcloud_map_loader-1 died with exit code -6\n"),
+                 container("planning", "healthy"), {"Config": {"Labels": {"com.docker.compose.service": "rosbag"}}, "State": {}}]
+
+    def run_compose(deployment, selection, arguments, **options):
+        if arguments[0] == "up":
+            raise cli_manifest.OpenADKitError("command failed with exit code 1: docker")
+        return types.SimpleNamespace(stdout="a b c\n" if arguments[0] == "ps" else "")
+
+    monkeypatch.setattr(cli_compose, "run_compose", run_compose)
+    monkeypatch.setattr(cli_compose, "restart_counts", lambda *_: {})
+    monkeypatch.setattr(cli_compose, "docker", lambda *_, **__: types.SimpleNamespace(stdout=json.dumps(inspected)))
+    deployment = types.SimpleNamespace(compose={"waitTimeout": 5})
+    with pytest.raises(cli_manifest.OpenADKitError) as error:
+        cli_compose.up(deployment, None, [])
+    assert str(error.value) == ("map is unhealthy: pointcloud_map_loader-1 died with exit code -6\n"
+                                "see: openadkit logs map")
+    # Without an unhealthy service, the failure stays Compose's own.
+    inspected[0] = container("map", "healthy")
+    with pytest.raises(cli_manifest.OpenADKitError, match="command failed with exit code 1"):
+        cli_compose.up(deployment, None, [])
+
+
 def test_a_kit_names_the_files_it_does_not_read(tmp_path):
     root, _ = runtime_tree(tmp_path)
     kit = extending_kit(tmp_path, root)
