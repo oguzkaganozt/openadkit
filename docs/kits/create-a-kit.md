@@ -1,7 +1,9 @@
 # Create a Kit
 
-`openadkit new` makes a kit that extends this release and one of its
-deployments without copying them, so the kit holds only your differences:
+`openadkit new` makes a kit: your own project, which extends this release
+without copying it. A kit holds one or more deployments. Each runs a deployment
+of the release, its base, with the kit's files on top, so the kit holds only
+your differences:
 
 ```bash
 openadkit new my-kit                       # on top of planning-simulation
@@ -10,26 +12,61 @@ openadkit new my-kit --base scenario-simulation
 
 --8<-- "includes/cli-command-context.md"
 
-## One Directory, One Deployment
+## One Kit, One or More Deployments
 
 ```text
 my-kit/
 ├── openadkit.json
-├── deployment.json
-├── compose.yaml
-├── settings.env
-├── config/autoware/
-└── overlay_ws/src/
+├── settings.env                          # every deployment
+├── config/autoware/                      # every deployment
+├── overlay_ws/src/                       # every deployment
+└── deployments/
+    └── my-kit-planning-simulation/
+        └── settings.env                  # this deployment only
 ```
 
-The kit's `README.md` explains each file. `openadkit.json` pins the release
-(`extends`), and `deployment.json` names the base deployment, whose
-architectures, ROS distros, GPU mode, downloads and verify step the kit
-inherits; `requirements` may narrow the first three. `compose.yaml` includes the
-base's Compose file, with your services below it.
+`openadkit.json` is the kit's one manifest. It pins the release (`extends`) and
+lists the kit's deployments, each with its `base`:
 
-The deployment's name is its key in `openadkit.json`, here `my-kit`;
-`deployment.json` does not repeat it. Renaming the directory changes nothing.
+```json
+{
+  "schemaVersion": 2,
+  "kind": "kit",
+  "extends": "v2.0.0",
+  "deployments": {
+    "my-kit-planning-simulation": { "base": "planning-simulation" }
+  },
+  "externalImages": {}
+}
+```
+
+- **The kit root** holds what belongs to your vehicle, whichever deployment
+  runs it: settings, config overrides and ROS packages.
+- **`deployments/<name>/`** holds what one deployment alone needs: its own
+  settings and config overrides, and a `compose.yaml` when it adds or changes
+  services. The directory is optional.
+- **A deployment** inherits its base's architectures, ROS distros, GPU mode,
+  downloads and verify step; `requirements` in its manifest entry may narrow
+  the first three. Without a `compose.yaml` it runs its base's services.
+
+`new` names the first deployment after the kit and its base. The name is yours
+to change: it is the key in `openadkit.json`, and its directory follows it.
+
+### Another Deployment of the Same Kit
+
+To run the same vehicle on another base, add one entry:
+
+```json
+"deployments": {
+  "my-kit-planning-simulation": { "base": "planning-simulation" },
+  "my-kit-logging-simulation": { "base": "logging-simulation" }
+}
+```
+
+It gets the kit's settings, config overrides and packages. Make
+`deployments/my-kit-logging-simulation/` only when it needs files of its own.
+What you wrote at the kit root now applies to both, so move what only one of
+them needs into its directory.
 
 ## Build, Validate, Run, Stop
 
@@ -41,8 +78,10 @@ openadkit run --verify          # start, wait until ready, run the base's verify
 openadkit stop
 ```
 
-Inside a kit with one deployment the commands need no name. From elsewhere,
-name it by its directory: `openadkit run ./my-kit`. A kit on a source checkout
+Inside a kit with one deployment the commands need no name; from elsewhere,
+name the kit by its directory: `openadkit run ./my-kit`. With several
+deployments, `run` takes the name of one, while `validate` and `fetch` without
+a name act on each of them. A kit on a source checkout
 runs that checkout's local build, or the CI build `OPENADKIT_BUILD` names; see
 [Overlay Workspace](kit-guide.md#3-overlay-workspace).
 

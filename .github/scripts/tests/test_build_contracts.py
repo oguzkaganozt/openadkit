@@ -245,15 +245,26 @@ def test_real_kit_validates_against_its_source_base(tmp_path, compose_context):
     import validation_matrix
     [kit] = validation_matrix.make_example_kits(ROOT, tmp_path)
     assert json.loads((kit / "openadkit.json").read_text())["extends"] == str(ROOT)
-    directory = kit
     # Documented host settings, used by the shared services and runtime.env.
-    (directory / "settings.env").write_text(
+    (kit / "settings.env").write_text(
         "VEHICLE_ID=custom\nCYCLONEDDS_NETWORK_INTERFACE=eth0\nWEBSOCKIFY_BIND=0.0.0.0\nRVIZ_GPU=off\n"
     )
-    result = subprocess.run([str(ROOT / "openadkit"), "validate", "example-kit", "--json"],
+    # The kit's files apply to both of its deployments, each on its own base.
+    for base in ("planning-simulation", "logging-simulation"):
+        result = subprocess.run([str(ROOT / "openadkit"), "validate", f"example-kit-{base}", "--json"],
+                                cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=30)
+        assert result.returncode == 0, result.stderr
+        assert json.loads(result.stdout)["base"] == base
+    result = subprocess.run([str(ROOT / "openadkit"), "config", "example-kit-logging-simulation"],
                             cwd=kit, env=dict(os.environ), text=True, capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["base"] == "planning-simulation"
+    services = json.loads(result.stdout)["services"]
+    # It has no Compose file, so it runs its base's services and none of the other deployment's.
+    assert "perception" in services and "acme-probe" not in services
+    mounts = {item["target"]: item["source"] for item in services["perception"]["volumes"]}
+    assert mounts["/openadkit/config/kit"] == str(kit / "config") and mounts["/openadkit/overlay_ws"] == str(kit / "overlay_ws")
+    # Its own settings win over the kit's.
+    assert "sensor_model:=sample_sensor_kit" in services["sensing"]["command"]
 
 
 def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compose_context):
@@ -263,10 +274,8 @@ def test_kit_on_one_service_layer_owns_its_services_and_settings(tmp_path, compo
     directory.mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
-        "deployments": {"world": {"path": "deployments/world"}}, "externalImages": {},
-    }))
-    (directory / "deployment.json").write_text(json.dumps({
-        "description": "Own simulator", "base": "carla-simulation",
+        "deployments": {"world": {"description": "Own simulator", "base": "carla-simulation"}},
+        "externalImages": {},
     }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "compose.yaml").write_text(
@@ -286,15 +295,13 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
     (kit / "deployments/shared").mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": str(ROOT),
-        "deployments": {"manual": {"path": "deployments/manual"}}, "externalImages": {},
+        "deployments": {"manual": {"description": "Drive by hand", "base": "carla-simulation"}},
+        "externalImages": {},
     }))
     world = '  carla:\n    image: busybox:1.36.1\n    command: ["sleep", "${TOWN}"]\n'
     (kit / "deployments/shared/world.yaml").write_text("services:\n" + world)
     directory = kit / "deployments/manual"
     directory.mkdir()
-    (directory / "deployment.json").write_text(json.dumps({
-        "description": "Drive by hand", "base": "carla-simulation",
-    }))
     (directory / "settings.env").write_text("TOWN=Town01\n")
     (directory / "compose.yaml").write_text(
         "include:\n  - ../shared/world.yaml\n"

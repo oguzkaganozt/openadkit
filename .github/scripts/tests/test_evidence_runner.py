@@ -43,10 +43,10 @@ def test_evidence_cells_carry_the_manifest_plan():
     assert split["roles"].split() == list(scenario["roles"]) and json.loads(split["verify"]) == scenario["verify"]
     drive = manifest("planning-simulation")["verify"]
     # A deployment with a base runs the base's verify step on top of its own layer.
-    for name in ("example-kit", "safety-island-simulation", "planning-simulation"):
+    for name in ("example-kit-planning-simulation", "safety-island-simulation", "planning-simulation"):
         assert json.loads(matrix_cell(name)["verify"]) == drive
     assert matrix_cell("planning-simulation")["roles"] == ""
-    for cell in (split, matrix_cell("example-kit"), matrix_cell("safety-island-simulation")):
+    for cell in (split, matrix_cell("example-kit-planning-simulation"), matrix_cell("safety-island-simulation")):
         assert cell["name"] == validation_matrix.evidence_cell_name(cell)
 
 
@@ -521,7 +521,7 @@ if args[0] == 'run':
     # The kit's loop gets the CLI and the distro, and runs in the kit.
     executable(tmp_path / "checks/dev_loop.sh", f'#!/usr/bin/env bash\necho "$@" > called\nexit {loop}\n')
     env = os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}", "OPENADKIT_CLI": str(cli), "VERIFY": verify}
-    cell = matrix_cell("example-kit")
+    cell = matrix_cell("example-kit-planning-simulation")
     result = subprocess.run(["bash", str(RUNNER), json.dumps(cell), str(tmp_path / "out")],
                             cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20)
     report = json.loads((tmp_path / "out/cell.json").read_text())

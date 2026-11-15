@@ -219,10 +219,14 @@ data usage cannot be checked, they refuse as well.
 
 ## Your Own Kit
 
-`openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit on top of a
-catalog deployment (Planning Simulation by default) that holds
-only your differences. `openadkit build` builds the kit's overlay workspace in
-the release's devel image. See [Create a Kit](../kits/create-a-kit.md).
+`openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit with one
+deployment on top of a catalog deployment (Planning Simulation by default). It
+holds only your differences. `openadkit build` builds the kit's overlay
+workspace in the release's devel image.
+
+Inside a kit the commands act on its deployments. With one, they need no name.
+With several, `validate` and `fetch` without a name act on each, and the others
+take the name of one. See [Create a Kit](../kits/create-a-kit.md).
 
 ## Upgrading
 

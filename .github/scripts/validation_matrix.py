@@ -40,7 +40,7 @@ ARM64_RUNNER_SUFFIX = "-arm"
 # base: made by the staged kit's own `openadkit new` into kits/, with the CI
 # fixture on top (an overlay C++ package, a parameter override, a healthcheck
 # and a pinned external image).
-EXAMPLE_KITS = {"example-kit": "planning-simulation"}
+EXAMPLE_KITS = {"example-kit": ("planning-simulation", "logging-simulation")}
 EXAMPLE_KIT_DIRECTORY = "kits"
 EXAMPLE_KIT_FIXTURE = Path(__file__).resolve().parent / "evidence/example-kit"
 # Host build products of an overlay workspace; never kit content.
@@ -176,7 +176,7 @@ def make_example_kits(launcher_root: Path, parent: Path) -> list[Path]:
     parent.mkdir(parents=True, exist_ok=True)
     environment = {name: value for name, value in os.environ.items() if name not in ("OPENADKIT_KIT", "OPENADKIT_DELEGATED")}
     kits = []
-    for name, base in EXAMPLE_KITS.items():
+    for name, (base, *more_bases) in EXAMPLE_KITS.items():
         result = subprocess.run(
             [str(launcher_root / "openadkit"), "new", name, "--base", base],
             cwd=parent, env=environment, capture_output=True, text=True, check=False,
@@ -191,6 +191,8 @@ def make_example_kits(launcher_root: Path, parent: Path) -> list[Path]:
         )
         manifest = json.loads((kit / "openadkit.json").read_text(encoding="utf-8"))
         manifest["externalImages"] = json.loads((EXAMPLE_KIT_FIXTURE / "external-images.json").read_text(encoding="utf-8"))
+        # The same kit on its other bases: one manifest entry each.
+        manifest["deployments"] |= {f"{name}-{other}": {"base": other} for other in more_bases}
         (kit / "openadkit.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         kits.append(kit)
     return kits
@@ -199,15 +201,16 @@ def make_example_kits(launcher_root: Path, parent: Path) -> list[Path]:
 def example_kit_cells(
     runtime: ModuleType, source_root: Path, platforms: tuple[str, ...] = EVIDENCE_PLATFORMS,
 ) -> list[dict[str, str]]:
-    """Each example kit runs its base's single-host cells, from its directory in kits/."""
+    """Each example kit runs its first deployment in its base's single-host
+    cells, from its directory in kits/; the cells validate its other deployments."""
     base_cells = evidence_cells(runtime, source_root, platforms=platforms)
     cells = []
-    for name, base in EXAMPLE_KITS.items():
+    for name, (base, *_) in EXAMPLE_KITS.items():
         for cell in base_cells:
             if cell["deployment"] == base and not cell.get("role") and not cell.get("backend"):
                 # The base's cell already checks the launch arguments.
                 kit_cell = {key: value for key, value in cell.items() if key != "launch_arguments"}
-                kit_cell |= {"deployment": name, "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
+                kit_cell |= {"deployment": f"{name}-{base}", "kit": f"{EXAMPLE_KIT_DIRECTORY}/{name}"}
                 cells.append(kit_cell | {"name": evidence_cell_name(kit_cell)})
     return cells
 

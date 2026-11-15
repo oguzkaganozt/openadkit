@@ -86,18 +86,20 @@ def create_kit(root: Path, catalog: Catalog, name: str, base: str, destination: 
     else:
         extends = str(root.resolve())
     values = {"name": name, "base": base, "extends": extends, "version": catalog.version or "(a source checkout)"}
+
+    def fill(text: str) -> str:
+        for key, value in values.items():
+            text = text.replace("{{" + key + "}}", value)
+        return text
+
+    # The template names the first deployment's directory after the kit and its base.
     for source in sorted(KIT_TEMPLATE.rglob("*")):
-        output = target / source.relative_to(KIT_TEMPLATE)
+        output = target / fill(str(source.relative_to(KIT_TEMPLATE)))
         if source.is_dir():
             output.mkdir(parents=True, exist_ok=True)
             continue
-        text = source.read_text(encoding="utf-8")
-        for key, value in values.items():
-            text = text.replace("{{" + key + "}}", value)
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(text, encoding="utf-8")
-    # The deployment's config overrides, which every service applies, come
-    # with the template's config/autoware/README.md.
+        output.write_text(fill(source.read_text(encoding="utf-8")), encoding="utf-8")
     return target
 
 
@@ -260,6 +262,13 @@ def deployment_name(root: Path, catalog: Catalog, argument: str) -> str:
     for name, reference in catalog.deployments.items():
         if (root / reference.path).resolve() == directory:
             return name
+    # A kit's directory names its deployment while it has one.
+    if catalog.kind == "kit" and directory == root.resolve():
+        if len(catalog.deployments) == 1:
+            return next(iter(catalog.deployments))
+        raise OpenADKitError(
+            f"{argument} has several deployments; name one: {available_deployments(catalog)}"
+        )
     raise OpenADKitError(f"{argument} is not a deployment of {root}")
 
 
@@ -368,7 +377,9 @@ def print_run_next_steps(
     deployment, services: set[str], role: str | None, output: str | None, *, tls: bool = False
 ) -> None:
     target = deployment.name if role is None else f"{deployment.name} --role {role}"
-    print(f"running: {target}")
+    # A kit deployment names what it runs, which its own name may not say.
+    on_base = f" ({deployment.base.name} with the kit's files on top)" if deployment.base else ""
+    print(f"running: {target}{on_base}")
     if "visualizer" in services:
         print(live.visualizer_address(tls))
         print(
@@ -514,6 +525,7 @@ def version_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> i
 def new_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int:
     target = create_kit(root, catalog, args.name, args.base, Path.cwd())
     print(f"created: {target}")
+    print(f"deployment: {args.name}-{args.base}, which runs {args.base} with the kit's files on top")
     print(f"next: cd {args.name} && openadkit validate && openadkit run --verify")
     return 0
 
@@ -872,6 +884,8 @@ COMMANDS = {
 # --help only read the kit, and Tab completion asks list for the names: a
 # directory someone else wrote must not start a program or a download there.
 ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "clean"})
+# Without a deployment name, these act on every deployment of the kit around them.
+ALL_DEPLOYMENTS_COMMANDS = frozenset({"validate", "fetch"})
 
 # The launcher runs these itself; main.py sees them only from a broken install.
 INSTALL_USAGE = {
@@ -996,6 +1010,12 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
     if not args.deployment and catalog.kind == "kit" and len(catalog.deployments) == 1:
         # A kit made by `openadkit new` is one deployment; naming it again adds nothing.
         args.deployment = next(iter(catalog.deployments))
+    json_output = getattr(args, "json_output", False)
+    if not args.deployment and catalog.kind == "kit" and args.command in ALL_DEPLOYMENTS_COMMANDS and not json_output:
+        # Checking a kit, or fetching its data, covers each of its deployments.
+        return max(
+            handler(root, catalog, get_deployment(root, catalog, name), args) for name in catalog.deployments
+        )
     if not args.deployment:
         if getattr(args, "json_output", False):
             raise OpenADKitError("deployment name required")

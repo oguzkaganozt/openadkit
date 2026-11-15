@@ -122,6 +122,11 @@ def edit_manifest(root, change):
     path.write_text(json.dumps(document))
 
 
+def edit_kit_deployment(kit, name="custom", **changes):
+    """Change one deployment's entry in a kit's manifest."""
+    edit_manifest(kit, lambda document: document["deployments"][name].update(changes))
+
+
 def fake_docker(tmp_path, *, projects=(), stopped=(), containers=(), daemon=0, config=0, runtimes='{"nvidia": {}}',
                 services=("app", "acme")):
     """One stateful stub shared by runtime and kit subprocess tests."""
@@ -232,10 +237,8 @@ def extending_kit(tmp_path, root, *, extends=None, external_images=None):
     directory.mkdir(parents=True)
     (kit / "openadkit.json").write_text(json.dumps({
         "schemaVersion": 2, "kind": "kit", "extends": extends or str(root),
-        "deployments": {"custom": {"path": "deployments/custom"}}, "externalImages": external_images or {},
-    }))
-    (directory / "deployment.json").write_text(json.dumps({
-        "description": "Kit deployment", "base": "example",
+        "deployments": {"custom": {"description": "Kit deployment", "base": "example"}},
+        "externalImages": external_images or {},
     }))
     (directory / "settings.env").write_text("VALUE=kit\n")
     (directory / "compose.yaml").write_text(
@@ -680,7 +683,7 @@ def test_every_run_records_what_it_started(tmp_path):
     assert record["images"] == {"app": None} and record["modelSha256"] == hashlib.sha256(model.encode()).hexdigest()
     assert record["role"] is None and record["gpu"] is False and "verify" not in record
     # What the services mount from the host is identified by its content.
-    assert set(record["configSha256"]) == {"base", "deployment"}
+    assert set(record["configSha256"]) == {"base", "kit", "deployment"}
     override = root / "deployments/example/config/autoware/pkg/params.yaml"
     override.parent.mkdir(parents=True)
     override.write_text("rate: 1\n")
@@ -723,8 +726,8 @@ def test_a_kit_inherits_the_verify_step_of_its_base_unless_it_names_one(tmp_path
     kit_root = extending_kit(tmp_path, root)
     kit = cli_catalog.load_catalog(kit_root)
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == verify
-    path = kit_root / "deployments/custom/deployment.json"
-    path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "acme"}}))
+    edit_kit_deployment(kit_root, verify={"service": "acme"})
+    kit = cli_catalog.load_catalog(kit_root)
     assert cli_catalog.get_deployment(kit_root, kit, "custom").verify == {"service": "acme"}
 
 
@@ -736,8 +739,7 @@ def test_a_kit_that_leaves_out_its_bases_verify_service_has_no_verify_step(tmp_p
     result = run_cli(root, "run", "custom", "--verify", directory=kit)
     assert result.returncode != 0 and "custom declares no verify step" in result.stderr
     # A verify step the kit names itself is checked like a base's.
-    path = kit / "deployments/custom/deployment.json"
-    path.write_text(json.dumps(json.loads(path.read_text()) | {"verify": {"service": "runner"}}))
+    edit_kit_deployment(kit, verify={"service": "runner"})
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode != 0 and "unknown Compose service(s): runner" in result.stderr
 
@@ -1398,6 +1400,7 @@ class SettingsDeployment:
 
     def __init__(self, directory, files, gpu_files, data):
         self.name, self.directory, self.data, self.roles = "example", directory, data, {}
+        self.working_directory = directory
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
         self.requirements = {"rosDistros": ["humble", "jazzy"]}
@@ -1698,17 +1701,21 @@ def test_new_makes_a_kit_that_extends_this_open_ad_kit(tmp_path, installed):
     manifest = json.loads((kit / "openadkit.json").read_text())
     # An installed release is followed by its version; anything else by its path.
     assert manifest["extends"] == ("v1.2.3" if installed else str(root.resolve()))
-    assert manifest["deployments"] == {"my-kit": {"path": "."}} and manifest["externalImages"] == {}
-    deployment = json.loads((kit / "deployment.json").read_text())
-    # The name lives once, in openadkit.json; Compose files default to compose.yaml.
-    assert deployment == {"description": "example with this kit's layer on top", "base": "example"}
-    # Each directory holds a README, so a clone of the kit keeps it.
-    assert (kit / "config/autoware/README.md").is_file() and (kit / "overlay_ws/src/README.md").is_file()
-    assert "{{" not in "".join(path.read_text() for path in kit.rglob("*") if path.is_file())
+    # One manifest: the deployment is named after the kit and its base, and says its base.
+    assert manifest["deployments"] == {"my-kit-example": {"base": "example"}} and manifest["externalImages"] == {}
+    assert "my-kit-example, which runs example with the kit's files on top" in result.stdout
+    # The kit's files are at its root; the deployment's own have their directory.
+    assert sorted(str(path.relative_to(kit)) for path in kit.rglob("*") if path.is_file()) == [
+        ".gitignore", "README.md", "config/autoware/README.md", "deployments/my-kit-example/settings.env",
+        "openadkit.json", "overlay_ws/src/README.md", "settings.env",
+    ]
+    assert "{{" not in "".join(str(path) + path.read_text() for path in kit.rglob("*") if path.is_file())
     if not installed:
         loaded = cli_catalog.load_catalog(kit)
-        assert loaded.kind == "kit" and set(loaded.deployments) == {"my-kit"}
-        assert cli_catalog.get_deployment(kit, loaded, "my-kit").base.name == "example"
+        assert loaded.kind == "kit" and set(loaded.deployments) == {"my-kit-example"}
+        deployment = cli_catalog.get_deployment(kit, loaded, "my-kit-example")
+        # Without a Compose file of its own it runs its base's.
+        assert deployment.base.name == "example" and deployment.compose_files(False) == deployment.base.compose_files(False)
 
 
 def test_new_makes_a_kit_inside_a_checkout_relative_to_it(tmp_path):
@@ -1739,13 +1746,20 @@ def test_a_kit_with_one_deployment_needs_no_name(tmp_path):
     result = run_cli(root, "validate", directory=kit)
     assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
     assert json.loads(run_cli(root, "validate", "--json", directory=kit).stdout)["deployment"] == "custom"
-    # With several, or outside a kit, the name is still asked for.
+    # Outside a kit the name is still asked for.
     assert run_cli(root, "validate").returncode == 2
-    second = kit / "deployments/second"
-    shutil.copytree(kit / "deployments/custom", second)
-    edit_manifest(kit, lambda document: document["deployments"].update(second={"path": "deployments/second"}))
+    # With several, validate and fetch cover each of them; the others take a name.
+    edit_manifest(kit, lambda document: document["deployments"].update(second={"base": "example"}))
     result = run_cli(root, "validate", directory=kit)
-    assert result.returncode == 2 and "deployment name required" in result.stderr
+    assert result.returncode == 0 and "custom is valid" in result.stdout and "second is valid" in result.stdout
+    assert run_cli(root, "fetch", directory=kit).returncode == 0
+    for arguments in (["run"], ["config"], ["validate", "--json"]):
+        result = run_cli(root, *arguments, directory=kit)
+        assert result.returncode != 0 and "deployment name required" in result.stderr, arguments
+    # One that does not validate fails the whole check.
+    edit_kit_deployment(kit, "second", base="missing")
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode != 0 and "unknown base deployment: missing" in result.stderr
 
 
 def test_usage_errors_exit_2_and_help_keeps_its_capitals(tmp_path):
@@ -1913,8 +1927,7 @@ def test_a_kit_defaults_to_a_distro_it_runs_on(tmp_path):
     edit_manifest(root, lambda doc: [doc["images"][distro].update({"universe-common-devel": image})
                                      for distro, image in devel.items()])
     kit = extending_kit(tmp_path, root)
-    path = kit / "deployments/custom/deployment.json"
-    path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": {"rosDistros": ["jazzy"]}}))
+    edit_kit_deployment(kit, requirements={"rosDistros": ["jazzy"]})
     (kit / "overlay_ws/src").mkdir(parents=True)
     calls = fake_docker(tmp_path)
     # The release defaults to humble, which this kit leaves out.
@@ -1964,18 +1977,47 @@ def test_a_kit_has_one_workspace_at_its_root(tmp_path, monkeypatch):
     assert overlay_workspace(kit, "custom", monkeypatch, tmp_path) == str(kit / "overlay_ws")
 
 
-def test_kit_whose_deployment_is_its_root_mounts_its_overlay(tmp_path, monkeypatch):
+def test_a_kits_root_applies_to_each_deployment_before_the_deployments_own_files(tmp_path, monkeypatch):
+    for name in ISOLATED_ENV:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    root, base = runtime_tree(tmp_path, config="VALUE=base\nBASE_ONLY=base\n")
+    kit = extending_kit(tmp_path, root)
+    edit_manifest(kit, lambda document: document["deployments"].update(plain={"base": "example"}))
+    (kit / "settings.env").write_text("VALUE=kit\nKIT_ONLY=kit\n")
+    (kit / "deployments/custom/settings.env").write_text("VALUE=deployment\n")
+    for path in (kit / "config", kit / "deployments/custom/config"):
+        path.mkdir()
+    context = cli_catalog.load_catalog(kit)
+
+    custom = cli_catalog.get_deployment(kit, context, "custom")
+    selection = cli_settings.resolve(custom, context, "humble", False)
+    # Later wins: the base, the kit, then the deployment.
+    assert [selection.environment[name] for name in ("BASE_ONLY", "KIT_ONLY", "VALUE")] == ["base", "kit", "deployment"]
+    assert selection.injections["OPENADKIT_CONFIG_KIT"] == str(kit / "config")
+    assert selection.injections["OPENADKIT_CONFIG_DEPLOYMENT"] == str(kit / "deployments/custom/config")
+    assert custom.compose_files(False) == [kit / "deployments/custom/compose.yaml"]
+
+    # A deployment with no directory of its own is the base with the kit's files.
+    plain = cli_catalog.get_deployment(kit, context, "plain")
+    selection = cli_settings.resolve(plain, context, "humble", False)
+    assert selection.environment["VALUE"] == "kit" and plain.compose_files(False) == [base / "compose.yaml"]
+    assert selection.injections["OPENADKIT_CONFIG_KIT"] == str(kit / "config")
+    assert selection.injections["OPENADKIT_CONFIG_DEPLOYMENT"].endswith("/empty")
+    assert plain.working_directory == kit and plain.manifest["description"] == "example with this kit's files on top"
+
+
+def test_a_kit_has_one_manifest_and_names_no_paths(tmp_path):
     root, _ = runtime_tree(tmp_path)
     kit = extending_kit(tmp_path, root)
-    directory = kit / "deployments/custom"
-    for item in directory.iterdir():
-        shutil.move(str(item), kit)
-    shutil.rmtree(kit / "deployments")
-    edit_manifest(kit, lambda document: document["deployments"].update(custom={"path": "."}))
-    # The deployment is the kit root, so the root is named after it.
-    kit = kit.rename(tmp_path / "custom")
-    (kit / "overlay_ws").mkdir()
-    assert overlay_workspace(kit, "custom", monkeypatch, tmp_path) == str(kit / "overlay_ws")
+    for change, message in (
+        ({"path": "."}, "unknown deployments.custom field\\(s\\): path"),
+        ({"base": ""}, "deployments.custom.base must be a nonempty string"),
+    ):
+        edit_manifest(kit, lambda document, change=change: document["deployments"].update(
+            custom={"description": "Kit deployment", "base": "example"} | change))
+        with pytest.raises(cli_manifest.OpenADKitError, match=message):
+            cli_catalog.load_catalog(kit)
 
 
 def test_only_a_kit_deployment_names_a_base(tmp_path):
@@ -1999,8 +2041,7 @@ def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(t
     kit_root = extending_kit(tmp_path, root)
 
     def on_top_with(requirements):
-        path = kit_root / "deployments/custom/deployment.json"
-        path.write_text(json.dumps(json.loads(path.read_text()) | {"requirements": requirements}))
+        edit_kit_deployment(kit_root, requirements=requirements)
         return cli_catalog.get_deployment(kit_root, cli_catalog.load_catalog(kit_root), "custom")
 
     # Only what it names changes; without a GPU mode the GPU-only data goes too.
@@ -2072,8 +2113,15 @@ def test_a_deployment_can_be_named_by_its_directory(tmp_path):
     assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
     result = run_cli(root, "validate", "./deployments/example", directory=root)
     assert result.returncode == 0 and "example is valid" in result.stdout, result.stderr
+    # A kit's directory names its deployment while it has one.
     result = run_cli(root, "validate", str(kit), directory=elsewhere)
-    assert result.returncode != 0 and "is not a deployment of" in result.stderr
+    assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
+    edit_manifest(kit, lambda document: document["deployments"].update(second={"base": "example"}))
+    result = run_cli(root, "run", str(kit), directory=elsewhere)
+    assert result.returncode != 0 and "has several deployments; name one: custom, second" in result.stderr
+    # A deployment's directory names it, even while it holds no file.
+    result = run_cli(root, "validate", str(kit / "deployments/second"), directory=elsewhere)
+    assert result.returncode == 0 and "second is valid" in result.stdout, result.stderr
 
 
 @pytest.mark.parametrize("available", [False, True])

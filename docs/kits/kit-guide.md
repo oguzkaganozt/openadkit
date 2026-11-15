@@ -24,8 +24,10 @@ release tag or, for development, the path of a source checkout. The kit's
 
 ## Choose a Base Deployment
 
-Each kit deployment names a `base` deployment of the pinned release in its
-`deployment.json`.
+Each deployment of a kit names a `base` deployment of the pinned release in
+its entry of the kit's `openadkit.json`:
+`"deployments": { "<name>": { "base": "planning-simulation" } }`. The entry may
+also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`.
 
 - **Requirements** (architectures, ROS distros, GPU) are inherited.
   `requirements` may narrow them: fewer architectures or ROS distros, or `gpu`
@@ -37,24 +39,39 @@ Each kit deployment names a `base` deployment of the pinned release in its
   own.
 - **Split-host roles are not inherited:** a kit deployment runs on one host.
 
-A kit made by `openadkit new my-kit` has one deployment, also named `my-kit`.
-Its manifests, Compose file and differences live in one directory
-(`deployments.my-kit.path` is `"."`), so it needs no nested `deployments/`
-directory. Run commands from that directory, where they need no deployment
-name.
+A kit made by `openadkit new my-kit` has one deployment, named
+`my-kit-<base>`. A kit can hold more: one entry each, on the same base or on
+another ([Create a Kit](create-a-kit.md#another-deployment-of-the-same-kit)).
+
+### What Applies Where
+
+| Files | At the kit root | In `deployments/<name>/` |
+| --- | --- | --- |
+| `settings.env`, `settings.gpu.env` | Every deployment | That deployment, after the kit's |
+| `config/autoware/` | Every deployment | That deployment, after the kit's |
+| `overlay_ws/` | Every deployment | Not read |
+| `compose.yaml` | Not read | That deployment's services |
+
+The kit root is your vehicle's layer. A setting or a parameter that a
+deployment does not use does no harm there. A Compose file is different: a
+service depends on other services, and not every base has them, so each
+deployment has its own. A deployment's name is also its Compose project, its
+host settings file and its output directory, so keep it unique among the kits
+on one host.
 
 ## Extension Points
 
 ### 1. Settings
 
-Put only differences in your deployment's `settings.env`. Compose reads these
-files in order (later files win):
+Put only differences in the kit's `settings.env`, and what one deployment alone
+needs in `deployments/<name>/settings.env`. Compose reads these files in order
+(later files win); each `settings.gpu.env` follows its `settings.env` when GPU
+mode is selected:
 
-1. Base `settings.env`
-2. Base `settings.gpu.env`, when GPU mode is selected
-3. Kit `settings.env`, if present
-4. Kit `settings.gpu.env`, if present and GPU mode is selected
-5. The host settings file, `~/.config/openadkit/<kit-deployment>.env`, if present
+1. The base's `settings.env`
+2. The kit's `settings.env`, if present
+3. The deployment's `settings.env`, if present
+4. The host settings file, `~/.config/openadkit/<deployment>.env`, if present
 
 Shell exports do not override values set in these files. The CLI adds the ROS
 distro, the host UID and GID, the config override and overlay workspace mounts, `OPENADKIT_ROOT`
@@ -66,7 +83,8 @@ containers, the ROS and DDS defaults come from the base services'
 ### 2. Config Overrides
 
 Store overrides under
-`config/autoware/<package>/<path-relative-to-package-share>`. For example,
+`config/autoware/<package>/<path-relative-to-package-share>` at the kit root,
+or in `deployments/<name>/` for one deployment. For example,
 `config/autoware/autoware_control_config/config/lane_departure_checker/lane_departure_checker.param.yaml`:
 
 ```yaml
@@ -77,7 +95,7 @@ Store overrides under
 
 On each start, the image entrypoint copies the package share directory into
 `/tmp/openadkit/<package>/share/<package>`. It applies the base deployment's
-layer, then the kit deployment's. YAML mappings merge
+layer, then the kit's, then the deployment's. YAML mappings merge
 recursively; scalars and lists replace the old value. Launch substitutions such
 as `$(var ...)` stay intact. Non-YAML files replace their counterpart.
 
@@ -167,10 +185,31 @@ deliberately to test this devel/runtime boundary, then publishes `/acme/probe`.
 
 ### 4. Extra Services
 
-Include the base's Compose file through `OPENADKIT_BASE_DEPLOYMENT`, then
-define your services under `services:`. Keep communicating ROS services on the
-base ROS domain and middleware, and give each one `init: true`
-([Develop and Debug](develop-and-debug.md#the-development-loop)).
+A deployment without a `compose.yaml` runs its base's services. To add or
+change services, write `deployments/<name>/compose.yaml`: include the base's
+Compose file through `OPENADKIT_BASE_DEPLOYMENT`, then define your services
+under `services:`.
+
+```yaml
+include:
+  - ${OPENADKIT_BASE_DEPLOYMENT}/compose.yaml
+
+services:
+  ota-agent:
+    image: ${OTA_AGENT_IMAGE:?pinned in openadkit.json externalImages}
+    init: true
+```
+
+Keep communicating ROS services on the base ROS domain and middleware, and give
+each one `init: true`
+([Develop and Debug](develop-and-debug.md#the-development-loop)). A service
+that is already in the base changes the same way: name it and set only what
+differs.
+
+A service that several deployments of the kit run goes in a file of its own,
+such as `services/ota-agent.yaml` at the kit root, which each of their Compose
+files includes next to the base. Compose resolves the relative paths of an
+included file against that file's own directory.
 
 An extra Open AD Kit runtime service loads the kit workspace by mounting
 `${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the example kit's
@@ -220,7 +259,8 @@ read four packages:
    `sample_vehicle_description`, `sample_vehicle_launch`,
    `sample_sensor_kit_description` and `sample_sensor_kit_launch` are the
    templates: copy them and replace the names in every file.
-2. Set `VEHICLE_MODEL` and `SENSOR_MODEL` in `settings.env`.
+2. Set `VEHICLE_MODEL` and `SENSOR_MODEL` in the kit's `settings.env`, so every
+   deployment of the kit runs your vehicle.
 3. Build and run: `openadkit build`, then `openadkit run --verify`.
 
 Every service sources the workspace, so planning, control, the simulator and
@@ -258,8 +298,8 @@ Your kit's acceptance checks run where CI runs its own:
   `checks/example_kit.py`, which checks the fresh `/acme/probe` publication of
   its C++ package and its parameters.
 - **End to end:** the base's `verify` step runs on top of your layer with
-  `openadkit run --verify`. To check something else, name your own in
-  `deployment.json`: `{"verify": {"service": "<service>", "command": [...]}}`
+  `openadkit run --verify`. To check something else, name your own in the
+  deployment's manifest entry: `{"verify": {"service": "<service>", "command": [...]}}`
   runs the command in that running service, and without `command` the step
   waits for the service to exit and takes its exit code.
 
@@ -267,8 +307,9 @@ The example kit is what `openadkit new` makes, with a
 [fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit)
 that uses every extension point on top. Its evidence cells run both checks on
 Humble and Jazzy, each with a workspace built against the matching devel
-digest, and every release needs them to pass. They show that the extension
-points work on that build; they do not verify your kit.
+digest, and every release needs them to pass. The fixture adds a second
+deployment on Logging Simulation, which the cells validate but do not run. They
+show that the extension points work on that build; they do not verify your kit.
 
 A base deployment's CI exemption stays with the kit; an exemption is not
 runtime evidence.
@@ -299,7 +340,7 @@ No Reference Design is published as a kit.
 | --- | --- |
 | Autoware version | `extends`: one Open AD Kit release, which pins one Autoware release and its images |
 | Modules | The base deployment's services, your packages in `overlay_ws/` and your extra services |
-| Model versions | `data` in `deployment.json`: each download with its URL and SHA-256 |
+| Model versions | `data` in the deployment's manifest entry: each download with its URL and SHA-256 |
 | Parameters | `config/autoware/` and `settings.env` |
 | Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](#a-new-vehicle)) |
 | Evaluation and testing | The `verify` step, which `openadkit run --verify` runs |
@@ -317,7 +358,7 @@ GPU.
 2. Add the stack through the kit's
    [extension points](#extension-points): packages,
    parameters, models and extra services.
-3. Name a `verify` step of your own in `deployment.json` that checks what the
+3. Name a `verify` step of your own in the deployment's manifest entry that checks what the
    Reference Design states, such as the rates of planning and control
    ([Validation and Evidence](#validation-and-evidence)).
 4. Commit the kit directory to the Reference Design's repository. A reader

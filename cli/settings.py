@@ -184,8 +184,8 @@ def _injections(deployment: Deployment, distro: str, role: str | None) -> dict[s
 def _overlay_mounts(deployment: Deployment) -> dict[str, str]:
     """Host directories the entrypoint hook layers over Autoware's files.
 
-    Config overrides apply in order: shared (every deployment that uses
-    the shared services), the base a kit builds on, then this deployment.
+    Config overrides apply in order: the base a kit builds on, the kit
+    (what every deployment of it shares), then this deployment.
     The overlay workspace is sourced on top of Autoware. A missing layer
     mounts an empty directory, so Docker never creates a root-owned one
     in its place.
@@ -208,7 +208,7 @@ def _resolved(deployment: Deployment, gpu: bool, injections: dict[str, str]) -> 
     files (${VAR:-default}, values built on other settings, quoting).
     """
     files = deployment.env_files(gpu)
-    resolved = compose_environment(files, _compose_environment(deployment, gpu, injections), deployment.directory)
+    resolved = compose_environment(files, _compose_environment(deployment, gpu, injections), deployment.working_directory)
     settings = {**configuration_environment(deployment, gpu), **injections}
     return {name: resolved.get(name, value) for name, value in settings.items()}
 

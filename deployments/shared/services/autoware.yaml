@@ -12,6 +12,7 @@ services:
       - ../cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       # Config overrides and the overlay workspace, which the image entrypoint applies (components/shared/entrypoint).
       - ${OPENADKIT_CONFIG_BASE:?set by the openadkit CLI}:/openadkit/config/base:ro
+      - ${OPENADKIT_CONFIG_KIT:?set by the openadkit CLI}:/openadkit/config/kit:ro
       - ${OPENADKIT_CONFIG_DEPLOYMENT:?set by the openadkit CLI}:/openadkit/config/deployment:ro
       - ${OPENADKIT_OVERLAY_WS:?set by the openadkit CLI}:/openadkit/overlay_ws:ro
     # `ros2 launch` keeps running when one of its nodes dies. The image records

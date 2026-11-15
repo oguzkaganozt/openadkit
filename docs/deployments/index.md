@@ -57,6 +57,7 @@ see [Troubleshooting](../getting-started/troubleshooting.md).
 ## Your Own Kit
 
 Start a kit with `openadkit new` ([Create a Kit](../kits/create-a-kit.md)). It
-extends a deployment without copying it and keeps only your differences. The
+is your own project: it runs one or more of these deployments with your
+vehicle's files on top, without copying them, and keeps only your differences. The
 [Kit Guide](../kits/kit-guide.md) is the reference for every
 extension point.

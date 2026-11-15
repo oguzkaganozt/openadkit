@@ -3,7 +3,8 @@
 set -uo pipefail
 
 # Run one evidence cell against a staged kit (run from the kit root):
-#   L0: ./openadkit validate; in one cell per distro, launch_arguments.py too
+#   L0: ./openadkit validate, in a kit for each of its deployments; in one cell
+#       per distro, launch_arguments.py too
 #   L1: ./openadkit run, which returns once the deployment's healthchecks pass
 #   L2: the deployment's verify step (./openadkit run --verify): the drive to
 #       the goal, or the scenario samples, plus a domain-isolation check when the
@@ -190,6 +191,10 @@ l0_rc=0
 for i in "${!roles[@]}"; do
     role_cli validate "${i}" --ros-distro "${distro}" --json >"${validation_files[i]}" 2>"${validation_files[i]%.json}.log" || l0_rc=1
 done
+# A kit's other deployments share its files: they must validate too.
+if [ -n "${kit}" ]; then
+    "${cli}" validate --ros-distro "${distro}" >"${out}/validate-kit.log" 2>&1 || l0_rc=1
+fi
 # One cell per distro also checks that the images' launch files read every
 # launch argument the catalog deployments pass.
 if [ "$(field launch_arguments)" = all ]; then
