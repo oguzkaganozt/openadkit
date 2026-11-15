@@ -236,8 +236,10 @@ openadkit upgrade           # install it
 ```
 
 The new release is verified and installed next to the old one, and the
-`openadkit` launcher is repointed. The previous version stays in the install
-directory, so you can roll back:
+`openadkit` launcher is repointed. `upgrade` moves to the latest stable
+release, also across a major version, and says so when it does: read that
+release's breaking changes first. A kit keeps running the release it pins. The
+previous version stays in the install directory, so you can roll back:
 
 ```bash
 openadkit install --version vOLD

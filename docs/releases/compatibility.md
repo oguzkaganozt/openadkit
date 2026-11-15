@@ -8,9 +8,8 @@ This page lists what that promise covers. Within one major version:
   release. It keeps every item below working. JSON output and manifests can
   gain new fields, which readers should ignore. The CLI itself rejects a
   manifest field it does not know, so a manifest that uses a new field needs
-  the CLI of the release that added it: a kit's pinned release runs its
-  commands, while `list`, `version` and Tab completion read it with the
-  `openadkit` you called.
+  the CLI of the release that added it. A kit's pinned release therefore runs
+  the kit's commands, whichever `openadkit` you called.
 - **A major release** (`v3.0.0`) is the only one that removes or changes an item
   below. Its release notes list each change under **Breaking changes**.
 

@@ -287,6 +287,8 @@ class Deployment:
         self.verify: dict[str, Any] | None = manifest["verify"]
         # A kit deployment that names no verify step runs its base's.
         self.verify_inherited = False
+        # A kit only: the base's data resources that its own data replaces.
+        self.replaced_data: list[dict[str, Any]] = []
         # Services that run once and exit, read from each Compose model (compose.one_shot_services).
         self.one_shots: dict[tuple[str | None, bool], set[str]] = {}
         # Why CI cannot produce evidence for this deployment, if it cannot.
@@ -436,6 +438,7 @@ def _load_kit_deployment(
     # Its own data replaces the base's with the same destination, as its
     # settings replace the base's: its own recording instead of the sample.
     replaced = {item["destinationEnv"] for item in own_data}
+    replaced_data = [item for item in base_data if item["destinationEnv"] in replaced]
     base_data = [item for item in base_data if item["destinationEnv"] not in replaced]
     repeated = sorted({item["name"] for item in base_data} & {item["name"] for item in own_data})
     if repeated:
@@ -459,6 +462,7 @@ def _load_kit_deployment(
     }
     deployment = Deployment(root, directory, merged, base=base)
     deployment.verify_inherited = own_verify is None
+    deployment.replaced_data = replaced_data
     deployment.compose_files(False)
     deployment.env_files()
     return deployment

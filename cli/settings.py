@@ -213,6 +213,26 @@ def _resolved(deployment: Deployment, gpu: bool, injections: dict[str, str]) -> 
     return {name: resolved.get(name, value) for name, value in settings.items()}
 
 
+def require_own_destinations(deployment: Deployment) -> None:
+    """A kit's data that replaces its base's needs a directory of its own.
+
+    Left where the base keeps its data, the two would replace each other's
+    files on every run of the other.
+    """
+    base = deployment.base
+    if base is None:
+        return
+    for replaced in deployment.replaced_data:
+        variable, gpu = replaced["destinationEnv"], bool(replaced.get("gpu"))
+        inherited = _env_file_settings(tuple(path for layer in base.env_layers for path in layer.files(gpu)))
+        if configuration_environment(deployment, gpu).get(variable) == inherited.get(variable):
+            own = next(item["name"] for item in deployment.data if item["destinationEnv"] == variable)
+            raise OpenADKitError(
+                f"data {own} replaces {replaced['name']} of {base.name}, but {variable} still names "
+                f"that deployment's directory; set {variable} in the kit's settings.env"
+            )
+
+
 def resolve(
     deployment: Deployment,
     catalog: Catalog,
@@ -231,6 +251,7 @@ def resolve(
     if role is not None and role not in deployment.roles:
         valid = ", ".join(sorted(deployment.roles)) if deployment.roles else "none"
         raise OpenADKitError(f"{deployment.name} has no role {role}\navailable roles: {valid}")
+    require_own_destinations(deployment)
     distro = ros_distro or default_ros_distro(catalog, deployment.requirements["rosDistros"])
     injections = _injections(deployment, distro, role)
     if data_only:

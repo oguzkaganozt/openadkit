@@ -341,6 +341,21 @@ def test_an_installed_version_becomes_active_without_a_download(tmp_path):
     assert result.returncode != 0 and "is not an installed release" in result.stderr
 
 
+def test_a_failed_download_exits_1_with_an_error_line(tmp_path):
+    offline = tmp_path / "offline"
+    executable(offline / "curl", "#!/usr/bin/env bash\nexit 22\n")
+    result = install(tmp_path, offline)
+    assert result.returncode == 1, result.stderr
+    assert "error: could not download the release metadata of the latest release" in result.stderr
+    result = install(tmp_path, offline, "--version", "v1.2.3")
+    assert result.returncode == 1 and "error: could not download the release metadata of v1.2.3" in result.stderr
+    # upgrade resolves the latest release through the same installer.
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=offline)
+    assert result.returncode == 1 and "error: could not download the release metadata" in result.stderr
+
+
 def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_path):
     assert install(tmp_path, release_bin(tmp_path)).returncode == 0
     launcher = tmp_path / "home/.local/bin/openadkit"
@@ -541,6 +556,21 @@ def test_upgrade_never_downgrades(tmp_path):
     result = command(installed(tmp_path, "v1.3.0"), "upgrade", home=tmp_path / "home", bin_dir=release_bin(tmp_path))
     assert result.returncode == 0 and "nothing to upgrade" in result.stdout
     assert (tmp_path / "home/.local/bin/openadkit").resolve() == installed(tmp_path, "v1.3.0")
+
+
+def test_upgrade_crosses_a_major_version_and_says_so(tmp_path):
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    minor, major = release_bin(tmp_path, "v1.3.0"), release_bin(tmp_path, "v2.0.0")
+    note = "v2.0.0 is a major release: its release notes list the breaking changes"
+    result = command(launcher, "upgrade", "--check", home=tmp_path / "home", bin_dir=minor)
+    assert result.returncode == 0 and "major release" not in result.stdout, result.stderr
+    result = command(launcher, "upgrade", "--check", home=tmp_path / "home", bin_dir=major)
+    assert result.returncode == 0 and note in result.stdout, result.stderr
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=major)
+    assert result.returncode == 0, result.stderr
+    assert f"{note}. To go back, run: openadkit install --version v1.2.3" in result.stdout
+    assert launcher.resolve() == installed(tmp_path, "v2.0.0")
 
 
 @pytest.mark.parametrize("unsafe", ["running", "launcher"])
@@ -1400,7 +1430,7 @@ class SettingsDeployment:
 
     def __init__(self, directory, files, gpu_files, data):
         self.name, self.directory, self.data, self.roles = "example", directory, data, {}
-        self.working_directory = directory
+        self.working_directory, self.replaced_data = directory, []
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
         self.requirements = {"rosDistros": ["humble", "jazzy"]}
@@ -2054,6 +2084,20 @@ def test_a_kits_data_replaces_its_bases_at_the_same_destination(tmp_path):
         data_with(files_resource(tmp_path, env="ROSBAG_PATH", name="dataset"))
 
 
+def test_a_kits_replacement_data_needs_a_directory_of_its_own(tmp_path):
+    # Left in the base's directory, the two would replace each other's files.
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    kit = extending_kit(tmp_path, root)
+    edit_kit_deployment(kit, data=[files_resource(tmp_path, name="my-map")])
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 1
+    assert ("data my-map replaces dataset of example, but MAP_PATH still names that deployment's directory; "
+            "set MAP_PATH in the kit's settings.env") in result.stderr
+    (kit / "settings.env").write_text("MAP_PATH=$HOME/data/my-map\n")
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 0, result.stderr
+
+
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
     gpu_data = files_resource(tmp_path, env="MODEL_PATH", name="model", gpu=True)
     document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
@@ -2230,6 +2274,24 @@ def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned)
     # A command that acts hands over to the pinned launcher, or downloads the release.
     run_cli(root, "validate", "custom", directory=kit)
     assert acted.exists()
+
+
+def test_reading_a_kit_runs_with_its_pinned_release_once_that_is_installed(tmp_path):
+    # An older openadkit never has to read the manifests of a newer release.
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root, extends="v1.2.3")
+    record = tmp_path / "delegated"
+    pinned = tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3"
+    pinned.mkdir(parents=True)
+    (pinned / "openadkit.json").write_text('{"schemaVersion":2,"kind":"release","fieldOfANewerRelease":1}')
+    executable(pinned / "openadkit", f'#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "{record}"\necho custom\n')
+    for args in (["list"], ["list", "--json"], ["version"]):
+        result = run_cli(root, *args, directory=kit)
+        assert result.returncode == 0, result.stderr
+    assert record.read_text().splitlines() == ["list", "list --json", "version"]
+    # Help is this CLI's own, as before.
+    assert run_cli(root, "list", "--help", directory=kit).returncode == 0
+    assert len(record.read_text().splitlines()) == 3
 
 
 def test_validate_json_reports_a_broken_kit_as_json(tmp_path):

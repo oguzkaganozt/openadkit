@@ -215,8 +215,12 @@ def upgrade(root: Path, arguments: Sequence[str]) -> int:
             "nothing to upgrade"
         )
         return 0
+    # A major release is the one that removes or changes what the last one kept.
+    major = _parse_version(current)[0][0] != _parse_version(latest)[0][0]
     if check_only:
         print(f"Upgrade available: {current} -> {latest}")
+        if major:
+            print(f"{latest} is a major release: its release notes list the breaking changes")
         return 0
 
     # Force replacement so a version directory left behind by a rollback or a
@@ -227,6 +231,11 @@ def upgrade(root: Path, arguments: Sequence[str]) -> int:
         f"Upgraded {current} -> {latest} "
         f"(previous version kept at {destination / f'openadkit-{current}'})"
     )
+    if major:
+        print(
+            f"{latest} is a major release: its release notes list the breaking changes. "
+            f"To go back, run: openadkit install --version {current}"
+        )
     return 0
 
 

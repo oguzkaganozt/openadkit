@@ -103,19 +103,25 @@ def create_kit(root: Path, catalog: Catalog, name: str, base: str, destination: 
     return target
 
 
-def hand_over(start: Path) -> Path | None:
+def hand_over(start: Path, *, act: bool = True) -> Path | None:
     """The kit around start, if any, once this is the CLI of the Open AD Kit it pins.
 
     Otherwise the pinned release's own launcher takes over the command: only
     its CLI is guaranteed to understand that release's manifests and options.
+    A command that acts downloads a pinned release that is missing. One that
+    only reads the kit (act=False) hands over to a pinned release that is
+    installed and otherwise reads with this CLI: it downloads nothing and
+    never starts a program that a path in the kit names.
     """
     kit_root = find_kit(start)
     if kit_root is None:
         return None
     extends = read_extends(kit_root)
-    if VERSION_RE.fullmatch(extends):
+    pinned = VERSION_RE.fullmatch(extends) is not None
+    if act and pinned:
         install_pinned_release(extends)
-    run_with(resolve_extends(kit_root, extends), {"OPENADKIT_KIT": str(kit_root)})
+    if act or (pinned and (install_root() / f"openadkit-{extends}" / "openadkit.json").is_file()):
+        run_with(resolve_extends(kit_root, extends), {"OPENADKIT_KIT": str(kit_root)})
     return kit_root
 
 
@@ -151,10 +157,10 @@ def load_catalog_around(start: Path, *, act: bool = True) -> tuple[Path, Catalog
     """The kit around start, or this CLI's own Open AD Kit.
 
     A command that acts on a kit runs with the CLI of the release the kit pins.
-    Reading one (act=False) only reads its manifests with this CLI: it starts
-    no other program and downloads nothing.
+    Reading one (act=False) does too when that release is installed; it
+    downloads nothing (hand_over).
     """
-    root = (hand_over(start) if act else find_kit(start)) or root_path()
+    root = hand_over(start, act=act) or root_path()
     return root, load_catalog(root)
 
 
@@ -880,10 +886,13 @@ COMMANDS = {
 }
 
 # These act on a kit, so they run with the CLI of the release it pins and
-# download that release when it is missing. list, version, new and every
-# --help only read the kit, and Tab completion asks list for the names: a
-# directory someone else wrote must not start a program or a download there.
+# download that release when it is missing. list, version and new only read
+# the kit, and Tab completion asks list for the names: a directory someone else
+# wrote must not start a download or a program it names there. They run with
+# the pinned release only when it is installed, so an older openadkit never
+# has to read a newer release's manifests.
 ACTING_COMMANDS = frozenset({"validate", "config", "fetch", "run", "build", "clean"})
+READING_COMMANDS = frozenset({"list", "version", "new"})
 # Without a deployment name, these act on every deployment of the kit around them.
 ALL_DEPLOYMENTS_COMMANDS = frozenset({"validate", "fetch"})
 
@@ -952,12 +961,13 @@ def hand_over_before_parsing(parser: OpenADKitParser, arguments: list[str]) -> N
 
     The kit is the one around the deployment or workspace the command names by
     its directory, or else around the working directory. Only a command that
-    acts hands over, and never to print its help.
+    acts or reads the kit hands over, and never to print its help.
     """
     name, target = command_and_target(parser, arguments)
-    if name not in ACTING_COMMANDS or {"-h", "--help"} & set(arguments):
+    if name not in ACTING_COMMANDS | READING_COMMANDS or {"-h", "--help"} & set(arguments):
         return
-    hand_over(Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd())
+    start = Path(target).expanduser().resolve() if target and is_path(target) else Path.cwd()
+    hand_over(start, act=name in ACTING_COMMANDS)
 
 
 def main() -> int:

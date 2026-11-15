@@ -16,10 +16,11 @@ release tag or, for development, the path of a source checkout. The kit's
   `OPENADKIT_HOME` when set) and hands the command to its launcher. A missing version is
   downloaded and verified on first use, as a build tool's wrapper does; your
   active `openadkit` stays as it is.
-- **Only the commands that act on a kit do this:** `validate`, `config`,
-  `fetch`, `run`, `build` and `clean`. `list`, `version`, `new`, every `--help`
-  and Tab completion read the kit with the CLI you called, so a directory you
-  only look at starts no program and no download.
+- **Only the commands that act on a kit download it:** `validate`, `config`,
+  `fetch`, `run`, `build` and `clean`. `list`, `version`, `new` and Tab
+  completion run with the pinned release when it is installed, and otherwise
+  read the kit with the CLI you called; `--help` is always that CLI's. A
+  directory you only look at starts no download and no program that it names.
 - **One level of `extends`:** a kit extends Open AD Kit, not another kit.
 
 ## Choose a Base Deployment
@@ -36,7 +37,8 @@ also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`.
   base's GPU-only downloads are left out.
 - **Downloads and one-shot services** are inherited. A kit can add downloads
   and one-shot services of its own. A download whose `destinationEnv` a base's
-  download has, such as `ROSBAG_PATH`, replaces that one.
+  download has, such as `ROSBAG_PATH`, replaces that one. Set that variable in
+  the kit's `settings.env` too, so the download gets a directory of its own.
 - **Split-host roles are not inherited:** a kit deployment runs on one host.
 
 A kit made by `openadkit new my-kit` has one deployment, named
