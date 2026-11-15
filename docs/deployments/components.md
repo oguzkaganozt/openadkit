@@ -19,7 +19,7 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 
 | Image | Services | Deployments |
 |-------|----------|-------------|
-| `sensing-perception` | `sensing`, `perception` | Logging; CARLA runs the CUDA variant |
+| `sensing-perception` | `sensing`, `perception` | Logging, CARLA; CARLA's `perception` runs the CUDA variant |
 | `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
 | `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
 | `control` | `control` | Planning, Scenario, CARLA, Safety Island |
@@ -35,9 +35,13 @@ Sensor preprocessing and object recognition, as two services from one image.
 - **`perception`** — launch: `component_perception.launch.xml`
 - **CUDA variant** — `sensing-perception-cuda` builds the same packages with
   CUDA and TensorRT, for detection models such as CenterPoint. It is amd64-only
-  and requires the NVIDIA Container Toolkit. Used by
+  and requires the NVIDIA Container Toolkit. `perception` runs it in
   [Logging Simulation](logging-simulation.md) (`--gpu`) and
-  [CARLA Simulation](carla-simulation.md).
+  [CARLA Simulation](carla-simulation.md); `sensing` stays on the CPU image.
+
+`sensing`, `perception` and `localization` each run their point cloud nodes in
+a component container of their own, so one service restarts without the others.
+The point cloud crosses between them as a ROS message.
 
 ### Localization & Mapping {: #localization-mapping }
 
