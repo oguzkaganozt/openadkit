@@ -98,7 +98,7 @@ def run_compose(
     """A Compose command on the deployment, with its files and settings; options as docker()."""
     return docker(
         compose_command(deployment, selection) + arguments,
-        cwd=deployment.directory, env=compose_process_environment(deployment, selection), **options,
+        cwd=deployment.working_directory, env=compose_process_environment(deployment, selection), **options,
     )
 
 
@@ -373,7 +373,7 @@ def run_report(
         "modelSha256": hashlib.sha256(model.encode("utf-8")).hexdigest(),
         "configSha256": {
             layer: deployment_checksum(Path(mounted[f"OPENADKIT_CONFIG_{layer.upper()}"]))
-            for layer in ("base", "deployment")
+            for layer in ("base", "kit", "deployment")
         },
         # What the services source; build products and logs are not.
         "overlaySha256": deployment_checksum(Path(mounted["OPENADKIT_OVERLAY_WS"]), exclude_dirs=("build", "log")),

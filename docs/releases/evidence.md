@@ -17,14 +17,16 @@ distro, architecture and topology:
 | Scenario Simulation | Humble, Jazzy | amd64, arm64 | Single host; two isolated roles on one host |
 | Logging Simulation | Humble, Jazzy | amd64, arm64 | Single host, in CPU mode |
 | Safety Island Simulation | Humble, Jazzy | amd64 | Single host, with the pinned Safety Island release over `domain_bridge` |
-| `example-kit` | Humble, Jazzy | amd64, arm64 | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages |
+| `example-kit-planning-simulation` | Humble, Jazzy | amd64, arm64 | Single host: a kit made with `openadkit new` on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages |
 
 A cell runs on a hosted runner of its own architecture.
 
 Each cell runs these levels on a fresh stack, started with
 `openadkit run --no-visualizer`:
 
-- **L0:** manifests and Compose configuration validate. One cell per distro
+- **L0:** manifests and Compose configuration validate; the example kit's cell
+  validates each of the kit's deployments, of which it runs the first. One cell
+  per distro
   also checks that the images' launch files read every launch argument the
   deployments pass, the exempt deployments included: `ros2 launch` ignores an
   argument it does not know, so a renamed Autoware argument would otherwise do

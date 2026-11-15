@@ -139,3 +139,15 @@ def test_non_yaml_files_replace_and_the_vehicle_description_is_linked(
         shutil.rmtree(folder, ignore_errors=True)
     assert overlay.main() == 0
     assert yaml.safe_load(info.read_text()) == {"wheel": 1}
+
+
+def test_the_services_mount_the_layers_the_entrypoint_applies_in_order():
+    spec = importlib.util.spec_from_file_location("openadkit_overlay_layers", ROOT / "components/shared/entrypoint/overlay.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # A kit's own layer comes between its base's and its deployment's.
+    assert [str(layer) for layer in module.LAYERS] == [
+        f"/openadkit/config/{name}" for name in ("base", "kit", "deployment")]
+    service = yaml.safe_load((ROOT / "deployments/shared/services/autoware.yaml").read_text())["services"]["autoware"]
+    mounted = [volume.rsplit(":", 2)[1] for volume in service["volumes"] if ":/openadkit/config/" in volume]
+    assert mounted == [str(layer) for layer in module.LAYERS]

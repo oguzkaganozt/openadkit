@@ -39,8 +39,13 @@ ALLOWED_BASE_KEYS = {
 }
 ALLOWED_EXTERNAL_IMAGE_KEYS = {"ref", "distros"}
 # A kit (kind "kit"): its own deployments on top of one pinned Open AD Kit.
+# openadkit.json is its one manifest: each entry of deployments names a base
+# deployment of that Open AD Kit and says what differs from it.
 ALLOWED_KIT_KEYS = {"schemaVersion", "kind", "extends", "deployments", "externalImages"}
 ALLOWED_KIT_DEPLOYMENT_KEYS = {"description", "base", "waitTimeout", "requirements", "data", "verify"}
+# Where a kit keeps the files of one deployment: deployments/<name>/. What is
+# at the kit root applies to every deployment.
+KIT_DEPLOYMENTS_DIRECTORY = "deployments"
 _IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 # Strict SemVer release tag; must agree with the launcher (test_release_versions.py).
 VERSION_RE = re.compile(
@@ -488,6 +493,8 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
 class DeploymentRef:
     path: str
     checksum: str | None
+    # A kit only: the deployment's entry in the kit's manifest.
+    entry: dict[str, Any] | None = None
 
 
 def parse_component_images(value: Any) -> dict[str, str]:
@@ -514,6 +521,14 @@ def parse_deployment_refs(value: Any, kind: str) -> dict[str, DeploymentRef]:
             raise OpenADKitError(f"invalid deployment name: {name}")
         if not isinstance(entry, dict):
             raise OpenADKitError(f"deployments.{name} must be an object")
+        if kind == "kit":
+            # The entry is the deployment's manifest; its files go by name.
+            reject_unknown(entry, ALLOWED_KIT_DEPLOYMENT_KEYS, f"deployments.{name}")
+            require_string(entry.get("base"), f"deployments.{name}.base")
+            refs[name] = DeploymentRef(
+                path=f"{KIT_DEPLOYMENTS_DIRECTORY}/{name}", checksum=None, entry=dict(entry, name=name)
+            )
+            continue
         reject_unknown(entry, ALLOWED_DEPLOYMENT_REF_KEYS, f"deployments.{name}")
         path = require_string(entry.get("path"), f"deployments.{name}.path")
         safe_relative(path, f"deployments.{name}.path")

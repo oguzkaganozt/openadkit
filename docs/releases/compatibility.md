@@ -39,19 +39,29 @@ This page lists what that promise covers. Within one major version:
 
 ### Manifests
 
-- `openadkit.json` (the release manifest, or a kit's kit manifest) at
-  `schemaVersion: 2`, and the deployment manifest `deployment.json`: their
-  fields and what they mean. A deployment is named by its key in
-  `openadkit.json`, and its Compose files by convention: `compose.yaml`,
-  `compose.gpu.yaml` for the GPU mode, and `compose.<role>.yaml` with
-  `compose.zenoh.yaml` for a split-host role. A service with
-  `restart: "no"` is a one-shot service.
+- `openadkit.json` (the release manifest, or a kit's one manifest) at
+  `schemaVersion: 2`, and the release's deployment manifests
+  `deployment.json`: their fields and what they mean. A deployment is named by
+  its key in `openadkit.json`, and its Compose files by convention:
+  `compose.yaml`, `compose.gpu.yaml` for the GPU mode, and
+  `compose.<role>.yaml` with `compose.zenoh.yaml` for a split-host role. A
+  service with `restart: "no"` is a one-shot service.
 
 ### Kits
 
 What a kit made with `openadkit new` builds on:
 
-- `extends` pinning a release, and `base` naming one of its deployments.
+- `extends` pinning a release, and each entry of `deployments` naming its
+  `base`, one of the release's deployments.
+- The kit's layout: `settings.env`, `config/autoware/` and `overlay_ws/` at its
+  root for every deployment, and `deployments/<name>/` for the `settings.env`,
+  `config/autoware/` and `compose.yaml` of one. They apply in the order base,
+  kit, deployment, host settings file.
+- `deployments/shared/services/autoware.yaml`, the service a kit's own services
+  extend, with what it gives them: the host network, the DDS settings, the
+  config overrides, the overlay workspace and the healthcheck that fails when a
+  process of the service's `ros2 launch` dies, with its record in
+  `/tmp/openadkit/died`.
 - The Compose variables `OPENADKIT_ROOT`, `OPENADKIT_BASE_DEPLOYMENT` and
   `OPENADKIT_OVERLAY_WS`.
 - Each base deployment's Compose files, service names, data destination

@@ -15,6 +15,7 @@ from manifest import (
     ALLOWED_KIT_DEPLOYMENT_KEYS,
     ALLOWED_KIT_KEYS,
     DEVEL_IMAGE_TARGET,
+    ENTRY_COMPOSE_FILE,
     GPU_COMPONENT_IMAGE_SUFFIX,
     IMAGE_REFERENCE_RE,
     NAME_RE,
@@ -30,7 +31,6 @@ from manifest import (
     parse_component_images,
     parse_deployment_refs,
     parse_external_images,
-    read_deployment_manifest,
     reject_unknown,
     require_checksum_map,
     require_string,
@@ -293,7 +293,15 @@ class Deployment:
         self.evidence_exemption: str | None = manifest["evidence"].get("exempt")
         self.project = f"openadkit-{self.name}"
         own_layer = EnvironmentLayer(directory, base is None, bool(self.compose["gpuFiles"]))
-        self.env_layers: tuple[EnvironmentLayer, ...] = (*(base.env_layers if base else ()), own_layer)
+        # A kit's root holds what every deployment of it shares, between its
+        # base and its own directory.
+        kit_layers = (*base.env_layers, EnvironmentLayer(root, False, False)) if base else ()
+        self.env_layers: tuple[EnvironmentLayer, ...] = (*kit_layers, own_layer)
+        # A kit deployment that has no Compose file of its own runs its base's.
+        own_compose = directory / ENTRY_COMPOSE_FILE
+        self.compose_directory = (
+            directory if base is None or own_compose.exists() or own_compose.is_symlink() else base.directory
+        )
         # A kit's GPU files follow its entry Compose file.
         self.gpu_files: list[tuple[Path, str]] = [
             (directory, name) for name in self.compose["gpuFiles"]
@@ -302,6 +310,7 @@ class Deployment:
         # workspace lives at the kit root.
         self.overlay_paths: dict[str, Path | None] = {
             "OPENADKIT_CONFIG_BASE": base.directory / "config" if base else None,
+            "OPENADKIT_CONFIG_KIT": root / "config" if base else None,
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
             "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
         }
@@ -316,6 +325,12 @@ class Deployment:
         Names never contain "_", so it separates the role unambiguously.
         """
         return self.project if role is None else f"{self.project}_{role}"
+
+    @property
+    def working_directory(self) -> Path:
+        """Where its commands run: its own directory, which a kit deployment
+        without files of its own does not have."""
+        return self.directory if self.directory.is_dir() else self.root
 
     @property
     def host_settings(self) -> Path:
@@ -361,7 +376,7 @@ class Deployment:
         """Only explicitly selected files; each entrypoint owns its whole graph."""
         names = self.compose["files"] if role is None else self.roles[role]["files"]
         files = [
-            ensure_safe_existing(self.directory, name, "Compose file") for name in names
+            ensure_safe_existing(self.compose_directory, name, "Compose file") for name in names
         ]
         if gpu:
             files.extend(
@@ -390,11 +405,15 @@ def _load_base_deployment(root: Path, directory: Path, name: str) -> Deployment:
 
 
 def _load_kit_deployment(
-    root: Path, directory: Path, extended: Catalog, extended_root: Path, name: str
+    root: Path, directory: Path, extended: Catalog, extended_root: Path, manifest: dict[str, Any]
 ) -> Deployment:
-    """A kit deployment: its own Compose file and values on top of a
-    base deployment of the Open AD Kit it extends, whose requirements it keeps or narrows."""
-    manifest = read_deployment_manifest(directory, ALLOWED_KIT_DEPLOYMENT_KEYS, name)
+    """A kit deployment: the kit's files and its own on top of a base
+    deployment of the Open AD Kit the kit extends, whose requirements it keeps
+    or narrows. Its directory, deployments/<name>/, holds only what it alone
+    needs, so it may be missing."""
+    reject_unknown(manifest, ALLOWED_KIT_DEPLOYMENT_KEYS | {"name"}, f"deployments.{manifest['name']}")
+    if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+        raise OpenADKitError(f"unsafe deployment directory: {directory}")
     base_name = require_string(manifest.get("base"), "base")
     if base_name not in extended.deployments:
         raise OpenADKitError(
@@ -412,7 +431,8 @@ def _load_kit_deployment(
     base_data = [item for item in base.data if requirements["gpu"] != "none" or not item.get("gpu")]
 
     own_verify = validate_verify(manifest.get("verify"))
-    own_data = validate_data(manifest.get("data", []), {}, directory)
+    # A file the kit ships as data is named from the kit root, where the manifest is.
+    own_data = validate_data(manifest.get("data", []), {}, root)
     destinations = {item["destinationEnv"] for item in base.data}
     clashing = sorted(destinations & {item["destinationEnv"] for item in own_data})
     if clashing:
@@ -422,7 +442,9 @@ def _load_kit_deployment(
 
     merged = {
         "name": manifest["name"],
-        "description": manifest["description"],
+        "description": require_string(
+            manifest.get("description", f"{base_name} with this kit's files on top"), "description"
+        ),
         "compose": compose,
         "roles": {},
         "requirements": requirements,
@@ -588,7 +610,10 @@ def get_deployment(root: Path, catalog: Catalog, name: str) -> Deployment:
     directory = root.joinpath(*safe_relative(reference.path, "deployment path").parts)
     if catalog.extended is not None:
         assert catalog.extended_root is not None
-        deployment = _load_kit_deployment(root, directory, catalog.extended, catalog.extended_root, name)
+        assert reference.entry is not None
+        deployment = _load_kit_deployment(
+            root, directory, catalog.extended, catalog.extended_root, dict(reference.entry)
+        )
     else:
         deployment = _load_base_deployment(root, directory, name)
     return deployment

@@ -21,7 +21,7 @@ def identities(cells):
 def test_example_evidence_cells_follow_the_base_distros():
     runtime = validation_matrix.load_runtime(ROOT)
     assert identities(validation_matrix.example_kit_cells(runtime, ROOT)) == [
-        {"deployment": kit, "distro": distro, "platform": platform, "kit": f"kits/{kit}"}
+        {"deployment": f"{kit}-planning-simulation", "distro": distro, "platform": platform, "kit": f"kits/{kit}"}
         for kit in ("example-kit",) for distro in ("humble", "jazzy") for platform in ("linux/amd64", "linux/arm64")
     ]
 
@@ -46,7 +46,11 @@ def test_staged_example_is_made_by_openadkit_new_with_the_fixture_on_top(tmp_pat
     runtime = validation_matrix.load_runtime(staged)
     example = staged / "kits/example-kit"
     kit = runtime.load_catalog(example)
-    assert set(kit.deployments) == {"example-kit"} and kit.deployments["example-kit"].path == "."
+    # One manifest names both deployments; the first is the one `new` made.
+    assert {name: reference.entry["base"] for name, reference in kit.deployments.items()} == {
+        "example-kit-planning-simulation": "planning-simulation", "example-kit-logging-simulation": "logging-simulation"}
+    assert (example / "deployments/example-kit-planning-simulation/compose.yaml").is_file()
+    assert not (example / "deployments/example-kit-logging-simulation/compose.yaml").exists()
     # The staged release is not installed, so the kit extends it by its path.
     manifest = json.loads((example / "openadkit.json").read_text())
     assert manifest["extends"] == "../.." and "HEARTBEAT_IMAGE" in manifest["externalImages"]
