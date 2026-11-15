@@ -2282,7 +2282,7 @@ that is already in the base changes the same way: name it and set only what
 differs.</p>
 <ul>
 <li><strong>A service that runs <code>ros2 launch</code></strong> also sets <code>pid: service:map</code>, as the
-  base's Autoware services do. <code>ros2 launch</code> names its own node after its PID,
+  base's Autoware services and the example kit's <code>acme-probe</code> do. <code>ros2 launch</code> names its own node after its PID,
   and in separate PID namespaces every launch gets the same one: Autoware then
   reports the repeated node name as an error, and autonomous mode becomes
   unavailable.</li>

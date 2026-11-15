@@ -1871,7 +1871,8 @@ openadkit<span class="w"> </span>stop
 <p>Inside a kit with one deployment the commands need no name; from elsewhere,
 name the kit by its directory: <code>openadkit run ./my-kit</code>. With several
 deployments, <code>run</code> takes the name of one, while <code>validate</code> and <code>fetch</code> without
-a name act on each of them. A kit on a source checkout
+a name act on each of them. From elsewhere, one of them is
+<code>./my-kit/deployments/&lt;name&gt;</code>, also while it has no directory of its own. A kit on a source checkout
 runs that checkout's local build, or the CI build <code>OPENADKIT_BUILD</code> names; see
 <a href="../kit-guide/#3-overlay-workspace">Overlay Workspace</a>.</p>
 <p>Add <code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy.

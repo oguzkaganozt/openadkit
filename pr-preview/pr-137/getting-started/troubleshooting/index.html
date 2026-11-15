@@ -2133,6 +2133,9 @@ a vehicle, one failed node must not take its whole service down mid-drive.</p>
 <li>When the process is a component container, such as
   <code>component_container_mt-1</code>, one of the nodes it hosts crashed it. The logs
   name that node.</li>
+<li>A service whose launch file starts one process ends with it: <code>status</code> then
+  shows the service as exited, and <code>openadkit restart &lt;service&gt;</code> starts it
+  again.</li>
 <li><code>run</code> and <code>restart</code> fail when a node dies while the deployment starts, and
   name the service and the process. A map loader that dies there usually
   cannot find a file: check <code>MAP_PATH</code> and the file names in

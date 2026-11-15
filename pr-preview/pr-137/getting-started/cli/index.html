@@ -2117,9 +2117,12 @@ config overrides and overlay workspace, and keeps to the same readiness checks.<
 <li><code>restart --all</code> recreates the whole deployment, one-shot services included.</li>
 </ul>
 <h3 id="shell">Shell<a class="headerlink" href="#shell" title="Permanent link">#</a></h3>
-<p><code>shell</code> sources ROS, Autoware and the overlay workspace like the services'
-entrypoint. Give it a service and a command to run one command instead of an
-interactive shell; <code>shell</code> then exits with the command's status.</p>
+<p><code>shell</code> sources ROS, Autoware and the overlay workspace, as the services'
+entrypoint does. Give it a service and a command to run one command instead of
+an interactive shell; <code>shell</code> then exits with the command's status.</p>
+<p>Unlike the service itself, the shell runs as root and without the config
+overrides: a launch file you start there reads Autoware's own parameter files.
+The running nodes have the overrides, so <code>ros2 param get</code> shows them.</p>
 <h3 id="record">Record<a class="headerlink" href="#record" title="Permanent link">#</a></h3>
 <p><code>record</code> writes a rosbag of the named topics (or <code>--all</code>) to
 <code>~/openadkit-output/&lt;deployment&gt;/recordings/</code> (<code>--output</code> to change) until
@@ -2271,7 +2274,9 @@ apt source, your <code>docker</code> group membership and
 <li><strong>A directory instead of a name:</strong> <code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code> and
   <code>clean</code> also take a deployment's directory, such as <code>openadkit run ./my-kit</code>.
   An argument with a <code>/</code> or a leading <code>.</code> is a directory, and the kit around it
-  is used wherever you run the command.</li>
+  is used wherever you run the command. A kit's own directory stands for the
+  kit, as when you run the command inside it; from outside, one of several
+  deployments is named as <code>./my-kit/deployments/&lt;name&gt;</code>.</li>
 <li><strong>Version:</strong> <code>openadkit version</code> prints the installed release and the
   Autoware release it pins; in a source checkout, the commit.</li>
 <li><strong>Scripting:</strong> <code>list</code>, <code>version</code> and <code>validate</code> accept <code>--json</code>.
