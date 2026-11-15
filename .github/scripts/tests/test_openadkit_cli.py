@@ -1430,7 +1430,7 @@ class SettingsDeployment:
 
     def __init__(self, directory, files, gpu_files, data):
         self.name, self.directory, self.data, self.roles = "example", directory, data, {}
-        self.working_directory, self.replaced_data = directory, []
+        self.working_directory, self.base = directory, None
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
         self.requirements = {"rosDistros": ["humble", "jazzy"]}
