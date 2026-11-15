@@ -114,8 +114,25 @@ def visualizer_address(tls: bool) -> str:
     return f"visualizer: {'https' if tls else 'http'}://localhost:6080/vnc.html"
 
 
+def unhealthy_services(project: str) -> dict[str, str]:
+    """Unhealthy services with what their last healthcheck printed, such as
+    the node that died."""
+    reasons = {}
+    for container in running_containers(project):
+        health = (container.get("State") or {}).get("Health") or {}
+        if health.get("Status") == "unhealthy":
+            output = (health.get("Log") or [{}])[-1].get("Output") or ""
+            reasons[service_of(container)] = "; ".join(output.split("\n")[:-1] or [output]).strip()
+    return reasons
+
+
 def status(project: str) -> None:
     run_project(project, ["ps"], show=True)
+    unhealthy = unhealthy_services(project)
+    if unhealthy:
+        print()
+    for service, reason in sorted(unhealthy.items()):
+        print(f"{service} is unhealthy" + (f": {reason}" if reason else ""))
     state = autoware_state(project)
     if state is not None:
         print()

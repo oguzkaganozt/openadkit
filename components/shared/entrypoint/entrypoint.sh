@@ -15,6 +15,8 @@
 #   3. those copies go first on AMENT_PREFIX_PATH, so $(find-pkg-share) finds
 #      the merged files. Launch arguments in our Compose files point at the
 #      same stable paths.
+# The command then runs with the launch option of health/ on PYTHONPATH, which
+# records a node that dies for the service's healthcheck.
 # shellcheck disable=SC1090,SC1091
 set -eo pipefail
 
@@ -39,5 +41,7 @@ prefixes=$(python3 /opt/openadkit/overlay.py)
 if [ -n "${prefixes}" ]; then
     export AMENT_PREFIX_PATH="${prefixes}:${AMENT_PREFIX_PATH}"
 fi
+
+export PYTHONPATH="/opt/openadkit/health${PYTHONPATH:+:${PYTHONPATH}}"
 
 exec "$@"

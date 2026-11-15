@@ -13,6 +13,27 @@ If `run` fails after the containers are created, they stay so you can read
 their logs, running or not; `openadkit status` lists them. Remove them with
 `openadkit stop`, which another deployment needs before it can start.
 
+## A Service Is Unhealthy
+
+`openadkit status` lists a service as `unhealthy` and names the process that
+died, for example `multi_object_tracker_node-4 died with exit code -9`.
+
+`ros2 launch` keeps running when one of its nodes dies, so the container stays
+up and the service's other nodes keep working. Nothing restarts the service: on
+a vehicle, one failed node must not take its whole service down mid-drive.
+
+1. Read why the node died: `openadkit logs <service>`.
+2. Start the service again: `openadkit restart <service>`.
+
+- When the process is a component container, such as
+  `component_container_mt-1`, one of the nodes it hosts crashed it. The logs
+  name that node.
+- `run` and `restart` fail when a node dies while the deployment starts.
+- The `api` service reports a dead node within three minutes, the others within
+  ten seconds: its check also covers Autoware's readiness and runs less often.
+- A component that fails to load into a running container is not a process that
+  died, and does not show here. It shows in the logs.
+
 ## Docker
 
 ### Permission denied

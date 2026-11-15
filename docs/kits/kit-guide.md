@@ -179,6 +179,12 @@ workspace are enough. Build your own image only for what the runtime images
 lack, such as a system package or a non-ROS application, and declare it as an
 external image ([point 5](#5-image-replacement)).
 
+A service that extends `deployments/shared/services/autoware.yaml`, as
+`acme-probe` does, turns unhealthy when a process of its `ros2 launch` dies
+([A Service Is Unhealthy](../getting-started/troubleshooting.md#a-service-is-unhealthy)).
+A `healthcheck` of its own replaces that check. To keep it, start the command
+with `! cat /tmp/openadkit/died 2>/dev/null &&`, as the `api` service does.
+
 To replace one role of a base that runs as split-host roles, include only the
 other role's Compose file instead of the base's `compose.yaml`. For
 example, a kit that brings its own simulator to `carla-simulation` includes

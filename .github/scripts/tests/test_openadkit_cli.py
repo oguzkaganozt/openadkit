@@ -1258,6 +1258,22 @@ def test_status_gives_the_visualizer_address_only_when_it_runs(tmp_path):
     assert result.returncode == 0 and "visualizer:" not in result.stdout
 
 
+def test_status_names_what_an_unhealthy_service_reported(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    label = "com.docker.compose.service"
+    containers = [
+        {"Id": "a", "Config": {"Labels": {label: "perception"}}, "State": {"Health": {
+            "Status": "unhealthy", "Log": [{"Output": ""}, {"Output": "tracker-4 died with exit code -9\n"}]}}},
+        {"Id": "b", "Config": {"Labels": {label: "planning"}}, "State": {"Health": {"Status": "healthy", "Log": []}}},
+        {"Id": "c", "Config": {"Labels": {label: "carla"}}, "State": {}},
+    ]
+    fake_docker(tmp_path, projects=["openadkit-example"], containers=containers, services=("carla", "perception", "planning"))
+    result = run_cli(root, "status")
+    assert result.returncode == 0
+    assert "perception is unhealthy: tracker-4 died with exit code -9" in result.stdout
+    assert "planning is" not in result.stdout and "carla is" not in result.stdout
+
+
 def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     root, _ = runtime_tree(tmp_path)
     containers = [
