@@ -175,8 +175,7 @@ def compose_context(tmp_path, monkeypatch):
     # and without it Docker falls back to the runner's older plugin.
     monkeypatch.setenv("DOCKER_CONFIG", os.environ.get("DOCKER_CONFIG") or str(Path.home() / ".docker"))
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("OPENADKIT_SETTINGS_DIR", str(tmp_path / "config"))
-    monkeypatch.setenv("OPENADKIT_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("OPENADKIT_HOME", str(tmp_path / "oak"))
     monkeypatch.setenv("ZENOH_LISTEN", "tcp/127.0.0.1:7447")
     monkeypatch.setenv("ZENOH_PEER", "tcp/127.0.0.1:7447")
     monkeypatch.setenv("REMOTE_PASSWORD", "ci-validate")
@@ -310,8 +309,8 @@ def test_kit_files_shared_by_deployments_and_host_reads_are_the_kits(tmp_path, c
 
 def test_centerpoint_models_mount_where_the_cli_installs_them(compose_context, tmp_path):
     import data
-    (tmp_path / "config").mkdir()
-    (tmp_path / "config/logging-simulation.env").write_text("DATA_PATH=/srv/autoware_data\n")
+    (tmp_path / "oak/settings").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "oak/settings/logging-simulation.env").write_text("DATA_PATH=/srv/autoware_data\n")
     deployment = catalog.get_deployment(ROOT, compose_context, "logging-simulation")
     selection = settings.resolve(deployment, compose_context, "humble", True)
     resource = next(item for item in deployment.data if item["destinationEnv"] == "CENTERPOINT_DATA_PATH")

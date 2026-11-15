@@ -53,29 +53,30 @@ if [ "${platform}" != "${host_platform}" ]; then
 fi
 
 mkdir -p "${out}"
-# Keep run results and the CLI's own files with this cell's evidence instead
-# of the runner's home.
-export OPENADKIT_OUTPUT_DIR="${out}/output"
+# Keep everything the CLI writes with this cell's evidence instead of the
+# runner's home: results, run records and host settings, and the downloaded
+# data (left out of the uploaded artifact). A host settings file, or an
+# inherited kit selection, would change the deployment, its data, or its DDS
+# settings under the cell.
+export OPENADKIT_HOME="${out}/home"
 # Cell logs show every docker command the CLI runs.
 export OPENADKIT_VERBOSE=1
-export OPENADKIT_STATE_DIR="${out}/state"
-# Read no host settings either: a host settings file, or an inherited kit selection,
-# would change the deployment, its data, or its DDS settings under the cell.
-export OPENADKIT_SETTINGS_DIR="${out}/config"
 unset OPENADKIT_KIT OPENADKIT_DELEGATED
-mkdir -p "${OPENADKIT_SETTINGS_DIR}"
-scenario_output="${OPENADKIT_OUTPUT_DIR}/${deployment}/results"
+settings_dir="${OPENADKIT_HOME}/settings"
+output_dir="${OPENADKIT_HOME}/output"
+mkdir -p "${settings_dir}"
+scenario_output="${output_dir}/${deployment}/results"
 # A 4-vCPU runner cannot run Autoware main in real time: the ego drives late
 # and the samples take three times as long as on 16 vCPUs, past the wall-clock
 # timeout. Half speed gives Autoware the CPU a larger host has per simulated
 # second, so the cell checks the scenarios rather than the runner's size.
 if [ "${scenario}" = true ]; then
-    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
+    printf '%s\n' GLOBAL_REAL_TIME_FACTOR=0.5 GLOBAL_TIMEOUT=400 >"${settings_dir}/${deployment}.env"
 fi
 # The same holds for a replayed recording: at a tenth of its speed sensing and
 # perception keep up, and the rosbag waits longer for a slow start.
 if [ "${deployment}" = logging-simulation ]; then
-    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${OPENADKIT_SETTINGS_DIR}/${deployment}.env"
+    printf '%s\n' ROSBAG_RATE=0.1 ROSBAG_READY_TIMEOUT=300 >"${settings_dir}/${deployment}.env"
 fi
 
 # Several roles on one host: each gets its own project, logs and Zenoh endpoint.
@@ -96,7 +97,7 @@ engine=(docker)
 api_container=autoware-api
 # The CLI's record of the run, written once the deployment is ready, with the
 # verify step's result.
-run_report="${OPENADKIT_OUTPUT_DIR}/${deployment}/results/run.json"
+run_report="${output_dir}/${deployment}/results/run.json"
 # The first role listens on the base port; each later role listens on its own
 # port and peers with the first.
 zenoh_port=7447

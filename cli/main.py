@@ -496,7 +496,7 @@ def record_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--all", action="store_true", dest="all_topics", help="record every topic")
     parser.add_argument(
         "--output", metavar="DIRECTORY",
-        help="where bags go (default: ~/openadkit-output/<deployment>/recordings)",
+        help="where bags go (default: <deployment>/recordings in the output directory)",
     )
 
 

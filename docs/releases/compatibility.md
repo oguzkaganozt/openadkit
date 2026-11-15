@@ -66,9 +66,9 @@ See [Create a Kit](../kits/create-a-kit.md) and the
 
 ### Settings and Paths
 
-- `OPENADKIT_VERBOSE`, `OPENADKIT_INSTALL_DIR`, `OPENADKIT_SETTINGS_DIR` and
-  `OPENADKIT_OUTPUT_DIR`, and `DEVEL_IMAGE`, the devel image `openadkit build`
-  uses in place of the pinned one.
+- `OPENADKIT_HOME` and the directories under it, `OPENADKIT_VERBOSE`, and
+  `DEVEL_IMAGE`, the devel image `openadkit build` uses in place of the pinned
+  one.
 - The host settings file `~/.config/openadkit/<deployment>.env`, and the
   `results` and `recordings` directories under the output directory.
 - These settings of a deployment's `settings.env` and of the host settings
