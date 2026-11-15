@@ -114,7 +114,7 @@ printf '%s\\n' "${COMMON_METADATA}"
         "AUTOWARE_INPUT_REF": "1.8.0",
         "AUTOWARE_REF_TYPE": "tag",
         "AUTOWARE_REF": AUTOWARE_REF,
-        "AUTOWARE_BASE_VERSION": "1.8.0",
+        "AUTOWARE_VERSION": "1.8.0",
         "AUTOWARE_LOCK_SHA256": LOCK_SHA256,
         "USE_LOCAL_COMMON": "false",
         "ROS_DISTRO": "humble",

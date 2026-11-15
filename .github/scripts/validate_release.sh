@@ -207,7 +207,7 @@ validate_metadata() {
 # A release is a build of the branch it is released from, on an Autoware
 # release tag (.github/autoware.ref).
 validate_release_rules() {
-  local metadata_sha autoware_input_ref autoware_ref_type autoware_base_version
+  local metadata_sha autoware_input_ref autoware_ref_type autoware_version
 
   metadata_sha=$(jq -r '.openadkit_sha' release-input/build/build-metadata.json)
   [ "${metadata_sha}" = "${release_sha}" ] \
@@ -218,12 +218,12 @@ validate_release_rules() {
 
   autoware_input_ref=$(jq -r '.autoware_input_ref' release-input/build/build-metadata.json)
   autoware_ref_type=$(jq -r '.autoware_ref_type' release-input/build/build-metadata.json)
-  autoware_base_version=$(jq -r '.autoware_base_version' release-input/build/build-metadata.json)
+  autoware_version=$(jq -r '.autoware_version' release-input/build/build-metadata.json)
   if [ "${autoware_ref_type}" != "tag" ] || ! printf '%s\n' "${autoware_input_ref}" | grep -Eq "${autoware_stable_re}"; then
     fail "Releases must be built from an Autoware X.Y.Z release tag (got ${autoware_ref_type}:${autoware_input_ref})"
   fi
-  [ "${autoware_base_version}" = "${autoware_input_ref}" ] \
-    || fail "Autoware base version ${autoware_base_version} does not match release tag ${autoware_input_ref}"
+  [ "${autoware_version}" = "${autoware_input_ref}" ] \
+    || fail "Autoware version ${autoware_version} does not match release tag ${autoware_input_ref}"
 }
 
 # Publishing creates the tag; one that already exists must be on this commit.

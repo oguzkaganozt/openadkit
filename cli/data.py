@@ -51,15 +51,16 @@ def is_own(target: Path) -> bool:
 def source_digest(resource: dict[str, Any]) -> str:
     """Identify the content a resource declares, so a changed declaration shows.
 
-    Only checksums and generated content count: a mirror URL for the same bytes
-    is the same data.
+    Only checksums and written-out content count: a mirror URL for the same
+    bytes is the same data.
     """
     source = {
         "kind": resource["kind"],
         "sha256": resource.get("sha256"),
         "expectedRoot": resource.get("expectedRoot"),
-        "files": sorted((item["path"], item["sha256"]) for item in resource.get("files", [])),
-        "generatedFiles": resource.get("generatedFiles", {}),
+        "files": sorted(
+            (item["path"], item.get("sha256"), item.get("content")) for item in resource.get("files", [])
+        ),
     }
     return hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
 
@@ -402,14 +403,12 @@ def install_resource(
                     item["path"], "data file path"
                 )
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                if "sourcePath" in item:
+                if "content" in item:
+                    destination.write_text(item["content"], encoding="utf-8")
+                elif "sourcePath" in item:
                     copy_verified(item["sourcePath"], destination, item["sha256"])
                 else:
                     download(item["url"], destination, item["sha256"])
-        for relative, content in resource.get("generatedFiles", {}).items():
-            generated = candidate / safe_relative(relative, "generated data file")
-            generated.parent.mkdir(parents=True, exist_ok=True)
-            generated.write_text(content, encoding="utf-8")
         if not validate_dataset(candidate, required):
             raise OpenADKitError(
                 f"downloaded data failed validation: {resource['name']}"

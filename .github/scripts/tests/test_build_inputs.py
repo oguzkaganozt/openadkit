@@ -55,7 +55,7 @@ def test_a_release_pin_uses_the_release_sources_and_images(tmp_path):
     result, values = resolve(tmp_path, "2.0.0", FAKE_TAG="2.0.0")
     assert result.returncode == 0, result.stderr
     assert values["autoware_ref_type"] == "tag" and values["autoware_ref"] == SHA
-    assert values["upstream_tag"] == values["autoware_base_version"] == "2.0.0"
+    assert values["upstream_tag"] == values["autoware_version"] == "2.0.0"
 
 
 @pytest.mark.parametrize(("pin", "fake", "message"), [

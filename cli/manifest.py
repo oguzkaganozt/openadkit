@@ -91,12 +91,11 @@ ALLOWED_DATA_KEYS = {
     "url",
     "sha256",
     "files",
-    "generatedFiles",
     "requiredFiles",
     "gpu",
     "roles",
 }
-ALLOWED_DATA_FILE_KEYS = {"path", "url", "source", "sha256"}
+ALLOWED_DATA_FILE_KEYS = {"path", "url", "source", "content", "sha256"}
 
 
 class OpenADKitError(Exception):
@@ -241,14 +240,6 @@ def validate_data(data: Any, roles: dict[str, Any], directory: Path) -> list[dic
         )
         for required in resource["requiredFiles"]:
             safe_relative(required, f"{where}.requiredFiles")
-        generated = resource.get("generatedFiles", {})
-        if not isinstance(generated, dict) or any(
-            not isinstance(value, str) for value in generated.values()
-        ):
-            raise OpenADKitError(f"{where}.generatedFiles must map paths to strings")
-        for relative in generated:
-            safe_relative(relative, f"{where}.generatedFiles")
-        resource["generatedFiles"] = generated
         if resource["kind"] == "zip":
             require_url(resource.get("url"), f"{where}.url")
             checksum = require_string(resource.get("sha256"), f"{where}.sha256")
@@ -279,10 +270,16 @@ def validate_data(data: Any, roles: dict[str, Any], directory: Path) -> list[dic
                 if relative in seen_paths:
                     raise OpenADKitError(f"duplicate data file path: {relative}")
                 seen_paths.add(relative)
-                # A file the deployment ships (source, relative to its directory)
-                # or one to download (url); the checksum is checked either way.
-                if ("url" in item) == ("source" in item):
-                    raise OpenADKitError(f"{file_where} needs exactly one of url and source")
+                # A file to download (url), one the deployment ships (source,
+                # relative to its directory) or a short one written out as it
+                # is here (content). A checksum vouches for the first two.
+                if sum(key in item for key in ("url", "source", "content")) != 1:
+                    raise OpenADKitError(f"{file_where} needs exactly one of url, source and content")
+                if "content" in item:
+                    require_string(item["content"], f"{file_where}.content")
+                    if "sha256" in item:
+                        raise OpenADKitError(f"{file_where}.sha256 is invalid with content")
+                    continue
                 if "url" in item:
                     require_url(item["url"], f"{file_where}.url")
                 else:

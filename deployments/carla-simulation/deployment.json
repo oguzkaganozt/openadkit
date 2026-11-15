@@ -32,11 +32,12 @@
           "path": "pointcloud_map.pcd",
           "url": "https://bitbucket.org/carla-simulator/autoware-contents/raw/062f94b5322e679ee0430e2daa6995dca9f7f0ea/maps/point_cloud_maps/Town01.pcd",
           "sha256": "296d6429ae0190b19a35458a155d76d8e3c4f460eb718cde3d669bc5a8f03ba2"
+        },
+        {
+          "path": "map_projector_info.yaml",
+          "content": "projector_type: Local\n"
         }
       ],
-      "generatedFiles": {
-        "map_projector_info.yaml": "projector_type: Local\n"
-      },
       "requiredFiles": [
         "lanelet2_map.osm",
         "pointcloud_map.pcd",

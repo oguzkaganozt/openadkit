@@ -89,7 +89,7 @@ import sys
 
 try:
     metadata = json.load(open(sys.argv[1], encoding="utf-8"))
-    version = metadata["openadkit_version"]
+    version = metadata["version"]
     bundles = metadata["bundles"]
     if not isinstance(version, str) or not re.fullmatch(sys.argv[2], version):
         raise ValueError("invalid Open AD Kit version")
@@ -101,7 +101,7 @@ try:
     if len(named) != 1:
         raise ValueError(f"expected one bundle named {name}")
     digest = named[0]["sha256"]
-    autoware = metadata.get("autoware_base_version") or "unknown"
+    autoware = ((metadata.get("bom") or {}).get("autoware") or {}).get("version") or "unknown"
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("invalid bundle SHA-256")
     print(version, name, digest, autoware, sep="\t")

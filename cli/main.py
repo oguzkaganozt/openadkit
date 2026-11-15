@@ -23,7 +23,7 @@ from catalog import (
     Deployment,
     available_deployments,
     default_ros_distro,
-    deployment_integrity,
+    deployment_modified,
     get_deployment,
     install_root,
     load_catalog,
@@ -221,7 +221,7 @@ def list_deployments(
             entries.append(
                 {
                     "name": name,
-                    "integrity": deployment_integrity(root, deployment, catalog),
+                    "modified": deployment_modified(root, deployment, catalog),
                     "gpu": deployment.requirements["gpu"],
                     "description": deployment.manifest["description"],
                 }
@@ -230,7 +230,7 @@ def list_deployments(
             entries.append(
                 {
                     "name": name,
-                    "integrity": "invalid",
+                    "modified": None,
                     "gpu": None,
                     "description": None,
                     "error": str(error).replace("\n", " "),
@@ -251,7 +251,7 @@ def list_deployments(
     _print_table(("NAME", "GPU", "DESCRIPTION"), rows)
     # A release's deployments are checked against it; a source checkout's are what is there.
     for entry in entries:
-        if entry["integrity"] == "modified":
+        if entry["modified"]:
             print(f"note: {entry['name']} differs from the release it came with")
     return 0
 
@@ -338,7 +338,7 @@ def show_version(root, catalog, *, json_output: bool = False) -> int:
 
 
 def warn_if_modified(root, deployment, catalog) -> None:
-    if deployment_integrity(root, deployment, catalog) == "modified":
+    if deployment_modified(root, deployment, catalog):
         print(
             f"warning: {deployment.name} has been modified from this release",
             file=sys.stderr,

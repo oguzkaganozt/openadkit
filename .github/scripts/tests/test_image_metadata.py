@@ -79,7 +79,7 @@ def test_capture_uses_registry_platforms_and_scan_rows(artifacts, monkeypatch):
         platforms = [{"platform": {"os": "linux", "architecture": platform.split("/")[1]}} for platform in row["platforms"]]
         return json.dumps({"manifest": {"digest": DIGEST, "manifests": [*platforms, {"platform": {"os": "unknown", "architecture": "unknown"}}]}})
     monkeypatch.setattr(images.subprocess, "check_output", inspect)
-    env = {key.upper(): metadata[key] for key in ("build_tag", "openadkit_sha", "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_base_version")}
+    env = {key.upper(): metadata[key] for key in ("build_tag", "openadkit_sha", "autoware_input_ref", "autoware_ref_type", "autoware_ref", "autoware_version")}
     env.update(GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1", SCAN_REQUESTED="false", PREPARED_LOCK_SHA256=metadata["autoware_lock_sha256"],
                IMAGE_REPO="ghcr.io/example/openadkit")
     captured = images.capture(directory, env)
@@ -103,7 +103,7 @@ def test_scan_duplicates_and_distro_overrides_are_supported(artifacts):
 
 def test_the_run_page_summary_names_the_build_and_each_image():
     text = images.summary({
-        "build_tag": "1-1", "autoware_base_version": "2.0.0", "autoware_ref": "6f91fff359e8",
+        "build_tag": "1-1", "autoware_version": "2.0.0", "autoware_ref": "6f91fff359e8",
         "openadkit_sha": "5e3837ac7b80",
         "images": [{"target": "api", "ros_distro": "humble", "platforms": ["linux/amd64", "linux/arm64"],
                     "digest": "sha256:" + "a" * 64}],

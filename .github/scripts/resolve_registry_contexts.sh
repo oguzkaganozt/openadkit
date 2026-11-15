@@ -8,7 +8,7 @@ set -euo pipefail
 : "${AUTOWARE_INPUT_REF:?AUTOWARE_INPUT_REF is required}"
 : "${AUTOWARE_REF_TYPE:?AUTOWARE_REF_TYPE is required}"
 : "${AUTOWARE_REF:?AUTOWARE_REF is required}"
-: "${AUTOWARE_BASE_VERSION:?AUTOWARE_BASE_VERSION is required}"
+: "${AUTOWARE_VERSION:?AUTOWARE_VERSION is required}"
 : "${AUTOWARE_LOCK_SHA256:?AUTOWARE_LOCK_SHA256 is required}"
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -38,8 +38,8 @@ resolve_registry_context() {
   lock_sha256=$(jq -r '.["org.autoware.openadkit.autoware-lock-sha256"] // empty' <<<"${labels}")
   openadkit_sha=$(jq -r '.["org.opencontainers.image.revision"] // empty' <<<"${labels}")
   if [ "${image_autoware_ref}" != "${AUTOWARE_REF}" ] \
-    || [ "${base_version}" != "${AUTOWARE_BASE_VERSION}" ]; then
-    echo "Registry context ${ref} was built from Autoware ${base_version} (${image_autoware_ref}); expected ${AUTOWARE_BASE_VERSION} (${AUTOWARE_REF})" >&2
+    || [ "${base_version}" != "${AUTOWARE_VERSION}" ]; then
+    echo "Registry context ${ref} was built from Autoware ${base_version} (${image_autoware_ref}); expected ${AUTOWARE_VERSION} (${AUTOWARE_REF})" >&2
     return 1
   fi
   if ! [[ "${lock_sha256}" =~ ^[0-9a-f]{64}$ ]] \

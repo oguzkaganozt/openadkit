@@ -272,7 +272,7 @@ def release_bin(tmp_path, version="v1.2.3", *, bad_checksum=False, member=None):
                 archive.addfile(info, io.BytesIO(payload))
     # A later release may list more bundles; the installer takes the one it knows by name.
     (release / "release-metadata.json").write_text(json.dumps({
-        "openadkit_version": version, "autoware_base_version": "1.9.0", "bundles": [
+        "version": version, "bom": {"autoware": {"version": "1.9.0"}}, "bundles": [
             {"name": f"{root_name}-extra.tar.gz", "sha256": "f" * 64},
             {"name": bundle.name,
              "sha256": "0" * 64 if bad_checksum else hashlib.sha256(bundle.read_bytes()).hexdigest()}],
@@ -452,7 +452,8 @@ def test_validate_json_reports_an_invalid_deployment_as_json(tmp_path, name):
     valid = json.loads(run_cli(root, "validate", "example", "--json").stdout)
     assert valid["valid"] is True and valid["deployment"] == "example"
     listed = json.loads(run_cli(root, "list", "--json").stdout)["deployments"]
-    assert [entry["integrity"] for entry in listed] == ["source"]
+    # Nothing vouches for a source checkout's files.
+    assert [entry["modified"] for entry in listed] == [None]
 
 
 def test_list_shows_name_gpu_and_description(tmp_path):
@@ -964,10 +965,29 @@ def test_data_file_shipped_with_the_deployment_installs_by_checksum(tmp_path):
     assert (tmp_path / "home/data/map/required.txt").read_text() == "shipped"
 
 
-def test_data_file_takes_exactly_one_of_url_and_source(tmp_path):
+def test_data_file_takes_exactly_one_of_url_source_and_content(tmp_path):
     resource = files_resource(tmp_path)
     resource["files"][0]["source"] = "data/map.txt"
-    with pytest.raises(cli_manifest.OpenADKitError, match="exactly one of url and source"):
+    with pytest.raises(cli_manifest.OpenADKitError, match="exactly one of url, source and content"):
+        cli_manifest.validate_data([resource], {}, tmp_path)
+
+
+def test_a_data_file_can_be_written_out_from_the_manifest(tmp_path, monkeypatch):
+    # A short file, such as a map's projection, needs no download and no checksum.
+    resource = files_resource(tmp_path)
+    resource["files"].append({"path": "projector.yaml", "content": "projector_type: Local\n"})
+    resource["requiredFiles"].append("projector.yaml")
+    cli_manifest.validate_data([resource], {}, tmp_path)
+    target = tmp_path / "installed"
+    monkeypatch.setattr(cli_data, "resolve_destination", lambda *_: target)
+    cli_data.install_resource(resource, None, force=False)
+    assert (target / "projector.yaml").read_text() == "projector_type: Local\n"
+    # Other content is another declaration: the installed data is then outdated.
+    assert not cli_data.is_outdated(target, resource)
+    resource["files"][-1]["content"] = "projector_type: MGRS\n"
+    assert cli_data.is_outdated(target, resource)
+    resource["files"][-1]["sha256"] = "0" * 64
+    with pytest.raises(cli_manifest.OpenADKitError, match="sha256 is invalid with content"):
         cli_manifest.validate_data([resource], {}, tmp_path)
 
 
@@ -1111,7 +1131,6 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
     # Exercise download validation, not the earlier unmanaged-target refusal.
     resource = files_resource(tmp_path)
     resource["files"][0]["sha256"] = "0" * 64
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     target.mkdir()
     (target / cli_data.MARKER).write_text("{}")
@@ -1386,7 +1405,6 @@ def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeyp
 @pytest.mark.parametrize("race", ["appeared", "replaced", "unmarked"])
 def test_forced_fetch_preserves_targets_changed_during_publication(tmp_path, monkeypatch, race):
     resource = files_resource(tmp_path)
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     if race != "appeared":
         target.mkdir()
@@ -1414,7 +1432,6 @@ def test_forced_fetch_preserves_targets_changed_during_publication(tmp_path, mon
 
 def test_forced_fetch_replaces_managed_data_and_removes_the_old(tmp_path):
     resource = files_resource(tmp_path)
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     target.mkdir()
     (target / cli_data.MARKER).write_text("{}")

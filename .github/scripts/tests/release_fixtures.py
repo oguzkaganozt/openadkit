@@ -42,7 +42,7 @@ def build_images():
 def build_metadata(images=None):
     return {"build_tag": BUILD_TAG, "openadkit_sha": RELEASE_SHA,
             "autoware_input_ref": "1.8.0", "autoware_ref_type": "tag", "autoware_ref": "d" * 40,
-            "autoware_base_version": "1.8.0", "autoware_lock_sha256": "e" * 64,
+            "autoware_version": "1.8.0", "autoware_lock_sha256": "e" * 64,
             "upstream_images_sha256": "f" * 64, "images": build_images() if images is None else images}
 
 

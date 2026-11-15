@@ -141,9 +141,8 @@ def verify_release_integrity(bundle_root: Path, plan: dict[str, Any]) -> None:
         fail("staged bundle deployments do not match the release plan")
     for name in expected:
         deployment = runtime.get_deployment(bundle_root, catalog, name)
-        state = runtime.deployment_integrity(bundle_root, deployment, catalog)
-        if state != "intact":
-            fail(f"packaged deployment is not intact: {name} ({state})")
+        if runtime.deployment_modified(bundle_root, deployment, catalog) is not False:
+            fail(f"packaged deployment does not match its checksum: {name}")
 
 
 def ros_snapshots(source_root: Path, distros: list[str]) -> dict[str, str]:
@@ -233,7 +232,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     root_name = f"openadkit-{args.version}"
     asset_name = f"{root_name}.tar.gz"
     autoware: dict[str, Any] = {
-        "version": require_string(metadata.get("autoware_base_version"), "autoware_base_version"),
+        "version": require_string(metadata.get("autoware_version"), "autoware_version"),
         "ref": require_string(metadata.get("autoware_ref"), "autoware_ref"),
         "lockSha256": require_string(metadata.get("autoware_lock_sha256"), "autoware_lock_sha256"),
     }

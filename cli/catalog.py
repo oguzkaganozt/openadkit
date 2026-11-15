@@ -653,19 +653,18 @@ def deployment_checksum(directory: Path, *, exclude_dirs: tuple[str, ...] = ()) 
     return digest.hexdigest()
 
 
-def deployment_integrity(
+def deployment_modified(
     root: Path,
     deployment: Deployment,
     catalog: Catalog,
-) -> str:
+) -> bool | None:
+    """Whether a release's deployment differs from the files the release came
+    with. None where nothing vouches for the files: a source checkout or a kit."""
     if catalog.kind != "release":
-        return "source"
-    expected = catalog.deployments[deployment.name].checksum
-    if expected != deployment_checksum(deployment.directory):
-        return "modified"
-    if not all(
+        return None
+    if catalog.deployments[deployment.name].checksum != deployment_checksum(deployment.directory):
+        return True
+    return not all(
         catalog.shared.get(name) == deployment_checksum(root / "deployments" / name)
         for name in deployment.shared
-    ):
-        return "modified"
-    return "intact"
+    )

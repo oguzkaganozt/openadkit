@@ -111,9 +111,10 @@ See [CLI & Maintenance](../getting-started/cli.md).
   `setup` commands.
 - The `openadkit-vX.Y.Z.tar.gz` bundle.
 - These fields of `release-metadata.json`, which the installer and
-  [Verify a Release](verification.md) read: `openadkit_version`,
-  `autoware_base_version`, `bundles`, `evidence` and `bom`. A release may list
-  more bundles there; the installer takes the one named after the version.
+  [Verify a Release](verification.md) read: `version`, `bundles`, `evidence`
+  and `bom`, which holds the pinned Autoware release as `bom.autoware`. A
+  release may list more bundles there; the installer takes the one named after
+  the version.
 
 ## Experimental
 
