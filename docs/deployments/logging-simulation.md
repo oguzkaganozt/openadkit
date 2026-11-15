@@ -26,6 +26,25 @@ The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than
 with a full recording.
 
+## Your Own Recording
+
+Point `ROSBAG_PATH` at a rosbag directory, the one that holds `metadata.yaml`,
+in your [host settings file](../getting-started/cli.md#settings) or in a kit's
+`settings.env`:
+
+```bash
+ROSBAG_PATH=$HOME/recordings/my-drive
+ROSBAG_FORMAT=mcap                              # sqlite3 by default
+ROSBAG_READY_TOPIC=/sensing/lidar/top/pointcloud_raw_ex
+```
+
+The CLI checks that the directory holds `metadata.yaml`, and never downloads
+into it, replaces it or removes it. The recording starts once something
+subscribes to `ROSBAG_READY_TOPIC`, so name a topic of yours that sensing
+reads. A recording of another vehicle needs that vehicle's map (`MAP_PATH`)
+and its vehicle and sensor kit packages, which a
+[kit](../kits/kit-guide.md#a-new-vehicle) holds.
+
 ## Stop and Recover
 
 To replace missing sample data, run `openadkit fetch logging-simulation --force`;

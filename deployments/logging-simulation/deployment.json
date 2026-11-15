@@ -27,7 +27,7 @@
       "expectedRoot": "sample-rosbag",
       "url": "https://autoware-files.s3.us-west-2.amazonaws.com/recordings/bags/demos/sample-rosbag.zip",
       "sha256": "5f9d36353393b3d249212153c19049822b1298db56512aa045b4f7f6fc37cf88",
-      "requiredFiles": ["metadata.yaml", "sample-rosbag_0.db3"]
+      "requiredFiles": ["metadata.yaml"]
     },
     {
       "name": "centerpoint-model",

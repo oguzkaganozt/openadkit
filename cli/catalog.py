@@ -433,11 +433,14 @@ def _load_kit_deployment(
     own_verify = validate_verify(manifest.get("verify"))
     # A file the kit ships as data is named from the kit root, where the manifest is.
     own_data = validate_data(manifest.get("data", []), {}, root)
-    destinations = {item["destinationEnv"] for item in base.data}
-    clashing = sorted(destinations & {item["destinationEnv"] for item in own_data})
-    if clashing:
+    # Its own data replaces the base's with the same destination, as its
+    # settings replace the base's: its own recording instead of the sample.
+    replaced = {item["destinationEnv"] for item in own_data}
+    base_data = [item for item in base_data if item["destinationEnv"] not in replaced]
+    repeated = sorted({item["name"] for item in base_data} & {item["name"] for item in own_data})
+    if repeated:
         raise OpenADKitError(
-            "data reuses a destination of the base deployment: " + ", ".join(clashing)
+            "data reuses the name of a resource of the base deployment that it keeps: " + ", ".join(repeated)
         )
 
     merged = {

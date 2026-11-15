@@ -34,9 +34,9 @@ also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`.
   set to `none` or `required` where the base leaves it optional. It never
   widens them, since the kit runs the base's services. Without a GPU mode, the
   base's GPU-only downloads are left out.
-- **Downloads and one-shot services** are inherited. A kit can add
-  downloads with distinct destination variables, and one-shot services of its
-  own.
+- **Downloads and one-shot services** are inherited. A kit can add downloads
+  and one-shot services of its own. A download whose `destinationEnv` a base's
+  download has, such as `ROSBAG_PATH`, replaces that one.
 - **Split-host roles are not inherited:** a kit deployment runs on one host.
 
 A kit made by `openadkit new my-kit` has one deployment, named
