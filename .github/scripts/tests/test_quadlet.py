@@ -27,14 +27,14 @@ def model(tmp_path):
         {"type": "bind", "source": str(empty), "target": "/openadkit/overlay_ws", "read_only": True, "bind": {}},
     ]
     return {"name": "openadkit-example", "services": {
-        "map-check": {
-            "image": "ghcr.io/x/oak:map-humble", "container_name": "autoware-map-check", "network_mode": "host",
+        "prepare": {
+            "image": "ghcr.io/x/oak:map-humble", "container_name": "autoware-prepare", "network_mode": "host",
             "init": True, "restart": "no", "entrypoint": ["bash", "-lc"], "command": ['echo "$${f}" 100%\n'],
         },
         "map": {
             "image": "ghcr.io/x/oak:map-humble", "container_name": "autoware-map", "network_mode": "host", "ipc": "host",
             "restart": "on-failure", "command": ["ros2", "launch", "map"], "volumes": volumes,
-            "depends_on": {"map-check": {"condition": "service_completed_successfully", "required": True}},
+            "depends_on": {"prepare": {"condition": "service_completed_successfully", "required": True}},
         },
         "control": {
             "image": "ghcr.io/x/oak@sha256:abc", "container_name": "autoware-control", "network_mode": "host",
@@ -64,7 +64,7 @@ def test_units_keep_the_compose_behaviour(tmp_path, monkeypatch):
     assert 'Environment="TEXT=a b"' in control and "Environment=ROS_DOMAIN_ID=1" in control
     assert "HOST_UID" not in control and "HOST_GID" not in control
     assert "RunInit" not in control
-    check = unit(output, "autoware-map-check")
+    check = unit(output, "autoware-prepare")
     assert "Type=oneshot\nRemainAfterExit=yes" in check and "Restart=" not in check
     assert "RunInit=true" in check and "PodmanArgs=--entrypoint=bash" in check
     assert r'Exec=-lc "echo \"$${f}\" 100%%\n"' in check
@@ -149,7 +149,7 @@ def test_an_image_without_a_tag_or_digest_is_not_embedded(tmp_path, reference):
     (lambda m: m["services"]["control"].update(pid="host"), "pid"),
     (lambda m: m["services"]["map"]["volumes"][0].update(read_only=False), "writable"),
     (lambda m: m["services"]["map"]["volumes"][0].update(source="/no/such/file"), "does not exist"),
-    (lambda m: m["services"]["map"]["depends_on"]["map-check"].update(condition="service_healthy"), "service_healthy"),
+    (lambda m: m["services"]["map"]["depends_on"]["prepare"].update(condition="service_healthy"), "service_healthy"),
     (lambda m: m["services"]["map"].update(healthcheck={"test": ["CMD", "true"]}), "CMD-SHELL healthcheck"),
     (lambda m: m["services"]["map"].update(healthcheck={"test": ["CMD-SHELL", "a\nb"]}), "several lines"),
     (lambda m: m["services"]["map"].update(restart="unless-stopped"), "restart: unless-stopped"),
@@ -171,12 +171,12 @@ def test_dependencies_keep_whether_they_are_required_and_restart_together(tmp_pa
     monkeypatch.chdir(tmp_path)
     data = model(tmp_path)
     data["services"]["control"]["depends_on"]["map"].update(restart=True)
-    data["services"]["control"]["depends_on"]["map-check"] = {"condition": "service_started", "required": False}
+    data["services"]["control"]["depends_on"]["prepare"] = {"condition": "service_started", "required": False}
     output = tmp_path / "out"
     quadlet.write(data, output, [])
     control = unit(output, "autoware-control").splitlines()
     assert "PartOf=autoware-map.service" in control
-    assert "Wants=autoware-map-check.service" in control and "Requires=autoware-map-check.service" not in control
+    assert "Wants=autoware-prepare.service" in control and "Requires=autoware-prepare.service" not in control
 
 
 def test_a_service_without_a_container_name_takes_compose_s_name(tmp_path, monkeypatch):
@@ -252,7 +252,7 @@ def test_planning_simulation_translates_from_openadkit_config(tmp_path):
     data = json.loads(result.stdout)
     data["services"].pop("visualizer")
     names = set(data["services"])
-    oneshots = {"map-check"}
+    # Planning Simulation waits on no service to finish.
     for name, service in data["services"].items():
-        assert "[Container]" in quadlet.translate(name, service, data["services"], oneshots)
+        assert "[Container]" in quadlet.translate(name, service, data["services"], set())
     assert {"map", "control", "planning"} <= names

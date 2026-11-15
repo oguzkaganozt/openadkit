@@ -241,7 +241,7 @@ def bake_recipe(inventory, prepared, target, distro, platform, *, publish, commo
         # The Autoware an image is built from, in the project's own label
         # namespace; metadata-action adds the OCI ones, the commit among them.
         labels = {f"{LABEL_NAMESPACE}{name}": prepared[key] for name, key in (
-            ("autoware-version", "autoware_base_version"), ("autoware-ref", "autoware_ref"),
+            ("autoware-version", "autoware_version"), ("autoware-ref", "autoware_ref"),
             ("autoware-lock-sha256", "autoware_lock_sha256"),
         )}
     else:

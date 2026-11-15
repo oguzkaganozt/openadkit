@@ -119,6 +119,7 @@ nav:
       - releases/index.md
       - Container Images: releases/container-images.md
       - Compatibility: releases/compatibility.md
+      - Manifest and Output Reference: releases/reference.md
       - Evidence Policy: releases/evidence.md
       - Verify a Release: releases/verification.md
   - Development:

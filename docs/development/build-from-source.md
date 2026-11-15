@@ -37,10 +37,10 @@ compiles and only refreshes and reassembles the runtime images.
 
 | Group | Targets |
 |-------|---------|
-| `universe-common` | `universe-common-devel`, `universe-common` |
+| `common` | `universe-common-devel`, `universe-common` |
 | `component` | all component images, including the amd64-only `sensing-perception-cuda` and `planning-cuda` |
 | `planning-simulation` | `universe-common` plus the images Planning Simulation needs (local builds) |
-| `default` | `universe-common` + `component` |
+| `default` | `common` + `component` |
 
 CI publishes every image to `{{ registry }}`.
 

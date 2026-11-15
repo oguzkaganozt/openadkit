@@ -38,7 +38,7 @@ def test_a_release_is_a_build_of_its_branch_on_an_autoware_release(tmp_path, dis
     build.mkdir(parents=True)
     (build / "build-metadata.json").write_text(json.dumps({
         "openadkit_sha": RELEASE_SHA, "autoware_input_ref": input_ref,
-        "autoware_ref_type": ref_type, "autoware_base_version": "2.0.0",
+        "autoware_ref_type": ref_type, "autoware_version": "2.0.0",
     }))
     result = run_validator(tmp_path, f"source_branch={branch}; validate_release_rules", GITHUB_REF=f"refs/heads/{dispatch}")
     assert (result.returncode == 0) is accepted, result.stderr
@@ -50,7 +50,7 @@ def test_a_version_is_open_ad_kits_own(tmp_path, version):
     build.mkdir(parents=True)
     (build / "build-metadata.json").write_text(json.dumps({
         "openadkit_sha": RELEASE_SHA, "autoware_input_ref": "2.0.0",
-        "autoware_ref_type": "tag", "autoware_base_version": "2.0.0",
+        "autoware_ref_type": "tag", "autoware_version": "2.0.0",
     }))
     result = run_validator(tmp_path, "validate_inputs; source_branch=main; validate_release_rules",
                            VERSION=version, GITHUB_REF="refs/heads/main")
@@ -395,7 +395,7 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     context = json.loads((root / "openadkit.json").read_text())
     assert context["kind"] == "release" and set(context["images"]) == {"humble", "jazzy"}
     listed = subprocess.run([str(root / "openadkit"), "list", "--json"], env=env, text=True, capture_output=True, check=True)
-    assert [entry["integrity"] for entry in json.loads(listed.stdout)["deployments"]] == ["intact"] * len(context["deployments"])
+    assert [entry["modified"] for entry in json.loads(listed.stdout)["deployments"]] == [False] * len(context["deployments"])
     assert "humble|" in calls.read_text() and "jazzy|" in calls.read_text()
     (tmp_path / "dist/stale.tar.gz").write_bytes(b"stale")
     run_packager(tmp_path, env, umask="077")

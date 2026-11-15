@@ -524,19 +524,54 @@ def scale_to_zero(services: set[str]) -> list[str]:
     return [f"--scale={service}=0" for service in sorted(services)]
 
 
+def unhealthy_reasons(containers: list[dict[str, Any]]) -> dict[str, str]:
+    """The unhealthy services among inspected containers, each with what its
+    last healthcheck printed, such as the node that died."""
+    reasons = {}
+    for container in containers:
+        health = (container.get("State") or {}).get("Health") or {}
+        if health.get("Status") == "unhealthy":
+            output = (health.get("Log") or [{}])[-1].get("Output") or ""
+            service = container["Config"]["Labels"]["com.docker.compose.service"]
+            reasons[service] = "; ".join(output.split("\n")[:-1] or [output]).strip()
+    return reasons
+
+
+def explain_failed_start(deployment: Deployment, selection: Selection) -> str | None:
+    """Why `up --wait` failed, where a healthcheck says so: Compose only names
+    the unhealthy container."""
+    ids = run_compose(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    inspected = docker(["docker", "inspect", *ids], check=False, trace=False) if ids else None
+    try:
+        containers = json.loads(inspected.stdout) if inspected else []
+    except ValueError:
+        return None
+    unhealthy = unhealthy_reasons(containers if isinstance(containers, list) else [])
+    if not unhealthy:
+        return None
+    lines = [f"{service} is unhealthy" + (f": {reason}" if reason else "") for service, reason in sorted(unhealthy.items())]
+    return "\n".join([*lines, f"see: openadkit logs {' '.join(sorted(unhealthy))}"])
+
+
 def up(deployment: Deployment, selection: Selection, arguments: list[str]) -> None:
     """`compose up`, held to one readiness policy for run and restart:
     healthchecks pass within the deployment's waitTimeout, then no service
     crashes, restarts or exits while the stack settles. One-shot services
     may finish, but not fail."""
     baseline = restart_counts(deployment, selection)
-    run_compose(
-        deployment,
-        selection,
-        ["up", "--detach", "--wait", "--wait-timeout", str(deployment.compose["waitTimeout"]),
-         "--pull", "never", *arguments],
-        show=True,
-    )
+    try:
+        run_compose(
+            deployment,
+            selection,
+            ["up", "--detach", "--wait", "--wait-timeout", str(deployment.compose["waitTimeout"]),
+             "--pull", "never", *arguments],
+            show=True,
+        )
+    except OpenADKitError as error:
+        reason = explain_failed_start(deployment, selection)
+        if reason is None:
+            raise
+        raise OpenADKitError(reason) from error
     check_services_stay_up(deployment, selection, baseline)
     report_overrides(deployment, selection)
 
@@ -761,10 +796,17 @@ def build_container(name: str, workspace: Path, image: str, colcon: Sequence[str
 
 
 def check_overlay_build(deployment: Deployment, selection: Selection, image: str | None) -> str | None:
-    """Warn about an overlay install that build made for another image."""
-    stamp = read_overlay_stamp(deployment.workspace)
+    """Warn about an overlay workspace that holds packages but no build, or
+    an install that build made for another image."""
+    workspace = deployment.workspace
+    stamp = read_overlay_stamp(workspace)
     if stamp is None:
-        return None
+        source = workspace / "src"
+        if (workspace / "install").exists() or not source.is_dir() or next(source.rglob("package.xml"), None) is None:
+            return None
+        warning = f"{workspace} holds packages that are not built; build it: openadkit build {workspace}"
+        print(f"warning: overlay workspace: {warning}", file=sys.stderr)
+        return warning
     if stamp.get("rosDistro") == selection.ros_distro and (not image or stamp.get("image") == image):
         return None
     warning = (

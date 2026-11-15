@@ -101,7 +101,7 @@ def test_invalid_build_inputs_fail_closed(tmp_path, monkeypatch):
 def test_shared_build_recipe_keeps_pins_provenance_and_local_graphs(target, publish, local):
     uri = "docker-image://example/base@sha256:" + "c" * 64
     prepared = {"build_tag": "123-1", "cache_scope": "main", "autoware_input_ref": "1.8.0", "autoware_ref_type": "tag",
-                "autoware_ref": "a" * 40, "autoware_base_version": "1.8.0", "autoware_lock_sha256": "e" * 64,
+                "autoware_ref": "a" * 40, "autoware_version": "1.8.0", "autoware_lock_sha256": "e" * 64,
                 "upstream_images": json.dumps({"humble": {name: {"uri": uri} for name in ("core-devel", "base", "base-cuda-runtime", "base-cuda-devel")}}),
                 "use_local_common": str(local).lower()}
     if not local:

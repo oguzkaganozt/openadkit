@@ -23,6 +23,7 @@ from compose import (
     read_run_state,
     remove_run_state,
     stopped_project_files,
+    unhealthy_reasons,
 )
 from manifest import OpenADKitError
 from settings import docker_environment
@@ -115,15 +116,8 @@ def visualizer_address(tls: bool) -> str:
 
 
 def unhealthy_services(project: str) -> dict[str, str]:
-    """Unhealthy services with what their last healthcheck printed, such as
-    the node that died."""
-    reasons = {}
-    for container in running_containers(project):
-        health = (container.get("State") or {}).get("Health") or {}
-        if health.get("Status") == "unhealthy":
-            output = (health.get("Log") or [{}])[-1].get("Output") or ""
-            reasons[service_of(container)] = "; ".join(output.split("\n")[:-1] or [output]).strip()
-    return reasons
+    """The project's unhealthy services, each with its reason."""
+    return unhealthy_reasons(running_containers(project))
 
 
 def status(project: str) -> None:

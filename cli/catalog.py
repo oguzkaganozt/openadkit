@@ -287,6 +287,8 @@ class Deployment:
         self.verify: dict[str, Any] | None = manifest["verify"]
         # A kit deployment that names no verify step runs its base's.
         self.verify_inherited = False
+        # A kit only: the base's data resources that its own data replaces.
+        self.replaced_data: list[dict[str, Any]] = []
         # Services that run once and exit, read from each Compose model (compose.one_shot_services).
         self.one_shots: dict[tuple[str | None, bool], set[str]] = {}
         # Why CI cannot produce evidence for this deployment, if it cannot.
@@ -314,9 +316,11 @@ class Deployment:
             "OPENADKIT_CONFIG_DEPLOYMENT": directory / "config",
             "OPENADKIT_OVERLAY_WS": (root if base else directory) / "overlay_ws",
         }
+        # What a kit's Compose files and settings name their paths with.
         self.kit_environment = {
             "OPENADKIT_ROOT": str(base.root),
             "OPENADKIT_BASE_DEPLOYMENT": str(base.directory),
+            "OPENADKIT_KIT": str(root),
         } if base else {}
 
     def project_name(self, role: str | None = None) -> str:
@@ -436,6 +440,7 @@ def _load_kit_deployment(
     # Its own data replaces the base's with the same destination, as its
     # settings replace the base's: its own recording instead of the sample.
     replaced = {item["destinationEnv"] for item in own_data}
+    replaced_data = [item for item in base_data if item["destinationEnv"] in replaced]
     base_data = [item for item in base_data if item["destinationEnv"] not in replaced]
     repeated = sorted({item["name"] for item in base_data} & {item["name"] for item in own_data})
     if repeated:
@@ -459,6 +464,7 @@ def _load_kit_deployment(
     }
     deployment = Deployment(root, directory, merged, base=base)
     deployment.verify_inherited = own_verify is None
+    deployment.replaced_data = replaced_data
     deployment.compose_files(False)
     deployment.env_files()
     return deployment
@@ -649,19 +655,18 @@ def deployment_checksum(directory: Path, *, exclude_dirs: tuple[str, ...] = ()) 
     return digest.hexdigest()
 
 
-def deployment_integrity(
+def deployment_modified(
     root: Path,
     deployment: Deployment,
     catalog: Catalog,
-) -> str:
+) -> bool | None:
+    """Whether a release's deployment differs from the files the release came
+    with. None where nothing vouches for the files: a source checkout or a kit."""
     if catalog.kind != "release":
-        return "source"
-    expected = catalog.deployments[deployment.name].checksum
-    if expected != deployment_checksum(deployment.directory):
-        return "modified"
-    if not all(
+        return None
+    if catalog.deployments[deployment.name].checksum != deployment_checksum(deployment.directory):
+        return True
+    return not all(
         catalog.shared.get(name) == deployment_checksum(root / "deployments" / name)
         for name in deployment.shared
-    ):
-        return "modified"
-    return "intact"
+    )

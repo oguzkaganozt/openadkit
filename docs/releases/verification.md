@@ -34,7 +34,7 @@ jq -r --arg name "openadkit-$VERSION.tar.gz" \
   | sha256sum --check
 ```
 
-Review the metadata: `.openadkit_version` names the requested version, `.bom`
+Review the metadata: `.version` names the requested version, `.bom`
 the pinned Autoware release and image digests, and `.evidence` the tested
 commit (`source_sha`), the passing cells, the CI exemptions (`exempt`) and the
 `url` of the evidence run the release gate accepted.

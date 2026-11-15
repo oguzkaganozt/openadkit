@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import types
 import zipfile
 from pathlib import Path
 
@@ -272,7 +273,7 @@ def release_bin(tmp_path, version="v1.2.3", *, bad_checksum=False, member=None):
                 archive.addfile(info, io.BytesIO(payload))
     # A later release may list more bundles; the installer takes the one it knows by name.
     (release / "release-metadata.json").write_text(json.dumps({
-        "openadkit_version": version, "autoware_base_version": "1.9.0", "bundles": [
+        "version": version, "bom": {"autoware": {"version": "1.9.0"}}, "bundles": [
             {"name": f"{root_name}-extra.tar.gz", "sha256": "f" * 64},
             {"name": bundle.name,
              "sha256": "0" * 64 if bad_checksum else hashlib.sha256(bundle.read_bytes()).hexdigest()}],
@@ -339,6 +340,21 @@ def test_an_installed_version_becomes_active_without_a_download(tmp_path):
     installed(tmp_path, "v1.3.0").unlink()
     result = install(tmp_path, newer)
     assert result.returncode != 0 and "is not an installed release" in result.stderr
+
+
+def test_a_failed_download_exits_1_with_an_error_line(tmp_path):
+    offline = tmp_path / "offline"
+    executable(offline / "curl", "#!/usr/bin/env bash\nexit 22\n")
+    result = install(tmp_path, offline)
+    assert result.returncode == 1, result.stderr
+    assert "error: could not download the release metadata of the latest release" in result.stderr
+    result = install(tmp_path, offline, "--version", "v1.2.3")
+    assert result.returncode == 1 and "error: could not download the release metadata of v1.2.3" in result.stderr
+    # upgrade resolves the latest release through the same installer.
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=offline)
+    assert result.returncode == 1 and "error: could not download the release metadata" in result.stderr
 
 
 def test_uninstall_all_removes_kept_releases_but_not_lookalike_directories(tmp_path):
@@ -431,13 +447,47 @@ def test_validate_json_reports_an_invalid_deployment_as_json(tmp_path, name):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path)
     result = run_cli(root, "validate", *name, "--json")
-    assert result.returncode == 1
+    # A missing name is a usage error; it too comes as one JSON document.
+    assert result.returncode == (1 if name else 2)
     document = json.loads(result.stdout)
     assert document["valid"] is False and document["error"]
+    assert name or document["error"] == "deployment name required; available: example"
     valid = json.loads(run_cli(root, "validate", "example", "--json").stdout)
     assert valid["valid"] is True and valid["deployment"] == "example"
     listed = json.loads(run_cli(root, "list", "--json").stdout)["deployments"]
-    assert [entry["integrity"] for entry in listed] == ["source"]
+    # Nothing vouches for a source checkout's files.
+    assert [entry["modified"] for entry in listed] == [None]
+
+
+def test_the_json_output_has_the_fields_the_reference_lists(tmp_path):
+    # docs/releases/reference.md lists these fields, and 2.0 freezes them: a
+    # field that goes or changes its name is a breaking change.
+    document = manifest(data=[files_resource(tmp_path)]) | {"verify": {"service": "app", "command": ["true"]}}
+    root, _ = runtime_tree(tmp_path, release=True, document=document)
+    fake_docker(tmp_path, services=("app",))
+
+    def output(*args):
+        return json.loads(run_cli(root, *args).stdout)
+
+    listed = output("list", "--json")
+    assert set(listed) == {"schemaVersion", "deployments"}
+    assert set(listed["deployments"][0]) == {"name", "description", "gpu", "modified"}
+    version = output("version", "--json")
+    assert set(version) == {"schemaVersion", "kind", "version", "commit", "extends", "bom"}
+    assert set(version["bom"]) == {"autoware", "images", "externalImages"}
+    assert set(version["bom"]["autoware"]) == {"version", "ref", "lockSha256"}
+    valid = output("validate", "example", "--data", "--json")
+    assert set(valid) == {"schemaVersion", "deployment", "valid", "base", "rosDistro", "gpu", "role", "dataValid", "data"}
+    assert set(valid["data"][0]) == {"name", "status"}
+    assert set(output("validate", "missing", "--json")) == {"schemaVersion", "deployment", "valid", "error"}
+    assert run_cli(root, "run", "example", "--verify").returncode == 0
+    record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
+    assert set(record) == {"schemaVersion", "deployment", "role", "rosDistro", "gpu", "version", "extends", "images",
+                           "modelSha256", "configSha256", "overlaySha256", "readySeconds", "verify"}
+    assert set(record["configSha256"]) == {"base", "kit", "deployment"}
+    assert set(record["verify"]) == {"service", "seconds", "exitCode", "result"}
+    for document in (listed, version, valid, record):
+        assert document["schemaVersion"] == 1
 
 
 def test_list_shows_name_gpu_and_description(tmp_path):
@@ -541,6 +591,21 @@ def test_upgrade_never_downgrades(tmp_path):
     result = command(installed(tmp_path, "v1.3.0"), "upgrade", home=tmp_path / "home", bin_dir=release_bin(tmp_path))
     assert result.returncode == 0 and "nothing to upgrade" in result.stdout
     assert (tmp_path / "home/.local/bin/openadkit").resolve() == installed(tmp_path, "v1.3.0")
+
+
+def test_upgrade_crosses_a_major_version_and_says_so(tmp_path):
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    minor, major = release_bin(tmp_path, "v1.3.0"), release_bin(tmp_path, "v2.0.0")
+    note = "v2.0.0 is a major release: its release notes list the breaking changes"
+    result = command(launcher, "upgrade", "--check", home=tmp_path / "home", bin_dir=minor)
+    assert result.returncode == 0 and "major release" not in result.stdout, result.stderr
+    result = command(launcher, "upgrade", "--check", home=tmp_path / "home", bin_dir=major)
+    assert result.returncode == 0 and note in result.stdout, result.stderr
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=major)
+    assert result.returncode == 0, result.stderr
+    assert f"{note}. To go back, run: openadkit install --version v1.2.3" in result.stdout
+    assert launcher.resolve() == installed(tmp_path, "v2.0.0")
 
 
 @pytest.mark.parametrize("unsafe", ["running", "launcher"])
@@ -934,10 +999,43 @@ def test_data_file_shipped_with_the_deployment_installs_by_checksum(tmp_path):
     assert (tmp_path / "home/data/map/required.txt").read_text() == "shipped"
 
 
-def test_data_file_takes_exactly_one_of_url_and_source(tmp_path):
+def test_data_file_takes_exactly_one_of_url_source_and_content(tmp_path):
     resource = files_resource(tmp_path)
     resource["files"][0]["source"] = "data/map.txt"
-    with pytest.raises(cli_manifest.OpenADKitError, match="exactly one of url and source"):
+    with pytest.raises(cli_manifest.OpenADKitError, match="exactly one of url, source and content"):
+        cli_manifest.validate_data([resource], {}, tmp_path)
+
+
+def test_the_recipe_of_the_data_marker_is_frozen():
+    # Releases on one host share installed data: another recipe would make each
+    # of them take the other's data for outdated and download it again in turns.
+    archive = {"name": "map", "kind": "zip", "destinationEnv": "MAP_PATH", "url": "https://example.com/a.zip",
+               "sha256": "a" * 64, "expectedRoot": "map", "files": []}
+    files = {"name": "map", "kind": "files", "destinationEnv": "MAP_PATH", "files": [
+        {"path": "b.osm", "url": "https://example.com/b.osm", "sha256": "b" * 64},
+        {"path": "a.yaml", "content": "projector_type: Local\n"}]}
+    assert cli_data.source_digest(archive) == "48bdc21d1bd90c55265f864f54d4816771394bda85df61fbc1eb403ef1eb2fe6"
+    assert cli_data.source_digest(files) == "7e6892c3375143b67166e636424e2f4b58e01843ed1ea076978cf70279e7556f"
+    # A mirror of the same bytes is the same data.
+    assert cli_data.source_digest(archive | {"url": "https://mirror.example.com/a.zip"}) == cli_data.source_digest(archive)
+
+
+def test_a_data_file_can_be_written_out_from_the_manifest(tmp_path, monkeypatch):
+    # A short file, such as a map's projection, needs no download and no checksum.
+    resource = files_resource(tmp_path)
+    resource["files"].append({"path": "projector.yaml", "content": "projector_type: Local\n"})
+    resource["requiredFiles"].append("projector.yaml")
+    cli_manifest.validate_data([resource], {}, tmp_path)
+    target = tmp_path / "installed"
+    monkeypatch.setattr(cli_data, "resolve_destination", lambda *_: target)
+    cli_data.install_resource(resource, None, force=False)
+    assert (target / "projector.yaml").read_text() == "projector_type: Local\n"
+    # Other content is another declaration: the installed data is then outdated.
+    assert not cli_data.is_outdated(target, resource)
+    resource["files"][-1]["content"] = "projector_type: MGRS\n"
+    assert cli_data.is_outdated(target, resource)
+    resource["files"][-1]["sha256"] = "0" * 64
+    with pytest.raises(cli_manifest.OpenADKitError, match="sha256 is invalid with content"):
         cli_manifest.validate_data([resource], {}, tmp_path)
 
 
@@ -1081,7 +1179,6 @@ def test_checksum_failure_preserves_managed_data_and_cleans_staging(tmp_path, mo
     # Exercise download validation, not the earlier unmanaged-target refusal.
     resource = files_resource(tmp_path)
     resource["files"][0]["sha256"] = "0" * 64
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     target.mkdir()
     (target / cli_data.MARKER).write_text("{}")
@@ -1356,7 +1453,6 @@ def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeyp
 @pytest.mark.parametrize("race", ["appeared", "replaced", "unmarked"])
 def test_forced_fetch_preserves_targets_changed_during_publication(tmp_path, monkeypatch, race):
     resource = files_resource(tmp_path)
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     if race != "appeared":
         target.mkdir()
@@ -1384,7 +1480,6 @@ def test_forced_fetch_preserves_targets_changed_during_publication(tmp_path, mon
 
 def test_forced_fetch_replaces_managed_data_and_removes_the_old(tmp_path):
     resource = files_resource(tmp_path)
-    resource["generatedFiles"] = {}
     target = tmp_path / "installed"
     target.mkdir()
     (target / cli_data.MARKER).write_text("{}")
@@ -1400,7 +1495,7 @@ class SettingsDeployment:
 
     def __init__(self, directory, files, gpu_files, data):
         self.name, self.directory, self.data, self.roles = "example", directory, data, {}
-        self.working_directory = directory
+        self.working_directory, self.base = directory, None
         self.files, self.gpu_files = files, gpu_files
         self.output_directory, self.kit_environment, self.overlay_paths = directory / "output", {}, {}
         self.requirements = {"rosDistros": ["humble", "jazzy"]}
@@ -1527,7 +1622,7 @@ def test_clean_lists_what_it_deletes_and_needs_yes_without_a_terminal(tmp_path):
     assert "no data of custom is installed" in run_cli(root, "clean", "custom", directory=kit).stdout
 
 
-@pytest.mark.parametrize("unsafe", ["unmanaged", "file", "symlink", "marker-symlink", "running"])
+@pytest.mark.parametrize("unsafe", ["file", "symlink", "running"])
 def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     resources = [files_resource(tmp_path), files_resource(tmp_path, env="SECOND_PATH", name="second")]
     root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
@@ -1537,17 +1632,12 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
         target.mkdir(parents=True)
         (target / cli_data.MARKER).write_text("{}")
         (target / "required.txt").write_text("keep")
-    if unsafe == "unmanaged":
-        (second / cli_data.MARKER).unlink()
-    elif unsafe == "file":
+    if unsafe == "file":
         shutil.rmtree(second)
         second.write_text("keep")
     elif unsafe == "symlink":
         second.rename(tmp_path / "outside")
         second.symlink_to(tmp_path / "outside")
-    elif unsafe == "marker-symlink":
-        (second / cli_data.MARKER).unlink()
-        (second / cli_data.MARKER).symlink_to(first / cli_data.MARKER)
     fake_docker(tmp_path, projects=["openadkit-example"] if unsafe == "running" else [])
     result = run_cli(root, "clean", "example", "--yes")
     assert result.returncode != 0
@@ -1557,6 +1647,43 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     assert message in result.stderr
     assert (first / "required.txt").read_text() == "keep"
     assert second.exists()
+
+
+@pytest.mark.parametrize("marker", ["none", "symlink"])
+def test_a_directory_the_cli_did_not_install_is_the_users_own(tmp_path, marker):
+    # Their own map, with their own file names: used as it is, never checked, replaced or removed.
+    resources = [files_resource(tmp_path), files_resource(tmp_path, env="SECOND_PATH", name="second")]
+    root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
+                           config="MAP_PATH=$HOME/data/map\nSECOND_PATH=$HOME/data/second\n")
+    installed, own = tmp_path / "home/data/map", tmp_path / "home/data/second"
+    for target in (installed, own):
+        target.mkdir(parents=True)
+        (target / cli_data.MARKER).write_text("{}")
+    (installed / "required.txt").write_text("installed")
+    (installed / cli_data.MARKER).write_text(json.dumps({"source": cli_data.source_digest(resources[0])}))
+    (own / cli_data.MARKER).unlink()
+    (own / "my-own-name.osm").write_text("mine")
+    if marker == "symlink":
+        # A marker that only links to one vouches for nothing.
+        (own / cli_data.MARKER).symlink_to(installed / cli_data.MARKER)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", "example", "--data", "--json")
+    document = json.loads(result.stdout)
+    assert document["dataValid"] is True, result.stderr
+    assert {"name": "second", "status": "own"} in document["data"]
+    assert "data second: your own directory, not checked" in run_cli(root, "validate", "example", "--data").stdout
+    result = run_cli(root, "fetch", "example", "--force")
+    assert result.returncode == 0 and f"using your own data: {own}" in result.stdout, result.stderr
+    result = run_cli(root, "clean", "example", "--yes")
+    assert result.returncode == 0, result.stderr
+    assert str(own) not in result.stdout and not installed.exists()
+    assert (own / "my-own-name.osm").read_text() == "mine"
+    # An empty directory holds nothing to use, and is not the CLI's to replace.
+    (own / "my-own-name.osm").unlink()
+    if marker == "symlink":
+        (own / cli_data.MARKER).unlink()
+    result = run_cli(root, "validate", "example", "--data")
+    assert result.returncode == 1 and "remove it and run: openadkit fetch example" in result.stderr
 
 
 @pytest.mark.parametrize(("name", "status", "shared"), [("custom", "running", True), ("example", "paused", True),
@@ -2054,6 +2181,21 @@ def test_a_kits_data_replaces_its_bases_at_the_same_destination(tmp_path):
         data_with(files_resource(tmp_path, env="ROSBAG_PATH", name="dataset"))
 
 
+def test_a_kits_replacement_data_needs_a_directory_of_its_own(tmp_path):
+    # Left in the base's directory, the two would replace each other's files.
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]))
+    kit = extending_kit(tmp_path, root)
+    edit_kit_deployment(kit, data=[files_resource(tmp_path, name="my-map")])
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 1
+    assert ("data my-map replaces dataset of example, but MAP_PATH still names that deployment's directory; "
+            "set MAP_PATH in the kit's settings.env") in result.stderr
+    (kit / "settings.env").write_text("MAP_PATH=$HOME/data/my-map\n")
+    result = run_cli(root, "validate", "custom", directory=kit)
+    assert result.returncode == 0, result.stderr
+
+
 def test_a_deployment_on_a_base_narrows_its_requirements_but_never_widens_them(tmp_path):
     gpu_data = files_resource(tmp_path, env="MODEL_PATH", name="model", gpu=True)
     document = manifest(gpu=True, data=[files_resource(tmp_path), gpu_data])
@@ -2138,8 +2280,15 @@ def test_a_deployment_can_be_named_by_its_directory(tmp_path):
     result = run_cli(root, "validate", str(kit), directory=elsewhere)
     assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
     edit_manifest(kit, lambda document: document["deployments"].update(second={"base": "example"}))
+    # With several, it is the kit, as inside it: validate checks each, and run needs one of them.
+    result = run_cli(root, "validate", str(kit), directory=elsewhere)
+    assert result.returncode == 0 and "custom is valid" in result.stdout and "second is valid" in result.stdout, result.stderr
     result = run_cli(root, "run", str(kit), directory=elsewhere)
-    assert result.returncode != 0 and "has several deployments; name one: custom, second" in result.stderr
+    assert result.returncode == 2, result.stderr
+    assert (f"{kit} has several deployments; name one by its directory: "
+            f"{kit}/deployments/custom, {kit}/deployments/second") in result.stderr
+    result = run_cli(root, "validate", str(kit), "--json", directory=elsewhere)
+    assert result.returncode == 2 and "name one by its directory" in json.loads(result.stdout)["error"]
     # A deployment's directory names it, even while it holds no file.
     result = run_cli(root, "validate", str(kit / "deployments/second"), directory=elsewhere)
     assert result.returncode == 0 and "second is valid" in result.stdout, result.stderr
@@ -2230,6 +2379,100 @@ def test_reading_a_kit_neither_runs_nor_downloads_what_it_pins(tmp_path, pinned)
     # A command that acts hands over to the pinned launcher, or downloads the release.
     run_cli(root, "validate", "custom", directory=kit)
     assert acted.exists()
+
+
+def test_reading_a_kit_runs_with_its_pinned_release_once_that_is_installed(tmp_path):
+    # An older openadkit never has to read the manifests of a newer release.
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root, extends="v1.2.3")
+    record = tmp_path / "delegated"
+    pinned = tmp_path / "home/.local/share/openadkit/openadkit-v1.2.3"
+    pinned.mkdir(parents=True)
+    (pinned / "openadkit.json").write_text('{"schemaVersion":2,"kind":"release","fieldOfANewerRelease":1}')
+    executable(pinned / "openadkit", f'#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "{record}"\necho custom\n')
+    for args in (["list"], ["list", "--json"], ["version"]):
+        result = run_cli(root, *args, directory=kit)
+        assert result.returncode == 0, result.stderr
+    assert record.read_text().splitlines() == ["list", "list --json", "version"]
+    # Help is this CLI's own, as before.
+    assert run_cli(root, "list", "--help", directory=kit).returncode == 0
+    assert len(record.read_text().splitlines()) == 3
+
+
+def test_a_failed_start_names_the_unhealthy_service_and_its_reason(monkeypatch):
+    # Compose only says "container autoware-map is unhealthy".
+    def container(service, status, output=""):
+        return {"Config": {"Labels": {"com.docker.compose.service": service}},
+                "State": {"Health": {"Status": status, "Log": [{"Output": "old\n"}, {"Output": output}]}}}
+
+    inspected = [container("map", "unhealthy", "pointcloud_map_loader-1 died with exit code -6\n"),
+                 container("planning", "healthy"), {"Config": {"Labels": {"com.docker.compose.service": "rosbag"}}, "State": {}}]
+
+    def run_compose(deployment, selection, arguments, **options):
+        if arguments[0] == "up":
+            raise cli_manifest.OpenADKitError("command failed with exit code 1: docker")
+        return types.SimpleNamespace(stdout="a b c\n" if arguments[0] == "ps" else "")
+
+    monkeypatch.setattr(cli_compose, "run_compose", run_compose)
+    monkeypatch.setattr(cli_compose, "restart_counts", lambda *_: {})
+    monkeypatch.setattr(cli_compose, "docker", lambda *_, **__: types.SimpleNamespace(stdout=json.dumps(inspected)))
+    deployment = types.SimpleNamespace(compose={"waitTimeout": 5})
+    with pytest.raises(cli_manifest.OpenADKitError) as error:
+        cli_compose.up(deployment, None, [])
+    assert str(error.value) == ("map is unhealthy: pointcloud_map_loader-1 died with exit code -6\n"
+                                "see: openadkit logs map")
+    # Without an unhealthy service, the failure stays Compose's own.
+    inspected[0] = container("map", "healthy")
+    with pytest.raises(cli_manifest.OpenADKitError, match="command failed with exit code 1"):
+        cli_compose.up(deployment, None, [])
+
+
+def test_a_kit_names_the_files_it_does_not_read(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    fake_docker(tmp_path)
+    assert "warning" not in run_cli(root, "validate", directory=kit).stderr
+    (kit / "compose.yaml").write_text("services: {}\n")
+    misspelled = kit / "deployments/custmo"
+    misspelled.mkdir()
+    (misspelled / "settings.env").write_text("VALUE=lost\n")
+    (kit / "deployments/custom/compose.gpu.yaml").write_text("services: {}\n")
+    # A directory of fragments that several deployments include is the kit's own business.
+    (kit / "deployments/fragments").mkdir()
+    (kit / "deployments/fragments/ota-agent.yaml").write_text("services: {}\n")
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode == 0, result.stderr
+    warnings = [line for line in result.stderr.splitlines() if line.startswith("warning: this kit does not read ")]
+    assert [line.removeprefix("warning: this kit does not read ").split(":")[0] for line in warnings] == [
+        "compose.yaml at its root", "deployments/custmo/", "deployments/custom/compose.gpu.yaml",
+    ]
+
+
+@NEEDS_COMPOSE
+def test_a_kit_names_its_own_files_by_its_root(tmp_path):
+    # A relative path in a setting would resolve inside the base, where its Compose file is.
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    (kit / "settings.env").write_text("MAP_PATH=${OPENADKIT_KIT}/maps/mine\n")
+    deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+    selection = cli_settings.resolve(deployment, cli_catalog.load_catalog(kit), data_only=True)
+    assert selection.environment["MAP_PATH"] == f"{kit}/maps/mine"
+
+
+def test_a_workspace_with_packages_but_no_build_is_named(tmp_path, capsys):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+    selection = types.SimpleNamespace(ros_distro="humble")
+    package = kit / "overlay_ws/src/my_vehicle_description"
+    package.mkdir(parents=True)
+    assert cli_compose.check_overlay_build(deployment, selection, None) is None
+    (package / "package.xml").write_text("<package/>")
+    assert "holds packages that are not built" in cli_compose.check_overlay_build(deployment, selection, None)
+    assert f"openadkit build {kit / 'overlay_ws'}" in capsys.readouterr().err
+    # A build made by hand, without the CLI's stamp, is the user's to keep right.
+    (kit / "overlay_ws/install").mkdir()
+    assert cli_compose.check_overlay_build(deployment, selection, None) is None
 
 
 def test_validate_json_reports_a_broken_kit_as_json(tmp_path):

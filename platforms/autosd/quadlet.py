@@ -79,7 +79,7 @@ def unit_name(services: dict[str, Any], service: str) -> str:
     return str(services[service]["container_name"])
 
 
-def translate(name: str, service: dict[str, Any], services: dict[str, Any], oneshots: set[str]) -> str:
+def translate(name: str, service: dict[str, Any], services: dict[str, Any], awaited: set[str]) -> str:
     """The Quadlet unit of one service."""
     unknown = sorted(set(service) - TRANSLATED)
     if unknown:
@@ -141,7 +141,7 @@ def translate(name: str, service: dict[str, Any], services: dict[str, Any], ones
     # Pulling on a host without the embedded images can outlast the default timeout.
     system = ["TimeoutStartSec=0"]
     restart = service.get("restart")
-    if name in oneshots:
+    if name in awaited:
         system += ["Type=oneshot", "RemainAfterExit=yes"]
     elif restart not in (None, "no"):
         if restart not in RESTART:
@@ -264,14 +264,16 @@ def write(model: dict[str, Any], output: Path, without: list[str], root_password
     missing = sorted(set(without) - set(model["services"]))
     if missing:
         raise TranslationError(f"no such service to leave out: {', '.join(missing)}")
-    oneshots = {
+    # The services another one waits on to finish: systemd orders a unit after
+    # them only once they have exited. Not every one-shot service is awaited.
+    awaited = {
         dependency
         for service in services.values()
         for dependency, condition in service.get("depends_on", {}).items()
         if condition["condition"] == "service_completed_successfully"
     }
     # Translate first, so a refusal leaves no partial tree behind.
-    units = {service["container_name"]: translate(name, service, services, oneshots) for name, service in services.items()}
+    units = {service["container_name"]: translate(name, service, services, awaited) for name, service in services.items()}
     sources = mounts(services)
     if root_password_hash:
         for service in services.values():

@@ -105,7 +105,7 @@ def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, re
         require(matches(SHA_RE, metadata.get(key)), f"invalid build {key}")
     string(metadata.get("autoware_input_ref"), "autoware_input_ref")
     require(metadata.get("autoware_ref_type") == "tag", "invalid Autoware ref type")
-    require(matches(VERSION_RE, metadata.get("autoware_base_version")), "invalid Autoware base version")
+    require(matches(VERSION_RE, metadata.get("autoware_version")), "invalid Autoware version")
     for file, key in (("autoware-lock.repos", "autoware_lock_sha256"), ("image-inventory.json", "image_inventory_sha256"), ("upstream-images.json", "upstream_images_sha256")):
         require(matches(HASH_RE, metadata.get(key)), f"invalid {key}")
         require(hashlib.sha256((directory / file).read_bytes()).hexdigest() == metadata[key], f"{file} SHA does not match metadata")
@@ -125,7 +125,7 @@ def validate_artifacts(directory: Path, scan: dict[str, Any], build_tag: str, re
         string(row.get("ros_distro"), "upstream ros_distro")
         string(row.get("ref"), "upstream ref")
         require(matches(DIGEST_RE, row.get("digest")) and row.get("uri") == f'docker-image://{row["ref"]}@{row["digest"]}', "invalid upstream digest/URI")
-    expected_upstream = {(name, distro, f'ghcr.io/autowarefoundation/autoware:{name}-{distro}-{metadata["autoware_base_version"]}')
+    expected_upstream = {(name, distro, f'ghcr.io/autowarefoundation/autoware:{name}-{distro}-{metadata["autoware_version"]}')
                          for name in UPSTREAM_NAMES for distro in inventory["ros_distros"]}
     require(len(upstream) == len(expected_upstream) and {(row["name"], row["ros_distro"], row["ref"]) for row in upstream} == expected_upstream,
             "upstream image metadata does not cover every required Autoware base")
@@ -150,7 +150,7 @@ def capture(directory: Path, env: dict[str, str]) -> dict[str, Any]:
         manifest = observed["manifest"]
         row.update(ref=ref, digest=manifest["digest"], platforms=sorted({f'{item["platform"]["os"]}/{item["platform"]["architecture"]}'
                    for item in manifest["manifests"] if item["platform"]["os"] != "unknown"}))
-    metadata: dict[str, Any] = {key.lower(): env[key] for key in ("BUILD_TAG", "OPENADKIT_SHA", "AUTOWARE_INPUT_REF", "AUTOWARE_REF_TYPE", "AUTOWARE_REF", "AUTOWARE_BASE_VERSION")}
+    metadata: dict[str, Any] = {key.lower(): env[key] for key in ("BUILD_TAG", "OPENADKIT_SHA", "AUTOWARE_INPUT_REF", "AUTOWARE_REF_TYPE", "AUTOWARE_REF", "AUTOWARE_VERSION")}
     # A partial rerun keeps prepare's build tag; the tag, not this attempt, names the images.
     run_id, run_attempt = env["BUILD_TAG"].split("-")
     metadata.update(hashes, run_id=run_id, run_attempt=run_attempt,
@@ -162,7 +162,7 @@ def capture(directory: Path, env: dict[str, str]) -> dict[str, Any]:
 def summary(metadata: dict[str, Any]) -> str:
     """One table for the run page: what was built, on what, and each image's digest."""
     lines = [
-        f'Build `{metadata["build_tag"]}` · Autoware {metadata["autoware_base_version"]} '
+        f'Build `{metadata["build_tag"]}` · Autoware {metadata["autoware_version"]} '
         f'(`{metadata["autoware_ref"][:7]}`) · Open AD Kit `{metadata["openadkit_sha"][:7]}`',
         "",
         "| Image | Distro | Platforms | Digest |",

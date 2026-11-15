@@ -28,7 +28,13 @@ a vehicle, one failed node must not take its whole service down mid-drive.
 - When the process is a component container, such as
   `component_container_mt-1`, one of the nodes it hosts crashed it. The logs
   name that node.
-- `run` and `restart` fail when a node dies while the deployment starts.
+- A service whose launch file starts one process ends with it: `status` then
+  shows the service as exited, and `openadkit restart <service>` starts it
+  again.
+- `run` and `restart` fail when a node dies while the deployment starts, and
+  name the service and the process. A map loader that dies there usually
+  cannot find a file: check `MAP_PATH` and the file names in
+  `LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.
 - The `api` service reports a dead node within three minutes, the others within
   ten seconds: its check also covers Autoware's readiness and runs less often.
 - A component that fails to load into a running container is not a process that

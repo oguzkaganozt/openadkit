@@ -34,18 +34,16 @@ jq \
   --arg bundle_sha256 "${bundle_sha256}" \
   --argjson publish_latest_aliases "${PUBLISH_LATEST_ALIASES}" \
   --slurpfile scan release-input/scan/scan-metadata.json \
-  --argjson evidence_exempt "$(jq -c '.evidence.exempt' "${plan_file}")" \
   --argjson evidence "$(jq -c '.evidence' "${plan_file}")" \
   --argjson bom "$(jq -c '(.releaseContext | {autoware, images, externalImages}) + {rosSnapshots}' "${plan_file}")" \
   '. + {
-    openadkit_version: $version,
+    version: $version,
     release_sha: $release_sha,
     default_ros_distro: $default_ros_distro,
     packager_sha: $packager_sha,
     bundles: [{name: $bundle_name, sha256: $bundle_sha256}],
     latest_aliases_updated: $publish_latest_aliases,
     scan: $scan[0],
-    evidence_exempt: $evidence_exempt,
     evidence: $evidence,
     bom: $bom
   }' \

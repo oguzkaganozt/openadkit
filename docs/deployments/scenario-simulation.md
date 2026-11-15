@@ -51,9 +51,10 @@ mark the deployment as modified and are lost on `upgrade` or `uninstall`.
 
 Scenarios must match the map, and the planning sample map does not work here.
 To use your own map, point `MAP_PATH` at a directory that holds the same files
-as the bundled map, which the CLI checks before starting: `lanelet2_map.osm`,
-`pointcloud_map.pcd`, `global_map_center.pcd.yaml`,
-`lanelet2_map_provider.osm.yaml` and `map.map_publisher.yaml`.
+as the bundled map: `lanelet2_map.osm`, `pointcloud_map.pcd`,
+`global_map_center.pcd.yaml`, `lanelet2_map_provider.osm.yaml` and
+`map.map_publisher.yaml`. The CLI uses your directory as it is and does not
+check it.
 
 This deployment changes one Autoware parameter with a
 [config override](../kits/kit-guide.md#2-config-overrides): a file that holds

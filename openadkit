@@ -79,7 +79,8 @@ download_release_metadata() {
   metadata="${INSTALL_TEMP}/release-metadata.json"
   log "downloading release metadata"
   curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-delay 1 \
-    "$(release_base_url "$requested")/release-metadata.json" -o "${metadata}"
+    "$(release_base_url "$requested")/release-metadata.json" -o "${metadata}" \
+    || fail "could not download the release metadata of ${requested/#latest/the latest release}"
 
   readarray -t release_fields < <(python3 - "${metadata}" "${OPENADKIT_VERSION_RE}" <<'PY'
 import json
@@ -88,7 +89,7 @@ import sys
 
 try:
     metadata = json.load(open(sys.argv[1], encoding="utf-8"))
-    version = metadata["openadkit_version"]
+    version = metadata["version"]
     bundles = metadata["bundles"]
     if not isinstance(version, str) or not re.fullmatch(sys.argv[2], version):
         raise ValueError("invalid Open AD Kit version")
@@ -100,7 +101,7 @@ try:
     if len(named) != 1:
         raise ValueError(f"expected one bundle named {name}")
     digest = named[0]["sha256"]
-    autoware = metadata.get("autoware_base_version") or "unknown"
+    autoware = ((metadata.get("bom") or {}).get("autoware") or {}).get("version") or "unknown"
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("invalid bundle SHA-256")
     print(version, name, digest, autoware, sep="\t")
@@ -187,7 +188,8 @@ install_resolved_release() {
   staged_bundle="${INSTALL_TEMP}/${archive_name}"
   log "downloading ${release_version}"
   curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-delay 1 \
-    "$(release_base_url "$release_version")/${archive_name}" -o "${staged_bundle}"
+    "$(release_base_url "$release_version")/${archive_name}" -o "${staged_bundle}" \
+    || fail "could not download ${archive_name}"
   printf '%s  %s\n' "$expected_sha256" "$staged_bundle" | sha256sum --check --status \
     || fail "checksum verification failed for ${archive_name}"
 
