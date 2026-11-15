@@ -102,7 +102,7 @@ The `openadkit.json` of a release, which its packaging writes:
 | `componentImages` | The component image of each Compose variable, such as `PLANNING_IMAGE` |
 | `images` | The digest-pinned reference of each component image, per ROS distro |
 | `externalImages` | As in a kit |
-| `autoware` | The pinned Autoware release: `version`, `ref` and `lockSha256` |
+| `autoware` | The pinned Autoware release: `version`, `ref` and `lockSha256`, and `backports` when the release carries backported fixes |
 | `deployments` | The catalog: each deployment's `path` and the `checksum` of its files |
 | `shared` | The checksum of `deployments/shared` |
 
@@ -123,28 +123,31 @@ Each document carries `schemaVersion`, now `1`.
 | Field | Meaning |
 | --- | --- |
 | `name`, `description` | The deployment's name and its one line |
-| `gpu` | `none`, `optional` or `required` |
+| `requirements` | Its [requirements](#requirements), as in the manifest |
 | `modified` | `true` when a release's deployment differs from the files it came with, else `false`. `null` in a source checkout and for a kit's deployments, which nothing vouches for |
-| `error` | Only when the deployment cannot be read; `gpu`, `description` and `modified` are then `null` |
+| `error` | Only when the deployment cannot be read; `requirements`, `description` and `modified` are then `null` |
 
 ### `version --json`
 
 | Field | Meaning |
 | --- | --- |
 | `kind` | `release`, `source` or `kit` |
-| `version` | The release, or `null` in a source checkout |
-| `commit` | The commit of a source checkout, else `null` |
-| `extends` | In a kit, what it pins; else `null` |
+| `version` | The release, or `null` in a source checkout. In a kit, the release it pins |
+| `commit` | The commit of a source checkout, also of the one a kit extends; else `null` |
+| `extends` | In a kit, what it pins, as its manifest says; else `null` |
 | `bom` | `autoware`, `images` and `externalImages`, as in the release manifest |
 
 ### `validate --json`
 
+One document covers one deployment, so a kit with several needs a name here;
+plain `validate` checks each of them.
+
 | Field | Meaning |
 | --- | --- |
-| `deployment` | The deployment's name |
+| `deployment` | The deployment's name. When `valid` is `false`, the argument as given, or `null` without one |
 | `valid` | `false` with an `error` when it cannot run as asked; the fields below are then missing |
 | `base` | A kit deployment's base, else `null` |
-| `rosDistro`, `gpu`, `role` | How it was validated |
+| `rosDistro`, `gpu`, `role` | How it was validated; `gpu` is `true` for the GPU mode |
 | `dataValid` | With `--data`: whether every resource can be used; else `null` |
 | `data` | With `--data`: each resource's `name` and `status`: `ok`, `missing`, `incomplete`, `outdated`, or `own` for a directory of yours |
 
@@ -152,7 +155,7 @@ Each document carries `schemaVersion`, now `1`.
 
 | Field | Meaning |
 | --- | --- |
-| `deployment`, `role`, `rosDistro`, `gpu` | What ran |
+| `deployment`, `role`, `rosDistro`, `gpu` | What ran; `gpu` is `true` for the GPU mode |
 | `version`, `extends` | The release, and what a kit pins |
 | `images` | The image of each service |
 | `modelSha256` | The digest of the resolved Compose model |

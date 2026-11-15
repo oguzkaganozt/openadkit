@@ -286,7 +286,22 @@ read four packages:
    templates: copy them and replace the names in every file.
 2. Set `VEHICLE_MODEL` and `SENSOR_MODEL` in the kit's `settings.env`, so every
    deployment of the kit runs your vehicle.
-3. Build and run: `openadkit build`, then `openadkit run --verify`.
+3. Point `MAP_PATH` at your map and name its files. In the kit's
+   `settings.env` this applies to every deployment of the kit:
+
+    ```bash
+    MAP_PATH=${OPENADKIT_KIT}/map
+    LANELET2_MAP_FILE=my_town.osm
+    POINTCLOUD_MAP_FILE=my_town.pcd
+    ```
+
+    A map too large for the kit's repository stays outside it: give its
+    absolute path in the host settings file instead. The CLI uses a map
+    directory of yours as it is
+    ([Downloaded Data](../getting-started/cli.md#downloaded-data)).
+4. Build and run: `openadkit build`, then `openadkit run --verify`. The base's
+   verify step drives the sample map's route, so on your own map give the
+   deployment a verify step of its own.
 
 Every service sources the workspace, so planning, control, the simulator and
 the visualizer all read the same vehicle. All four packages must exist: the

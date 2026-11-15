@@ -64,10 +64,10 @@ openadkit fetch <deployment> --force
 ```
 
 `validate --data` reports each resource as `ok`, `missing`, `incomplete` or
-`outdated`; add `--gpu` to include the data of a GPU mode, such as Logging
-Simulation's CenterPoint models. `fetch` always includes it. `--force` only
-replaces data the CLI installed; remove data you placed yourself, then run
-`openadkit fetch <deployment>`. See
+`outdated`, and a directory of your own as `own`; add `--gpu` to include the
+data of a GPU mode, such as Logging Simulation's CenterPoint models. `fetch`
+always includes it. `--force` only replaces data the CLI installed, and leaves
+a directory of your own alone. See
 [Downloaded Data](cli.md#downloaded-data).
 
 ## GPU

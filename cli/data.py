@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from catalog import Deployment, expand_home
+from catalog import Deployment, data_root, expand_home
 from manifest import OpenADKitError, safe_relative, sha256_file
 from settings import Selection
 
@@ -46,6 +46,12 @@ def is_own(target: Path) -> bool:
     """A directory with files that the CLI did not install: the user's own
     data. It is used as it is, and never checked, replaced or removed."""
     return not target.is_symlink() and target.is_dir() and not is_managed(target) and any(target.iterdir())
+
+
+def is_empty(target: Path) -> bool:
+    """An empty directory holds nothing to use and nothing to lose: it counts
+    as missing, whoever made it."""
+    return not target.is_symlink() and target.is_dir() and not any(target.iterdir())
 
 
 def source_digest(resource: dict[str, Any]) -> str:
@@ -165,9 +171,12 @@ def publish(candidate: Path, target: Path, stage: Path) -> None:
     the CLI installed; it moves into the stage and goes with it.
     """
     if target.exists() or target.is_symlink():
-        if target.is_symlink() or not is_managed(target):
+        if is_empty(target):
+            target.rmdir()
+        elif target.is_symlink() or not is_managed(target):
             raise OpenADKitError(f"data target changed during download: {target}")
-        target.rename(stage / "previous")
+        else:
+            target.rename(stage / "previous")
     candidate.rename(target)
 
 
@@ -254,7 +263,8 @@ def resolve_destination(resource: dict[str, Any], selection: Selection) -> Path:
     destination = Path(expand_home(value))
     if not destination.is_absolute():
         raise OpenADKitError(
-            f"data destination must be absolute after variable expansion: {destination}"
+            f"{variable} must be an absolute path, not {value}; "
+            f"a kit names its own files as ${{OPENADKIT_KIT}}/..."
         )
     ensure_no_symlink_components(destination.parent)
     return destination
@@ -274,6 +284,9 @@ def check_installed_data(deployment: Deployment, selection: Selection) -> list[d
         if is_own(target):
             status = "own"
             recovery = None
+        elif is_empty(target):
+            status = "missing"
+            recovery = "fetch"
         elif target.is_symlink() or (target.exists() and not is_managed(target)):
             # Nothing to use and nothing the CLI may replace: the operator removes it first.
             status = "incomplete"
@@ -312,7 +325,7 @@ def remove_installed_data(deployment: Deployment, selection: Selection) -> list[
         if target in seen:
             continue
         seen.add(target)
-        if is_own(target):
+        if is_own(target) or is_empty(target):
             continue
         if target.is_symlink():
             raise OpenADKitError(f"refusing to remove symlinked data: {target}")
@@ -336,7 +349,7 @@ def validate_install_targets(deployment: Deployment, selection: Selection, force
         if target in destinations:
             raise OpenADKitError(f"multiple data resources target the same path: {target}")
         destinations.add(target)
-        if not (target.exists() or target.is_symlink()) or is_own(target):
+        if not (target.exists() or target.is_symlink()) or is_own(target) or is_empty(target):
             continue
         if force:
             if target.is_symlink() or not target.is_dir():
@@ -374,7 +387,11 @@ def install_resource(
     if is_own(target):
         print(f"using your own data: {target}")
         return
-    if target.exists() or target.is_symlink():
+    if not target.exists() or is_empty(target):
+        if not target.is_relative_to(data_root()):
+            # A path of the user's own that holds nothing, perhaps mistyped: say what goes there.
+            print(f"{resource['destinationEnv']} names {target}, which holds nothing: installing {resource['name']} there")
+    elif target.exists() or target.is_symlink():
         if not force and validate_dataset(target, required) and is_outdated(target, resource):
             print(f"updating data: {target} (the deployment now declares other content)")
         elif not force:
