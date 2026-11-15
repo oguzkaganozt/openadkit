@@ -459,6 +459,37 @@ def test_validate_json_reports_an_invalid_deployment_as_json(tmp_path, name):
     assert [entry["modified"] for entry in listed] == [None]
 
 
+def test_the_json_output_has_the_fields_the_reference_lists(tmp_path):
+    # docs/releases/reference.md lists these fields, and 2.0 freezes them: a
+    # field that goes or changes its name is a breaking change.
+    document = manifest(data=[files_resource(tmp_path)]) | {"verify": {"service": "app", "command": ["true"]}}
+    root, _ = runtime_tree(tmp_path, release=True, document=document)
+    fake_docker(tmp_path, services=("app",))
+
+    def output(*args):
+        return json.loads(run_cli(root, *args).stdout)
+
+    listed = output("list", "--json")
+    assert set(listed) == {"schemaVersion", "deployments"}
+    assert set(listed["deployments"][0]) == {"name", "description", "gpu", "modified"}
+    version = output("version", "--json")
+    assert set(version) == {"schemaVersion", "kind", "version", "commit", "extends", "bom"}
+    assert set(version["bom"]) == {"autoware", "images", "externalImages"}
+    assert set(version["bom"]["autoware"]) == {"version", "ref", "lockSha256"}
+    valid = output("validate", "example", "--data", "--json")
+    assert set(valid) == {"schemaVersion", "deployment", "valid", "base", "rosDistro", "gpu", "role", "dataValid", "data"}
+    assert set(valid["data"][0]) == {"name", "status"}
+    assert set(output("validate", "missing", "--json")) == {"schemaVersion", "deployment", "valid", "error"}
+    assert run_cli(root, "run", "example", "--verify").returncode == 0
+    record = json.loads((root.parent / "home/openadkit-output/example/results/run.json").read_text())
+    assert set(record) == {"schemaVersion", "deployment", "role", "rosDistro", "gpu", "version", "extends", "images",
+                           "modelSha256", "configSha256", "overlaySha256", "readySeconds", "verify"}
+    assert set(record["configSha256"]) == {"base", "kit", "deployment"}
+    assert set(record["verify"]) == {"service", "seconds", "exitCode", "result"}
+    for document in (listed, version, valid, record):
+        assert document["schemaVersion"] == 1
+
+
 def test_list_shows_name_gpu_and_description(tmp_path):
     root, _ = runtime_tree(tmp_path, document=manifest(gpu=True))
     lines = run_cli(root, "list").stdout.splitlines()
@@ -2249,8 +2280,15 @@ def test_a_deployment_can_be_named_by_its_directory(tmp_path):
     result = run_cli(root, "validate", str(kit), directory=elsewhere)
     assert result.returncode == 0 and "custom is valid" in result.stdout, result.stderr
     edit_manifest(kit, lambda document: document["deployments"].update(second={"base": "example"}))
+    # With several, it is the kit, as inside it: validate checks each, and run needs one of them.
+    result = run_cli(root, "validate", str(kit), directory=elsewhere)
+    assert result.returncode == 0 and "custom is valid" in result.stdout and "second is valid" in result.stdout, result.stderr
     result = run_cli(root, "run", str(kit), directory=elsewhere)
-    assert result.returncode != 0 and "has several deployments; name one: custom, second" in result.stderr
+    assert result.returncode == 2, result.stderr
+    assert (f"{kit} has several deployments; name one by its directory: "
+            f"{kit}/deployments/custom, {kit}/deployments/second") in result.stderr
+    result = run_cli(root, "validate", str(kit), "--json", directory=elsewhere)
+    assert result.returncode == 2 and "name one by its directory" in json.loads(result.stdout)["error"]
     # A deployment's directory names it, even while it holds no file.
     result = run_cli(root, "validate", str(kit / "deployments/second"), directory=elsewhere)
     assert result.returncode == 0 and "second is valid" in result.stdout, result.stderr

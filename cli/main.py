@@ -276,13 +276,6 @@ def deployment_name(root: Path, catalog: Catalog, argument: str) -> str:
     for name, reference in catalog.deployments.items():
         if (root / reference.path).resolve() == directory:
             return name
-    # A kit's directory names its deployment while it has one.
-    if catalog.kind == "kit" and directory == root.resolve():
-        if len(catalog.deployments) == 1:
-            return next(iter(catalog.deployments))
-        raise OpenADKitError(
-            f"{argument} has several deployments; name one: {available_deployments(catalog)}"
-        )
     raise OpenADKitError(f"{argument} is not a deployment of {root}")
 
 
@@ -1056,6 +1049,10 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
     root, catalog = load_catalog_around(start, act=args.command in ACTING_COMMANDS)
     if command.group == "catalog":
         return handler(root, catalog, args)
+    kit_argument = None
+    if args.deployment and catalog.kind == "kit" and is_path(args.deployment) and start == root.resolve():
+        # A kit named by its directory is the kit, as when the command runs inside it.
+        kit_argument, args.deployment = args.deployment, None
     if not args.deployment and catalog.kind == "kit" and len(catalog.deployments) == 1:
         # A kit made by `openadkit new` is one deployment; naming it again adds nothing.
         args.deployment = next(iter(catalog.deployments))
@@ -1066,6 +1063,12 @@ def dispatch(parser: OpenADKitParser, args: argparse.Namespace) -> int:
             handler(root, catalog, get_deployment(root, catalog, name), args) for name in catalog.deployments
         )
     if not args.deployment:
+        if kit_argument:
+            # From outside the kit, only its directory names a deployment.
+            names = ", ".join(
+                f"{kit_argument.rstrip('/')}/{KIT_DEPLOYMENTS_DIRECTORY}/{name}" for name in catalog.deployments
+            )
+            raise UsageError(f"{kit_argument} has several deployments; name one by its directory: {names}")
         if json_output:
             # One JSON document covers one deployment.
             raise UsageError(f"deployment name required; available: {available_deployments(catalog)}")

@@ -118,9 +118,13 @@ config overrides and overlay workspace, and keeps to the same readiness checks.
 
 ### Shell
 
-`shell` sources ROS, Autoware and the overlay workspace like the services'
-entrypoint. Give it a service and a command to run one command instead of an
-interactive shell; `shell` then exits with the command's status.
+`shell` sources ROS, Autoware and the overlay workspace, as the services'
+entrypoint does. Give it a service and a command to run one command instead of
+an interactive shell; `shell` then exits with the command's status.
+
+Unlike the service itself, the shell runs as root and without the config
+overrides: a launch file you start there reads Autoware's own parameter files.
+The running nodes have the overrides, so `ros2 param get` shows them.
 
 ### Record
 
@@ -277,7 +281,9 @@ apt source, your `docker` group membership and
 - **A directory instead of a name:** `validate`, `config`, `fetch`, `run` and
   `clean` also take a deployment's directory, such as `openadkit run ./my-kit`.
   An argument with a `/` or a leading `.` is a directory, and the kit around it
-  is used wherever you run the command.
+  is used wherever you run the command. A kit's own directory stands for the
+  kit, as when you run the command inside it; from outside, one of several
+  deployments is named as `./my-kit/deployments/<name>`.
 - **Version:** `openadkit version` prints the installed release and the
   Autoware release it pins; in a source checkout, the commit.
 - **Scripting:** `list`, `version` and `validate` accept `--json`.

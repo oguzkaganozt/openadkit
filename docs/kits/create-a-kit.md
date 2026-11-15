@@ -81,7 +81,8 @@ openadkit stop
 Inside a kit with one deployment the commands need no name; from elsewhere,
 name the kit by its directory: `openadkit run ./my-kit`. With several
 deployments, `run` takes the name of one, while `validate` and `fetch` without
-a name act on each of them. A kit on a source checkout
+a name act on each of them. From elsewhere, one of them is
+`./my-kit/deployments/<name>`, also while it has no directory of its own. A kit on a source checkout
 runs that checkout's local build, or the CI build `OPENADKIT_BUILD` names; see
 [Overlay Workspace](kit-guide.md#3-overlay-workspace).
 
