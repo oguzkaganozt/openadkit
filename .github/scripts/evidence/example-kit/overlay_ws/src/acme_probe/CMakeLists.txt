@@ -9,5 +9,6 @@ find_package(diagnostic_updater REQUIRED)
 add_executable(probe src/probe.cpp)
 ament_target_dependencies(probe rclcpp std_msgs diagnostic_updater)
 install(TARGETS probe DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 ament_package()
