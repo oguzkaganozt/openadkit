@@ -75,7 +75,8 @@ def manifest(*, data=None, gpu=False, roles=False):
     }
     if roles:
         document["roles"] = {
-            name: {"rosDomainId": domain, "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
+            name: {"files": [f"compose.{name}.yaml"], "rosDomainId": domain,
+                   "requiredEnv": ["ROLE_TOKEN"] if domain == 2 else []}
             for name, domain in (("primary", 1), ("secondary", 2))
         }
     return document
@@ -91,11 +92,12 @@ def runtime_tree(tmp_path, *, release=False, document=None, config="MAP_PATH=$HO
     document = document or manifest()
     (directory / "deployment.json").write_text(json.dumps(document))
     (directory / "settings.env").write_text(config)
-    # A deployment's Compose files go by name; an optional GPU mode has an overlay.
+    # A deployment's own Compose files go by name, and an optional GPU mode
+    # has an overlay; a role lists its files.
     gpu = document["requirements"]["gpu"] == "optional"
     files = ["compose.yaml", *(["compose.gpu.yaml"] if gpu else [])]
-    files += [f"compose.{role}.yaml" for role in document.get("roles", {})]
-    for file in files:
+    files += [file for role in document.get("roles", {}).values() for file in role["files"]]
+    for file in dict.fromkeys(files):
         (directory / file).write_text("services:\n  app:\n    image: busybox:1.36.1\n")
     if gpu:
         (directory / "settings.gpu.env").write_text("VALUE=base-gpu\nBASE_GPU=1\n")
@@ -942,27 +944,47 @@ def test_several_live_roles_stop_together_but_take_one_target_otherwise(tmp_path
         "openadkit-example_primary", "openadkit-example_secondary"]
 
 
-@pytest.mark.parametrize("unsafe", ["missing", "symlink"])
-def test_a_role_with_a_zenoh_bridge_needs_its_allowlist_before_compose(tmp_path, unsafe):
-    root, directory = runtime_tree(tmp_path, document=manifest(roles=True))
-    (directory / "compose.zenoh.yaml").write_text("services: {}\n")
-    if unsafe == "symlink":
-        outside = tmp_path / "outside"
-        outside.write_text("{}")
-        (directory / "config").mkdir()
-        (directory / "config/zenoh.json5").symlink_to(outside)
+def test_a_role_starts_exactly_the_files_its_manifest_lists(tmp_path):
+    # No file is found by its name: not the role's own, and none beside it.
+    document = manifest(roles=True)
+    document["roles"]["primary"]["files"] = ["autoware-side.yaml", "link.yaml"]
+    root, directory = runtime_tree(tmp_path, document=document)
+    for stray in ("compose.primary.yaml", "compose.zenoh.yaml", "compose.bridge.yaml"):
+        (directory / stray).write_text("services: {}\n")
+    deployment = cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
+    assert deployment.compose_files(False, "primary") == [directory / "autoware-side.yaml", directory / "link.yaml"]
+    assert deployment.compose_files(False, "secondary") == [directory / "compose.secondary.yaml"]
+    assert deployment.compose_files(False) == [directory / "compose.yaml"]
+    calls = fake_docker(tmp_path)
+    assert run_cli(root, "validate", "example", "--role", "primary").returncode == 0
+    rendered = [row["args"] for row in recorded(calls) if "openadkit-example_primary" in row["args"]][-1]
+    files = [rendered[index + 1] for index, flag in enumerate(rendered) if flag == "--file"]
+    assert files == [str(directory / "autoware-side.yaml"), str(directory / "link.yaml")]
+
+
+@pytest.mark.parametrize(("files", "message"), [
+    (None, "roles.primary.files must be an array of nonempty strings"),
+    ("compose.primary.yaml", "roles.primary.files must be an array of nonempty strings"),
+    ([], "roles.primary.files must not be empty"),
+    (["compose.primary.yaml", "compose.primary.yaml"], "roles.primary.files contains duplicate values"),
+    (["absent.yaml"], "missing Compose file"),
+    (["../outside.yaml"], "Compose file must be a safe relative path"),
+    (["linked.yaml"], "symlinked Compose file is not allowed"),
+])
+def test_a_role_needs_its_files_before_compose(tmp_path, files, message):
+    document = manifest(roles=True)
+    root, directory = runtime_tree(tmp_path, document=document)
+    (tmp_path / "outside.yaml").write_text("services: {}\n")
+    (directory / "linked.yaml").symlink_to(tmp_path / "outside.yaml")
+    if files is None:
+        del document["roles"]["primary"]["files"]
+    else:
+        document["roles"]["primary"]["files"] = files
+    (directory / "deployment.json").write_text(json.dumps(document))
     calls = fake_docker(tmp_path)
     result = run_cli(root, "validate", "example", "--role", "primary")
-    assert result.returncode != 0
-    assert {"missing": "missing Zenoh allowlist", "symlink": "symlinked Zenoh allowlist"}[unsafe] in result.stderr
+    assert result.returncode != 0 and message in result.stderr
     assert recorded(calls) == []
-    # With it, a role runs its own file and the bridge.
-    if unsafe == "missing":
-        (directory / "config").mkdir()
-        (directory / "config/zenoh.json5").write_text("{}")
-        deployment = cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
-        assert deployment.compose_files(False, "secondary") == [
-            directory / "compose.secondary.yaml", directory / "compose.zenoh.yaml"]
 
 
 def files_resource(tmp_path, *, env="MAP_PATH", name="dataset", **extra):
@@ -1820,11 +1842,6 @@ def test_a_manifest_holds_only_what_the_files_do_not_say(tmp_path):
         root, _ = runtime_tree(tmp_path / field, document=document)
         with pytest.raises(cli_manifest.OpenADKitError, match=f"unknown manifest field\\(s\\): {field}"):
             cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
-    document = manifest(roles=True)
-    document["roles"]["primary"]["files"] = ["compose.primary.yaml"]
-    root, _ = runtime_tree(tmp_path / "roles", document=document)
-    with pytest.raises(cli_manifest.OpenADKitError, match="unknown roles.primary field\\(s\\): files"):
-        cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
 
 
 @pytest.mark.parametrize("installed", [False, True])

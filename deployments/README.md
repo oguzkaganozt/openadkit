@@ -11,10 +11,15 @@ is the canonical reference for running, configuring and troubleshooting them.
 | [`logging-simulation/`](./logging-simulation) | Replay recorded sensor data through sensing, perception and localization |
 | [`carla-simulation/`](./carla-simulation) | Drive in closed loop with the CARLA simulator (Humble, amd64, NVIDIA GPU) |
 | [`safety-island-simulation/`](./safety-island-simulation) | Planning Simulation driven by the Autoware Safety Island controller (amd64) |
-| `shared/` | What the deployments share: `services/*.yaml`, `runtime.env`, `cyclonedds.xml`, `compose.zenoh.yaml`, launch files and checks |
+| `shared/` | What the deployments share: Autoware's services (`services/*.yaml`), `runtime.env`, `cyclonedds.xml`, launch files and checks |
 
 Each deployment directory holds its deployment manifest (`deployment.json`),
 its settings (`settings.env`, and `settings.gpu.env` for a GPU mode) and its
 Compose files. Scenario and CARLA Simulation also declare
 [split-host](https://autowarefoundation.github.io/openadkit/deployments/split-host/)
 roles (`--role` over Zenoh, experimental).
+
+`shared/` holds only what runs on Open AD Kit's own images. A service on a
+third-party image, such as a simulator or the Zenoh bridge, is defined in the
+deployment that uses it, and `openadkit.json` pins its image under
+`externalImages`.

@@ -65,14 +65,13 @@ ALLOWED_BASE_DEPLOYMENT_KEYS = {
 # What `run --verify` runs once the deployment is ready: a command in a running
 # service, or, without one, that service's own exit.
 ALLOWED_VERIFY_KEYS = {"service", "command"}
-ALLOWED_ROLE_KEYS = {"requiredEnv", "rosDomainId"}
-# A deployment's Compose files go by name: its entry file, its GPU mode's
-# overlay, and for a split-host role, the role's file plus the Zenoh bridge
-# and its allowlist when the deployment has them.
+# A split-host role lists the Compose files it starts: the CLI derives none of
+# them from a name, and does not know what links one role to another.
+ALLOWED_ROLE_KEYS = {"files", "requiredEnv", "rosDomainId"}
+# A deployment's own Compose files go by name: its entry file and its GPU
+# mode's overlay.
 ENTRY_COMPOSE_FILE = "compose.yaml"
 GPU_COMPOSE_FILE = "compose.gpu.yaml"
-ZENOH_COMPOSE_FILE = "compose.zenoh.yaml"
-ZENOH_ALLOWLIST = "config/zenoh.json5"
 # The one directory of shared services, settings and checks.
 SHARED_DIRECTORY = "shared"
 # Linux keeps DDS ports for domains 0-101 clear of the ephemeral port range.
@@ -440,11 +439,7 @@ def validate_deployment_manifest(root: Path, directory: Path, name: str) -> dict
         if not isinstance(role, dict):
             raise OpenADKitError(f"{where} must be an object")
         reject_unknown(role, ALLOWED_ROLE_KEYS, where)
-        role["files"] = [f"compose.{role_name}.yaml"]
-        zenoh = directory / ZENOH_COMPOSE_FILE
-        if zenoh.exists() or zenoh.is_symlink():
-            role["files"].append(ZENOH_COMPOSE_FILE)
-            ensure_safe_existing(directory, ZENOH_ALLOWLIST, "Zenoh allowlist")
+        role["files"] = require_string_list(role.get("files"), f"{where}.files", nonempty=True)
         role["requiredEnv"] = require_string_list(
             role.get("requiredEnv", []), f"{where}.requiredEnv"
         )

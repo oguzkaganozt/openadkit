@@ -54,8 +54,10 @@ An entry with data and a verify step of its own:
 ```
 
 A catalog deployment may also hold `roles`, the hosts of a
-[split-host](../deployments/split-host.md) deployment (experimental), and
-`evidence.exempt`, the reason it has no hosted
+[split-host](../deployments/split-host.md) deployment (experimental). Each
+role lists the Compose files it starts (`files`), its ROS domain
+(`rosDomainId`) and the settings it needs (`requiredEnv`). A catalog
+deployment may also hold `evidence.exempt`, the reason it has no hosted
 [evidence cell](../releases/evidence.md#ci-exemptions).
 
 ### Requirements

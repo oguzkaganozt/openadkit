@@ -17,8 +17,10 @@ Without `--role`, the deployment runs on one host as usual.
 
 ## How It Works
 
-Each role runs its own services plus a Zenoh bridge that carries the
-deployment's [allowlist](#allowlist), in its own ROS domain.
+Each role lists the Compose files it starts in the deployment's
+`deployment.json`: its own services and `compose.zenoh.yaml`, the Zenoh bridge
+that carries the deployment's [allowlist](#allowlist). `--role` starts exactly
+those files.
 
 Each role is isolated: its own Compose project
 (`openadkit-<deployment>_<role>`), container names and ROS domain. The roles

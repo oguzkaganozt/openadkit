@@ -3,9 +3,9 @@
 # Assembles the shared Autoware and scenario service files and restores the
 # single-host wiring: scenario-simulator waits for Autoware, including the
 # local /map/pointcloud_map topic, and joins the map PID namespace.
-# Split-host runs use --role autoware / --role scenario, where the CLI
-# selects compose.<role>.yaml and compose.zenoh.yaml. This file never includes
-# the Zenoh bridge.
+# Split-host runs use --role autoware and --role scenario, which start the
+# files that deployment.json lists for the role. This file never includes the
+# Zenoh bridge.
 include:
   - compose.autoware.yaml
   - compose.scenario.yaml

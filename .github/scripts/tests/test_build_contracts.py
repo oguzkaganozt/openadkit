@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / "cli"), str(ROOT / ".github/scripts")]
@@ -182,6 +183,24 @@ def compose_context(tmp_path, monkeypatch):
     monkeypatch.delenv("OPENADKIT_KIT", raising=False)
     monkeypatch.delenv("OPENADKIT_DELEGATED", raising=False)
     return catalog.load_catalog(ROOT)
+
+
+def test_third_party_services_stay_in_the_deployments_that_use_them():
+    # deployments/shared holds what runs on Open AD Kit's own images. A
+    # simulator, or the bridge between split-host roles, is the deployment's.
+    external = json.loads((ROOT / "openadkit.json").read_text())["externalImages"]
+    shared = [path for path in sorted((ROOT / "deployments/shared").rglob("*")) if path.suffix in (".yaml", ".env")]
+    assert shared and not [(path.name, name) for path in shared for name in external if name in path.read_text()]
+
+
+@pytest.mark.parametrize("name", ["scenario-simulation", "carla-simulation"])
+def test_a_missing_allowlist_fails_the_start_of_the_bridge(name):
+    directory = ROOT / "deployments" / name
+    bridge = yaml.safe_load((directory / "compose.zenoh.yaml").read_text())["services"]["zenoh-bridge"]
+    # The short volume form would make a root-owned directory of a missing file.
+    allowlist = next(item for item in bridge["volumes"] if isinstance(item, dict))
+    assert allowlist["target"] == "/config/zenoh.json5" and allowlist["bind"] == {"create_host_path": False}
+    assert (directory / allowlist["source"]).is_file()
 
 
 @pytest.mark.parametrize(("name", "role", "present", "absent"), [

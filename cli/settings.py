@@ -173,10 +173,11 @@ def _injections(deployment: Deployment, distro: str, role: str | None) -> dict[s
     }
     if role is not None:
         # runtime.env reads this, so each role joins its own DDS domain and
-        # two roles on one host stay isolated until the Zenoh bridge links them.
+        # two roles on one host stay apart.
         injections["OPENADKIT_ROS_DOMAIN_ID"] = str(deployment.roles[role]["rosDomainId"])
-        # Only the Zenoh bridge and its allowlist link roles: DDS stays on
-        # loopback even when the host settings name a LAN interface.
+        # A role's DDS stays on loopback even when the host settings name a
+        # LAN interface: roles reach each other only through a service that
+        # their own Compose files start.
         injections["CYCLONEDDS_NETWORK_INTERFACE"] = "lo"
     return injections
 
@@ -275,8 +276,8 @@ def resolve(
 
     environment = _resolved(deployment, gpu, injections)
     # Env files and injections stay authoritative for data paths and
-    # Compose interpolation. Shell values only fill requiredEnv gaps such
-    # as CI dummy ZENOH_LISTEN exports; they cannot hide MAP_PATH.
+    # Compose interpolation. Shell values only fill requiredEnv gaps, such
+    # as an endpoint given for one command; they cannot hide MAP_PATH.
     present = {**os.environ, **environment}
     required = deployment.roles[role]["requiredEnv"] if role is not None else []
     missing = [name for name in required if not present.get(name)]
