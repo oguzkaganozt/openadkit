@@ -143,7 +143,7 @@ def main() -> int:
     # image has the launch files of its CPU image, which is the smaller pull.
     unique: dict[str, dict] = {}
     for deployment in json.loads(listing.stdout)["deployments"]:
-        options = ["--ros-distro", distro] + (["--gpu"] if deployment["gpu"] == "required" else [])
+        options = ["--ros-distro", distro] + (["--gpu"] if deployment["requirements"]["gpu"] == "required" else [])
         config = cli(openadkit, "config", deployment["name"], *options)
         if config.returncode != 0:
             # A deployment that does not support this distro has nothing to check.
