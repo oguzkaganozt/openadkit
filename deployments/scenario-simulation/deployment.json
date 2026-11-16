@@ -6,10 +6,12 @@
   },
   "roles": {
     "autoware": {
+      "files": ["compose.autoware.yaml", "compose.zenoh.yaml"],
       "rosDomainId": 1,
       "requiredEnv": ["ZENOH_LISTEN"]
     },
     "scenario": {
+      "files": ["compose.scenario.yaml", "compose.zenoh.yaml"],
       "rosDomainId": 2,
       "requiredEnv": ["ZENOH_LISTEN", "ZENOH_PEER"]
     }
