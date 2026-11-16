@@ -1916,8 +1916,8 @@ extension point on Humble and Jazzy.</p>
 <p>A config override changes a parameter without a build. Put the file with only
 the keys you change under <code>config/autoware/</code>, at the path it has in its
 package's share directory, then recreate the services that use it:</p>
-<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>config/autoware/autoware_launch/config/planning/scenario_planning/common
-<span class="nv">$EDITOR</span><span class="w"> </span>config/autoware/autoware_launch/config/planning/scenario_planning/common/common.param.yaml
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>config/autoware/autoware_planning_config/config/scenario_planning/common
+<span class="nv">$EDITOR</span><span class="w"> </span>config/autoware/autoware_planning_config/config/scenario_planning/common/common.param.yaml
 openadkit<span class="w"> </span>restart<span class="w">               </span><span class="c1"># the services with config overrides or settings that changed</span>
 </code></pre></div>
 <p>A package change needs a build and a restart of the service that runs it:</p>
