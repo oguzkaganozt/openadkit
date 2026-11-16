@@ -550,19 +550,30 @@ def unhealthy_reasons(containers: list[dict[str, Any]]) -> dict[str, str]:
 
 
 def explain_failed_start(deployment: Deployment, selection: Selection) -> str | None:
-    """Why `up --wait` failed, where a healthcheck says so: Compose only names
-    the unhealthy container."""
-    ids = run_compose(deployment, selection, ["ps", "--quiet"], check=False).stdout.split()
+    """Why `up --wait` failed, where a healthcheck or a container's state says
+    so: Compose only names the unhealthy container."""
+    ids = run_compose(deployment, selection, ["ps", "--all", "--quiet"], check=False).stdout.split()
     inspected = docker(["docker", "inspect", *ids], check=False, trace=False) if ids else None
     try:
         containers = json.loads(inspected.stdout) if inspected else []
     except ValueError:
         return None
-    unhealthy = unhealthy_reasons(containers if isinstance(containers, list) else [])
-    if not unhealthy:
+    containers = containers if isinstance(containers, list) else []
+    failed = {
+        service: f"{service} is unhealthy" + (f": {reason}" if reason else "")
+        for service, reason in unhealthy_reasons(containers).items()
+    }
+    for container in containers:
+        state = container.get("State") or {}
+        service = container["Config"]["Labels"]["com.docker.compose.service"]
+        # A command that fails at once never reaches a healthcheck.
+        if state.get("Restarting") or container.get("RestartCount"):
+            failed[service] = f"{service} keeps crashing (exit code {state.get('ExitCode')})"
+        elif state.get("Status") == "exited" and state.get("ExitCode"):
+            failed[service] = f"{service} exited with code {state['ExitCode']}"
+    if not failed:
         return None
-    lines = [f"{service} is unhealthy" + (f": {reason}" if reason else "") for service, reason in sorted(unhealthy.items())]
-    return "\n".join([*lines, f"see: openadkit logs {' '.join(sorted(unhealthy))}"])
+    return "\n".join([*(failed[service] for service in sorted(failed)), f"see: openadkit logs {' '.join(sorted(failed))}"])
 
 
 def up(deployment: Deployment, selection: Selection, arguments: list[str]) -> None:

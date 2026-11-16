@@ -2476,6 +2476,14 @@ def test_a_failed_start_names_the_unhealthy_service_and_its_reason(monkeypatch):
     inspected[0] = container("map", "healthy")
     with pytest.raises(cli_manifest.OpenADKitError, match="command failed with exit code 1"):
         cli_compose.up(deployment, None, [])
+    # A command that fails at once, such as a package that is not built, never reaches a healthcheck.
+    inspected[1] = container("planning", "starting") | {"RestartCount": 3}
+    inspected[1]["State"]["ExitCode"] = 1
+    inspected[2]["State"] = {"Status": "exited", "ExitCode": 2}
+    with pytest.raises(cli_manifest.OpenADKitError) as error:
+        cli_compose.up(deployment, None, [])
+    assert str(error.value) == ("planning keeps crashing (exit code 1)\nrosbag exited with code 2\n"
+                                "see: openadkit logs planning rosbag")
 
 
 def test_a_kit_names_the_files_it_does_not_read(tmp_path):

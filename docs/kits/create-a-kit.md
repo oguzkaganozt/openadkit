@@ -102,8 +102,8 @@ the keys you change under `config/autoware/`, at the path it has in its
 package's share directory, then recreate the services that use it:
 
 ```bash
-mkdir -p config/autoware/autoware_launch/config/planning/scenario_planning/common
-$EDITOR config/autoware/autoware_launch/config/planning/scenario_planning/common/common.param.yaml
+mkdir -p config/autoware/autoware_planning_config/config/scenario_planning/common
+$EDITOR config/autoware/autoware_planning_config/config/scenario_planning/common/common.param.yaml
 openadkit restart               # the services with config overrides or settings that changed
 ```
 
