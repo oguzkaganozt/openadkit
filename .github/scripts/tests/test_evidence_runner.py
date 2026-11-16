@@ -530,3 +530,11 @@ if args[0] == 'run':
     assert (tmp_path / "called").exists() is (l3 is not None)
     if l3 is not None:
         assert (tmp_path / "called").read_text().split() == [str(cli), "humble"]
+
+
+def test_the_launch_argument_check_reads_the_list_output_as_the_cli_prints_it():
+    # The check takes each deployment's GPU requirement from `list --json`.
+    listed = json.loads(subprocess.run([str(ROOT / "openadkit"), "list", "--json"], capture_output=True, text=True, check=True).stdout)
+    source = (ROOT / ".github/scripts/evidence/launch_arguments.py").read_text()
+    assert 'deployment["requirements"]["gpu"]' in source
+    assert all(deployment["requirements"]["gpu"] in ("none", "optional", "required") for deployment in listed["deployments"])
