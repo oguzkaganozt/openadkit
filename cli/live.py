@@ -120,8 +120,51 @@ def unhealthy_services(project: str) -> dict[str, str]:
     return unhealthy_reasons(running_containers(project))
 
 
+# Docker's states of a container that is not up.
+NOT_UP = ("created", "exited", "dead", "removing")
+
+
+def containers(project: str) -> list[dict[str, str]]:
+    """Each container of the project, stopped ones included: its service, its
+    own name as docker ps shows it, its state and its status line."""
+    output = run_project(project, ["ps", "--all", "--format", "json"]).stdout.strip()
+    try:
+        # One JSON document per line; older Compose printed one array.
+        rows = json.loads(output) if output.startswith("[") else [json.loads(line) for line in output.splitlines()]
+        found = [
+            {"service": row["Service"], "container": row["Name"], "state": row["State"], "status": row["Status"]}
+            for row in rows
+        ]
+    except (ValueError, LookupError, TypeError) as error:
+        raise OpenADKitError("could not list the services") from error
+    return sorted(found, key=lambda row: row["service"])
+
+
+def print_services(rows: list[dict[str, str]]) -> None:
+    """A service by the name the commands take, beside the container Docker shows."""
+    table = [("SERVICE", "CONTAINER", "STATUS"), *((row["service"], row["container"], row["status"]) for row in rows)]
+    widths = [max(len(line[column]) for line in table) for column in (0, 1)]
+    for service, container, state in table:
+        print(f"{service:<{widths[0]}}  {container:<{widths[1]}}  {state}")
+    sys.stdout.flush()
+
+
+def resolve_services(project: str, names: list[str], known: set[str] | None = None) -> list[str]:
+    """The services the names stand for. A service goes by its own name, and
+    also by its container's, which docker ps and the log lines show."""
+    rows = containers(project)
+    services = {row["service"] for row in rows} | (known or set())
+    by_container = {row["container"]: row["service"] for row in rows}
+    resolved = []
+    for name in names:
+        if name not in services and name not in by_container:
+            raise OpenADKitError(f"no service named {name}\nservices: {', '.join(sorted(services))}")
+        resolved.append(name if name in services else by_container[name])
+    return list(dict.fromkeys(resolved))
+
+
 def status(project: str) -> None:
-    run_project(project, ["ps"], show=True)
+    print_services([row for row in containers(project) if row["state"] not in NOT_UP])
     unhealthy = unhealthy_services(project)
     if unhealthy:
         print()
@@ -140,10 +183,11 @@ def status(project: str) -> None:
 
 def status_stopped(project: str) -> None:
     """The containers a stopped project left, with how each ended."""
-    run_project(project, ["ps", "--all"], show=True)
+    print_services(containers(project))
 
 
 def logs(project: str, follow: bool, services: list[str]) -> None:
+    services = resolve_services(project, services)
     run_project(project, ["logs", *(["--follow"] if follow else []), *services], show=True)
 
 
@@ -191,6 +235,7 @@ def pid_followers(project: str, services: set[str]) -> set[str]:
 def shell(project: str, service: str, command: list[str]) -> int:
     """A shell, or one command, in a running service with ROS, Autoware and
     the overlays sourced. Returns the shell's or the command's exit status."""
+    service = resolve_services(project, [service])[0]
     arguments = ["exec"] if sys.stdin.isatty() else ["exec", "-T"]
     arguments += [service, "bash", "-c", SHELL_SETUP + 'exec "$@"', "bash", *(command or ["bash"])]
     command_line = ["docker", "compose", "--project-name", project, *arguments]

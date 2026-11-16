@@ -78,7 +78,19 @@ logs, until `stop` removes them.
 
 ### Status
 
-Below its services, `status` shows Autoware's state from the AD API and the
+`status` lists each service beside its container:
+
+```text
+SERVICE   CONTAINER          STATUS
+map       autoware-map       Up 2 minutes (healthy)
+planning  autoware-planning  Up 2 minutes (healthy)
+```
+
+`logs`, `restart` and `shell` take a service by either name: `planning`, as
+the Compose files call it, or `autoware-planning`, as `docker ps` and the log
+lines show it.
+
+Below the services, `status` shows Autoware's state from the AD API and the
 visualizer address:
 
 ```text

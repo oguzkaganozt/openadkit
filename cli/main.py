@@ -269,6 +269,12 @@ def list_deployments(
     return 0
 
 
+def report(error: Exception) -> None:
+    # What the command printed comes before its error, also through a pipe.
+    sys.stdout.flush()
+    print(f"error: {error}", file=sys.stderr)
+
+
 def is_path(argument: str) -> bool:
     """A deployment or workspace named by its directory, such as ./my-kit."""
     return "/" in argument or argument.startswith(".")
@@ -281,6 +287,9 @@ def deployment_name(root: Path, catalog: Catalog, argument: str) -> str:
     for name, reference in catalog.deployments.items():
         if (root / reference.path).resolve() == directory:
             return name
+    # A kit's deployment goes by its directory also while it has none.
+    if not directory.exists():
+        raise OpenADKitError(f"{argument}: no such directory")
     raise OpenADKitError(f"{argument} is not a deployment of {root}")
 
 
@@ -594,6 +603,7 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
         )
     if not image:
         raise OpenADKitError(f"this release pins no {ros_distro} devel image to build a workspace in")
+    compose.require_local_devel_image(catalog, image)
     compose.build_overlay(workspace, image, ros_distro, args.colcon)
     return 0
 
@@ -853,7 +863,9 @@ def restart_command(args: argparse.Namespace) -> int:
     if args.all_services:
         services = compose.render(deployment, selection) - skipped
     elif args.services:
-        services = set(args.services)
+        # A service that is not up yet, such as a skipped visualizer, is still one to start.
+        known = compose.render(deployment, selection)
+        services = set(live.resolve_services(project, args.services, known))
     else:
         # What a restart is for: changed config or workspaces, and changed settings.
         services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
@@ -1047,7 +1059,7 @@ def main() -> int:
         # validate --json: one JSON document on stdout, also when the kit or
         # the deployment is invalid.
         print(json.dumps({"schemaVersion": 1, "deployment": target, "valid": False, "error": str(error)}))
-        print(f"error: {error}", file=sys.stderr)
+        report(error)
         return 2 if isinstance(error, UsageError) else 1
 
 
@@ -1106,10 +1118,10 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except UsageError as error:
-        print(f"error: {error}", file=sys.stderr)
+        report(error)
         raise SystemExit(2) from None
     except OpenADKitError as error:
-        print(f"error: {error}", file=sys.stderr)
+        report(error)
         raise SystemExit(1) from None
     except KeyboardInterrupt:
         # Ctrl+C (for example during `logs --follow`) is a normal way to stop.
@@ -1120,5 +1132,5 @@ if __name__ == "__main__":
         print("hint: check that your user owns this path", file=sys.stderr)
         raise SystemExit(1) from None
     except OSError as error:
-        print(f"error: {error}", file=sys.stderr)
+        report(error)
         raise SystemExit(1) from None
