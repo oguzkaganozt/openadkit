@@ -143,16 +143,17 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
         out += [changes.rstrip("\n"), ""]
 
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
-    run = f" ([evidence run]({evidence['url']}))" if evidence.get("url") else ""
     out += [
         "## Verification", "",
-        f"**{passed}/{len(cells)}** evidence cells passed{run}. "
+        f"**{passed}/{len(cells)}** evidence cells passed. "
         "[Verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
         "before you run its files.", "",
     ]
     exempt = [f"- `{item['deployment']}`: {item['reason']}" for item in evidence.get("exempt") or []]
     out += details("Evidence cells", "\n".join(
-        [render_evidence(evidence, summary=False).rstrip("\n"), *(["", "Not verified in CI:", "", *exempt] if exempt else [])]))
+        [render_evidence(evidence, summary=False).rstrip("\n"),
+         *(["", "Not verified in CI:", "", *exempt] if exempt else []),
+         *(["", f"Run: {evidence['url']}"] if evidence.get("url") else [])]))
     out += details("Image digests", "\n".join(f"- `{image['releaseRef']}@{image['digest']}`" for image in plan["images"]))
     backports = autoware.get("backports") or []
     if backports:
