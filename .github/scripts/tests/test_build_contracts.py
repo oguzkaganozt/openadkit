@@ -194,7 +194,7 @@ def test_third_party_services_stay_in_the_deployments_that_use_them():
 
 
 @pytest.mark.parametrize("name", ["scenario-simulation", "carla-simulation"])
-def test_a_missing_allowlist_fails_the_start_of_the_bridge(name):
+def test_the_bridge_mounts_its_allowlist_without_creating_it(name):
     directory = ROOT / "deployments" / name
     bridge = yaml.safe_load((directory / "compose.zenoh.yaml").read_text())["services"]["zenoh-bridge"]
     # The short volume form would make a root-owned directory of a missing file.

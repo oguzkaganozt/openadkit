@@ -107,8 +107,8 @@ See [CLI & Maintenance](../getting-started/cli.md).
 These work and are tested where the docs say so, but may change in a minor
 release:
 
-- **Split-host roles:** `--role`, `roles` in `deployment.json`, the
-  `compose.<role>.yaml` files and the Zenoh bridge. See
+- **Split-host roles:** `--role`, `roles` in `deployment.json`, the Compose
+  files a role lists and the Zenoh bridge. See
   [Split-host Simulation](../deployments/split-host.md).
 - **AutoSD with Podman and Quadlet:** `platforms/autosd/` and the units it
   generates. See [AutoSD](../platforms/autosd.md).
