@@ -93,7 +93,7 @@ of real sensors and vehicle hardware.
 - **`simulated-perception`** — dummy objects, tracking, prediction and the
   occupancy grid map. Launch: `planning_simulator/perception_simulation.launch.xml`
 
-The image also carries the [CARLA bridge](#carla-interface).
+The image also carries the CARLA bridge; see CARLA Interface below.
 
 ### Visualizer {: #visualizer }
 
