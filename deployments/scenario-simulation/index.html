@@ -1059,6 +1059,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1169,6 +1173,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1177,6 +1209,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1756,7 +1816,7 @@ initialize; the runner then executes the scenario and writes the results to
 <tr>
 <td><code>MAP_PATH</code></td>
 <td>Host map directory</td>
-<td><code>~/autoware_map/kashiwanoha_map</code></td>
+<td><code>~/autoware_data/maps/kashiwanoha_map</code></td>
 </tr>
 </tbody>
 </table>
@@ -1772,9 +1832,10 @@ the YAML there, and point the deployment at it in the host settings file:</p>
 mark the deployment as modified and are lost on <code>upgrade</code> or <code>uninstall</code>.</p>
 <p>Scenarios must match the map, and the planning sample map does not work here.
 To use your own map, point <code>MAP_PATH</code> at a directory that holds the same files
-as the bundled map, which the CLI checks before starting: <code>lanelet2_map.osm</code>,
-<code>pointcloud_map.pcd</code>, <code>global_map_center.pcd.yaml</code>,
-<code>lanelet2_map_provider.osm.yaml</code> and <code>map.map_publisher.yaml</code>.</p>
+as the bundled map: <code>lanelet2_map.osm</code>, <code>pointcloud_map.pcd</code>,
+<code>global_map_center.pcd.yaml</code>, <code>lanelet2_map_provider.osm.yaml</code> and
+<code>map.map_publisher.yaml</code>. The CLI uses your directory as it is and does not
+check it.</p>
 <p>This deployment changes one Autoware parameter with a
 <a href="../../kits/kit-guide/#2-config-overrides">config override</a>: a file that holds
 only the changed value, merged into the upstream parameter file on every start

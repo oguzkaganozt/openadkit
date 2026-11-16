@@ -906,6 +906,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#your-own-recording" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Own Recording
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stop-and-recover" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1059,6 +1070,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1169,6 +1184,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1177,6 +1220,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1662,6 +1733,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#your-own-recording" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your Own Recording
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stop-and-recover" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1717,6 +1799,20 @@ the GPU mode is checked by hand on a GPU host.</p>
 <p>The sample rosbag is Copyright 2020 TIER IV, Inc. It has no camera images, so
 traffic-light recognition is unavailable and detection is less complete than
 with a full recording.</p>
+<h2 id="your-own-recording">Your Own Recording<a class="headerlink" href="#your-own-recording" title="Permanent link">#</a></h2>
+<p>Point <code>ROSBAG_PATH</code> at a rosbag directory, the one that holds <code>metadata.yaml</code>,
+in your <a href="../../getting-started/cli/#settings">host settings file</a> or in a kit's
+<code>settings.env</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">ROSBAG_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/recordings/my-drive
+<span class="nv">ROSBAG_FORMAT</span><span class="o">=</span>mcap<span class="w">                              </span><span class="c1"># sqlite3 by default</span>
+<span class="nv">ROSBAG_READY_TOPIC</span><span class="o">=</span>/sensing/lidar/top/pointcloud_raw_ex
+</code></pre></div>
+<p>The CLI uses a directory that holds your files as it is: it never checks it,
+downloads into it, replaces it or removes it. The recording starts once something
+subscribes to <code>ROSBAG_READY_TOPIC</code>, so name a topic of yours that sensing
+reads. A recording of another vehicle needs that vehicle's map (<code>MAP_PATH</code>)
+and its vehicle and sensor kit packages, which a
+<a href="../../kits/new-vehicle/">kit</a> holds.</p>
 <h2 id="stop-and-recover">Stop and Recover<a class="headerlink" href="#stop-and-recover" title="Permanent link">#</a></h2>
 <p>To replace missing sample data, run <code>openadkit fetch logging-simulation --force</code>;
 it also refreshes the CenterPoint models. See <a href="../#stop-and-recover">Stop and Recover</a> for the rest.</p>

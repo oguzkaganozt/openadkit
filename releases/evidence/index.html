@@ -985,6 +985,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1095,6 +1099,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1103,6 +1135,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1763,7 +1823,7 @@ distro, architecture and topology:</p>
 <td>Single host, with the pinned Safety Island release over <code>domain_bridge</code></td>
 </tr>
 <tr>
-<td><code>example-kit</code></td>
+<td><code>example-kit-planning-simulation</code></td>
 <td>Humble, Jazzy</td>
 <td>amd64, arm64</td>
 <td>Single host: a kit made with <code>openadkit new</code> on Planning Simulation, plus a fixture that uses every extension point and its own vehicle and sensor kit packages</td>
@@ -1772,15 +1832,21 @@ distro, architecture and topology:</p>
 </table>
 <p>A cell runs on a hosted runner of its own architecture.</p>
 <p>Each cell runs these levels on a fresh stack, started with
-<code>openadkit run --no-visualizer</code>:</p>
+<code>openadkit run --no-visualizer</code>; the AutoSD cells start the generated systemd
+units instead:</p>
 <ul>
-<li><strong>L0:</strong> manifests and Compose configuration validate. One cell per distro
+<li><strong>L0:</strong> manifests and Compose configuration validate; the example kit's cell
+  validates each of the kit's deployments, of which it runs the first. One cell
+  per distro
   also checks that the images' launch files read every launch argument the
   deployments pass, the exempt deployments included: <code>ros2 launch</code> ignores an
   argument it does not know, so a renamed Autoware argument would otherwise do
   nothing without any error.</li>
 <li><strong>L1:</strong> <code>openadkit run</code> returns: the deployment's healthchecks pass, so its
-  ROS interfaces are present and its topics publish.</li>
+  ROS interfaces are present and its topics publish. After the other checks,
+  no service has turned unhealthy, so no node died during them. The cell then
+  kills one node of the map service and checks that the service turns
+  unhealthy while it keeps running.</li>
 <li><strong>L2:</strong> the deployment's verify step passes (<code>openadkit run --verify</code>): the
   Planning Simulation ego arrives at its goal, the scenarios pass, or
   localization and tracking follow the replayed rosbag, plus the split-role
@@ -1800,8 +1866,8 @@ and blocks the release.</p>
   evidence.</li>
 <li><strong>GPU modes.</strong> The cells of Planning and Logging Simulation run their CPU
   modes. The GPU modes (<code>--gpu</code>: the Diffusion Planner on <code>planning-cuda</code>,
-  CenterPoint on <code>sensing-perception-cuda</code>) validate in CI (L0) and are checked
-  by hand on a GPU host.</li>
+  CenterPoint on <code>sensing-perception-cuda</code>) validate in lint and in release
+  packaging, not in an evidence cell, and are checked by hand on a GPU host.</li>
 <li><strong>Real-time behavior.</strong> A 4-vCPU hosted runner cannot run Autoware in real
   time: the ego drives late, and the bundled samples take about three times as
   long as on a 16-vCPU host. The Scenario Simulation cells therefore run at

@@ -732,6 +732,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-service-is-unhealthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A Service Is Unhealthy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#docker" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1237,6 +1248,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1347,6 +1362,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1355,6 +1398,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1840,6 +1911,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-service-is-unhealthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A Service Is Unhealthy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#docker" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2067,6 +2149,32 @@ checkout, call its launcher by path: <code>./openadkit</code> in the checkout, o
 <p>If <code>run</code> fails after the containers are created, they stay so you can read
 their logs, running or not; <code>openadkit status</code> lists them. Remove them with
 <code>openadkit stop</code>, which another deployment needs before it can start.</p>
+<h2 id="a-service-is-unhealthy">A Service Is Unhealthy<a class="headerlink" href="#a-service-is-unhealthy" title="Permanent link">#</a></h2>
+<p><code>openadkit status</code> lists a service as <code>unhealthy</code> and names the process that
+died, for example <code>multi_object_tracker_node-4 died with exit code -9</code>.</p>
+<p><code>ros2 launch</code> keeps running when one of its nodes dies, so the container stays
+up and the service's other nodes keep working. Nothing restarts the service: on
+a vehicle, one failed node must not take its whole service down mid-drive.</p>
+<ol>
+<li>Read why the node died: <code>openadkit logs &lt;service&gt;</code>.</li>
+<li>Start the service again: <code>openadkit restart &lt;service&gt;</code>.</li>
+</ol>
+<ul>
+<li>When the process is a component container, such as
+  <code>component_container_mt-1</code>, one of the nodes it hosts crashed it. The logs
+  name that node.</li>
+<li>A service whose launch file starts one process ends with it: <code>status</code> then
+  shows the service as exited, and <code>openadkit restart &lt;service&gt;</code> starts it
+  again.</li>
+<li><code>run</code> and <code>restart</code> fail when a node dies while the deployment starts, and
+  name the service. A map loader that dies there usually
+  cannot find a file: check <code>MAP_PATH</code> and the file names in
+  <code>LANELET2_MAP_FILE</code> and <code>POINTCLOUD_MAP_FILE</code>.</li>
+<li>The <code>api</code> service reports a dead node within three minutes, the others within
+  ten seconds: its check also covers Autoware's readiness and runs less often.</li>
+<li>A component that fails to load into a running container is not a process that
+  died, and does not show here. It shows in the logs.</li>
+</ul>
 <h2 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">#</a></h2>
 <h3 id="permission-denied">Permission denied<a class="headerlink" href="#permission-denied" title="Permanent link">#</a></h3>
 <p>Your user must be in the <code>docker</code> group. Log out and back in after
@@ -2082,10 +2190,10 @@ setup. Ubuntu's own <code>docker-compose-v2</code> package is too old.</p>
 openadkit<span class="w"> </span>fetch<span class="w"> </span>&lt;deployment&gt;<span class="w"> </span>--force
 </code></pre></div>
 <p><code>validate --data</code> reports each resource as <code>ok</code>, <code>missing</code>, <code>incomplete</code> or
-<code>outdated</code>; add <code>--gpu</code> to include the data of a GPU mode, such as Logging
-Simulation's CenterPoint models. <code>fetch</code> always includes it. <code>--force</code> only
-replaces data the CLI installed; remove data you placed yourself, then run
-<code>openadkit fetch &lt;deployment&gt;</code>. See
+<code>outdated</code>, and a directory of your own as <code>own</code>; add <code>--gpu</code> to include the
+data of a GPU mode, such as Logging Simulation's CenterPoint models. <code>fetch</code>
+always includes it. <code>--force</code> only replaces data the CLI installed, and leaves
+a directory of your own alone. See
 <a href="../cli/#downloaded-data">Downloaded Data</a>.</p>
 <h2 id="gpu">GPU<a class="headerlink" href="#gpu" title="Permanent link">#</a></h2>
 <h3 id="nvidia-container-toolkit-not-detected">NVIDIA Container Toolkit not detected<a class="headerlink" href="#nvidia-container-toolkit-not-detected" title="Permanent link">#</a></h3>

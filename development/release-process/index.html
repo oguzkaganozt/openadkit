@@ -983,6 +983,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1093,6 +1097,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1101,6 +1133,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1820,6 +1880,7 @@ number promises.</p>
   scan and evidence jobs to larger runners (for example
   <code>ubicloud-standard-8-ubuntu-2204</code> and <code>ubicloud-standard-8-arm-ubuntu-2204</code>).
   Unset, they run on the GitHub-hosted <code>ubuntu-22.04</code> and <code>ubuntu-22.04-arm</code>.
+  The AutoSD evidence cells always run on <code>ubuntu-24.04</code> and <code>ubuntu-24.04-arm</code>.
   Pull request jobs run on them too, so point them only at ephemeral hosted
   runners, never at a persistent self-hosted machine.</li>
 <li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-buildcache</code>
@@ -1923,8 +1984,9 @@ commit, run URL and cells) in its release plan before packaging.
 exemptions. The bundle, installer and metadata receive build provenance from
 the release workflow.</p>
 <p>The verification table in the release notes shows the passing-cell count,
-readiness time, arrival time and peak memory of that build. A release never
-searches older runs or releases; its notes depend only on its release plan.
+readiness time, arrival time and peak memory of that build; it depends only on
+the release plan. The list of changes comes from GitHub's generated notes since
+the previous release.
 Missing metrics are shown as <code>-</code>, never replaced with zeroes.</p>
 <p>See <a href="../../releases/verification/">Verify a Release</a> to check a release yourself.</p>
 <h2 id="the-docs-site">The Docs Site<a class="headerlink" href="#the-docs-site" title="Permanent link">#</a></h2>

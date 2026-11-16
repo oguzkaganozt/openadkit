@@ -987,6 +987,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1104,13 +1108,30 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#one-directory-one-deployment" class="md-nav__link">
+  <a href="#one-kit-one-or-more-deployments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        One Directory, One Deployment
+        One Kit, One or More Deployments
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="One Kit, One or More Deployments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#another-deployment-of-the-same-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another Deployment of the Same Kit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1191,6 +1212,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../kit-guide/" class="md-nav__link">
         
   
@@ -1199,6 +1248,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1673,13 +1750,30 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#one-directory-one-deployment" class="md-nav__link">
+  <a href="#one-kit-one-or-more-deployments" class="md-nav__link">
     <span class="md-ellipsis">
       
-        One Directory, One Deployment
+        One Kit, One or More Deployments
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="One Kit, One or More Deployments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#another-deployment-of-the-same-kit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another Deployment of the Same Kit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1742,30 +1836,62 @@
 
 
 <h1 id="create-a-kit">Create a Kit<a class="headerlink" href="#create-a-kit" title="Permanent link">#</a></h1>
-<p><code>openadkit new</code> makes a kit that extends this release and one of its
-deployments without copying them, so the kit holds only your differences:</p>
+<p><code>openadkit new</code> makes a kit: your own project, which extends this release
+without copying it. A kit holds one or more deployments. Each runs a deployment
+of the release, its base, with the kit's files on top, so the kit holds only
+your differences. Every base is a simulation: a kit shows your vehicle's
+software in simulation, not on the vehicle.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w">                       </span><span class="c1"># on top of planning-simulation</span>
 openadkit<span class="w"> </span>new<span class="w"> </span>my-kit<span class="w"> </span>--base<span class="w"> </span>scenario-simulation
 </code></pre></div>
 <p>Commands are shown as the release installer installs them. From a source
 checkout, call its launcher by path: <code>./openadkit</code> in the checkout, or
 <code>&lt;checkout&gt;/openadkit</code> in a kit.</p>
-<h2 id="one-directory-one-deployment">One Directory, One Deployment<a class="headerlink" href="#one-directory-one-deployment" title="Permanent link">#</a></h2>
+<h2 id="one-kit-one-or-more-deployments">One Kit, One or More Deployments<a class="headerlink" href="#one-kit-one-or-more-deployments" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>my-kit/
 ├── openadkit.json
-├── deployment.json
-├── compose.yaml
-├── settings.env
-├── config/autoware/
-└── overlay_ws/src/
+├── settings.env                          # every deployment
+├── config/autoware/                      # every deployment
+├── overlay_ws/src/                       # every deployment
+└── deployments/
+    └── my-kit-planning-simulation/
+        └── settings.env                  # this deployment only
 </code></pre></div>
-<p>The kit's <code>README.md</code> explains each file. <code>openadkit.json</code> pins the release
-(<code>extends</code>), and <code>deployment.json</code> names the base deployment, whose
-architectures, ROS distros, GPU mode, downloads and verify step the kit
-inherits; <code>requirements</code> may narrow the first three. <code>compose.yaml</code> includes the
-base's Compose file, with your services below it.</p>
-<p>The deployment's name is its key in <code>openadkit.json</code>, here <code>my-kit</code>;
-<code>deployment.json</code> does not repeat it. Renaming the directory changes nothing.</p>
+<p><code>openadkit.json</code> is the kit's one manifest. It pins the release (<code>extends</code>) and
+lists the kit's deployments, each with its <code>base</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"schemaVersion"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"kit"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"extends"</span><span class="p">:</span><span class="w"> </span><span class="s2">"v2.0.0"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"deployments"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"my-kit-planning-simulation"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"base"</span><span class="p">:</span><span class="w"> </span><span class="s2">"planning-simulation"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"externalImages"</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong>The kit root</strong> holds what belongs to your vehicle, whichever deployment
+  runs it: settings, config overrides and ROS packages.</li>
+<li><strong><code>deployments/&lt;name&gt;/</code></strong> holds what one deployment alone needs: its own
+  settings and config overrides, and a <code>compose.yaml</code> when it adds or changes
+  services. The directory is optional.</li>
+<li><strong>A deployment</strong> inherits its base's architectures, ROS distros, GPU mode,
+  downloads and verify step; <code>requirements</code> in its manifest entry may narrow
+  the first three. Without a <code>compose.yaml</code> it runs its base's services.</li>
+</ul>
+<p><code>new</code> names the first deployment after the kit and its base. The name is yours
+to change: it is the key in <code>openadkit.json</code>, and its directory follows it.</p>
+<h3 id="another-deployment-of-the-same-kit">Another Deployment of the Same Kit<a class="headerlink" href="#another-deployment-of-the-same-kit" title="Permanent link">#</a></h3>
+<p>To run the same vehicle on another base, add one entry:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">"deployments"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"my-kit-planning-simulation"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"base"</span><span class="p">:</span><span class="w"> </span><span class="s2">"planning-simulation"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"my-kit-logging-simulation"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"base"</span><span class="p">:</span><span class="w"> </span><span class="s2">"logging-simulation"</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>It gets the kit's settings, config overrides and packages. Make
+<code>deployments/my-kit-logging-simulation/</code> only when it needs files of its own.
+What you wrote at the kit root now applies to both, so move what only one of
+them needs into its directory.</p>
 <h2 id="build-validate-run-stop">Build, Validate, Run, Stop<a class="headerlink" href="#build-validate-run-stop" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-kit
 openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># overlay_ws, in the release's devel image</span>
@@ -1773,9 +1899,12 @@ openadkit<span class="w"> </span>validate
 openadkit<span class="w"> </span>run<span class="w"> </span>--verify<span class="w">          </span><span class="c1"># start, wait until ready, run the base's verify step</span>
 openadkit<span class="w"> </span>stop
 </code></pre></div>
-<p>Inside a kit with one deployment the commands need no name. From elsewhere,
-name it by its directory: <code>openadkit run ./my-kit</code>. A kit on a source checkout
-needs <code>DEVEL_IMAGE</code> for <code>build</code>; see
+<p>Inside a kit with one deployment the commands need no name; from elsewhere,
+name the kit by its directory: <code>openadkit run ./my-kit</code>. With several
+deployments, <code>run</code> takes the name of one, while <code>validate</code> and <code>fetch</code> without
+a name act on each of them. From elsewhere, one of them is
+<code>./my-kit/deployments/&lt;name&gt;</code>, also while it has no directory of its own. A kit on a source checkout
+runs that checkout's local build, or the CI build <code>OPENADKIT_BUILD</code> names; see
 <a href="../kit-guide/#3-overlay-workspace">Overlay Workspace</a>.</p>
 <p>Add <code>--ros-distro jazzy</code> to <code>build</code>, <code>validate</code> and <code>run</code> for Jazzy.
 <code>validate</code> renders the Compose model without starting anything; it is not
@@ -1800,9 +1929,15 @@ into the running services.</p>
 <h2 id="where-changes-go">Where Changes Go<a class="headerlink" href="#where-changes-go" title="Permanent link">#</a></h2>
 <p>Keep parameter changes in <code>config/autoware/</code> and packages in <code>overlay_ws/</code>
 rather than mounting over <code>/opt/autoware</code> or replacing a base service's
-command. The <a href="../kit-guide/">Kit Guide</a> is the reference for the
-settings order, config overrides, the overlay workspace, extra services and
-image replacement.</p>
+command.</p>
+<ul>
+<li><a href="../new-vehicle/">A New Vehicle</a>: your vehicle and sensor packages, and your
+  map.</li>
+<li><a href="../kit-guide/">Kit Guide</a>: the settings order, config overrides, the overlay
+  workspace, extra services and image replacement.</li>
+<li><a href="../reference/">Manifest and Output Reference</a>: every field of
+  <code>openadkit.json</code>.</li>
+</ul>
 
 
 

@@ -1186,6 +1186,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1296,6 +1300,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1304,6 +1336,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -2033,10 +2093,11 @@ returns once the deployment is ready.</p>
   <code>openadkit stop</code>. The roles of one
   <a href="../../deployments/split-host/">split-host</a> deployment can run together.</li>
 </ul>
-<p>Every run writes <code>results/run.json</code> in the deployment's output directory: the
-version, distro and images it started, the digest of the resolved Compose
-model, content digests of the config overrides and overlay workspace it mounts,
-how long it took to be ready and, with <code>--verify</code>, the step's result.</p>
+<p>Every run writes <code>results/run.json</code> in the deployment's output directory: what
+it started, how long it took to be ready and, with <code>--verify</code>, the step's
+result (<a href="../../kits/reference/#resultsrunjson">fields</a>).</p>
+<p>Without <code>--ros-distro</code>, a deployment command uses the release's default distro,
+or the deployment's first one when it does not run on that.</p>
 <h2 id="runtime-controls">Runtime Controls<a class="headerlink" href="#runtime-controls" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>status
 openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
@@ -2064,6 +2125,9 @@ mrm          normal
 </code></pre></div>
 <p>A line reads <code>no data</code> while nothing publishes that state yet, for example
 before localization starts.</p>
+<p>When a node of an Autoware service dies, the service turns <code>unhealthy</code> and
+<code>status</code> names the process; see
+<a href="../troubleshooting/#a-service-is-unhealthy">A Service Is Unhealthy</a>.</p>
 <h3 id="restart">Restart<a class="headerlink" href="#restart" title="Permanent link">#</a></h3>
 <p><code>restart</code> recreates services as <code>run</code> started them, with the current settings,
 config overrides and overlay workspace, and keeps to the same readiness checks.</p>
@@ -2081,9 +2145,12 @@ config overrides and overlay workspace, and keeps to the same readiness checks.<
 <li><code>restart --all</code> recreates the whole deployment, one-shot services included.</li>
 </ul>
 <h3 id="shell">Shell<a class="headerlink" href="#shell" title="Permanent link">#</a></h3>
-<p><code>shell</code> sources ROS, Autoware and the overlay workspace like the services'
-entrypoint. Give it a service and a command to run one command instead of an
-interactive shell; <code>shell</code> then exits with the command's status.</p>
+<p><code>shell</code> sources ROS, Autoware and the overlay workspace, as the services'
+entrypoint does. Give it a service and a command to run one command instead of
+an interactive shell; <code>shell</code> then exits with the command's status.</p>
+<p>Unlike the service itself, the shell runs as root and without the config
+overrides: a launch file you start there reads Autoware's own parameter files.
+The running nodes have the overrides, so <code>ros2 param get</code> shows them.</p>
 <h3 id="record">Record<a class="headerlink" href="#record" title="Permanent link">#</a></h3>
 <p><code>record</code> writes a rosbag of the named topics (or <code>--all</code>) to
 <code>~/openadkit-output/&lt;deployment&gt;/recordings/</code> (<code>--output</code> to change) until
@@ -2093,11 +2160,10 @@ stays on the host when the deployment stops.</p>
 <h2 id="validate-before-running">Validate Before Running<a class="headerlink" href="#validate-before-running" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>planning-simulation<span class="w"> </span>--data
 </code></pre></div>
-<p>Without <code>--ros-distro</code>, a deployment command uses the Open AD Kit's default
-distro, or the deployment's first one when it does not run on that.</p>
 <p><code>validate</code> checks the manifest and the Compose configuration without starting
 anything. <code>--data</code> also reports each data resource as <code>ok</code>, <code>missing</code>,
-<code>incomplete</code> or <code>outdated</code> and fails on any gap. It follows the same GPU
+<code>incomplete</code> or <code>outdated</code> and fails on any gap; a directory of your own shows
+as <code>own</code>. It follows the same GPU
 selection as <code>run</code>: <code>openadkit validate logging-simulation --gpu --data</code>
 includes the CenterPoint models.</p>
 <p><code>config</code> prints a deployment's resolved Compose model as JSON, with <code>validate</code>'s
@@ -2126,34 +2192,45 @@ services. To change a node parameter instead, use a
 <tr>
 <th>Directory</th>
 <th>Default</th>
-<th>Override</th>
+<th>With <code>OPENADKIT_HOME</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Host settings</td>
-<td><code>~/.config/openadkit</code></td>
-<td><code>OPENADKIT_SETTINGS_DIR</code> (or <code>XDG_CONFIG_HOME</code>)</td>
-</tr>
-<tr>
-<td>Results and recordings</td>
-<td><code>~/openadkit-output/&lt;name&gt;/{results,recordings}</code></td>
-<td><code>OPENADKIT_OUTPUT_DIR</code></td>
-</tr>
-<tr>
-<td>Installed releases</td>
-<td><code>~/.local/share/openadkit</code></td>
-<td><code>OPENADKIT_INSTALL_DIR</code></td>
+<td><code>~/.config/openadkit</code> (or under <code>XDG_CONFIG_HOME</code>)</td>
+<td><code>settings/</code></td>
 </tr>
 <tr>
 <td>Run records, which <code>restart</code> reads</td>
-<td><code>~/.local/state/openadkit</code></td>
-<td><code>OPENADKIT_STATE_DIR</code> (or <code>XDG_STATE_HOME</code>)</td>
+<td><code>~/.local/state/openadkit</code> (or under <code>XDG_STATE_HOME</code>)</td>
+<td><code>state/</code></td>
+</tr>
+<tr>
+<td>Installed releases</td>
+<td><code>~/.local/share/openadkit</code> (or under <code>XDG_DATA_HOME</code>)</td>
+<td><code>releases/</code></td>
+</tr>
+<tr>
+<td>Results and recordings</td>
+<td><code>~/openadkit-output/&lt;deployment&gt;/{results,recordings}</code></td>
+<td><code>output/</code></td>
+</tr>
+<tr>
+<td>Downloaded data</td>
+<td><code>~/autoware_data</code></td>
+<td><code>data/</code></td>
 </tr>
 </tbody>
 </table>
+<p>Set <code>OPENADKIT_HOME</code> to an absolute path to keep everything Open AD Kit writes
+under that one directory, for example to keep a test run apart from your own
+files.</p>
 <h2 id="downloaded-data">Downloaded Data<a class="headerlink" href="#downloaded-data" title="Permanent link">#</a></h2>
-<p>Maps, rosbags and models live under <code>~/autoware_map</code> and <code>~/autoware_data</code>.</p>
+<p>Maps, rosbags and models live under one data directory, <code>~/autoware_data</code> (see
+the table above): maps in <code>maps/</code>, rosbags in <code>rosbags/</code>, models and the Safety
+Island beside them. To move one of them only, set its path in the host settings
+file, such as <code>MAP_PATH</code>.</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>validate<span class="w"> </span>planning-simulation<span class="w"> </span>--data<span class="w">   </span><span class="c1"># report</span>
 openadkit<span class="w"> </span>fetch<span class="w"> </span>planning-simulation<span class="w"> </span>--force<span class="w">     </span><span class="c1"># replace</span>
 openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulation<span class="w">             </span><span class="c1"># delete, after asking</span>
@@ -2173,24 +2250,32 @@ openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulatio
   next <code>run</code> or <code>fetch</code> downloads it again.</li>
 </ul>
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file, and
-<code>clean</code> and <code>--force</code> only delete or replace marked data. Data that was already
-there, such as a map you copied yourself, is used when it is complete, but the
-CLI never deletes or replaces it; move or remove it yourself.</p>
+checks, updates and deletes only marked data. A directory that holds files and
+no marker is yours, such as your own map at <code>MAP_PATH</code>: the deployment uses it
+as it is, whatever its files are called, and <code>fetch</code>, <code>--force</code> and <code>clean</code>
+leave it alone. Name its files in the settings where the deployment has them,
+such as <code>LANELET2_MAP_FILE</code> and <code>POINTCLOUD_MAP_FILE</code>.</p>
+<p>A path that does not exist, or an empty directory, counts as missing: the CLI
+downloads the sample data there, and says so first when the path is outside
+the data directory. Copy your own data in before the first <code>run</code>, and check
+the path for a typo when you see that line.</p>
 <p><code>clean</code> and <code>fetch --force</code> refuse while that deployment is running, or while
 any live container mounts the data (including another kit or deployment). If
 data usage cannot be checked, they refuse as well.</p>
 <h2 id="your-own-kit">Your Own Kit<a class="headerlink" href="#your-own-kit" title="Permanent link">#</a></h2>
-<p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit on top of a
-catalog deployment (Planning Simulation by default) that holds
-only your differences. <code>openadkit build</code> builds the kit's overlay workspace in
-the release's devel image. See <a href="../../kits/create-a-kit/">Create a Kit</a>.</p>
+<p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit with one
+deployment on top of a catalog deployment (Planning Simulation by default), and
+<code>openadkit build</code> builds its overlay workspace. See
+<a href="../../kits/create-a-kit/">Create a Kit</a>.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>upgrade<span class="w"> </span>--check<span class="w">   </span><span class="c1"># report whether a newer stable version exists</span>
 openadkit<span class="w"> </span>upgrade<span class="w">           </span><span class="c1"># install it</span>
 </code></pre></div>
 <p>The new release is verified and installed next to the old one, and the
-<code>openadkit</code> launcher is repointed. The previous version stays in the install
-directory, so you can roll back:</p>
+<code>openadkit</code> launcher is repointed. <code>upgrade</code> moves to the latest stable
+release, also across a major version, and says so when it does: read that
+release's breaking changes first. A kit keeps running the release it pins. The
+previous version stays in the install directory, so you can roll back:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>install<span class="w"> </span>--version<span class="w"> </span>vOLD
 </code></pre></div>
 <p>A version that is already installed becomes the active one as it is, without a
@@ -2207,9 +2292,8 @@ openadkit<span class="w"> </span>uninstall<span class="w">          </span><span
 openadkit<span class="w"> </span>uninstall<span class="w"> </span>--all<span class="w">    </span><span class="c1"># remove kept versions too</span>
 </code></pre></div>
 <p><code>uninstall</code> is for release installs; remove a source checkout with Git. It
-keeps your host settings in <code>~/.config/openadkit</code>, run records in
-<code>~/.local/state/openadkit</code>, results and recordings in <code>~/openadkit-output</code>, and
-downloaded data. The host changes <code>openadkit setup</code> made stay too: Docker and its
+keeps your host settings, run records, results, recordings and downloaded data
+(see <a href="#settings">Settings</a> for where they are). The host changes <code>openadkit setup</code> made stay too: Docker and its
 apt source, your <code>docker</code> group membership and
 <code>/etc/sysctl.d/99-openadkit-dds.conf</code>.</p>
 <h2 id="names-directories-and-output">Names, Directories and Output<a class="headerlink" href="#names-directories-and-output" title="Permanent link">#</a></h2>
@@ -2217,21 +2301,22 @@ apt source, your <code>docker</code> group membership and
 <li><strong>A directory instead of a name:</strong> <code>validate</code>, <code>config</code>, <code>fetch</code>, <code>run</code> and
   <code>clean</code> also take a deployment's directory, such as <code>openadkit run ./my-kit</code>.
   An argument with a <code>/</code> or a leading <code>.</code> is a directory, and the kit around it
-  is used wherever you run the command.</li>
+  is used wherever you run the command. A kit's own directory stands for the
+  kit, as when you run the command inside it; from outside, one of several
+  deployments is named as <code>./my-kit/deployments/&lt;name&gt;</code>.</li>
 <li><strong>Version:</strong> <code>openadkit version</code> prints the installed release and the
   Autoware release it pins; in a source checkout, the commit.</li>
 <li><strong>Scripting:</strong> <code>list</code>, <code>version</code> and <code>validate</code> accept <code>--json</code>.
   <code>validate --json</code> prints one JSON document also when the deployment is
-  invalid (<code>"valid": false</code> with the <code>"error"</code>).</li>
+  invalid (<code>"valid": false</code> with the <code>"error"</code>), and covers one deployment: in
+  a kit with several, name one. The <a href="../../kits/reference/#json-output">reference</a>
+  lists the fields.</li>
 <li><strong>Docker commands:</strong> commands print what they do in plain terms; add
   <code>--verbose</code> (or set <code>OPENADKIT_VERBOSE=1</code>) to also see the docker commands
   they run, status queries aside.</li>
 <li><strong>Tab completion:</strong> Tab completes commands, options and deployment names,
   from the kit around the current directory or else the active release;
-  bash-completion (installed on Ubuntu by default) loads it from
-  <code>~/.local/share/bash-completion/completions</code> in a new shell. The installer
-  leaves a completion file it did not install alone, and <code>openadkit uninstall</code>
-  removes only its own link.</li>
+  bash-completion (installed on Ubuntu by default) loads it in a new shell.</li>
 </ul>
 
 

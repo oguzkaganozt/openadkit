@@ -985,6 +985,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -1095,6 +1099,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../kits/new-vehicle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A New Vehicle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../kits/kit-guide/" class="md-nav__link">
         
   
@@ -1103,6 +1135,34 @@
     
   
     Kit Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kits/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest and Output Reference
   
 
     
@@ -1429,17 +1489,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#manifests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manifests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#kits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1757,17 +1806,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#manifests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manifests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#kits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1870,11 +1908,9 @@ This page lists what that promise covers. Within one major version:</p>
 <li><strong>A patch release</strong> (<code>v2.0.1</code>) fixes bugs and keeps every item below working.</li>
 <li><strong>A minor release</strong> (<code>v2.1.0</code>) adds features and may move to a newer Autoware
   release. It keeps every item below working. JSON output and manifests can
-  gain new fields, which readers should ignore. The CLI itself rejects a
-  manifest field it does not know, so a manifest that uses a new field needs
-  the CLI of the release that added it: a kit's pinned release runs its
-  commands, while <code>list</code>, <code>version</code> and Tab completion read it with the
-  <code>openadkit</code> you called.</li>
+  gain new fields. A reader of the JSON output ignores a field it does not
+  know; the CLI rejects an unknown manifest field, which is why a kit's pinned
+  release runs the kit's commands, whichever <code>openadkit</code> you called.</li>
 <li><strong>A major release</strong> (<code>v3.0.0</code>) is the only one that removes or changes an item
   below. Its release notes list each change under <strong>Breaking changes</strong>.</li>
 </ul>
@@ -1916,38 +1952,38 @@ This page lists what that promise covers. Within one major version:</p>
 </ul>
 <ul>
 <li>Machine-readable output: <code>list --json</code>, <code>version --json</code>, <code>validate --json</code>
-  and each run's <code>results/run.json</code>. Each carries <code>schemaVersion</code>.</li>
-</ul>
-<h3 id="manifests">Manifests<a class="headerlink" href="#manifests" title="Permanent link">#</a></h3>
-<ul>
-<li><code>openadkit.json</code> (the release manifest, or a kit's kit manifest) at
-  <code>schemaVersion: 2</code>, and the deployment manifest <code>deployment.json</code>: their
-  fields and what they mean. A deployment is named by its key in
-  <code>openadkit.json</code>, and its Compose files by convention: <code>compose.yaml</code>,
-  <code>compose.gpu.yaml</code> for the GPU mode, and <code>compose.&lt;role&gt;.yaml</code> with
-  <code>compose.zenoh.yaml</code> for a split-host role. A service with
-  <code>restart: "no"</code> is a one-shot service.</li>
+  and each run's <code>results/run.json</code>, with the fields in the
+  <a href="../../kits/reference/#json-output">reference</a>. Each carries <code>schemaVersion</code>.</li>
 </ul>
 <h3 id="kits">Kits<a class="headerlink" href="#kits" title="Permanent link">#</a></h3>
 <p>What a kit made with <code>openadkit new</code> builds on:</p>
 <ul>
-<li><code>extends</code> pinning a release, and <code>base</code> naming one of its deployments.</li>
-<li>The Compose variables <code>OPENADKIT_ROOT</code>, <code>OPENADKIT_BASE_DEPLOYMENT</code> and
-  <code>OPENADKIT_OVERLAY_WS</code>.</li>
-<li>Each base deployment's Compose files, service names, data destination
-  variables (such as <code>MAP_PATH</code>), verify step and the settings listed under
-  <a href="#settings-and-paths">Settings and Paths</a>.</li>
-<li>Config overrides under <code>config/autoware/</code> and the overlay workspace in <code>overlay_ws/</code>,
-  which the images' entrypoint applies and sources on every start.</li>
-<li><code>externalImages</code> that replace a component image or add new ones.</li>
+<li>The kit's manifest, <code>openadkit.json</code> at <code>schemaVersion: 2</code>: its fields and
+  what they mean, as the <a href="../../kits/reference/">reference</a> lists them.</li>
+<li>The kit's layout: <code>settings.env</code>, <code>config/autoware/</code> and <code>overlay_ws/</code> at its
+  root for every deployment, and <code>deployments/&lt;name&gt;/</code> for the <code>settings.env</code>,
+  <code>config/autoware/</code> and <code>compose.yaml</code> of one. They apply in the order base,
+  kit, deployment, host settings file.</li>
+<li><code>deployments/shared/services/autoware.yaml</code>, the service a kit's own services
+  extend: the host network, the DDS settings, the config overrides, the overlay
+  workspace and the healthcheck that fails when a process of the service's
+  <code>ros2 launch</code> dies, with its record in <code>/tmp/openadkit/died</code>. A service with
+  <code>restart: "no"</code> is a one-shot service.</li>
+<li>The variables the CLI sets for a kit's Compose files and settings:
+  <code>OPENADKIT_ROOT</code> (the release), <code>OPENADKIT_BASE_DEPLOYMENT</code> (the base's
+  directory), <code>OPENADKIT_KIT</code> (the kit's root), <code>OPENADKIT_OVERLAY_WS</code>,
+  <code>OPENADKIT_DATA_DIR</code> (the data directory), <code>ROS_DISTRO</code> and the
+  <a href="../../kits/reference/#release-manifest">component image variables</a>.</li>
+<li>Of each base deployment: its name, the names of its Autoware services (such
+  as <code>planning</code>, <code>control</code> and <code>map</code>), its data destination variables (such as
+  <code>MAP_PATH</code>), its <code>compose.yaml</code> as the file a kit includes, and its verify
+  step.</li>
 </ul>
 <p>See <a href="../../kits/create-a-kit/">Create a Kit</a> and the
 <a href="../../kits/kit-guide/">Kit Guide</a>.</p>
 <h3 id="settings-and-paths">Settings and Paths<a class="headerlink" href="#settings-and-paths" title="Permanent link">#</a></h3>
 <ul>
-<li><code>OPENADKIT_VERBOSE</code>, <code>OPENADKIT_INSTALL_DIR</code>, <code>OPENADKIT_SETTINGS_DIR</code> and
-  <code>OPENADKIT_OUTPUT_DIR</code>, and <code>DEVEL_IMAGE</code>, the devel image <code>openadkit build</code>
-  uses in place of the pinned one.</li>
+<li><code>OPENADKIT_HOME</code> and the directories under it.</li>
 <li>The host settings file <code>~/.config/openadkit/&lt;deployment&gt;.env</code>, and the
   <code>results</code> and <code>recordings</code> directories under the output directory.</li>
 <li>These settings of a deployment's <code>settings.env</code> and of the host settings
@@ -1955,6 +1991,9 @@ This page lists what that promise covers. Within one major version:</p>
   <code>VEHICLE_ID</code>, <code>CYCLONEDDS_NETWORK_INTERFACE</code>, and the visualizer's
   <code>REMOTE_DISPLAY</code>, <code>REMOTE_PASSWORD</code>, <code>RVIZ_CONFIG</code>, <code>RVIZ_GPU</code>,
   <code>WEBSOCKIFY_BIND</code>, <code>NOVNC_CERT</code> and <code>NOVNC_KEY</code>.</li>
+<li>The state on the host: a release reads the run records, data markers and
+  overlay workspace builds that any release of the same major version wrote,
+  so a kit that pins an older release shares the host with a newer one.</li>
 </ul>
 <p>See <a href="../../getting-started/cli/">CLI &amp; Maintenance</a>.</p>
 <h3 id="images">Images<a class="headerlink" href="#images" title="Permanent link">#</a></h3>
@@ -1965,15 +2004,10 @@ This page lists what that promise covers. Within one major version:</p>
 <li>The images' entrypoint, <code>/opt/openadkit/entrypoint.sh</code>: it runs the command
   as the host user (<code>HOST_UID</code>, <code>HOST_GID</code>), with ROS, Autoware and the overlay
   workspace sourced and the config overrides applied.</li>
-<li>The image labels <code>org.autoware.openadkit.ros-snapshot</code>,
-  <code>org.autoware.openadkit.autoware-version</code>, <code>org.autoware.openadkit.autoware-ref</code>
-  and <code>org.autoware.openadkit.autoware-lock-sha256</code>.</li>
-<li>The Autoware packages that the catalog deployments run and that each image's
-  launch files in <a href="../../deployments/components/">Components</a> need, with RViz plugins
-  in the visualizer image only. They change only with the pinned Autoware
-  release: when Autoware removes a package, the minor release that moves to
-  that Autoware release says so. An image may lose any other package in a minor
-  release, whose notes list it.</li>
+<li>The Autoware packages that the catalog deployments run, in the image that
+  <a href="../../deployments/components/">Components</a> names. They change only with the
+  pinned Autoware release; the minor release that moves to it says which
+  packages Autoware removed.</li>
 </ul>
 <h3 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h3>
 <ul>
@@ -1981,33 +2015,36 @@ This page lists what that promise covers. Within one major version:</p>
   <code>setup</code> commands.</li>
 <li>The <code>openadkit-vX.Y.Z.tar.gz</code> bundle.</li>
 <li>These fields of <code>release-metadata.json</code>, which the installer and
-  <a href="../verification/">Verify a Release</a> read: <code>openadkit_version</code>,
-  <code>autoware_base_version</code>, <code>bundles</code>, <code>evidence</code> and <code>bom</code>. A release may list
-  more bundles there; the installer takes the one named after the version.</li>
+  <a href="../verification/">Verify a Release</a> read: <code>version</code>, <code>bundles</code>, <code>evidence</code>
+  and <code>bom</code>.</li>
 </ul>
 <h2 id="experimental">Experimental<a class="headerlink" href="#experimental" title="Permanent link">#</a></h2>
 <p>These work and are tested where the docs say so, but may change in a minor
 release:</p>
 <ul>
-<li><strong>Split-host roles:</strong> <code>--role</code>, <code>roles</code> in <code>deployment.json</code> and the Zenoh
-  bridge. See <a href="../../deployments/split-host/">Split-host Simulation</a>.</li>
+<li><strong>Split-host roles:</strong> <code>--role</code>, <code>roles</code> in <code>deployment.json</code>, the
+  <code>compose.&lt;role&gt;.yaml</code> files and the Zenoh bridge. See
+  <a href="../../deployments/split-host/">Split-host Simulation</a>.</li>
 <li><strong>AutoSD with Podman and Quadlet:</strong> <code>platforms/autosd/</code> and the units it
   generates. See <a href="../../platforms/autosd/">AutoSD</a>.</li>
-<li><strong>The Diffusion Planner:</strong> <code>planning-simulation --gpu</code>. With Autoware 2.0.0
-  its verify step fails on the sample route. See
+<li><strong>The Diffusion Planner:</strong> <code>planning-simulation --gpu</code>. See
   <a href="../../deployments/planning-simulation/#gpu-mode">Planning Simulation</a>.</li>
 </ul>
 <h2 id="not-covered">Not Covered<a class="headerlink" href="#not-covered" title="Permanent link">#</a></h2>
 <ul>
 <li>Human-readable output: messages, tables and their wording.</li>
 <li>The output of <code>openadkit config</code>, which is Docker Compose's resolved model.</li>
-<li>The CI workflows and everything under <code>.github/</code>.</li>
-<li>The other fields of <code>release-metadata.json</code>, which are CI's own build and
-  scan records.</li>
+<li>A release's own manifests, <code>openadkit.json</code> and <code>deployment.json</code>, which its
+  packaging writes and its own CLI reads.</li>
+<li>Services that are not Autoware's, such as a simulator's, and Autoware
+  packages that no catalog deployment runs.</li>
 <li>The other settings in <code>settings.env</code>. Most are arguments of Autoware's launch
-  files and follow the pinned Autoware release; <code>READINESS_CHECKS</code> holds the
-  arguments of the readiness check.</li>
-<li>Environment variables, files and image internals that this page does not list.</li>
+  files and follow the pinned Autoware release.</li>
+<li>The other fields of <code>release-metadata.json</code>, and image labels.</li>
+<li>The CI workflows, everything under <code>.github/</code>, and what a developer or CI
+  uses to run a source checkout, such as <code>OPENADKIT_BUILD</code>.</li>
+<li>Environment variables, files and image internals that this page does not
+  list.</li>
 </ul>
 
 
