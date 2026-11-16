@@ -25,7 +25,7 @@ create_draft() {
   mapfile -t assets < <(jq -r '.githubAssets[].path' "${plan_file}")
   gh release create "${VERSION}" \
     --target "${RELEASE_SHA}" \
-    --title "Open AD Kit ${VERSION} · Autoware $(jq -r '.releaseContext.autoware.version' "${plan_file}")" \
+    --title "${VERSION}" \
     --notes-file release-notes.md \
     --draft \
     "${assets[@]}"

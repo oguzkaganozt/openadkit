@@ -117,7 +117,12 @@ def details(summary: str, body: str) -> list[str]:
 def render(plan: dict[str, Any], repository: str, highlights: str, changes: str) -> str:
     release, evidence = plan["release"], plan["evidence"]
     version = release["version"]
-    out: list[str] = []
+    autoware = plan["releaseContext"]["autoware"]
+    distros = " and ".join(distro.capitalize() for distro in sorted(plan["releaseContext"]["images"]))
+    cells = report_cells(evidence)
+    architectures = " and ".join(sorted({cell["platform"].rsplit("/", 1)[-1] for cell in cells if cell.get("platform")}))
+    # What the release runs, before anything else: its title is the version alone.
+    out: list[str] = [" · ".join(filter(None, [f"**Autoware {autoware['version']}**", f"ROS 2 {distros}", architectures])), ""]
     if highlights.strip():
         out += [highlights.strip(), ""]
 
@@ -137,32 +142,26 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     if changes:
         out += [changes.rstrip("\n"), ""]
 
-    autoware = plan["releaseContext"]["autoware"]
-    backports = autoware.get("backports") or []
-    if backports:
-        out += ["## Backported Autoware fixes", "", f"On top of Autoware {autoware['version']}, from upstream:", ""]
-        out += [f"- {fix['subject']} (`{fix['repository']}`): {fix['upstream']}" for fix in backports]
-        out += [""]
-
-    cells = report_cells(evidence)
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
     run = f" ([evidence run]({evidence['url']}))" if evidence.get("url") else ""
+    exempt = "; ".join(f"`{item['deployment']}` ({item['reason'].rstrip('.')})" for item in evidence.get("exempt") or [])
     out += [
         "## Verification", "",
-        f"**{passed}/{len(cells)}** evidence cells passed{run}. "
-        f"Default ROS distro: `{release['defaultRosDistro']}`.", "",
+        f"**{passed}/{len(cells)}** evidence cells passed{run}." + (f" Not verified in CI: {exempt}." if exempt else ""),
+        "Provenance, the BOM and checksums are in `release-metadata.json`: "
+        "[verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
+        "before you run its files.", "",
     ]
-    if evidence.get("exempt"):
-        out += ["Not verified in CI (the CLI warns when you run these):", ""]
-        out += [f"- `{item['deployment']}`: {item['reason']}" for item in evidence["exempt"]]
-        out += [""]
     out += details("Evidence cells", render_evidence(evidence, summary=False))
     out += details("Image digests", "\n".join(f"- `{image['releaseRef']}@{image['digest']}`" for image in plan["images"]))
-    out += [
-        "Provenance, the BOM and checksums are in `release-metadata.json`. "
-        "[Verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
-        "before you run its files.",
-    ]
+    backports = autoware.get("backports") or []
+    if backports:
+        out += details(
+            f"Fixes backported to Autoware {autoware['version']}",
+            "\n".join(f"- {fix['subject']} (`{fix['repository']}`): {fix['upstream']}" for fix in backports),
+        )
+    while out[-1] == "":
+        out.pop()
     return "\n".join(out) + "\n"
 
 
