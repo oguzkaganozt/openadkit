@@ -145,9 +145,8 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
     out += [
         "## Verification", "",
-        f"**{passed}/{len(cells)}** evidence cells passed. "
-        "[Verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
-        "before you run its files.", "",
+        f"**{passed}/{len(cells)}** evidence cells passed · "
+        "[How to verify this release](https://autowarefoundation.github.io/openadkit/releases/verification/)", "",
     ]
     exempt = [f"- `{item['deployment']}`: {item['reason']}" for item in evidence.get("exempt") or []]
     out += details("Evidence cells", "\n".join(

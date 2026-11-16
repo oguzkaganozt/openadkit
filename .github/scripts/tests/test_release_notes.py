@@ -62,7 +62,7 @@ def test_notes_lead_with_people_and_keep_digests_folded(tmp_path):
     assert f"releases/download/{VERSION}/openadkit" in notes
     assert "now point to this release" in notes
     assert notes.index("## What's Changed") < notes.index("## Verification")
-    assert "**1/1** evidence cells passed. [Verify a release]" in notes
+    assert "**1/1** evidence cells passed · [How to verify this release]" in notes
     assert "Run: https://github.com/example/repo/actions/runs/456" in notes[notes.index("<summary>Evidence cells</summary>"):]
     # What CI does not verify is listed with the cells, folded.
     assert "- `carla-simulation`: Needs a GPU." in notes[notes.index("<summary>Evidence cells</summary>"):]
