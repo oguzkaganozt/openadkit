@@ -71,7 +71,8 @@ connecting role fail fast when `ZENOH_PEER` is unset; `stop`, `status` and
 `logs` never need either variable.
 
 To run both roles on one machine, pass the endpoints per command instead, with
-a separate port for each role:
+a separate port for each role. Leave them out of the host settings file then:
+a value there wins over the command line.
 
 ```bash
 ZENOH_LISTEN=tcp/127.0.0.1:7447 openadkit run scenario-simulation --role autoware

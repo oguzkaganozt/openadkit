@@ -3,7 +3,8 @@
 `openadkit new` makes a kit: your own project, which extends this release
 without copying it. A kit holds one or more deployments. Each runs a deployment
 of the release, its base, with the kit's files on top, so the kit holds only
-your differences:
+your differences. Every base is a simulation: a kit shows your vehicle's
+software in simulation, not on the vehicle.
 
 ```bash
 openadkit new my-kit                       # on top of planning-simulation
@@ -120,6 +121,11 @@ into the running services.
 
 Keep parameter changes in `config/autoware/` and packages in `overlay_ws/`
 rather than mounting over `/opt/autoware` or replacing a base service's
-command. The [Kit Guide](kit-guide.md) is the reference for the
-settings order, config overrides, the overlay workspace, extra services and
-image replacement.
+command.
+
+- [A New Vehicle](new-vehicle.md): your vehicle and sensor packages, and your
+  map.
+- [Kit Guide](kit-guide.md): the settings order, config overrides, the overlay
+  workspace, extra services and image replacement.
+- [Manifest and Output Reference](reference.md): every field of
+  `openadkit.json`.

@@ -111,7 +111,9 @@ nav:
   - Kits:
       - Create a Kit: kits/create-a-kit.md
       - Develop and Debug: kits/develop-and-debug.md
+      - A New Vehicle: kits/new-vehicle.md
       - Kit Guide: kits/kit-guide.md
+      - Manifest and Output Reference: kits/reference.md
   - Platforms:
       - platforms/index.md
       - AutoSD: platforms/autosd.md
@@ -119,7 +121,6 @@ nav:
       - releases/index.md
       - Container Images: releases/container-images.md
       - Compatibility: releases/compatibility.md
-      - Manifest and Output Reference: releases/reference.md
       - Evidence Policy: releases/evidence.md
       - Verify a Release: releases/verification.md
   - Development:

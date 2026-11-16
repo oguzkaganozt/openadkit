@@ -22,7 +22,8 @@ distro, architecture and topology:
 A cell runs on a hosted runner of its own architecture.
 
 Each cell runs these levels on a fresh stack, started with
-`openadkit run --no-visualizer`:
+`openadkit run --no-visualizer`; the AutoSD cells start the generated systemd
+units instead:
 
 - **L0:** manifests and Compose configuration validate; the example kit's cell
   validates each of the kit's deployments, of which it runs the first. One cell
@@ -57,8 +58,8 @@ and blocks the release.
   evidence.
 - **GPU modes.** The cells of Planning and Logging Simulation run their CPU
   modes. The GPU modes (`--gpu`: the Diffusion Planner on `planning-cuda`,
-  CenterPoint on `sensing-perception-cuda`) validate in CI (L0) and are checked
-  by hand on a GPU host.
+  CenterPoint on `sensing-perception-cuda`) validate in lint and in release
+  packaging, not in an evidence cell, and are checked by hand on a GPU host.
 - **Real-time behavior.** A 4-vCPU hosted runner cannot run Autoware in real
   time: the ego drives late, and the bundled samples take about three times as
   long as on a 16-vCPU host. The Scenario Simulation cells therefore run at

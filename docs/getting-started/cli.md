@@ -47,10 +47,12 @@ returns once the deployment is ready.
   `openadkit stop`. The roles of one
   [split-host](../deployments/split-host.md) deployment can run together.
 
-Every run writes `results/run.json` in the deployment's output directory: the
-version, distro and images it started, the digest of the resolved Compose
-model, content digests of the config overrides and overlay workspace it mounts,
-how long it took to be ready and, with `--verify`, the step's result.
+Every run writes `results/run.json` in the deployment's output directory: what
+it started, how long it took to be ready and, with `--verify`, the step's
+result ([fields](../kits/reference.md#resultsrunjson)).
+
+Without `--ros-distro`, a deployment command uses the release's default distro,
+or the deployment's first one when it does not run on that.
 
 ## Runtime Controls
 
@@ -89,14 +91,8 @@ mrm          normal
 A line reads `no data` while nothing publishes that state yet, for example
 before localization starts.
 
-When a node of an Autoware service dies, the service keeps running with its
-other nodes and turns `unhealthy`. `status` then names the process:
-
-```text
-perception is unhealthy: multi_object_tracker_node-4 died with exit code -9
-```
-
-`openadkit restart perception` starts the service again. See
+When a node of an Autoware service dies, the service turns `unhealthy` and
+`status` names the process; see
 [A Service Is Unhealthy](troubleshooting.md#a-service-is-unhealthy).
 
 ### Restart
@@ -139,9 +135,6 @@ stays on the host when the deployment stops.
 ```bash
 openadkit validate planning-simulation --data
 ```
-
-Without `--ros-distro`, a deployment command uses the Open AD Kit's default
-distro, or the deployment's first one when it does not run on that.
 
 `validate` checks the manifest and the Compose configuration without starting
 anything. `--data` also reports each data resource as `ok`, `missing`,
@@ -232,13 +225,9 @@ data usage cannot be checked, they refuse as well.
 ## Your Own Kit
 
 `openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit with one
-deployment on top of a catalog deployment (Planning Simulation by default). It
-holds only your differences. `openadkit build` builds the kit's overlay
-workspace in the release's devel image.
-
-Inside a kit the commands act on its deployments. With one, they need no name.
-With several, `validate` and `fetch` without a name act on each, and the others
-take the name of one. See [Create a Kit](../kits/create-a-kit.md).
+deployment on top of a catalog deployment (Planning Simulation by default), and
+`openadkit build` builds its overlay workspace. See
+[Create a Kit](../kits/create-a-kit.md).
 
 ## Upgrading
 
@@ -294,14 +283,11 @@ apt source, your `docker` group membership and
 - **Scripting:** `list`, `version` and `validate` accept `--json`.
   `validate --json` prints one JSON document also when the deployment is
   invalid (`"valid": false` with the `"error"`), and covers one deployment: in
-  a kit with several, name one. The [reference](../releases/reference.md#json-output)
+  a kit with several, name one. The [reference](../kits/reference.md#json-output)
   lists the fields.
 - **Docker commands:** commands print what they do in plain terms; add
   `--verbose` (or set `OPENADKIT_VERBOSE=1`) to also see the docker commands
   they run, status queries aside.
 - **Tab completion:** Tab completes commands, options and deployment names,
   from the kit around the current directory or else the active release;
-  bash-completion (installed on Ubuntu by default) loads it from
-  `~/.local/share/bash-completion/completions` in a new shell. The installer
-  leaves a completion file it did not install alone, and `openadkit uninstall`
-  removes only its own link.
+  bash-completion (installed on Ubuntu by default) loads it in a new shell.
