@@ -2593,3 +2593,16 @@ def test_a_deployment_is_named_by_its_kit_manifest_key_alone(tmp_path):
     (renamed / "deployment.json").write_text(json.dumps(document | {"name": "example"}))
     with pytest.raises(cli_manifest.OpenADKitError, match="name"):
         cli_catalog.get_deployment(root, cli_catalog.load_catalog(root), "example")
+
+
+def test_a_missing_directory_and_a_missing_devel_image_say_so(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path)
+    result = run_cli(root, "validate", "./nope")
+    assert result.returncode == 1 and result.stderr == "error: ./nope: no such directory\n"
+    # A source checkout builds in its own local devel image and pulls none.
+    kit = extending_kit(tmp_path, root)
+    (kit / "overlay_ws/src").mkdir(parents=True)
+    result = run_cli(root, "build", directory=kit, FAKE_NO_IMAGES="1")
+    assert result.returncode == 1 and "has no local build of universe-common-devel; build it with" in result.stderr
+    assert "docker: Error" not in result.stderr

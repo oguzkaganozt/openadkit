@@ -22,7 +22,7 @@ from catalog import (
     host_architecture,
     state_root,
 )
-from manifest import OpenADKitError
+from manifest import DEVEL_IMAGE_TARGET, OpenADKitError
 from settings import Selection, compose_process_environment, docker_environment
 
 PROJECT_PREFIX = "openadkit-"
@@ -317,6 +317,18 @@ def create_writable_mounts(deployment: Deployment, selection: Selection) -> str:
             if not source.exists():
                 source.mkdir(parents=True)
     return result.stdout
+
+
+def require_local_devel_image(catalog: Catalog, image: str) -> None:
+    """As require_local_images, for the devel image a workspace builds in."""
+    if catalog.pinned or ci_build() is not None:
+        return
+    if docker(["docker", "image", "inspect", "--format", "{{.Id}}", image], check=False, trace=False).returncode:
+        raise OpenADKitError(
+            f"this source checkout has no local build of {DEVEL_IMAGE_TARGET}; build it with "
+            f"`docker buildx bake -f components/docker-bake.hcl --load {DEVEL_IMAGE_TARGET}`, "
+            "or set OPENADKIT_BUILD=<image repository>:<build tag> to build in a CI build's image"
+        )
 
 
 def require_local_images(
