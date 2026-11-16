@@ -173,6 +173,9 @@ elif text == "compose ls --all --format json":
     print(json.dumps(json.loads(live.read_text()) + {left!r}))
 elif text == "ps -aq":
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
+elif args[0] == "compose" and "ps" in args and "--format" in args:
+    for name in {service_lines!r}.split():
+        print(json.dumps({{"Service": name, "Name": "autoware-" + name, "State": "running", "Status": "Up 1 minute"}}))
 elif args[0] == "compose" and "ps" in args and "--services" in args:
     print({service_lines!r})
 elif args[0] == "compose" and "ps" in args and "--quiet" in args:
@@ -1325,10 +1328,26 @@ def test_status_shows_the_ad_api_state_in_one_line_each():
 
 def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     root, _ = runtime_tree(tmp_path)
-    calls = fake_docker(tmp_path, projects=["openadkit-example"])
+    calls = fake_docker(tmp_path, projects=["openadkit-example"], services=("app", "map", "planning"))
     assert run_cli(root, "logs", "map", "planning", directory=tmp_path).returncode == 0
     assert recorded(calls)[-1]["args"] == ["compose", "--project-name", "openadkit-example", "logs", "map", "planning"]
+    # A service also goes by its container's name, which docker ps and the log lines show.
+    assert run_cli(root, "logs", "autoware-planning", "planning").returncode == 0
+    assert recorded(calls)[-1]["args"][3:] == ["logs", "planning"]
+    assert run_cli(root, "shell", "autoware-map", "true").returncode == 0
+    assert recorded(calls)[-1]["args"][3:6] == ["exec", "-T", "map"]
+    # Compose prints nothing for a name it does not know; the CLI says so.
+    for operation in (("logs", "nope"), ("shell", "nope", "true")):
+        result = run_cli(root, *operation)
+        assert result.returncode == 1 and "error: no service named nope\nservices: app, map, planning" in result.stderr
+    result = run_cli(root, "status")
+    assert [line.split() for line in result.stdout.splitlines()[:2]] == [
+        ["SERVICE", "CONTAINER", "STATUS"], ["app", "autoware-app", "Up", "1", "minute"]]
     assert run_cli(root, "run", "example").returncode == 0
+    assert run_cli(root, "restart", "autoware-planning", directory=tmp_path).returncode == 0
+    assert next(row["args"] for row in reversed(recorded(calls)) if "up" in row["args"])[-1] == "planning"
+    result = run_cli(root, "restart", "nope")
+    assert result.returncode == 1 and "error: no service named nope" in result.stderr
     assert run_cli(root, "restart", "planning", directory=tmp_path).returncode == 0
     up = next(row["args"] for row in reversed(recorded(calls)) if "up" in row["args"])
     assert up[-3:] == ["--no-deps", "--force-recreate", "planning"]
@@ -1353,7 +1372,7 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
     root, _ = runtime_tree(tmp_path)
     edit_manifest(root, lambda kit: kit["deployments"].update(other={"path": "deployments/other"}))
     shutil.copytree(root / "deployments/example", root / "deployments/other")
-    calls = fake_docker(tmp_path, stopped=["openadkit-other"])
+    calls = fake_docker(tmp_path, stopped=["openadkit-other"], services=("app", "map"))
     result = run_cli(root, "status")
     assert result.returncode == 0 and "== other (stopped)" in result.stdout
     assert "remove the stopped containers with: openadkit stop" in result.stdout
@@ -1363,7 +1382,7 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
     assert not any("up" in row["args"] for row in recorded(calls))
     # The same deployment starts again in place.
     assert run_cli(root, "run", "other").returncode == 0
-    fake_docker(tmp_path, stopped=["openadkit-other"])
+    fake_docker(tmp_path, stopped=["openadkit-other"], services=("app", "map"))
     calls.write_text("")
     # Its logs stay readable until stop removes it.
     assert run_cli(root, "logs", "map", directory=tmp_path).returncode == 0

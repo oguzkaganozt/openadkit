@@ -853,7 +853,9 @@ def restart_command(args: argparse.Namespace) -> int:
     if args.all_services:
         services = compose.render(deployment, selection) - skipped
     elif args.services:
-        services = set(args.services)
+        # A service that is not up yet, such as a skipped visualizer, is still one to start.
+        known = compose.render(deployment, selection)
+        services = set(live.resolve_services(project, args.services, known))
     else:
         # What a restart is for: changed config or workspaces, and changed settings.
         services = set(live.hooked_services(project)) | compose.changed_services(deployment, selection)
