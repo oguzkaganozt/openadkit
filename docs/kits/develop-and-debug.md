@@ -60,9 +60,9 @@ service's process namespace; the service and its image stay as they are.
     openadkit restart my-node
     ```
 
-2. Find the service's container with `docker ps`. An Autoware service is
-   `autoware-<service>`; a service of your kit is
-   `openadkit-<deployment>-<service>-1`.
+2. Find the service's container in the `CONTAINER` column of
+   `openadkit status`. An Autoware service is `autoware-<service>`; a service
+   of your kit is `openadkit-<deployment>-<service>-1`.
 
 3. Start gdb beside it. `my_node` is the name of the executable:
 
