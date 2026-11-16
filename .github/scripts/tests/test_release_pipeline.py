@@ -299,7 +299,7 @@ def test_a_new_release_starts_as_a_draft_with_its_title_and_assets(tmp_path):
     result, calls = run_manager(tmp_path, "draft", existing=None)
     assert result.returncode == 0, result.stderr
     assert len(calls) == 1 and calls[0].startswith(f"release create {VERSION} --target {RELEASE_SHA}")
-    assert f"--title Open AD Kit {VERSION} · Autoware 1.9.0 " in calls[0]
+    assert f"--title {VERSION} --notes-file" in calls[0]
     assert "--draft bundle.tar.gz" in calls[0]
 
 

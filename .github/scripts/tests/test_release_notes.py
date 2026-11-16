@@ -56,13 +56,17 @@ def test_notes_lead_with_people_and_keep_digests_folded(tmp_path):
     plan["releaseContext"]["autoware"]["backports"] = [
         {"subject": "fix a crash", "repository": "autoware_universe", "upstream": "https://example/pull/9"}]
     notes = release_notes.render(plan, "example/repo", "Big release.\n", "## What's Changed\n\n* fix: x\n")
-    assert notes.startswith("Big release.\n\n## Install")
+    # The title is the version alone, so the first line says what the release runs.
+    first, _, rest = notes.partition("\n\n")
+    assert first.startswith("**Autoware ") and " · ROS 2 " in first and rest.startswith("Big release.\n\n## Install")
     assert f"releases/download/{VERSION}/openadkit" in notes
     assert "now point to this release" in notes
-    assert notes.index("## What's Changed") < notes.index("## Backported Autoware fixes") < notes.index("## Verification")
-    assert "**1/1** evidence cells passed ([evidence run](https://github.com/example/repo/actions/runs/456))" in notes
-    assert "- `carla-simulation`: Needs a GPU." in notes
+    assert notes.index("## What's Changed") < notes.index("## Verification")
+    assert "**1/1** evidence cells passed ([evidence run](https://github.com/example/repo/actions/runs/456))." in notes
+    assert "Not verified in CI: `carla-simulation` (Needs a GPU)." in notes
     assert "Passing cells" not in notes and "| Cell | Result |" in notes
+    # The long parts stay folded, the backported fixes among them.
     digests = notes.index("<summary>Image digests</summary>")
     assert notes.index("<summary>Evidence cells</summary>") < digests and plan["images"][0]["digest"] in notes[digests:]
-    assert "Provenance" not in notes.split("Provenance, the BOM")[0]
+    assert "fix a crash (`autoware_universe`)" in notes[notes.index("<summary>Fixes backported to Autoware"):]
+    assert notes.endswith("</details>\n")
