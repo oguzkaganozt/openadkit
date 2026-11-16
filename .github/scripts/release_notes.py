@@ -144,15 +144,15 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
 
     passed = sum(cell.get("result") == "PASSED" for cell in cells)
     run = f" ([evidence run]({evidence['url']}))" if evidence.get("url") else ""
-    exempt = "; ".join(f"`{item['deployment']}` ({item['reason'].rstrip('.')})" for item in evidence.get("exempt") or [])
     out += [
         "## Verification", "",
-        f"**{passed}/{len(cells)}** evidence cells passed{run}." + (f" Not verified in CI: {exempt}." if exempt else ""),
-        "Provenance, the BOM and checksums are in `release-metadata.json`: "
-        "[verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
+        f"**{passed}/{len(cells)}** evidence cells passed{run}. "
+        "[Verify a release](https://autowarefoundation.github.io/openadkit/releases/verification/) "
         "before you run its files.", "",
     ]
-    out += details("Evidence cells", render_evidence(evidence, summary=False))
+    exempt = [f"- `{item['deployment']}`: {item['reason']}" for item in evidence.get("exempt") or []]
+    out += details("Evidence cells", "\n".join(
+        [render_evidence(evidence, summary=False).rstrip("\n"), *(["", "Not verified in CI:", "", *exempt] if exempt else [])]))
     out += details("Image digests", "\n".join(f"- `{image['releaseRef']}@{image['digest']}`" for image in plan["images"]))
     backports = autoware.get("backports") or []
     if backports:
