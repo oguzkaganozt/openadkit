@@ -41,7 +41,7 @@
     "ZENOH_BRIDGE_IMAGE": {
       "ref": "eclipse/zenoh-bridge-ros2dds:1.10.1@sha256:74fae6a9d4f449c53d1ee6f0faaca97d01c1e68dfcafd785b657f01907157d22"
     },
-    "CARLA_CONTAINER_IMAGE": {
+    "CARLA_IMAGE": {
       "ref": "carlasim/carla:0.9.16@sha256:aaf1df22702780ece072069e23d03c4879b002ae028c79744b09c4c7ddbae953"
     }
   }

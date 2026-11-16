@@ -3,7 +3,9 @@
 Upstream's simulator and map component launches ignore use_sim_time, while
 the other components load it with the global parameters. Their nodes then run
 on wall time against simulation-time TF and never clear their TF buffers when
-a new scenario resets the clock. Usage:
+a new scenario resets the clock. Remove this file once the pinned Autoware
+release has https://github.com/autowarefoundation/autoware_launch/pull/2023.
+Usage:
 
     ros2 launch component.launch.py component:=tier4_simulator_component \
         use_sim_time:=true <component arguments>
