@@ -15,6 +15,7 @@ number promises.
   scan and evidence jobs to larger runners (for example
   `ubicloud-standard-8-ubuntu-2204` and `ubicloud-standard-8-arm-ubuntu-2204`).
   Unset, they run on the GitHub-hosted `ubuntu-22.04` and `ubuntu-22.04-arm`.
+  The AutoSD evidence cells always run on `ubuntu-24.04` and `ubuntu-24.04-arm`.
   Pull request jobs run on them too, so point them only at ephemeral hosted
   runners, never at a persistent self-hosted machine.
 - **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-buildcache`
@@ -128,8 +129,9 @@ exemptions. The bundle, installer and metadata receive build provenance from
 the release workflow.
 
 The verification table in the release notes shows the passing-cell count,
-readiness time, arrival time and peak memory of that build. A release never
-searches older runs or releases; its notes depend only on its release plan.
+readiness time, arrival time and peak memory of that build; it depends only on
+the release plan. The list of changes comes from GitHub's generated notes since
+the previous release.
 Missing metrics are shown as `-`, never replaced with zeroes.
 
 See [Verify a Release](../releases/verification.md) to check a release yourself.

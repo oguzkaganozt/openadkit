@@ -17,10 +17,10 @@ release tag or, for development, the path of a source checkout. The kit's
   downloaded and verified on first use, as a build tool's wrapper does; your
   active `openadkit` stays as it is.
 - **Only the commands that act on a kit download it:** `validate`, `config`,
-  `fetch`, `run`, `build` and `clean`. `list`, `version`, `new` and Tab
-  completion run with the pinned release when it is installed, and otherwise
-  read the kit with the CLI you called; `--help` is always that CLI's. A
-  directory you only look at starts no download and no program that it names.
+  `fetch`, `run`, `build` and `clean`. `list`, `version` and Tab completion
+  run with the pinned release when it is installed; while it is missing, they
+  stop and name it. `--help` is always that of the CLI you called. A directory
+  you only look at starts no download and no program that it names.
 - **One level of `extends`:** a kit extends Open AD Kit, not another kit.
 
 ## Choose a Base Deployment
@@ -29,7 +29,7 @@ Each deployment of a kit names a `base` deployment of the pinned release in
 its entry of the kit's `openadkit.json`:
 `"deployments": { "<name>": { "base": "planning-simulation" } }`. The entry may
 also hold `description`, `requirements`, `data`, `verify` and `waitTimeout`;
-the [reference](../releases/reference.md#deployment-entry) lists their fields.
+the [reference](reference.md#deployment-entry) lists their fields.
 
 - **Requirements** (architectures, ROS distros, GPU) are inherited.
   `requirements` may narrow them: fewer architectures or ROS distros, or `gpu`
@@ -41,10 +41,6 @@ the [reference](../releases/reference.md#deployment-entry) lists their fields.
   download has, such as `ROSBAG_PATH`, replaces that one. Set that variable in
   the kit's `settings.env` too, so the download gets a directory of its own.
 - **Split-host roles are not inherited:** a kit deployment runs on one host.
-
-A kit made by `openadkit new my-kit` has one deployment, named
-`my-kit-<base>`. A kit can hold more: one entry each, on the same base or on
-another ([Create a Kit](create-a-kit.md#another-deployment-of-the-same-kit)).
 
 ### What Applies Where
 
@@ -108,24 +104,17 @@ or in `deployments/<name>/` for one deployment. For example,
     update_rate: 20.0
 ```
 
-On each start, the image entrypoint copies the package share directory into
-`/tmp/openadkit/<package>/share/<package>`. It applies the base deployment's
-layer, then the kit's, then the deployment's. YAML mappings merge
-recursively; scalars and lists replace the old value. Launch substitutions such
-as `$(var ...)` stay intact. Non-YAML files replace their counterpart.
+On each start the images' entrypoint merges the overrides over the package's
+own files: the base deployment's layer, then the kit's, then the deployment's.
+YAML mappings merge recursively; scalars and lists replace the old value, and a
+non-YAML file replaces its counterpart. Nothing is written into the image:
+remove an override and restart to return to the remaining layers.
 
-The copied prefixes go first on `AMENT_PREFIX_PATH`, and base launch arguments
-use the same stable paths. No change is written into the image. Removing an
-override and restarting returns to the remaining layers.
-
-Unknown packages, files or YAML keys are warnings, not startup failures. The
-hook logs them and writes `/tmp/openadkit/overlay-report.json` in each container.
-Once the services are up, `run` collects those reports and warns about every
-override without a counterpart: a package no service has changes nothing, and a
-file or a parameter its package does not have is added. That is intended for a
-new file such as a diagnostics graph; after a release change it usually
-means a renamed package, file or parameter. Every service gets the same layers,
-so a package installed in only some images is not reported.
+An override without a counterpart is a warning, not a startup failure. Once the
+services are up, `run` names each one: a package that no service has, or a
+file or parameter its package does not have. That is intended for a new file
+such as a diagnostics graph; after a release change it usually means a renamed
+package, file or parameter.
 
 ### 3. Overlay Workspace
 
@@ -148,7 +137,7 @@ openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=Debug   # Release unless you 
   After a release upgrade or a distro change, `validate` and `run` warn until you
   rebuild, and that rebuild starts from a clean `build/` and `install/`, since
   CMake caches record the paths they were configured with.
-- Without `--ros-distro`, the build uses the Open AD Kit's default distro, or
+- Without `--ros-distro`, the build uses the release's default distro, or
   the first one that every kit deployment runs on.
 - A `build/` or `install/` that `openadkit build` did not make, such as a colcon
   build on the host, stops the build; remove them first.
@@ -267,63 +256,6 @@ Compose to require the declared reference.
 A replaced component image needs your own runtime evidence: pinning alone does not
 prove that it honors the entrypoint, launch or parameter interfaces.
 
-## A New Vehicle
-
-Autoware finds a vehicle and its sensors by package name. With
-`VEHICLE_MODEL=my_vehicle` and `SENSOR_MODEL=my_sensor_kit`, its launch files
-read four packages:
-
-| Package | Holds |
-| --- | --- |
-| `my_vehicle_description` | `vehicle_info.param.yaml`, the simulator model and the vehicle's URDF and mesh |
-| `my_vehicle_launch` | `vehicle_interface.launch.xml`, which starts your vehicle interface |
-| `my_sensor_kit_description` | The sensor calibration files and the sensor kit's URDF |
-| `my_sensor_kit_launch` | The sensor launch files and the sensor kit's diagnostics configuration |
-
-1. Put the four packages in `overlay_ws/src`. Autoware's
-   `sample_vehicle_description`, `sample_vehicle_launch`,
-   `sample_sensor_kit_description` and `sample_sensor_kit_launch` are the
-   templates: copy them and replace the names in every file.
-2. Set `VEHICLE_MODEL` and `SENSOR_MODEL` in the kit's `settings.env`, so every
-   deployment of the kit runs your vehicle.
-3. Point `MAP_PATH` at your map and name its files. In the kit's
-   `settings.env` this applies to every deployment of the kit:
-
-    ```bash
-    MAP_PATH=${OPENADKIT_KIT}/map
-    LANELET2_MAP_FILE=my_town.osm
-    POINTCLOUD_MAP_FILE=my_town.pcd
-    ```
-
-    A map too large for the kit's repository stays outside it: give its
-    absolute path in the host settings file instead. The CLI uses a map
-    directory of yours as it is
-    ([Downloaded Data](../getting-started/cli.md#downloaded-data)).
-4. Build and run: `openadkit build`, then `openadkit run --verify`. The base's
-   verify step drives the sample map's route, so on your own map give the
-   deployment a verify step of its own.
-
-Every service sources the workspace, so planning, control, the simulator and
-the visualizer all read the same vehicle. All four packages must exist: the
-vehicle and system services look up the two `_launch` packages on every start.
-`validate` does not check for them. When one is missing, `run` reports the
-service that failed, and `openadkit logs <service>` names the package. Every
-release tests this path: the example kit drives with four such packages.
-
-Autoware's defaults describe a passenger car. Review these for your vehicle.
-The first two are in your packages. The others belong to Autoware packages, so
-change them with [config overrides](#2-config-overrides); their package and
-path depend on the release's Autoware version, so look them up in its images and
-check `run`'s override warnings.
-
-| Parameters | File | Why |
-| --- | --- | --- |
-| Dimensions, `wheel_base`, `max_steer_angle` | `vehicle_info.param.yaml` of your vehicle description | Planning and control use them as limits; a steering limit above the vehicle's makes control ask for angles it cannot reach. |
-| Sensor poses | your sensor kit's `sensor_kit_calibration.yaml` and `sensors_calibration.yaml` | A wrong sign or offset shows up as a localization error of the same size. |
-| `nominal_latency`, `assumed_limit_acc` | `control_validator.param.yaml` | Your actuation latency and achievable braking. With car values a slower or weaker vehicle fails validation and triggers an MRM. |
-| `pose_measurement.pose_gate_dist` | `ekf_localizer.param.yaml` | The Mahalanobis gate for pose updates. A start pose far from the truth can be rejected for good. |
-| Velocity, acceleration, jerk and steering-rate limits | `vehicle_cmd_gate.param.yaml` | The last limits before the vehicle interface. |
-
 ## Validation and Evidence
 
 `openadkit validate` renders the deployment and checks its manifest (and, with
@@ -343,13 +275,10 @@ Your kit's acceptance checks run where CI runs its own:
   runs the command in that running service, and without `command` the step
   waits for the service to exit and takes its exit code.
 
-The example kit is what `openadkit new` makes, with a
-[fixture](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit)
-that uses every extension point on top. Its evidence cells run both checks on
-Humble and Jazzy, each with a workspace built against the matching devel
-digest, and every release needs them to pass. The fixture adds a second
-deployment on Logging Simulation, which the cells validate but do not run. They
-show that the extension points work on that build; they do not verify your kit.
+Every release runs both checks on the
+[example kit](../releases/evidence.md#cells-and-levels), which uses every
+extension point. That shows the extension points work on the build; it does
+not verify your kit.
 
 A base deployment's CI exemption stays with the kit; an exemption is not
 runtime evidence.
@@ -382,29 +311,13 @@ No Reference Design is published as a kit.
 | Modules | The base deployment's services, your packages in `overlay_ws/` and your extra services |
 | Model versions | `data` in the deployment's manifest entry: each download with its URL and SHA-256 |
 | Parameters | `config/autoware/` and `settings.env` |
-| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](#a-new-vehicle)) |
+| Vehicle and sensors | `VEHICLE_MODEL` and `SENSOR_MODEL`, with the vehicle's description and launch packages in `overlay_ws/` ([A New Vehicle](new-vehicle.md)) |
 | Evaluation and testing | The `verify` step, which `openadkit run --verify` runs |
 
 The Deployment Profile stays in the Reference Design's own documents: the
 hardware, the operational design domain and the use case. The kit states only
 what it needs from the host, in `requirements`: architectures, ROS distros and
 GPU.
-
-### Publish One as a Kit
-
-1. Start a kit on the simulation deployment that fits the design, for example
-   `openadkit new my-design --base scenario-simulation`
-   ([Create a Kit](create-a-kit.md)).
-2. Add the stack through the kit's
-   [extension points](#extension-points): packages,
-   parameters, models and extra services.
-3. Name a `verify` step of your own in the deployment's manifest entry that checks what the
-   Reference Design states, such as the rates of planning and control
-   ([Validation and Evidence](#validation-and-evidence)).
-4. Commit the kit directory to the Reference Design's repository. A reader
-   reproduces the stack there with `openadkit build` and
-   `openadkit run --verify`; the CLI downloads the release the kit pins on
-   first use.
 
 ### Limits
 

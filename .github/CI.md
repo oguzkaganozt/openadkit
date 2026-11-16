@@ -56,7 +56,7 @@ manifest order and the deployment's verify step. L1 is `openadkit run`, which
 waits for the deployment's healthchecks; L2 is `run --verify`; L3 is the example
 kit's `checks/dev_loop.sh`. `run_cell.sh` executes the row with a common
 validate/start/cleanup lifecycle; it does not derive policy from deployment
-names. Scenario isolation and drive-to-goal checks stay distinct. Hosted split
+names, except the replay rate it sets for Logging Simulation. Scenario isolation and drive-to-goal checks stay distinct. Hosted split
 evidence is two roles on one runner, not proof of two physical hosts.
 
 The integrator example is made in CI, not kept in `deployments/`: the staged

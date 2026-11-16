@@ -43,7 +43,7 @@ downloads into it, replaces it or removes it. The recording starts once somethin
 subscribes to `ROSBAG_READY_TOPIC`, so name a topic of yours that sensing
 reads. A recording of another vehicle needs that vehicle's map (`MAP_PATH`)
 and its vehicle and sensor kit packages, which a
-[kit](../kits/kit-guide.md#a-new-vehicle) holds.
+[kit](../kits/new-vehicle.md) holds.
 
 ## Stop and Recover
 

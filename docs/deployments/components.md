@@ -19,7 +19,7 @@ carries RViz and its plugins. A kit compiles its overlay workspace in the
 
 | Image | Services | Deployments |
 |-------|----------|-------------|
-| `sensing-perception` | `sensing`, `perception` | Logging, CARLA; CARLA's `perception` runs the CUDA variant |
+| `sensing-perception` | `sensing`, `perception`, Logging's `rosbag` | Logging, CARLA; CARLA's `perception` runs the CUDA variant |
 | `localization-mapping` | `map`, `localization` | `map` in all; `localization` in Logging and CARLA |
 | `planning` | `planning` | Planning, Scenario, CARLA, Safety Island |
 | `control` | `control` | Planning, Scenario, CARLA, Safety Island |
@@ -93,9 +93,7 @@ of real sensors and vehicle hardware.
 - **`simulated-perception`** — dummy objects, tracking, prediction and the
   occupancy grid map. Launch: `planning_simulator/perception_simulation.launch.xml`
 
-On amd64 the image also carries the CARLA bridge and the CARLA Python client
-that [CARLA Simulation](carla-simulation.md) runs in its
-`carla-interface` service.
+The image also carries the CARLA bridge; see CARLA Interface below.
 
 ### Visualizer {: #visualizer }
 

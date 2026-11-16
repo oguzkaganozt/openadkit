@@ -32,7 +32,7 @@ a vehicle, one failed node must not take its whole service down mid-drive.
   shows the service as exited, and `openadkit restart <service>` starts it
   again.
 - `run` and `restart` fail when a node dies while the deployment starts, and
-  name the service and the process. A map loader that dies there usually
+  name the service. A map loader that dies there usually
   cannot find a file: check `MAP_PATH` and the file names in
   `LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.
 - The `api` service reports a dead node within three minutes, the others within

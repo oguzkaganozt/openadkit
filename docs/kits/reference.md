@@ -1,8 +1,7 @@
 # Manifest and Output Reference
 
-The fields of the manifests and of the CLI's JSON output that
-[Compatibility](compatibility.md) covers. The CLI rejects a manifest field it
-does not know; a reader of the JSON output ignores a field it does not know.
+The fields of a kit's manifest and of the CLI's JSON output that
+[Compatibility](../releases/compatibility.md) covers.
 
 ## Kit Manifest
 
@@ -30,10 +29,34 @@ fields, except `base`, in its `deployment.json`.
 | `data` | The base's | What `run` and `fetch` download; see [Data](#data) |
 | `verify` | The base's | What `run --verify` runs; see [Verify Step](#verify-step) |
 
+An entry with data and a verify step of its own:
+
+```json
+"my-kit-logging-simulation": {
+  "base": "logging-simulation",
+  "description": "My vehicle on a recorded drive",
+  "data": [
+    {
+      "name": "my-drive",
+      "kind": "zip",
+      "destinationEnv": "ROSBAG_PATH",
+      "url": "https://example.com/my-drive.zip",
+      "sha256": "<64 hex digits>",
+      "expectedRoot": "my-drive",
+      "requiredFiles": ["metadata.yaml"]
+    }
+  ],
+  "verify": {
+    "service": "api",
+    "command": ["ros2", "topic", "echo", "--once", "/my_vehicle/status"]
+  }
+}
+```
+
 A catalog deployment may also hold `roles`, the hosts of a
 [split-host](../deployments/split-host.md) deployment (experimental), and
 `evidence.exempt`, the reason it has no hosted
-[evidence cell](evidence.md#ci-exemptions).
+[evidence cell](../releases/evidence.md#ci-exemptions).
 
 ### Requirements
 
@@ -88,29 +111,16 @@ receives it, and holds one of:
 
 A name that matches a component image variable, such as `PLANNING_IMAGE`,
 replaces that component; see
-[Image Replacement](../kits/kit-guide.md#5-image-replacement).
+[Image Replacement](kit-guide.md#5-image-replacement).
 
 ## Release Manifest
 
-The `openadkit.json` of a release, which its packaging writes:
-
-| Field | Meaning |
-| --- | --- |
-| `schemaVersion`, `kind` | `2` and `release` (`source` in a source checkout) |
-| `version` | The release, as `vX.Y.Z` |
-| `defaultRosDistro` | The ROS distro a command uses without `--ros-distro` |
-| `componentImages` | The component image of each Compose variable, such as `PLANNING_IMAGE` |
-| `images` | The digest-pinned reference of each component image, per ROS distro |
-| `externalImages` | As in a kit |
-| `autoware` | The pinned Autoware release: `version`, `ref` and `lockSha256`, and `backports` when the release carries backported fixes |
-| `deployments` | The catalog: each deployment's `path` and the `checksum` of its files |
-| `shared` | The checksum of `deployments/shared` |
-
-The component image variables are `SENSING_PERCEPTION_IMAGE`,
-`LOCALIZATION_MAPPING_IMAGE`, `PLANNING_IMAGE`, `CONTROL_IMAGE`,
-`VEHICLE_SYSTEM_IMAGE`, `SIMULATOR_IMAGE` and `VISUALIZER_IMAGE`, with
-`SENSING_PERCEPTION_GPU_IMAGE` and `PLANNING_GPU_IMAGE` for the GPU mode. A
-kit's Compose files name an image through them.
+A release's own `openadkit.json` is written by its packaging; a kit reads it
+only through the CLI. What a kit's Compose files use from it are the component
+image variables: `SENSING_PERCEPTION_IMAGE`, `LOCALIZATION_MAPPING_IMAGE`,
+`PLANNING_IMAGE`, `CONTROL_IMAGE`, `VEHICLE_SYSTEM_IMAGE`, `SIMULATOR_IMAGE`
+and `VISUALIZER_IMAGE`, with `SENSING_PERCEPTION_GPU_IMAGE` and
+`PLANNING_GPU_IMAGE` for the GPU mode.
 
 ## JSON Output
 
@@ -135,7 +145,7 @@ Each document carries `schemaVersion`, now `1`.
 | `version` | The release, or `null` in a source checkout. In a kit, the release it pins |
 | `commit` | The commit of a source checkout, also of the one a kit extends; else `null` |
 | `extends` | In a kit, what it pins, as its manifest says; else `null` |
-| `bom` | `autoware`, `images` and `externalImages`, as in the release manifest |
+| `bom` | What the release runs: `autoware` (the pinned Autoware release: `version`, `ref`, `lockSha256`), `images` (the digest-pinned component images per ROS distro) and `externalImages` |
 
 ### `validate --json`
 
