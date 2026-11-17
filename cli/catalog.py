@@ -512,6 +512,14 @@ def _load_kit(root: Path, value: dict[str, Any]) -> Catalog:
             }
         else:
             external_images[name] = image
+    deployments = parse_deployment_refs(value.get("deployments"), "kit")
+    # A deployment's name keys its host settings file, output directory and
+    # Compose project, so a kit's must not be one of the release's.
+    taken = sorted(set(deployments) & set(extended.deployments))
+    if taken:
+        raise OpenADKitError(
+            f"kit deployment {', '.join(taken)} has the name of a deployment of {extends}; give it another name"
+        )
     return Catalog(
         kind="kit",
         default_ros_distro=extended.default_ros_distro,
@@ -519,7 +527,7 @@ def _load_kit(root: Path, value: dict[str, Any]) -> Catalog:
         image_repository=extended.image_repository,
         component_images=extended.component_images,
         images=extended.images,
-        deployments=parse_deployment_refs(value.get("deployments"), "kit"),
+        deployments=deployments,
         shared={},
         external_images=external_images,
         autoware=extended.autoware,

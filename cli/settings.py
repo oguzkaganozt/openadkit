@@ -230,7 +230,7 @@ def require_own_destinations(deployment: Deployment) -> None:
             own = next(item["name"] for item in deployment.data if item["destinationEnv"] == variable)
             raise OpenADKitError(
                 f"data {own} replaces {replaced['name']} of {base.name}, but {variable} still names "
-                f"that deployment's directory; set {variable} in the kit's settings.env"
+                f"that deployment's directory; set {variable} in deployments/{deployment.name}/settings.env"
             )
 
 

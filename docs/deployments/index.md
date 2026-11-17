@@ -50,9 +50,9 @@ openadkit stop
 
 ### Stop and Recover
 
-`openadkit stop` stops and removes the deployment. To replace missing or
-incomplete data, run `openadkit fetch <deployment> --force`. For other issues,
-see [Troubleshooting](../getting-started/troubleshooting.md).
+`openadkit stop` stops and removes the deployment. To download missing data,
+run `openadkit fetch <deployment>`; to repair incomplete data, add `--force`.
+For other issues, see [Troubleshooting](../getting-started/troubleshooting.md).
 
 ## Your Own Kit
 

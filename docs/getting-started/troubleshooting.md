@@ -60,7 +60,8 @@ setup. Ubuntu's own `docker-compose-v2` package is too old.
 
 ```bash
 openadkit validate <deployment> --data
-openadkit fetch <deployment> --force
+openadkit fetch <deployment>            # missing or outdated data
+openadkit fetch <deployment> --force    # incomplete data
 ```
 
 `validate --data` reports each resource as `ok`, `missing`, `incomplete` or

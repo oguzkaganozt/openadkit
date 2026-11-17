@@ -7,7 +7,7 @@
 # test_openadkit_cli.py checks that every subcommand and option is listed.
 
 _openadkit_deployments() {
-    "$1" list --json 2>/dev/null | python3 -c '
+    "$1" list --json 2>/dev/null | python3 -I -c '
 import json, sys
 try:
     print(" ".join(item["name"] for item in json.load(sys.stdin)["deployments"]))

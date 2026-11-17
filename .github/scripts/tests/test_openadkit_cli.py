@@ -174,8 +174,10 @@ elif text == "compose ls --all --format json":
 elif text == "ps -aq":
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
 elif args[0] == "compose" and "ps" in args and "--format" in args:
+    exited = os.environ.get("FAKE_EXITED", "").split(",")
     for name in {service_lines!r}.split():
-        print(json.dumps({{"Service": name, "Name": "autoware-" + name, "State": "running", "Status": "Up 1 minute"}}))
+        state, status = ("exited", "Exited (1) 5 seconds ago") if name in exited else ("running", "Up 1 minute")
+        print(json.dumps({{"Service": name, "Name": "autoware-" + name, "State": state, "Status": status}}))
 elif args[0] == "compose" and "ps" in args and "--services" in args:
     print({service_lines!r})
 elif args[0] == "compose" and "ps" in args and "--quiet" in args:
@@ -345,6 +347,42 @@ def test_an_installed_version_becomes_active_without_a_download(tmp_path):
     installed(tmp_path, "v1.3.0").unlink()
     result = install(tmp_path, newer)
     assert result.returncode != 0 and "is not an installed release" in result.stderr
+
+
+def test_upgrade_uses_an_installed_latest_version_as_it_is(tmp_path):
+    older, newer = release_bin(tmp_path), release_bin(tmp_path, "v1.3.0")
+    assert install(tmp_path, older).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    # The latest version is installed but not active, as a kit pins it.
+    assert install(tmp_path, newer, "--version", "v1.3.0").returncode == 0
+    assert install(tmp_path, older, "--version", "v1.2.3").returncode == 0
+    marker = installed(tmp_path, "v1.3.0").parent / "marker"
+    marker.write_text("in use")
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=newer)
+    assert result.returncode == 0, result.stderr
+    assert launcher.resolve() == installed(tmp_path, "v1.3.0") and marker.read_text() == "in use"
+    # A leftover that is not a release is replaced.
+    assert install(tmp_path, older, "--version", "v1.2.3").returncode == 0
+    installed(tmp_path, "v1.3.0").unlink()
+    result = command(launcher, "upgrade", home=tmp_path / "home", bin_dir=newer)
+    assert result.returncode == 0, result.stderr
+    assert installed(tmp_path, "v1.3.0").is_file() and not marker.exists()
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root removes a read-only directory anyway")
+def test_uninstall_removes_the_launcher_before_the_release(tmp_path):
+    assert install(tmp_path, release_bin(tmp_path)).returncode == 0
+    launcher = tmp_path / "home/.local/bin/openadkit"
+    stuck = installed(tmp_path).parent / "stuck"
+    (stuck / "inner").mkdir(parents=True)
+    stuck.chmod(0o500)
+    fake_docker(tmp_path)
+    try:
+        result = command(launcher, "uninstall", home=tmp_path / "home", bin_dir=tmp_path / "bin")
+    finally:
+        stuck.chmod(0o700)
+    assert result.returncode != 0 and f"could not remove {installed(tmp_path).parent}" in result.stderr
+    assert not launcher.exists() and not launcher.is_symlink()
 
 
 def test_a_failed_download_exits_1_with_an_error_line(tmp_path):
@@ -1392,6 +1430,15 @@ def test_a_stopped_stack_is_shown_and_removed_and_blocks_another_deployment(tmp_
         row["args"] for row in recorded(calls)]
 
 
+def test_status_keeps_a_service_that_exited(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    fake_docker(tmp_path, projects=["openadkit-example"], services=("map", "scenario-simulator"))
+    result = run_cli(root, "status", FAKE_EXITED="scenario-simulator")
+    assert result.returncode == 0, result.stderr
+    assert "map" in result.stdout
+    assert "scenario-simulator" in result.stdout and "Exited (1)" in result.stdout
+
+
 def test_status_gives_the_visualizer_address_only_when_it_runs(tmp_path):
     root, _ = runtime_tree(tmp_path)
     fake_docker(tmp_path, projects=["openadkit-example"], services=("map", "visualizer"))
@@ -2240,8 +2287,9 @@ def test_a_kits_replacement_data_needs_a_directory_of_its_own(tmp_path):
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 1
     assert ("data my-map replaces dataset of example, but MAP_PATH still names that deployment's directory; "
-            "set MAP_PATH in the kit's settings.env") in result.stderr
-    (kit / "settings.env").write_text("MAP_PATH=$HOME/data/my-map\n")
+            "set MAP_PATH in deployments/custom/settings.env") in result.stderr
+    with (kit / "deployments/custom/settings.env").open("a") as settings:
+        settings.write("MAP_PATH=$HOME/data/my-map\n")
     result = run_cli(root, "validate", "custom", directory=kit)
     assert result.returncode == 0, result.stderr
 
@@ -2614,3 +2662,45 @@ def test_a_missing_directory_and_a_missing_devel_image_say_so(tmp_path):
     result = run_cli(root, "build", directory=kit, FAKE_NO_IMAGES="1")
     assert result.returncode == 1 and "has no local build of universe-common-devel; build it with" in result.stderr
     assert "docker: Error" not in result.stderr
+
+
+def test_a_docker_permission_error_names_the_group_step():
+    denied = "permission denied while trying to connect to the Docker daemon socket"
+    assert "newgrp docker" in str(cli_compose.docker_error("could not access the Docker daemon", denied + "\n"))
+    other = str(cli_compose.docker_error("could not access the Docker daemon", "Cannot connect to the Docker daemon"))
+    assert other == "could not access the Docker daemon: Cannot connect to the Docker daemon"
+
+
+def test_inline_python_ignores_the_current_directory():
+    # `python3 -c` and `python3 -` put the current directory first on sys.path.
+    for path in ("openadkit", "cli/setup.sh", "cli/completion.bash"):
+        text = (ROOT / path).read_text()
+        assert not re.search(r"python3 (-c|-)\s", text), path
+
+
+def test_run_leaves_another_kits_stack_of_the_same_name_alone(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    other = tmp_path / "other-kit"
+    shutil.copytree(kit, other)
+    calls = fake_docker(tmp_path, projects=["openadkit-custom"])
+    state = root.parent / "home/.local/state/openadkit/runs/openadkit-custom.json"
+    state.parent.mkdir(parents=True)
+    state.write_text(json.dumps({"schemaVersion": 1, "kit": str(kit), "deployment": "custom"}))
+    result = run_cli(root, "run", "custom", directory=other)
+    assert result.returncode != 0 and "error: custom is already running" in result.stderr
+    assert not any("up" in row["args"] for row in recorded(calls))
+    # The kit that started it is not refused.
+    result = run_cli(root, "run", "custom", directory=kit)
+    assert "is already running" not in result.stderr
+
+
+def test_a_kit_deployment_cannot_take_a_release_deployments_name(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    edit = json.loads((kit / "openadkit.json").read_text())
+    edit["deployments"] = {"example": edit["deployments"]["custom"]}
+    (kit / "openadkit.json").write_text(json.dumps(edit))
+    (kit / "deployments/custom").rename(kit / "deployments/example")
+    result = run_cli(root, "validate", directory=kit)
+    assert result.returncode != 0 and "kit deployment example has the name of a deployment of" in result.stderr

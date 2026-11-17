@@ -84,7 +84,7 @@ download_release_metadata() {
     "$(release_base_url "$requested")/release-metadata.json" -o "${metadata}" \
     || fail "could not download the release metadata of ${requested/#latest/the latest release}"
 
-  readarray -t release_fields < <(python3 - "${metadata}" "${OPENADKIT_VERSION_RE}" <<'PY'
+  readarray -t release_fields < <(python3 -I - "${metadata}" "${OPENADKIT_VERSION_RE}" <<'PY'
 import json
 import re
 import sys
@@ -195,7 +195,7 @@ install_resolved_release() {
   printf '%s  %s\n' "$expected_sha256" "$staged_bundle" | sha256sum --check --status \
     || fail "checksum verification failed for ${archive_name}"
 
-  python3 - "${staged_bundle}" "${root_name}" <<'PY'
+  python3 -I - "${staged_bundle}" "${root_name}" <<'PY'
 import tarfile
 import sys
 

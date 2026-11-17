@@ -86,6 +86,9 @@ map       autoware-map       Up 2 minutes (healthy)
 planning  autoware-planning  Up 2 minutes (healthy)
 ```
 
+A service that stopped stays in the list with how it ended, such as
+`Exited (0)` for a one-shot service that finished.
+
 `logs`, `restart` and `shell` take a service by either name: `planning`, as
 the Compose files call it, or `autoware-planning`, as `docker ps` and the log
 lines show it.

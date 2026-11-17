@@ -223,10 +223,13 @@ def upgrade(root: Path, arguments: Sequence[str]) -> int:
             print(f"{latest} is a major release: its release notes list the breaking changes")
         return 0
 
-    # Force replacement so a version directory left behind by a rollback or a
-    # previous install is re-verified and reinstalled instead of failing.
+    # An installed latest version is made active as it is, so a deployment that
+    # runs from it keeps its files; a leftover that is not a release is replaced.
     destination = root.parent
-    installer(root, "--version", latest, "--force", "--no-next-steps")
+    target = destination / f"openadkit-{latest}"
+    complete = is_installed_release(target) and os.access(target / "openadkit", os.X_OK)
+    force = ["--force"] if target.exists() and not complete else []
+    installer(root, "--version", latest, *force, "--no-next-steps")
     print(
         f"Upgraded {current} -> {latest} "
         f"(previous version kept at {destination / f'openadkit-{current}'})"
@@ -299,10 +302,15 @@ def uninstall(root: Path, arguments: Sequence[str]) -> int:
         path for path in [completion_path()]
         if path.is_symlink() and path.resolve().is_relative_to(root.resolve())
     ]
-    shutil.rmtree(root)
+    # The launcher goes first: a release that cannot be removed in full is left
+    # as files, never behind a launcher that no longer runs.
     launcher_path().unlink()
     for path in shortcuts:
         path.unlink()
+    try:
+        shutil.rmtree(root)
+    except OSError as error:
+        raise OpenADKitError(f"could not remove {root}: {error}; remove it by hand") from error
 
     if remove_kept:
         for candidate in sorted(destination.glob("openadkit-v*")):

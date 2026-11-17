@@ -197,7 +197,7 @@ install_gpu() {
       sudo cp -a "$config" "$backup"
     fi
     if ! sudo nvidia-ctk runtime configure --runtime=docker \
-      || ! sudo python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$config" \
+      || ! sudo python3 -I -c 'import json,sys; json.load(open(sys.argv[1]))' "$config" \
       || ! sudo systemctl restart docker; then
       if [[ -n $backup ]]; then
         sudo cp -a "$backup" "$config"

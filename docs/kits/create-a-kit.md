@@ -51,7 +51,9 @@ lists the kit's deployments, each with its `base`:
   the first three. Without a `compose.yaml` it runs its base's services.
 
 `new` names the first deployment after the kit and its base. The name is yours
-to change: it is the key in `openadkit.json`, and its directory follows it.
+to change: it is the key in `openadkit.json`, and its directory follows it. It
+cannot be the name of a deployment of the release, such as
+`planning-simulation`.
 
 ### Another Deployment of the Same Kit
 
