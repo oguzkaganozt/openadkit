@@ -146,8 +146,8 @@ jobs:
       packages: write
       attestations: write
       id-token: write
-    # Each step that runs gh gets its own token: the release token only
-    # reaches the steps that create and publish the release.
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out release scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -187,8 +187,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release metadata and notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/write_release_notes.sh
         shell: bash
 
@@ -201,20 +199,14 @@ jobs:
             release-metadata.json
 
       - name: Create the draft release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/manage_github_release.sh draft
         shell: bash
 
       - name: Promote image digests
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/promote_release_images.sh
         shell: bash
 
       - name: Publish the release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/manage_github_release.sh publish
         shell: bash
 

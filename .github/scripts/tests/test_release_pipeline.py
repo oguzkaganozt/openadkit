@@ -262,6 +262,37 @@ def test_scan_gate_takes_the_newest_full_scan(tmp_path, runs, accepted):
     assert selected.exists() is accepted
 
 
+# (existing tag, workflow files of the build commit): publishing tags the build
+# commit with the run's token, which GitHub allows only with the run's own
+# workflow files; an existing tag must already be on the build commit.
+@pytest.mark.parametrize(("tag", "build_workflows", "accepted"), [
+    (None, "run", True),
+    (None, "older", False),
+    (RELEASE_SHA, "older", True),
+    ("f" * 40, "run", False),
+])
+def test_publishing_can_tag_the_build_commit(tmp_path, tag, build_workflows, accepted):
+    executable(tmp_path / "bin/gh", f'''#!/usr/bin/env python3
+import sys
+path = [arg for arg in sys.argv[1:] if arg.startswith("repos/")][0]
+if "/matching-refs/" in path:
+    print(0 if {tag!r} is None else 1)
+elif "/commits/refs/tags/" in path:
+    print({tag!r})
+elif path.endswith("?ref={RELEASE_SHA}"):
+    print({build_workflows!r})
+elif "/contents/.github?ref=" in path:
+    print("run")
+else:
+    sys.exit("unexpected request " + path)
+''')
+    result = run_validator(tmp_path, "source_branch=release/9.8; validate_git_tag",
+                           PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}")
+    assert (result.returncode == 0) is accepted, result.stderr
+    if build_workflows == "older" and not accepted:
+        assert "build release/9.8 again" in result.stderr
+
+
 @pytest.mark.parametrize(("problem", "messages"), [
     (None, []),
     ("source", ["Source digest mismatch"]),
