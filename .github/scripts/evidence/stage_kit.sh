@@ -7,16 +7,12 @@ export PYTHONDONTWRITEBYTECODE=1
 # staged and verified by the same release_plan.py step that assembles release
 # bundles, plus the example kits without their host colcon products.
 #
-# Usage: stage_kit.sh <source-root> <build-metadata.json> <kit-dir> <build-sha> [<source-sha>]
-#
-# <source-sha> is the commit of <source-root> when it is not the build's own,
-# for a change tested against an existing build's images.
+# Usage: stage_kit.sh <source-root> <build-metadata.json> <kit-dir> <build-sha>
 
 source_root=$1
 metadata=$2
 kit=$3
 sha=$4
-packager_sha=${5:-$4}
 
 [ -f "${metadata}" ] || { echo "missing build metadata: ${metadata}" >&2; exit 1; }
 [ -f "${source_root}/openadkit" ] || { echo "missing launcher under ${source_root}" >&2; exit 1; }
@@ -37,7 +33,6 @@ python3 "${planner}" \
     --build-metadata "${metadata}" \
     --version "v0.0.0-evidence.${build_tag}" \
     --release-sha "${sha}" \
-    --packager-sha "${packager_sha}" \
     --stable-release false \
     --publish-latest-aliases false
 

@@ -19,7 +19,6 @@ jq -e '
 VERSION=$(jq -r '.release.version' "${plan_file}")
 RELEASE_SHA=$(jq -r '.release.releaseSha' "${plan_file}")
 DEFAULT_ROS_DISTRO=$(jq -r '.release.defaultRosDistro' "${plan_file}")
-PACKAGER_SHA=$(jq -r '.release.packagerSha' "${plan_file}")
 PUBLISH_LATEST_ALIASES=$(jq -r '.release.publishLatestAliases' "${plan_file}")
 bundle_name=$(jq -r '.bundle.asset' "${plan_file}")
 bundle="dist/${bundle_name}"
@@ -29,7 +28,6 @@ jq \
   --arg version "${VERSION}" \
   --arg release_sha "${RELEASE_SHA}" \
   --arg default_ros_distro "${DEFAULT_ROS_DISTRO}" \
-  --arg packager_sha "${PACKAGER_SHA}" \
   --arg bundle_name "${bundle_name}" \
   --arg bundle_sha256 "${bundle_sha256}" \
   --argjson publish_latest_aliases "${PUBLISH_LATEST_ALIASES}" \
@@ -40,7 +38,6 @@ jq \
     version: $version,
     release_sha: $release_sha,
     default_ros_distro: $default_ros_distro,
-    packager_sha: $packager_sha,
     bundles: [{name: $bundle_name, sha256: $bundle_sha256}],
     latest_aliases_updated: $publish_latest_aliases,
     scan: $scan[0],

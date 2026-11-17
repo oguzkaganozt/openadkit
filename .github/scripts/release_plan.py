@@ -190,8 +190,6 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         fail(f"invalid release version: {args.version}")
     if not SHA_RE.fullmatch(args.release_sha):
         fail("release SHA must be 40 lowercase hexadecimal characters")
-    if not SHA_RE.fullmatch(args.packager_sha):
-        fail("packager SHA must be 40 lowercase hexadecimal characters")
     default_ros_distro = product["catalog"].default_ros_distro
     if default_ros_distro not in product["distros"]:
         fail(f"unsupported default ROS distro: {default_ros_distro}")
@@ -303,7 +301,6 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "release": {
             "buildTag": build_tag,
             "defaultRosDistro": default_ros_distro,
-            "packagerSha": args.packager_sha,
             "publishLatestAliases": args.publish_latest_aliases,
             "releaseSha": args.release_sha,
             "stable": args.stable_release,
@@ -348,7 +345,6 @@ def main() -> int:
     parser.add_argument("--evidence-summary", type=Path)
     parser.add_argument("--version")
     parser.add_argument("--release-sha")
-    parser.add_argument("--packager-sha")
     parser.add_argument("--stable-release", type=parse_bool)
     parser.add_argument("--publish-latest-aliases", type=parse_bool)
     args = parser.parse_args()
@@ -367,7 +363,6 @@ def main() -> int:
             "--build-metadata": args.build_metadata,
             "--version": args.version,
             "--release-sha": args.release_sha,
-            "--packager-sha": args.packager_sha,
             "--stable-release": args.stable_release,
             "--publish-latest-aliases": args.publish_latest_aliases,
         }

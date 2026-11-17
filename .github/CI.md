@@ -48,7 +48,8 @@ both validation and promotion.
 
 Release packaging and evidence staging assemble the release tree through one
 `release_plan.py --stage` step, so evidence runs the tree the release ships;
-evidence adds only the example kits. The bundle, the release plan and the
+evidence adds only the example kits. Both run the build commit's own scripts:
+a later packaging change on the branch does not reach an older build. The bundle, the release plan and the
 evidence subjects all read one catalog inventory.
 
 Each evidence matrix row is the complete cell plan: identity, the role list in
