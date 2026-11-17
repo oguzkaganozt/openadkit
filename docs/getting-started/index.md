@@ -13,8 +13,6 @@ From zero to a running Autoware planning simulation in about 10 minutes. No GPU 
 
 ## 1. Install {: #install }
 
---8<-- "includes/first-release-note.md"
-
 ```bash
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
   | bash -s -- install

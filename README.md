@@ -19,9 +19,6 @@
 
 From nothing to a driving Autoware on Ubuntu. No GPU needed. The [full Quickstart](https://autowarefoundation.github.io/openadkit/getting-started/) has the details.
 
-> [!NOTE]
-> **v2.0.0 is not published yet.** Until it is, [build the images from a source checkout](https://autowarefoundation.github.io/openadkit/development/build-from-source/) and run the commands below as `./openadkit` from its root, without the `install` step.
-
 ```bash
 # 1. Install the CLI
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \

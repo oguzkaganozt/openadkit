@@ -1,7 +1,5 @@
 # Releases
 
---8<-- "includes/first-release-note.md"
-
 [GitHub Releases](https://github.com/autowarefoundation/openadkit/releases) is
 the canonical source for published versions, release notes and provenance
 metadata. Each stable release publishes:

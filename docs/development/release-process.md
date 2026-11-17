@@ -45,9 +45,7 @@ number promises.
   candidates open with a table of the Autoware release, ROS 2 distros and
   architectures, then the highlights; the rest of the notes is generated.
 - **The docs on `main`** describe the release: a stable release publishes the
-  site from `main` as it is then. For the first stable release, remove the
-  "not published yet" notes first, from `README.md` and
-  `docs/includes/first-release-note.md` with the two lines that include it.
+  site from `main` as it is then.
 
 ## Workflow
 
