@@ -13,6 +13,7 @@ source "${script_dir}/stable_alias_policy.sh"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 : "${GITHUB_REF:?GITHUB_REF is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
+: "${GITHUB_SHA:?GITHUB_SHA is required}"
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
 : "${IMAGE_REPO:?IMAGE_REPO is required}"
 
@@ -241,14 +242,28 @@ validate_release_rules() {
 }
 
 # Publishing creates the tag; one that already exists must be on this commit.
+# GitHub lets the workflow token tag only a commit with the workflow files of
+# the commit the run is on, so a workflow change after the build needs a new
+# build. Checked here, before any image is tagged.
 validate_git_tag() {
-  local existing tag_sha
+  local existing tag_sha build_workflows run_workflows
 
   existing=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${VERSION}" \
     --jq "map(select(.ref == \"refs/tags/${VERSION}\")) | length")
-  [ "${existing}" != 0 ] || return 0
-  tag_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/refs/tags/${VERSION}" --jq .sha)
-  [ "${tag_sha}" = "${release_sha}" ] || fail "Tag ${VERSION} already exists at ${tag_sha}, expected ${release_sha}"
+  if [ "${existing}" != 0 ]; then
+    tag_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/refs/tags/${VERSION}" --jq .sha)
+    [ "${tag_sha}" = "${release_sha}" ] || fail "Tag ${VERSION} already exists at ${tag_sha}, expected ${release_sha}"
+    return 0
+  fi
+  build_workflows=$(workflows_tree "${release_sha}") || fail "could not read the workflow files of ${release_sha}"
+  run_workflows=$(workflows_tree "${GITHUB_SHA}") || fail "could not read the workflow files of ${GITHUB_SHA}"
+  [ "${build_workflows}" = "${run_workflows}" ] \
+    || fail "The workflow files on ${source_branch} changed after build ${BUILD_TAG}, and GitHub lets this run tag only a commit with its own workflow files: build ${source_branch} again and release that build"
+}
+
+# The tree ID of .github/workflows at a commit: equal IDs, equal files.
+workflows_tree() {
+  gh api "repos/${GITHUB_REPOSITORY}/contents/.github?ref=$1" --jq '.[] | select(.name == "workflows") | .sha'
 }
 
 validate_registry_conflicts() {

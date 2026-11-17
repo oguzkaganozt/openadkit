@@ -84,7 +84,7 @@ def run_validator(tmp_path, function, **env):
         "bash", "-c", f'source "$1"; release_sha="$2"; {function}', "bash", str(VALIDATOR), RELEASE_SHA,
     ], cwd=tmp_path, text=True, capture_output=True, timeout=30, env=os.environ | {
         "BUILD_TAG": BUILD_TAG, "VERSION": VERSION, "GH_TOKEN": "test", "GITHUB_REF": "refs/heads/release/9.8",
-        "GITHUB_REPOSITORY": "example/repo", "GITHUB_OUTPUT": str(tmp_path / "output"),
+        "GITHUB_REPOSITORY": "example/repo", "GITHUB_SHA": "d" * 40, "GITHUB_OUTPUT": str(tmp_path / "output"),
         "IMAGE_REPO": kit["imageRepository"],
         **env,
     })

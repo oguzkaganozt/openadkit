@@ -20,9 +20,6 @@ number promises.
   runners, never at a persistent self-hosted machine.
 - **GHCR packages** accept pushes from CI: `openadkit`, `openadkit-buildcache`
   and `openadkit-ci` under `ghcr.io/autowarefoundation/`.
-- **`secrets.RELEASE_TOKEN`** (Contents and Workflows write) is set when promoting
-  a build commit older than later workflow changes; otherwise `GITHUB_TOKEN` is
-  used.
 - **The `release` environment** exists in the repository settings: the publish
   job runs in it, so the reviewers required there approve each release.
 - **Immutable releases** are on in the repository settings: a published
@@ -34,7 +31,9 @@ number promises.
   `build_tag`. The release ships the CLI and deployments of that build's
   commit. A push that changes only the CLI or deployments starts no build, so
   dispatch `build-all-images` on the branch to release it; the release run
-  warns when the branch has such changes.
+  warns when the branch has such changes. A change to `.github/workflows` after
+  the build needs a new build too: the release run's token can tag only a
+  commit with the run's own workflow files.
 - **A passing scan** of `scan-images` exists for that `build_tag` on the same
   branch; it runs after the build.
 - **A successful `evidence` run** on the same branch passed every cell for that
@@ -63,8 +62,8 @@ flowchart LR
    [`validate_release.sh`](https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh)
    (version format, the build run and its age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
-   digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
-   tagged if a gate fails.
+   digests, Git tag and workflow files). A build older than 90 days cannot be
+   promoted. Nothing is tagged if a gate fails.
 2. **package-bundles**: writes the immutable release plan and the runtime bundle
    for both distros, with the build commit's own packaging scripts.
 3. **publish**: writes the notes and metadata from the validated plan, attests
