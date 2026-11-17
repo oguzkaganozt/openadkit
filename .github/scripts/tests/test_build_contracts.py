@@ -232,6 +232,15 @@ def test_real_compose_preserves_single_and_split_graphs(compose_context, name, r
         assert "pid" not in services["scenario-simulator"]
     if name == "carla-simulation" and role == "autoware":
         assert "carla-interface" not in services["vehicle"].get("depends_on", {})
+    # The CARLA bridge is an Autoware service: its death turns it unhealthy,
+    # and restart and config overrides reach it.
+    if "carla-interface" in services:
+        bridge = services["carla-interface"]
+        assert "/tmp/openadkit/died" in " ".join(bridge["healthcheck"]["test"])
+        assert "/openadkit/overlay_ws" in {item["target"] for item in bridge["volumes"]}
+    if name == "carla-simulation" and role is None:
+        assert {"map", "carla-interface"} <= services["vehicle"]["depends_on"].keys()
+        assert {"map", "system", "carla-interface"} <= services["sensing"]["depends_on"].keys()
     # The visualizer joins no PID namespace, and only the single-host graph waits on Autoware.
     if "visualizer" in services:
         assert "pid" not in services["visualizer"]

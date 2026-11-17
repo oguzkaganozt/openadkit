@@ -121,9 +121,8 @@ config overrides and overlay workspace, and keeps to the same readiness checks.
   without restarting a simulator such as CARLA; `restart` names the services it
   left running.
 - A running service that shares the process namespace of a recreated one is
-  recreated with it, since it cannot outlive that namespace: CARLA Simulation's
-  `carla-interface`, a rosbag that is still playing or a scenario that is still
-  running, which then start over.
+  recreated with it, since it cannot outlive that namespace: a rosbag that is
+  still playing or a scenario that is still running, which then start over.
 - `restart <service>...` recreates only those services.
 - `restart --all` recreates the whole deployment, one-shot services included.
 

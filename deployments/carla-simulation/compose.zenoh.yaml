@@ -17,6 +17,7 @@ services:
   zenoh-bridge:
     image: ${ZENOH_BRIDGE_IMAGE:?pinned in openadkit.json externalImages}
     network_mode: host
+    init: true
     ipc: host
     restart: on-failure
     # RMW_IMPLEMENTATION, ROS_DOMAIN_ID, CYCLONEDDS_URI and
@@ -30,7 +31,7 @@ services:
       # the Zenoh session up but routing no topics. The CLI sets the selected
       # distro.
       - ROS_DISTRO=${ROS_DISTRO:-humble}
-      # From settings.env and the host settings file. The empty defaults keep
+      # From the host settings file or the shell. The empty defaults keep
       # `stop`, `status` and `logs` working without them; the command below
       # fails when it needs a listen endpoint.
       - ZENOH_LISTEN=${ZENOH_LISTEN:-}
