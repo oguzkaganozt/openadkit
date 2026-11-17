@@ -101,6 +101,10 @@ class OpenADKitError(Exception):
     """A user-facing failure."""
 
 
+class UsageError(OpenADKitError):
+    """A command line that cannot run as given; exits 2 like the parser's own errors."""
+
+
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:

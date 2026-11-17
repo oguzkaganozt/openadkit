@@ -184,9 +184,14 @@ def status_stopped(project: str) -> None:
     print_services(containers(project))
 
 
+# A stack up for hours holds tens of thousands of lines: following starts from
+# each service's recent ones.
+FOLLOW_TAIL = "100"
+
+
 def logs(project: str, follow: bool, services: list[str]) -> None:
     services = resolve_services(project, services)
-    run_project(project, ["logs", *(["--follow"] if follow else []), *services], show=True)
+    run_project(project, ["logs", *(["--follow", "--tail", FOLLOW_TAIL] if follow else []), *services], show=True)
 
 
 def running_containers(project: str) -> list[dict[str, Any]]:

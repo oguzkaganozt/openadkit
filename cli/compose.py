@@ -435,7 +435,7 @@ def check_daemon(selection: Selection) -> None:
         available = {}
     if "nvidia" not in available:
         raise OpenADKitError(
-            "NVIDIA Container Toolkit is unavailable for the selected GPU mode"
+            "NVIDIA Container Toolkit is unavailable for the selected GPU mode; run: openadkit setup --gpu"
         )
 
 

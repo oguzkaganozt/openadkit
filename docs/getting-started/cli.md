@@ -58,7 +58,7 @@ or the deployment's first one when it does not run on that.
 
 ```bash
 openadkit status
-openadkit logs --follow
+openadkit logs --follow           # stream, from each service's last 100 lines
 openadkit logs map planning        # only these services
 openadkit restart                  # apply changed settings, config overrides and overlay workspaces
 openadkit restart --all            # recreate the whole deployment
@@ -281,8 +281,12 @@ openadkit uninstall --all    # remove kept versions too
 
 `uninstall` is for release installs; remove a source checkout with Git. It
 keeps your host settings, run records, results, recordings and downloaded data
-(see [Settings](#settings) for where they are). The host changes `openadkit setup` made stay too: Docker and its
-apt source, your `docker` group membership and
+(see [Settings](#settings) for where they are), and the Docker images, several
+GB each. To delete a deployment's data, run `openadkit clean <deployment>`
+before uninstalling, since it needs the CLI. Afterwards,
+`docker image ls ghcr.io/autowarefoundation/openadkit` lists the images and
+`docker image rm` removes them. The host changes `openadkit setup` made stay
+too: Docker and its apt source, your `docker` group membership and
 `/etc/sysctl.d/99-openadkit-dds.conf`.
 
 ## Names, Directories and Output
