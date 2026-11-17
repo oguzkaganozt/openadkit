@@ -108,11 +108,11 @@ def pin_release_repository(launcher: Path, repository: str) -> None:
     """The launcher installs and upgrades from the repository that released it."""
     if not REPOSITORY_RE.fullmatch(repository):
         fail(f"not a GitHub repository: {repository}")
-    default = f"${{OPENADKIT_REPOSITORY:-{UPSTREAM_REPOSITORY}}}"
+    default = f"readonly OPENADKIT_REPOSITORY={UPSTREAM_REPOSITORY}\n"
     text = launcher.read_text(encoding="utf-8")
     if text.count(default) != 1:
-        fail(f"{launcher}: expected one default release repository, {default}")
-    launcher.write_text(text.replace(default, f"${{OPENADKIT_REPOSITORY:-{repository}}}"), encoding="utf-8")
+        fail(f"{launcher}: expected one line {default.strip()}")
+    launcher.write_text(text.replace(default, f"readonly OPENADKIT_REPOSITORY={repository}\n"), encoding="utf-8")
 
 
 def verify_staged_bundle(bundle_root: Path, plan: dict[str, Any]) -> None:

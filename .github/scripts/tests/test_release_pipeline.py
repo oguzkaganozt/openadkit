@@ -392,7 +392,7 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
     root = tmp_path / f"extract/openadkit-{VERSION}"
     # The launcher is the release commit's, set to install from the repository that released it.
     launcher = (ROOT / "openadkit").read_text().replace(
-        "${OPENADKIT_REPOSITORY:-autowarefoundation/openadkit}", "${OPENADKIT_REPOSITORY:-example/repo}")
+        "readonly OPENADKIT_REPOSITORY=autowarefoundation/openadkit\n", "readonly OPENADKIT_REPOSITORY=example/repo\n")
     assert launcher != (ROOT / "openadkit").read_text()
     assert (root / "openadkit").read_text() == launcher and (tmp_path / "dist/openadkit").read_text() == launcher
     assert os.access(root / "openadkit", os.X_OK)
