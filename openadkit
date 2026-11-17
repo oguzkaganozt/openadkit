@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly OPENADKIT_REPOSITORY=${OPENADKIT_REPOSITORY:-autowarefoundation/openadkit}
-readonly OPENADKIT_RELEASES_URL=${OPENADKIT_RELEASES_URL:-"https://github.com/${OPENADKIT_REPOSITORY}/releases"}
+# Packaging a release writes the repository that released it here, so a
+# launcher installs and upgrades from the repository it came from.
+readonly OPENADKIT_REPOSITORY=autowarefoundation/openadkit
+readonly OPENADKIT_RELEASES_URL="https://github.com/${OPENADKIT_REPOSITORY}/releases"
 # Strict SemVer release tag. The same pattern appears in cli/installation.py,
 # .github/scripts/release_plan.py and validate_release.sh; the bootstrap
 # cannot import it, so test_release_versions.py checks all four agree.
