@@ -36,16 +36,13 @@ from manifest import (
     NAME_RE,
     VERSION_RE,
     OpenADKitError,
+    UsageError,
     load_json,
     require_string,
 )
 from settings import Selection
 
 KIT_TEMPLATE = Path(__file__).resolve().parent / "templates/kit"
-
-
-class UsageError(OpenADKitError):
-    """A command line that cannot run as given; exits 2 like the parser's own errors."""
 
 
 def find_kit(start: Path) -> Path | None:
@@ -534,7 +531,7 @@ def clean_arguments(parser: argparse.ArgumentParser) -> None:
 
 def logs_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("services", nargs="*", metavar="SERVICE", help="only these services")
-    parser.add_argument("--follow", action="store_true", help="stream logs")
+    parser.add_argument("--follow", action="store_true", help="stream logs, from each service's last 100 lines")
 
 
 def restart_arguments(parser: argparse.ArgumentParser) -> None:
@@ -744,14 +741,14 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
     })
     started = time.monotonic()
     compose.start(deployment, selection, services, skipped)
-    report = compose.run_report(deployment, selection, catalog, model, started)
-    compose.write_run_report(deployment, report)
+    run_report = compose.run_report(deployment, selection, catalog, model, started)
+    compose.write_run_report(deployment, run_report)
     print_run_next_steps(
         deployment, services - skipped, selection.role, selection.environment.get("OUTPUT_HOST_PATH"),
         tls=bool(selection.environment.get("NOVNC_CERT")),
     )
     if args.verify:
-        return compose.verify(deployment, selection, services - skipped, report)
+        return compose.verify(deployment, selection, services - skipped, run_report)
     return 0
 
 

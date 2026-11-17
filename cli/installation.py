@@ -21,7 +21,7 @@ from pathlib import Path
 
 import compose
 from catalog import data_root, expand_home, root_path
-from manifest import VERSION_RE, OpenADKitError
+from manifest import VERSION_RE, OpenADKitError, UsageError
 
 KEPT_RELEASE_RE = re.compile(r"^openadkit-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$")
 
@@ -40,9 +40,9 @@ UNINSTALL_USAGE = """\
 Usage: openadkit uninstall [--all]
 
 Removes the active Open AD Kit release installation, its launcher and Tab
-completion.
-Downloaded data is not touched. Refuses while an openadkit-* Compose project
-is still running, because uninstall removes the launcher `openadkit stop` needs.
+completion. Downloaded data and Docker images are not touched. Refuses while a
+deployment is still running, because uninstall removes the launcher
+`openadkit stop` needs.
 
   --all  also remove previously kept releases in the install destination
 
@@ -50,10 +50,6 @@ Stop running deployments first (`openadkit stop`). Run
 `openadkit clean <deployment>` before uninstalling if you also want to
 delete downloaded data such as maps and perception models.
 """
-
-
-class UsageError(Exception):
-    """A command-line mistake; exits 2 like the launcher's other usage errors."""
 
 
 def log(message: str) -> None:
@@ -329,9 +325,8 @@ def uninstall(root: Path, arguments: Sequence[str]) -> int:
         except OSError:
             pass
 
-    log(
-        f"uninstalled {version}; downloaded data under {data_root()} was kept"
-    )
+    log(f"uninstalled {version}; kept the downloaded data under {data_root()} and the Docker images")
+    log("docker image ls lists the images, and docker image rm removes them")
     return 0
 
 

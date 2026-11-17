@@ -320,6 +320,8 @@ def test_install_upgrade_and_uninstall_preserve_kept_versions(tmp_path):
     assert result.returncode == 0, result.stderr
     assert not launcher.exists() and not installed(tmp_path, "v1.3.0").exists()
     assert installed(tmp_path).is_file()
+    # The images take more space than the release; the message says they stay.
+    assert "and the Docker images" in result.stdout and "docker image rm" in result.stdout
 
 
 
@@ -711,7 +713,7 @@ def test_unsupported_runtime_selection_fails_before_compose(tmp_path, constraint
 
 @pytest.mark.parametrize(("options", "args", "message"), [
     ({"daemon": 1}, [], "Docker daemon"),
-    ({"runtimes": "{}"}, ["--gpu"], "NVIDIA Container Toolkit"),
+    ({"runtimes": "{}"}, ["--gpu"], "NVIDIA Container Toolkit is unavailable for the selected GPU mode; run: openadkit setup --gpu"),
     ({"config": 1}, [], "failed"),
 ])
 def test_run_preflight_does_not_touch_data_or_start_containers(tmp_path, options, args, message):
@@ -1372,6 +1374,9 @@ def test_operational_commands_act_on_the_running_stack_without_a_name(tmp_path):
     # A service also goes by its container's name, which docker ps and the log lines show.
     assert run_cli(root, "logs", "autoware-planning", "planning").returncode == 0
     assert recorded(calls)[-1]["args"][3:] == ["logs", "planning"]
+    # Following starts from the recent lines, not the whole history.
+    assert run_cli(root, "logs", "--follow", "map").returncode == 0
+    assert recorded(calls)[-1]["args"][3:] == ["logs", "--follow", "--tail", "100", "map"]
     assert run_cli(root, "shell", "autoware-map", "true").returncode == 0
     assert recorded(calls)[-1]["args"][3:6] == ["exec", "-T", "map"]
     # Compose prints nothing for a name it does not know; the CLI says so.
@@ -2669,6 +2674,22 @@ def test_a_docker_permission_error_names_the_group_step():
     assert "newgrp docker" in str(cli_compose.docker_error("could not access the Docker daemon", denied + "\n"))
     other = str(cli_compose.docker_error("could not access the Docker daemon", "Cannot connect to the Docker daemon"))
     assert other == "could not access the Docker daemon: Cannot connect to the Docker daemon"
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="setup refuses root")
+def test_setup_gpu_needs_a_working_driver_before_it_asks_for_sudo(tmp_path):
+    try:
+        distribution = platform.freedesktop_os_release().get("ID")
+    except OSError:
+        distribution = None
+    if distribution != "ubuntu":
+        pytest.skip("setup runs on Ubuntu only")
+    executable(tmp_path / "bin/nvidia-smi", "#!/usr/bin/env bash\nexit 9\n")
+    executable(tmp_path / "bin/sudo", f"#!/usr/bin/env bash\ntouch {tmp_path / 'sudo-called'}\nexit 1\n")
+    result = subprocess.run(["bash", str(ROOT / "cli/setup.sh"), "setup", "--gpu"], text=True, capture_output=True,
+                            timeout=30, env=os.environ | {"PATH": f"{tmp_path / 'bin'}:{os.environ['PATH']}"})
+    assert result.returncode == 1 and "install the NVIDIA driver first" in result.stderr
+    assert not (tmp_path / "sudo-called").exists()
 
 
 def test_inline_python_ignores_the_current_directory():

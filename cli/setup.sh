@@ -130,10 +130,6 @@ install_nvidia_gl_libraries() {
     log "NVIDIA OpenGL/Vulkan libraries are already installed"
     return 0
   fi
-  if ! command -v nvidia-smi >/dev/null 2>&1; then
-    log "nvidia-smi not found; skipping NVIDIA OpenGL/Vulkan libraries"
-    return 0
-  fi
 
   local driver_version driver_branch pkg compute_pkg compute_ver gl_ver dep dep_ver
   local -a install_pkgs
@@ -287,6 +283,10 @@ case "$(uname -m)" in
   x86_64|amd64|aarch64|arm64) ;;
   *) fail "unsupported architecture: $(uname -m)" ;;
 esac
+# The toolkit and the OpenGL libraries follow the host's driver.
+if [[ $INSTALL_GPU == true ]] && ! nvidia-smi >/dev/null 2>&1; then
+  fail "nvidia-smi failed; install the NVIDIA driver first (and reboot), then rerun openadkit setup --gpu"
+fi
 
 RUNTIME_PACKAGES=(ca-certificates curl git gzip python3 tar)
 MISSING_PACKAGES=()
@@ -332,7 +332,6 @@ if [[ $RUN_CHECK == true ]]; then
   log "checking Docker with a test container (--no-check skips this)"
   docker_run run --rm hello-world >/dev/null
   if [[ $INSTALL_GPU == true ]]; then
-    command -v nvidia-smi >/dev/null 2>&1 || fail "nvidia-smi is unavailable"
     nvidia_gl_libraries_present || fail "NVIDIA OpenGL/Vulkan libraries are missing"
     docker_run run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi >/dev/null
   fi

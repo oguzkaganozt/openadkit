@@ -395,12 +395,9 @@ def install_resource(
         if not force and validate_dataset(target, required) and is_outdated(target, resource):
             print(f"updating data: {target} (the deployment now declares other content)")
         elif not force:
-            if validate_dataset(target, required):
-                print(f"data already present: {target}")
-                return
-            raise OpenADKitError(
-                f"incomplete data at {target}; run: openadkit fetch <deployment> --force"
-            )
+            # validate_install_targets refused incomplete data before any download.
+            print(f"data already present: {target}")
+            return
         if target.is_symlink() or not target.is_dir():
             raise OpenADKitError(f"unsafe data target: {target}")
         refuse_unmanaged(target, "replace")
