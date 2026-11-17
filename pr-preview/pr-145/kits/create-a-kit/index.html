@@ -1910,7 +1910,7 @@ runs that checkout's local build, or the CI build <code>OPENADKIT_BUILD</code> n
 <code>validate</code> renders the Compose model without starting anything; it is not
 runtime or ABI evidence, so finish with <code>run --verify</code>.</p>
 <p>Every release tests a kit made this way: the
-<a href="../../releases/evidence/#cells-and-levels">example kit</a> exercises each
+<a href="https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit">example kit</a> exercises each
 extension point on Humble and Jazzy.</p>
 <h2 id="make-a-change">Make a Change<a class="headerlink" href="#make-a-change" title="Permanent link">#</a></h2>
 <p>A config override changes a parameter without a build. Put the file with only
@@ -1922,7 +1922,7 @@ openadkit<span class="w"> </span>restart<span class="w">               </span><s
 </code></pre></div>
 <p>A package change needs a build and a restart of the service that runs it:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build
-openadkit<span class="w"> </span>restart<span class="w"> </span>my-node
+openadkit<span class="w"> </span>restart<span class="w"> </span>&lt;service&gt;
 </code></pre></div>
 <p><a href="../develop-and-debug/">Develop and Debug</a> times that loop and shows how to look
 into the running services.</p>
