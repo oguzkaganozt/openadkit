@@ -7,7 +7,7 @@ to look into a running deployment.
 
 ```bash
 openadkit build                 # compiles what changed, in the release's devel image
-openadkit restart my-node       # recreates the service that runs it
+openadkit restart <service>     # recreates the service that runs it
 ```
 
 `build` compiles only what changed, and `restart <service>` recreates only that
@@ -57,7 +57,7 @@ service's process namespace; the service and its image stay as they are.
 
     ```bash
     openadkit build -- --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
-    openadkit restart my-node
+    openadkit restart <service>
     ```
 
 2. Find the service's container in the `CONTAINER` column of

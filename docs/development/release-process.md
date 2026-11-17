@@ -127,7 +127,9 @@ The release workflow seals the selected evidence summary (result, build,
 commit, run URL and cells) in its release plan before packaging.
 `release-metadata.json` publishes that same evidence, the BOM and the CI
 exemptions. The bundle, installer and metadata receive build provenance from
-the release workflow.
+the release workflow. The installer and the bundle's launcher install and
+upgrade from the repository that released them, so a fork's release installs
+from the fork.
 
 The folded evidence table in the release notes shows the passing-cell count,
 readiness time, arrival time and peak memory of that build; it depends only on

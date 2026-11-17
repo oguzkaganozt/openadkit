@@ -549,7 +549,9 @@ def restart_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def shell_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("service", nargs="?", default="api", help="service (default: api)")
+    # argparse prints a REMAINDER argument as a bare "..." in the usage line.
+    parser.usage = "%(prog)s [-h] [--role ROLE] [--verbose] [SERVICE [COMMAND ...]]"
+    parser.add_argument("service", nargs="?", default="api", metavar="SERVICE", help="service (default: api)")
     parser.add_argument("command_args", nargs=argparse.REMAINDER, metavar="COMMAND", help="command to run")
 
 
@@ -922,7 +924,7 @@ COMMANDS = {
     "build": Command(
         "catalog", "build an overlay workspace in the pinned devel image", build_command, build_arguments
     ),
-    "new": Command("catalog", "create a kit on top of one of these deployments", new_command, new_arguments),
+    "new": Command("catalog", "create a kit on top of a deployment", new_command, new_arguments),
     "clean": Command("deployment", "delete a deployment's downloaded data", clean_command, clean_arguments),
     "status": Command("live", "show the running deployment", status_command),
     "logs": Command("live", "show the running deployment's logs", logs_command, logs_arguments),

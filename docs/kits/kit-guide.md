@@ -161,7 +161,7 @@ visible in every service. Whether your code runs depends on what starts it:
   Autoware packages that link against its library keep the copy they were
   built with.
 - A new node runs only where something starts it: an extra service (as the
-  example kit's `acme-probe`), a launch file you override under
+  [example kit](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit)'s `acme-probe`), a launch file you override under
   `config/autoware`, or by hand with
   `openadkit shell <service> ros2 run <package> <node>`.
 
