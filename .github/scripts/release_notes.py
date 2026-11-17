@@ -121,9 +121,8 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     distros = ", ".join(distro.capitalize() for distro in sorted(plan["releaseContext"]["images"]))
     cells = report_cells(evidence)
     architectures = ", ".join(sorted({cell["platform"].rsplit("/", 1)[-1] for cell in cells if cell.get("platform")}))
-    # A release tag has its own page; any other ref links to its source.
-    page = "releases/tag" if autoware["ref"] == autoware["version"] else "tree"
-    autoware_link = f"[{autoware['version']}](https://github.com/autowarefoundation/autoware/{page}/{autoware['ref']})"
+    # The build accepts only an Autoware release, so its version is a tag with a release page.
+    autoware_link = f"[{autoware['version']}](https://github.com/autowarefoundation/autoware/releases/tag/{autoware['version']})"
     # What the release runs, before anything else: its title is the version alone.
     out: list[str] = [
         "| Autoware | ROS 2 | Architectures |",

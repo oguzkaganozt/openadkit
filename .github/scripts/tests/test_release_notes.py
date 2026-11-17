@@ -60,7 +60,8 @@ def test_notes_lead_with_people_and_keep_digests_folded(tmp_path):
     first, _, rest = notes.partition("\n\n")
     autoware = plan["releaseContext"]["autoware"]
     assert first.splitlines()[0] == "| Autoware | ROS 2 | Architectures |"
-    assert first.splitlines()[2].startswith(f"| [{autoware['version']}](https://github.com/autowarefoundation/autoware/")
+    assert first.splitlines()[2].startswith(
+        f"| [{autoware['version']}](https://github.com/autowarefoundation/autoware/releases/tag/{autoware['version']}) |")
     assert rest.startswith("Big release.\n\n## Install")
     assert f"releases/download/{VERSION}/openadkit" in notes
     assert "now point to this release" in notes
