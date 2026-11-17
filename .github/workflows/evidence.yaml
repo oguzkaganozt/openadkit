@@ -190,7 +190,7 @@ jobs:
           set -euo pipefail
           bash .github/scripts/evidence/stage_kit.sh \
             "$PWD" "$RUNNER_TEMP/openadkit-build-metadata/build-metadata.json" "$PWD/evidence-kit" \
-            "${{ steps.prepare.outputs.build_sha }}" "${{ steps.source.outputs.source_sha }}"
+            "${{ steps.prepare.outputs.build_sha }}"
 
       - name: Upload evidence kit
         if: steps.source.outputs.skip != 'true'

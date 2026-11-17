@@ -81,36 +81,10 @@ jobs:
     permissions:
       actions: read
       contents: read
-    outputs:
-      packager_sha: ${{ steps.packager.outputs.packager_sha }}
     steps:
-      - name: Check out release scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.workflow_sha }}
-          # Cone mode rejects leading-slash entries.
-          sparse-checkout: |
-            .github/scripts/install-compose.sh
-            .github/scripts/package_release_bundles.sh
-            .github/scripts/release_plan.py
-            .github/scripts/autoware_patches.py
-            .github/scripts/images.py
-            .github/scripts/validation_matrix.py
-
-      - name: Verify packager revision
-        id: packager
-        env:
-          EXPECTED_PACKAGER_SHA: ${{ github.workflow_sha }}
-        run: |
-          set -euo pipefail
-          packager_sha=$(git rev-parse HEAD)
-          if [ "${packager_sha}" != "${EXPECTED_PACKAGER_SHA}" ]; then
-            echo "Packager checkout ${packager_sha} does not match workflow ${EXPECTED_PACKAGER_SHA}" >&2
-            exit 1
-          fi
-          echo "packager_sha=${packager_sha}" >> "${GITHUB_OUTPUT}"
-        shell: bash
-
+      # The build commit packages itself: its own scripts made the tree its
+      # evidence ran, so they make the bundle too. Validation above stays with
+      # the branch's scripts.
       - name: Check out repository at release SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,6 +98,7 @@ jobs:
             /components/docker-bake.hcl
             /deployments/
             /.github/autoware-patches/
+            /.github/scripts/
 
       - name: Download validated release metadata
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -134,7 +109,7 @@ jobs:
       - name: Install Docker Compose 5.0+
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: bash .github/scripts/install-compose.sh
+        run: bash src/.github/scripts/install-compose.sh
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -143,10 +118,9 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           RELEASE_SHA: ${{ needs.validate.outputs.release_sha }}
-          PACKAGER_SHA: ${{ steps.packager.outputs.packager_sha }}
           PUBLISH_LATEST_ALIASES: ${{ needs.validate.outputs.publish_latest_aliases }}
           STABLE_RELEASE: ${{ needs.validate.outputs.is_stable_release }}
-        run: bash .github/scripts/package_release_bundles.sh
+        run: bash src/.github/scripts/package_release_bundles.sh
         shell: bash
 
       - name: Upload deployment bundles
@@ -172,8 +146,8 @@ jobs:
       packages: write
       attestations: write
       id-token: write
-    env:
-      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+    # Each step that runs gh gets its own token: the release token only
+    # reaches the steps that create and publish the release.
     steps:
       - name: Check out release scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -213,6 +187,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release metadata and notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/write_release_notes.sh
         shell: bash
 
@@ -225,14 +201,20 @@ jobs:
             release-metadata.json
 
       - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/manage_github_release.sh draft
         shell: bash
 
       - name: Promote image digests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/promote_release_images.sh
         shell: bash
 
       - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/manage_github_release.sh publish
         shell: bash
 

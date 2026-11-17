@@ -68,7 +68,7 @@ flowchart LR
    digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
    tagged if a gate fails.
 2. **package-bundles**: writes the immutable release plan and the runtime bundle
-   for both distros.
+   for both distros, with the build commit's own packaging scripts.
 3. **publish**: writes the notes and metadata from the validated plan, attests
    the bundle, installer and metadata, and creates the draft with its
    assets. It then creates the image release tags and, for stable releases, the

@@ -9,8 +9,7 @@ source "${script_dir}/registry_lookup.sh"
 source "${script_dir}/stable_alias_policy.sh"
 
 plan_file=${RELEASE_PLAN_FILE:-release-plan.json}
-# release_plan.py validated this plan, and the workflow checks its digest
-# before every use.
+# release_plan.py validated this plan in this run's package-bundles job.
 jq -e '.schemaVersion == 1' "${plan_file}" >/dev/null
 VERSION=$(jq -r '.release.version' "${plan_file}")
 export VERSION
