@@ -8,16 +8,21 @@ No GPU is required.
 ## Run
 
 ```bash
-openadkit run scenario-simulation
-openadkit logs --follow
+openadkit run scenario-simulation --verify
 ```
 
 To run Autoware on one host and the scenario runner on another, see
 [Split-host Simulation](split-host.md).
 
-`run` downloads the Kashiwanoha map. Autoware takes about 90 seconds to
-initialize; the runner then executes the scenario and writes the results to
+`run` downloads the Kashiwanoha map. Autoware takes about two minutes to be
+ready; the runner then executes the scenario, seven to eight minutes for the
+bundled one on a 4-vCPU host, and writes the results to
 `~/openadkit-output/scenario-simulation/results` (`run` prints the path).
+
+With `--verify`, `run` waits for the runner and ends with `verify: passed`, or
+fails with the runner's exit code. The runner's log ends with
+`scenario: N of M passed`: see `openadkit logs scenario-simulator`. Without
+`--verify`, `openadkit status` shows the runner's exit code once it ends.
 
 ## Settings
 

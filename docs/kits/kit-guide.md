@@ -226,18 +226,20 @@ such as `services/ota-agent.yaml` at the kit root, which each of their Compose
 files includes next to the base. Compose resolves the relative paths of an
 included file against that file's own directory.
 
-An extra Open AD Kit runtime service loads the kit workspace by mounting
-`${OPENADKIT_OVERLAY_WS}` at `/openadkit/overlay_ws:ro`, as the example kit's
-`acme-probe` does. It needs no image of its own: a runtime image and the
-workspace are enough. Build your own image only for what the runtime images
-lack, such as a system package or a non-ROS application, and declare it as an
-external image ([point 5](#5-image-replacement)).
-
-A service that extends `deployments/shared/services/autoware.yaml`, as
-`acme-probe` does, turns unhealthy when a process of its `ros2 launch` dies
+An extra service on an Open AD Kit runtime image extends
+`${OPENADKIT_ROOT}/deployments/shared/services/autoware.yaml`, as the example
+kit's `acme-probe` does. That gives it what the base's Autoware services share:
+the host network, the ROS domain and DDS settings, the config overrides and the
+kit workspace at `/openadkit/overlay_ws`. It also turns unhealthy when a
+process of its `ros2 launch` dies
 ([A Service Is Unhealthy](../getting-started/troubleshooting.md#a-service-is-unhealthy)).
 A `healthcheck` of its own replaces that check. To keep it, start the command
-with `! cat /tmp/openadkit/died 2>/dev/null &&`, as the `api` service does.
+with `! cat /tmp/openadkit/died 2>/dev/null &&`, as `acme-probe` does.
+
+Such a service needs no image of its own: a runtime image and the workspace are
+enough. Build your own image only for what the runtime images lack, such as a
+system package or a non-ROS application, and declare it as an external image
+([point 5](#5-image-replacement)).
 
 To replace one role of a base that runs as split-host roles, include only the
 other role's Compose file instead of the base's `compose.yaml`. For

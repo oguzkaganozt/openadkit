@@ -13,8 +13,9 @@ which runs `{{base}}` with this kit's files on top.
 | `deployments/<name>/config/autoware/` | Config overrides one deployment alone needs | That deployment |
 | `deployments/<name>/compose.yaml` | Its services, when it adds or changes any | That deployment |
 
-Settings and config overrides apply in this order, and a later one wins: the
-base, the kit, the deployment, then your host settings file.
+Settings apply in this order, and a later one wins: the base, the kit, the
+deployment, then your host settings file. Config overrides apply in the same
+order, without the host settings file.
 
 ```bash
 openadkit build                  # build overlay_ws in the matching devel image
