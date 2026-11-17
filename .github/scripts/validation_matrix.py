@@ -236,7 +236,7 @@ def catalog_inventory(
     catalog = catalog if catalog is not None else runtime.load_catalog(source_root)
     deployments: dict[str, dict[str, str]] = {}
     shared: set[str] = set()
-    for name in sorted(catalog.deployments):
+    for name in catalog.deployments:
         deployment = runtime.get_deployment(source_root, catalog, name)
         deployments[name] = {
             "path": catalog.deployments[name].path,

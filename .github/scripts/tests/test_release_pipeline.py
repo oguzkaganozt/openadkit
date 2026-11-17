@@ -390,12 +390,20 @@ def test_bundle_pins_integrity_and_reproducibility(tmp_path):
         assert all("__pycache__" not in member.name and not member.name.endswith(".pyc") for member in members)
         archive.extractall(tmp_path / "extract", filter="data")
     root = tmp_path / f"extract/openadkit-{VERSION}"
-    assert (root / "openadkit").read_bytes() == (ROOT / "openadkit").read_bytes()
-    assert (tmp_path / "dist/openadkit").read_bytes() == (ROOT / "openadkit").read_bytes()
+    # The launcher is the release commit's, set to install from the repository that released it.
+    launcher = (ROOT / "openadkit").read_text().replace(
+        "${OPENADKIT_REPOSITORY:-autowarefoundation/openadkit}", "${OPENADKIT_REPOSITORY:-example/repo}")
+    assert launcher != (ROOT / "openadkit").read_text()
+    assert (root / "openadkit").read_text() == launcher and (tmp_path / "dist/openadkit").read_text() == launcher
+    assert os.access(root / "openadkit", os.X_OK)
     context = json.loads((root / "openadkit.json").read_text())
     assert context["kind"] == "release" and set(context["images"]) == {"humble", "jazzy"}
     listed = subprocess.run([str(root / "openadkit"), "list", "--json"], env=env, text=True, capture_output=True, check=True)
-    assert [entry["modified"] for entry in json.loads(listed.stdout)["deployments"]] == [False] * len(context["deployments"])
+    deployments = json.loads(listed.stdout)["deployments"]
+    assert [entry["modified"] for entry in deployments] == [False] * len(context["deployments"])
+    # The bundle lists deployments in the catalog's order.
+    catalog = json.loads((ROOT / "openadkit.json").read_text())["deployments"]
+    assert [entry["name"] for entry in deployments] == list(catalog)
     assert "humble|" in calls.read_text() and "jazzy|" in calls.read_text()
     (tmp_path / "dist/stale.tar.gz").write_bytes(b"stale")
     run_packager(tmp_path, env, umask="077")

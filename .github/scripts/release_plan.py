@@ -23,6 +23,8 @@ SEMVER_RE = re.compile(
     rf"(?:-{_IDENTIFIER}(?:\.{_IDENTIFIER})*)?$"
 )
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+UPSTREAM_REPOSITORY = "autowarefoundation/openadkit"
+REPOSITORY_RE = re.compile(r"[A-Za-z0-9-]+/[A-Za-z0-9._-]+")
 ROS_SNAPSHOT_RE = re.compile(r'variable "ROS_SNAPSHOT_([A-Z]+)" \{\s*default = "(\d{4}-\d{2}-\d{2})"\s*\}')
 
 
@@ -95,10 +97,22 @@ def stage_bundle(
                 fail(f"Release bundle must not contain symlinks: {os.path.join(directory, name)}")
 
     verify_staged_bundle(bundle_root, plan)
+    pin_release_repository(bundle_root / "openadkit", os.environ.get("GITHUB_REPOSITORY", UPSTREAM_REPOSITORY))
     write_json(bundle_root / "openadkit.json", plan["releaseContext"])
     verify_release_integrity(bundle_root, plan)
     if include_example_kits:
         validation_matrix.make_example_kits(bundle_root, bundle_root / validation_matrix.EXAMPLE_KIT_DIRECTORY)
+
+
+def pin_release_repository(launcher: Path, repository: str) -> None:
+    """The launcher installs and upgrades from the repository that released it."""
+    if not REPOSITORY_RE.fullmatch(repository):
+        fail(f"not a GitHub repository: {repository}")
+    default = f"${{OPENADKIT_REPOSITORY:-{UPSTREAM_REPOSITORY}}}"
+    text = launcher.read_text(encoding="utf-8")
+    if text.count(default) != 1:
+        fail(f"{launcher}: expected one default release repository, {default}")
+    launcher.write_text(text.replace(default, f"${{OPENADKIT_REPOSITORY:-{repository}}}"), encoding="utf-8")
 
 
 def verify_staged_bundle(bundle_root: Path, plan: dict[str, Any]) -> None:
@@ -305,9 +319,10 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
+    # Keys keep their order, so the bundle lists deployments as the catalog does.
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(value, indent=2, sort_keys=True, separators=(",", ": ")) + "\n",
+        json.dumps(value, indent=2, separators=(",", ": ")) + "\n",
         encoding="utf-8",
     )
 

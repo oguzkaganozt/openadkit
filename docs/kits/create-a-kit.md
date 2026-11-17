@@ -92,7 +92,7 @@ Add `--ros-distro jazzy` to `build`, `validate` and `run` for Jazzy.
 runtime or ABI evidence, so finish with `run --verify`.
 
 Every release tests a kit made this way: the
-[example kit](../releases/evidence.md#cells-and-levels) exercises each
+[example kit](https://github.com/autowarefoundation/openadkit/tree/main/.github/scripts/evidence/example-kit) exercises each
 extension point on Humble and Jazzy.
 
 ## Make a Change
@@ -111,7 +111,7 @@ A package change needs a build and a restart of the service that runs it:
 
 ```bash
 openadkit build
-openadkit restart my-node
+openadkit restart <service>
 ```
 
 [Develop and Debug](develop-and-debug.md) times that loop and shows how to look

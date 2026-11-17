@@ -41,7 +41,8 @@ number promises.
   [Evidence Policy](../releases/evidence.md).
 - **Highlights** for a minor or major release are in
   `.github/release-highlights/vX.Y.Z.md`. The notes of that release and of its
-  candidates open with them; the rest of the notes is generated.
+  candidates open with a table of the Autoware release, ROS 2 distros and
+  architectures, then the highlights; the rest of the notes is generated.
 - **The docs on `main`** describe the release: a stable release publishes the
   site from `main` as it is then. For the first stable release, remove the
   "not published yet" notes first, from `README.md` and
@@ -126,9 +127,11 @@ The release workflow seals the selected evidence summary (result, build,
 commit, run URL and cells) in its release plan before packaging.
 `release-metadata.json` publishes that same evidence, the BOM and the CI
 exemptions. The bundle, installer and metadata receive build provenance from
-the release workflow.
+the release workflow. The installer and the bundle's launcher install and
+upgrade from the repository that released them, so a fork's release installs
+from the fork.
 
-The verification table in the release notes shows the passing-cell count,
+The folded evidence table in the release notes shows the passing-cell count,
 readiness time, arrival time and peak memory of that build; it depends only on
 the release plan. The list of changes comes from GitHub's generated notes since
 the previous release.
@@ -164,8 +167,8 @@ the pinned release as a patch instead of waiting for the next Autoware release:
    the fix's own diff.
 3. Every build applies the patches in order right after `vcs import`; one that
    does not apply, or has no `Upstream:` line, fails the build. The release
-   lists them under **Backported Autoware fixes**, its bundle carries them as
-   `autoware.backports`, and `openadkit version` counts them. The Autoware
-   version stays that of the tag.
+   notes list them under **Fixes backported to Autoware X.Y.Z**, its bundle
+   carries them as `autoware.backports`, and `openadkit version` counts them.
+   The Autoware version stays that of the tag.
 4. When the branch moves to an Autoware release that contains the fix, delete
    the patch.
