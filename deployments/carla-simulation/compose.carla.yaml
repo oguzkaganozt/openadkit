@@ -49,15 +49,15 @@ services:
     restart: on-failure
 
   carla-interface:
+    # What every Autoware service shares: host network, DDS settings, config
+    # overrides, the overlay workspace, and the healthcheck that turns it
+    # unhealthy when the bridge node dies while `ros2 launch` keeps running.
+    extends:
+      file: ../shared/services/autoware.yaml
+      service: autoware
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}
     container_name: ${CARLA_INTERFACE_CONTAINER}
-    network_mode: host
-    init: true
-    ipc: host
-    env_file:
-      - ../shared/runtime.env
     volumes:
-      - ../shared/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ./config/sensor_mapping.yaml:/autoware_config/sensor_mapping.yaml:ro
     depends_on:
       carla:
@@ -74,7 +74,6 @@ services:
       carla_map:=${CARLA_WORLD}
       sensor_kit_name:=carla_sensor_kit_description
       sensor_mapping_file:=/autoware_config/sensor_mapping.yaml
-    restart: on-failure
 
   carla-map-loader:
     image: ${SIMULATOR_IMAGE:?set by the openadkit CLI}

@@ -6,8 +6,8 @@
 # files that deployment.json lists for the role. This file never includes the
 # Zenoh bridge.
 #
-# Compose replaces depends_on on merge, so the default view restates the
-# Autoware edges plus the carla-interface edges.
+# Compose merges depends_on with what the included files declare, so this file
+# adds only the carla-interface edges, and the visualizer's edges to Autoware.
 include:
   - compose.autoware.yaml
   - compose.carla.yaml
@@ -21,14 +21,11 @@ services:
 
   vehicle:
     depends_on:
-      - map
       - carla-interface
 
   sensing:
     depends_on:
-      - map
       - carla-interface
-      - system
 
   visualizer:
     depends_on:
