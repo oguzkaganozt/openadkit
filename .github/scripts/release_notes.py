@@ -118,11 +118,19 @@ def render(plan: dict[str, Any], repository: str, highlights: str, changes: str)
     release, evidence = plan["release"], plan["evidence"]
     version = release["version"]
     autoware = plan["releaseContext"]["autoware"]
-    distros = " and ".join(distro.capitalize() for distro in sorted(plan["releaseContext"]["images"]))
+    distros = ", ".join(distro.capitalize() for distro in sorted(plan["releaseContext"]["images"]))
     cells = report_cells(evidence)
-    architectures = " and ".join(sorted({cell["platform"].rsplit("/", 1)[-1] for cell in cells if cell.get("platform")}))
+    architectures = ", ".join(sorted({cell["platform"].rsplit("/", 1)[-1] for cell in cells if cell.get("platform")}))
+    # A release tag has its own page; any other ref links to its source.
+    page = "releases/tag" if autoware["ref"] == autoware["version"] else "tree"
+    autoware_link = f"[{autoware['version']}](https://github.com/autowarefoundation/autoware/{page}/{autoware['ref']})"
     # What the release runs, before anything else: its title is the version alone.
-    out: list[str] = [" · ".join(filter(None, [f"**Autoware {autoware['version']}**", f"ROS 2 {distros}", architectures])), ""]
+    out: list[str] = [
+        "| Autoware | ROS 2 | Architectures |",
+        "| --- | --- | --- |",
+        f"| {autoware_link} | {distros} | {architectures} |",
+        "",
+    ]
     if highlights.strip():
         out += [highlights.strip(), ""]
 

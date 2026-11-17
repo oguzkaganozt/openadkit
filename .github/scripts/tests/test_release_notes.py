@@ -56,9 +56,12 @@ def test_notes_lead_with_people_and_keep_digests_folded(tmp_path):
     plan["releaseContext"]["autoware"]["backports"] = [
         {"subject": "fix a crash", "repository": "autoware_universe", "upstream": "https://example/pull/9"}]
     notes = release_notes.render(plan, "example/repo", "Big release.\n", "## What's Changed\n\n* fix: x\n")
-    # The title is the version alone, so the first line says what the release runs.
+    # The title is the version alone, so the note opens with what the release runs.
     first, _, rest = notes.partition("\n\n")
-    assert first.startswith("**Autoware ") and " · ROS 2 " in first and rest.startswith("Big release.\n\n## Install")
+    autoware = plan["releaseContext"]["autoware"]
+    assert first.splitlines()[0] == "| Autoware | ROS 2 | Architectures |"
+    assert first.splitlines()[2].startswith(f"| [{autoware['version']}](https://github.com/autowarefoundation/autoware/")
+    assert rest.startswith("Big release.\n\n## Install")
     assert f"releases/download/{VERSION}/openadkit" in notes
     assert "now point to this release" in notes
     assert notes.index("## What's Changed") < notes.index("## Verification")
