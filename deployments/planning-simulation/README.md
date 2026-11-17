@@ -1,8 +1,7 @@
 # Planning Simulation
 
 Runs the Autoware planning and control stack on a sample map with the built-in
-simulator. See the [canonical documentation](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/)
-for settings and troubleshooting.
+simulator. See the [canonical documentation](https://autowarefoundation.github.io/openadkit/deployments/planning-simulation/).
 
 ```bash
 cd ../..

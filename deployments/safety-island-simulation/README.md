@@ -4,7 +4,7 @@ Planning Simulation driven by the
 [Autoware Safety Island](https://github.com/autowarefoundation/autoware-safety-island)
 instead of Autoware's own trajectory follower. See the
 [canonical documentation](https://autowarefoundation.github.io/openadkit/deployments/safety-island-simulation/)
-for requirements, what to expect and troubleshooting.
+for requirements and what to expect.
 
 ```bash
 cd ../..
@@ -19,7 +19,7 @@ cd ../..
 | `compose.yaml` | Planning Simulation's services, plus the `safety-island` and `safety-island-bridge` services |
 | `settings.env` | Planning Simulation's settings, then where the release is fetched and the diagnostics graph below |
 | `config/autoware/autoware_control_config/.../default_preset.yaml` | The default control preset with `trajectory_follower_mode: none` |
-| `config/autoware/autoware_launch/.../autoware-safety-island.yaml` | Autoware's main diagnostics graph without the follower's `control_state`, which nothing publishes any more |
+| `config/autoware/autoware_launch/.../autoware-safety-island.yaml` | Autoware's main diagnostics graph without the follower's `control_state`, which nothing publishes with the follower off |
 | `checks/safety_island.py` | The bridge's healthcheck: the control command's only publisher is the Safety Island's bridge, and Autoware's follower is not running |
 
 The deployment uses the release's files as they are. The bridge carries the

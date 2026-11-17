@@ -29,22 +29,22 @@ metadata, so `evidence.yaml` runs on it unchanged before merge. A fork's pull
 request loads its images (no push, read-only token) and stops at the scan,
 which applies the release gate's policy. Only pipeline changes (`PIPELINE_INPUTS`
 in `build.py`) build a single image, `localization-mapping`, which proves the pipeline end to end.
-Temporary shared caches stay restricted to same-repository PRs. Published
-builds retain exact upstream contexts, source/lock labels, security-refresh
-stamps and the existing bounded cache policy. The local Bake graph in
-`components/docker-bake.hcl` still owns Dockerfiles and dependency edges.
+Temporary shared caches are restricted to same-repository PRs. Published
+builds carry exact upstream contexts, source/lock labels and security-refresh
+stamps, with a bounded cache policy. `components/docker-bake.hcl` owns the
+Dockerfiles and dependency edges.
 
-`images.py` keeps the existing unversioned, snake-case build/scan JSON formats.
+`images.py` writes unversioned, snake-case build/scan JSON.
 It records **observed** registry platforms, not the inventory's expected list.
 The scanner and release validator use the same digest/platform records; the
-validator still checks raw-byte sidecar hashes and exact inventory coverage.
-Shell retains the registry retry/error policy and GitHub run selection.
+validator also checks raw-byte sidecar hashes and exact inventory coverage.
+The shell scripts own registry retries and errors, and GitHub run selection.
 
-Shared parsing is **not** shared authorization: release validation still requires
+Shared parsing is **not** shared authorization: release validation requires
 the latest eligible full scan to pass and a successful evidence run whose summary
 passed the promoted build. Packaging reparses image records and rechecks that
-summary against the build and commit. Registry preflight remains at
-both validation and promotion.
+summary against the build and commit. Registry preflight runs at both
+validation and promotion.
 
 Release packaging and evidence staging assemble the release tree through one
 `release_plan.py --stage` step, so evidence runs the tree the release ships;
@@ -97,10 +97,7 @@ marker.
 - **Input:** `build_tag`, `<run_id>-<run_attempt>`, whose `build-metadata-<build_tag>`
   artifact must be available in the repository.
 - **What it tests:** the workflow checks out the build's `openadkit_sha` and takes
-  the image digests from the same metadata, never latest aliases. It stages the
-  release tree with the step that assembles release bundles, so the cells run the
-  tree a release of that build ships, plus the example kit that the staged CLI's
-  `openadkit new` makes, with `.github/scripts/evidence/example-kit` on top.
+  the image digests from the same metadata, never latest aliases.
 - **How it runs:** hosted runners execute the L0–L3 cells, retry a failed cell
   once, and aggregate every expected cell; a missing cell fails the run.
 - **Output:** per-cell diagnostics and the `evidence-summary-<build_tag>`
@@ -108,8 +105,8 @@ marker.
 
 Cells use `schemaVersion: 1`, and the summary (`schemaVersion: 3`) carries them
 as written. Readers accept only these versioned payloads: a cell without
-`schemaVersion: 1` and `metrics` is rejected. Read timings from `metrics`
-rather than from top-level fields. Source and config checksums leave out the
+`schemaVersion: 1` and `metrics` is rejected. Read timings from `metrics`.
+Source and config checksums leave out the
 `build`, `install` and `log` products of a workspace.
 
 ## Split-host allowlists

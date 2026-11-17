@@ -14,8 +14,9 @@ metadata. Each stable release publishes:
   the upstream images the build started from
 - build provenance for the installer, bundle and metadata
 
-The release notes open with the highlights and the install command, list the
-merged pull requests by type, and summarize the evidence. An installed release
+The release notes open with the Autoware release, ROS 2 distros and
+architectures, then the highlights and the install command; they list the
+merged pull requests by type and summarize the evidence. An installed release
 moves to the latest stable version with `openadkit upgrade`.
 
 - [Container Images](container-images.md) — image tags, what to pin and the

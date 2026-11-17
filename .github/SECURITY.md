@@ -20,10 +20,6 @@ and agree on disclosure with the reporter. Confirmed issues can be published
 as GitHub Security Advisories after coordination. This is community-maintained
 software; no response-time or remediation SLA is promised.
 
-Repository administrators and security managers should subscribe to the
-repository's **Security alerts** notifications and monitor private reports.
-Enabling the reporting form alone does not establish an incident-response team.
-
 ## Supported versions
 
 The latest stable release receives security fixes in a new release. Older

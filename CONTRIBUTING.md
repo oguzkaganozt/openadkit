@@ -121,8 +121,8 @@ containers via `env_file:` and is not passed on the command line.
 ./openadkit run planning-simulation
 ```
 
-The release bundle ships the same commands. Put local overrides in the host
-settings file, `~/.config/openadkit/<deployment>.env`.
+Put local overrides in the host settings file,
+`~/.config/openadkit/<deployment>.env`.
 
 To test a split-host (`--role`) topology, follow [Split-host Simulation](https://autowarefoundation.github.io/openadkit/deployments/split-host/).
 

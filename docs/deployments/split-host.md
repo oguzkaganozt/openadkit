@@ -131,9 +131,6 @@ before routing anything new.
   availability on the Autoware host depend on it. Without it the vehicle stays
   in `PLANNING` and the scenario times out.
 
-After an Autoware update, check the CARLA allowlist against the live graph of a
-two-host run; CI checks Scenario Simulation's.
-
 ## Latency and Timing
 
 Cross-host simulation is timing sensitive. With a large round-trip time the

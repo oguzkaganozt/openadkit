@@ -126,7 +126,7 @@ and `VISUALIZER_IMAGE`, with `SENSING_PERCEPTION_GPU_IMAGE` and
 
 ## JSON Output
 
-Each document carries `schemaVersion`, now `1`.
+Each document carries `schemaVersion: 1`.
 
 ### `list --json`
 

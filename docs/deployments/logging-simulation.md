@@ -44,8 +44,3 @@ subscribes to `ROSBAG_READY_TOPIC`, so name a topic of yours that sensing
 reads. A recording of another vehicle needs that vehicle's map (`MAP_PATH`)
 and its vehicle and sensor kit packages, which a
 [kit](../kits/new-vehicle.md) holds.
-
-## Stop and Recover
-
-To download missing sample data, run `openadkit fetch logging-simulation`. See
-[Stop and Recover](index.md#stop-and-recover) for the rest.

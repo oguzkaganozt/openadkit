@@ -9,7 +9,7 @@ CLI, the images and the catalog. Start one with `openadkit new`
 
 In the kit's `openadkit.json`, `kind` is `kit` and `extends` names a published
 release tag or, for development, the path of a source checkout. The kit's
-`openadkit.json` has `schemaVersion: 2`; older ones are rejected.
+`openadkit.json` has `schemaVersion: 2`.
 
 - **The pinned release runs the kit.** The CLI finds it under
   `~/.local/share/openadkit/openadkit-<tag>` (`releases/` under

@@ -102,11 +102,9 @@ build to pass.
 
 ## Autoware and ROS Distro Decisions
 
-Every release, stable or candidate, is a build of `main` (or of a
-`release/X.Y` branch that fixes an older line) on the Autoware release tag in
-`.github/autoware.ref`. The release records that Autoware version; the build's
-`autoware-lock.repos`, resolved SHA and upstream image digests record the
-input.
+The release records the Autoware version in `.github/autoware.ref`; the
+build's `autoware-lock.repos`, resolved SHA and upstream image digests record
+the input.
 
 - **Autoware:** pin the latest stable Autoware release at the release cut. If
   it has a blocking issue, keep the previous verified pin and explain the
