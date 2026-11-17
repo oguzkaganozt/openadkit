@@ -120,10 +120,6 @@ def unhealthy_services(project: str) -> dict[str, str]:
     return unhealthy_reasons(running_containers(project))
 
 
-# Docker's states of a container that is not up.
-NOT_UP = ("created", "exited", "dead", "removing")
-
-
 def containers(project: str) -> list[dict[str, str]]:
     """Each container of the project, stopped ones included: its service, its
     own name as docker ps shows it, its state and its status line."""
@@ -164,7 +160,9 @@ def resolve_services(project: str, names: list[str], known: set[str] | None = No
 
 
 def status(project: str) -> None:
-    print_services([row for row in containers(project) if row["state"] not in NOT_UP])
+    # Stopped containers stay listed: a crashed service and a one-shot service's
+    # exit code show here.
+    print_services(containers(project))
     unhealthy = unhealthy_services(project)
     if unhealthy:
         print()

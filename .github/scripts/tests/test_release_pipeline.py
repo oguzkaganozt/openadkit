@@ -140,13 +140,13 @@ def select_latest(tmp_path, name, workflow, file, runs, eligible, passed, direct
     (run conclusion, branch, artifact content[, event, head repository])."""
     artifacts, run_json = [], {}
     for index, (conclusion, branch, content, *origin) in enumerate(runs):
-        event, repository = origin or ("workflow_dispatch", "example/repo")
+        event, repository, head_sha = (*origin, "on-branch")[:3] if origin else ("workflow_dispatch", "example/repo", "on-branch")
         artifact, run = 100 + index, 200 + index
         with zipfile.ZipFile(tmp_path / f"{artifact}.zip", "w") as archive:
             archive.writestr(file, json.dumps(content))
         artifacts.append(f"{artifact}\t2026-10-{30 - index:02d}T00:00:00Z")
         run_json[str(artifact)] = run
-        run_json[str(run)] = {"path": workflow, "head_branch": branch, "event": event,
+        run_json[str(run)] = {"path": workflow, "head_branch": branch, "event": event, "head_sha": head_sha,
                               "head_repository": {"full_name": repository},
                               "status": "completed", "conclusion": conclusion}
     (tmp_path / "runs.json").write_text(json.dumps(run_json))
@@ -154,7 +154,11 @@ def select_latest(tmp_path, name, workflow, file, runs, eligible, passed, direct
 import json, sys
 path = [arg for arg in sys.argv[1:] if arg.startswith("repos/")][0]
 runs = json.load(open({str(tmp_path / "runs.json")!r}))
-if "artifacts?name={name}" in path:
+if "/branches/" in path:
+    print("tip")
+elif "/compare/" in path:
+    print("diverged" if path.split("/compare/")[1].startswith("off-") else "ahead")
+elif "artifacts?name={name}" in path:
     print("\\n".join({artifacts!r}))
 elif path.endswith("/zip"):
     sys.stdout.buffer.write(open({str(tmp_path)!r} + "/" + path.split("/")[-2] + ".zip", "rb").read())
@@ -209,6 +213,31 @@ def test_evidence_gate_ignores_pull_request_and_fork_runs(tmp_path, event, repos
         "evidence_is_release", "evidence_passed", "release-input/evidence")
     assert result.returncode == 0, result.stderr
     assert json.loads(selected.read_text())["result"] == "PASSED"
+
+
+def test_evidence_gate_ignores_a_run_off_the_branch(tmp_path):
+    # A tag named like the branch reports the branch's name as its head_branch.
+    forged = passing_summary(build_metadata()) | {"result": "PASSED", "release_evidence": True}
+    genuine = passing_summary(build_metadata()) | {"result": "FAILED", "release_evidence": True}
+    result, _ = select_latest(
+        tmp_path, f"evidence-summary-{BUILD_TAG}", ".github/workflows/evidence.yaml", "evidence-summary.json",
+        [("success", "release/9.8", forged, "workflow_dispatch", "example/repo", "off-tag"),
+         ("failure", "release/9.8", genuine)],
+        "evidence_is_release", "evidence_passed", "release-input/evidence")
+    assert result.returncode != 0 and "did not pass" in result.stderr
+
+
+@pytest.mark.parametrize(("sha", "status", "accepted"), [
+    ("on-branch", "ahead", True), ("tip", "identical", True), ("off-tag", "diverged", False), ("newer", "behind", False)])
+def test_a_build_commit_must_be_on_its_branch(tmp_path, sha, status, accepted):
+    executable(tmp_path / "bin/gh", f'''#!/usr/bin/env python3
+import sys
+path = [arg for arg in sys.argv[1:] if arg.startswith("repos/")][0]
+print("tip" if "/branches/" in path else {status!r})
+''')
+    result = run_validator(tmp_path, f'source_branch=main; on_branch {sha} || fail "not on branch"',
+                           PATH=f"{tmp_path / 'bin'}:{os.environ['PATH']}")
+    assert (result.returncode == 0) is accepted, result.stderr
 
 
 # (run conclusion, scan status), newest first; a partial scan is not about the release.

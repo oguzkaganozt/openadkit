@@ -39,7 +39,8 @@ the [reference](reference.md#deployment-entry) lists their fields.
 - **Downloads and one-shot services** are inherited. A kit can add downloads
   and one-shot services of its own. A download whose `destinationEnv` a base's
   download has, such as `ROSBAG_PATH`, replaces that one. Set that variable in
-  the kit's `settings.env` too, so the download gets a directory of its own.
+  the deployment's own `deployments/<name>/settings.env` too, so the download
+  gets a directory of its own.
 - **Split-host roles are not inherited:** a kit deployment runs on one host.
 
 ### What Applies Where

@@ -798,7 +798,12 @@ def clean_command(root: Path, catalog: Catalog, deployment: Deployment, args: ar
     if not args.yes:
         if not sys.stdin.isatty():
             raise OpenADKitError("clean deletes data; pass --yes to confirm without a terminal")
-        if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
+        try:
+            answer = input("continue? [y/N] ")
+        except EOFError:
+            answer = ""
+            print()
+        if answer.strip().lower() not in ("y", "yes"):
             print("nothing deleted")
             return 0
     data.remove_installed_data(deployment, selection)

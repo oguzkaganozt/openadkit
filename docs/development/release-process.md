@@ -28,8 +28,9 @@ number promises.
 - **Immutable releases** are on in the repository settings: a published
   release and its tag cannot change. The publish step fails when a release it
   published is not immutable.
-- **A successful build** of `build-all-images` exists on that branch; stable
-  releases and pre-releases both come from it. The build summary shows its
+- **A successful build** of `build-all-images` exists on that branch, of a
+  commit the branch contains; stable releases and pre-releases both come from
+  it. The build summary shows its
   `build_tag`. The release ships the CLI and deployments of that build's
   commit. A push that changes only the CLI or deployments starts no build, so
   dispatch `build-all-images` on the branch to release it; the release run

@@ -27,8 +27,9 @@ From nothing to a driving Autoware on Ubuntu. No GPU needed. The [full Quickstar
 curl -fsSL https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit \
   | bash -s -- install
 
-# 2. Prepare the host
+# 2. Prepare the host, then start a shell in the docker group it adds you to
 openadkit setup
+newgrp docker
 
 # 3. Start Autoware
 openadkit run planning-simulation

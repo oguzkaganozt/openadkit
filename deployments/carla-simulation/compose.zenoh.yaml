@@ -18,7 +18,7 @@ services:
     image: ${ZENOH_BRIDGE_IMAGE:?pinned in openadkit.json externalImages}
     network_mode: host
     ipc: host
-    restart: unless-stopped
+    restart: on-failure
     # RMW_IMPLEMENTATION, ROS_DOMAIN_ID, CYCLONEDDS_URI and
     # CYCLONEDDS_NETWORK_INTERFACE=lo. Without the URI the interface pin is a
     # no-op and DDS would leak onto the LAN.

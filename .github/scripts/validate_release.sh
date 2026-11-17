@@ -74,6 +74,18 @@ resolve_latest_alias_policy() {
   fi
 }
 
+# A run's head_branch is only a name: a tag called "main" carries it too. A
+# commit belongs to the branch when the branch itself contains it.
+on_branch() {
+  local status
+  if [ -z "${branch_sha:-}" ]; then
+    branch_sha=$(gh api "repos/${GITHUB_REPOSITORY}/branches/${source_branch}" --jq '.commit.sha') \
+      || fail "could not read branch ${source_branch}"
+  fi
+  status=$(gh api "repos/${GITHUB_REPOSITORY}/compare/$1...${branch_sha}" --jq '.status') || return 1
+  [ "${status}" = ahead ] || [ "${status}" = identical ]
+}
+
 validate_build_run() {
   local run_json latest_tag workflow_name workflow_path status conclusion created_at
   local created_epoch now_epoch max_age_seconds
@@ -99,6 +111,7 @@ validate_build_run() {
   [ "${workflow_path}" = ".github/workflows/build-all-images.yaml" ] || fail "Unexpected workflow path '${workflow_path}'"
   [ "${status}" = "completed" ] || fail "Source build must be completed (got '${status}')"
   [ "${conclusion}" = "success" ] || fail "Source build must succeed (got '${conclusion}')"
+  on_branch "${release_sha}" || fail "Build commit ${release_sha} is not on branch ${source_branch}"
 
   created_epoch=$(date -u -d "${created_at}" +%s)
   now_epoch=$(date -u +%s)
@@ -167,6 +180,7 @@ select_latest_artifact() {
       and .event != "pull_request" and .event != "pull_request_target"
       and .head_repository.full_name == $repo' \
       <<<"${run_json}" >/dev/null || continue
+    on_branch "$(jq -r '.head_sha' <<<"${run_json}")" || continue
 
     rm -rf "${dir}"
     mkdir -p "${dir}"

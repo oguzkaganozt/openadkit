@@ -47,5 +47,5 @@ and its vehicle and sensor kit packages, which a
 
 ## Stop and Recover
 
-To replace missing sample data, run `openadkit fetch logging-simulation --force`;
-it also refreshes the CenterPoint models. See [Stop and Recover](index.md#stop-and-recover) for the rest.
+To download missing sample data, run `openadkit fetch logging-simulation`. See
+[Stop and Recover](index.md#stop-and-recover) for the rest.

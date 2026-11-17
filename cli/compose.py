@@ -113,6 +113,16 @@ def live_projects() -> set[str]:
     return set(live_project_files())
 
 
+def docker_error(message: str, stderr: str) -> OpenADKitError:
+    """Docker's own reason, and the next step when the user cannot reach the daemon yet."""
+    detail = stderr.strip()
+    if detail:
+        message = f"{message}: {detail}"
+    if "permission denied" in detail.lower():
+        message += "\nyour user is not in the docker group yet: log out and back in, or run: newgrp docker"
+    return OpenADKitError(message)
+
+
 def _project_files(*, stopped: bool) -> dict[str, list[str]]:
     """Open AD Kit Compose projects, with the Compose files each started from:
     the live ones, or with `stopped` every one that still has containers."""
@@ -123,9 +133,7 @@ def _project_files(*, stopped: bool) -> dict[str, list[str]]:
         trace=False,
     )
     if result.returncode != 0:
-        detail = result.stderr.strip()
-        suffix = f": {detail}" if detail else ""
-        raise OpenADKitError(f"could not list Compose projects{suffix}")
+        raise docker_error("could not list Compose projects", result.stderr)
     try:
         projects = json.loads(result.stdout) if result.stdout.strip() else []
     except json.JSONDecodeError as error:
@@ -164,9 +172,17 @@ def _started_here(deployment: Deployment, role: str | None, projects: dict[str, 
     """Whether the project of this role started from the deployment's own
     entry Compose file. Compose that reports no files keeps the name as the
     only evidence."""
-    files = projects.get(deployment.project_name(role))
+    project = deployment.project_name(role)
+    files = projects.get(project)
     if files is None:
         return False
+    # Two kits' deployments of one name can start from the same base Compose
+    # file; the run record names the kit that started the project.
+    state = read_run_state(project)
+    if state is not None and "kit" in state:
+        kit = deployment.root.resolve() if deployment.base is not None else None
+        if (Path(state["kit"]).resolve() if state["kit"] else None) != kit:
+            return False
     return not files or Path(files[0]).resolve() == deployment.compose_files(False, role)[0].resolve()
 
 
@@ -406,9 +422,7 @@ def check_daemon(selection: Selection) -> None:
         ["docker", "info"], check=False
     )
     if result.returncode != 0:
-        detail = result.stderr.strip()
-        suffix = f": {detail}" if detail else ""
-        raise OpenADKitError(f"could not access the Docker daemon{suffix}")
+        raise docker_error("could not access the Docker daemon", result.stderr)
     if not selection.gpu:
         return
     runtimes = docker(
