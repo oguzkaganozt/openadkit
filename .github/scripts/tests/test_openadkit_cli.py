@@ -1472,7 +1472,7 @@ def test_status_names_what_an_unhealthy_service_reported(tmp_path):
 
 
 def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
-    root, _ = runtime_tree(tmp_path)
+    root, directory = runtime_tree(tmp_path)
     containers = [
         {"Id": "a", "Config": {"Labels": {"com.docker.compose.service": "planning"}},
          "Mounts": [{"Destination": "/openadkit/config/base"}]},
@@ -1515,6 +1515,13 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     assert up[up.index("--force-recreate") + 1:] == ["acme", "bridge", "carla", "planning"]
     result = run_cli(root, "restart", "planning", "--all")
     assert result.returncode != 0 and "or pass --all" in result.stderr
+    # A workspace built for another distro stops it before anything is recreated.
+    (directory / "overlay_ws/install").mkdir(parents=True)
+    (directory / "overlay_ws/install/.openadkit-overlay.json").write_text('{"image": "x", "rosDistro": "jazzy"}')
+    calls.write_text("")
+    result = run_cli(root, "restart")
+    assert result.returncode == 1 and "rebuild it: openadkit build" in result.stderr
+    assert not any("up" in row["args"] for row in recorded(calls))
     # stop forgets how the stack was started.
     assert run_cli(root, "stop").returncode == 0
     assert not list((root.parent / "home/.local/state/openadkit/runs").iterdir())
@@ -2033,10 +2040,10 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert stamp == {"image": devel, "rosDistro": "humble"}
     assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
 
-    # After a base upgrade the install is stale until rebuilt.
+    # After a base upgrade the install is stale: validate stops until it is rebuilt.
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
     result = run_cli(root, "validate", "custom", directory=kit)
-    assert result.returncode == 0 and f"openadkit build {workspace}" in result.stderr
+    assert result.returncode == 1 and f"rebuild it: openadkit build {workspace}" in result.stderr
 
     # A build for another image starts clean; the same image builds incrementally.
     (workspace / "build").mkdir(exist_ok=True)
@@ -2362,9 +2369,14 @@ def test_ws_mounts_a_built_workspace_for_a_deployment_without_one(tmp_path, monk
     assert result.returncode == 0, result.stderr
     up = next(row for row in recorded(calls) if "up" in row["args"])
     assert up["env"]["OPENADKIT_OVERLAY_WS"] == str(workspace)
-    # One with its own workspace keeps it: --ws would hide its packages.
+    # An empty workspace of its own, as `openadkit new` makes one, gives way.
     (directory / "overlay_ws/src").mkdir(parents=True)
-    with pytest.raises(cli_manifest.OpenADKitError, match="has its own overlay workspace"):
+    (directory / "overlay_ws/src/README.md").write_text("")
+    assert overlay_workspace(root, "example", monkeypatch, tmp_path, workspace) == str(workspace)
+    # One with packages keeps them: --ws would hide them.
+    (directory / "overlay_ws/src/my_pkg").mkdir()
+    (directory / "overlay_ws/src/my_pkg/package.xml").write_text("")
+    with pytest.raises(cli_manifest.OpenADKitError, match="has packages of its own"):
         overlay_workspace(root, "example", monkeypatch, tmp_path, workspace)
 
 
@@ -2620,6 +2632,22 @@ def test_a_workspace_with_packages_but_no_build_is_named(tmp_path, capsys):
     # A build made by hand, without the CLI's stamp, is the user's to keep right.
     (kit / "overlay_ws/install").mkdir()
     assert cli_compose.check_overlay_build(deployment, selection, None) is None
+
+
+def test_an_overlay_built_for_another_distro_or_image_stops(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    kit = extending_kit(tmp_path, root)
+    deployment = cli_catalog.get_deployment(kit, cli_catalog.load_catalog(kit), "custom")
+    selection = types.SimpleNamespace(ros_distro="humble")
+    stamp = kit / "overlay_ws/install/.openadkit-overlay.json"
+    stamp.parent.mkdir(parents=True)
+    stamp.write_text(json.dumps({"image": "devel:2", "rosDistro": "humble"}))
+    assert cli_compose.check_overlay_build(deployment, selection, "devel:2") is None
+    rebuild = re.escape(f"rebuild it: openadkit build {kit / 'overlay_ws'} --ros-distro humble")
+    for built in ({"image": "devel:2", "rosDistro": "jazzy"}, {"image": "devel:1", "rosDistro": "humble"}):
+        stamp.write_text(json.dumps(built))
+        with pytest.raises(cli_manifest.OpenADKitError, match=rebuild):
+            cli_compose.check_overlay_build(deployment, selection, "devel:2")
 
 
 def test_validate_json_reports_a_broken_kit_as_json(tmp_path):
