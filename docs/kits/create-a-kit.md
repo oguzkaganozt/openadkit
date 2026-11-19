@@ -10,8 +10,8 @@ Without a kit, a deployment of the release takes your settings from the
 [host settings file](../getting-started/cli.md#settings) and your packages from
 [`--ws`](kit-guide.md#without-a-kit). A kit keeps your changes, from config
 overrides to your vehicle, services and images, on top of a release that passed
-its [evidence](../releases/evidence.md); to take the next release, change
-`extends`, rebuild and run `openadkit run --verify`.
+its [evidence](../releases/evidence.md), and takes the next release when you
+change `extends` ([Upgrade](kit-guide.md#upgrade-without-losing-your-work)).
 
 ```bash
 openadkit new my-kit                       # on top of planning-simulation
@@ -94,7 +94,7 @@ a name act on each of them. From elsewhere, one of them is
 runs that checkout's local build, or the CI build `OPENADKIT_BUILD` names; see
 [Overlay Workspace](kit-guide.md#3-overlay-workspace).
 
-For Jazzy, add `--ros-distro jazzy` to `run`, `validate` and `build`.
+For Jazzy, add `--ros-distro jazzy` to `run` and `validate`.
 `openadkit validate` checks the kit and renders the Compose model without
 starting anything; it is not runtime or ABI evidence, so finish with
 `run --verify`.
@@ -107,7 +107,8 @@ extension point on Humble and Jazzy.
 
 Put your ROS packages in `overlay_ws/src`, then build them and restart the
 services, or only the one that runs them. The build runs in the release's devel
-image, so the host needs no ROS, and the next build compiles only what changed:
+image, so the host needs no ROS, and the next build compiles only what changed.
+For Jazzy, add `--ros-distro jazzy` to `build` too:
 
 ```bash
 openadkit build                 # overlay_ws, in the release's devel image

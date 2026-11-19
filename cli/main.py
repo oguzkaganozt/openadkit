@@ -26,6 +26,7 @@ from catalog import (
     default_ros_distro,
     deployment_modified,
     get_deployment,
+    holds_packages,
     install_root,
     load_catalog,
     resolve_extends,
@@ -594,6 +595,9 @@ def build_command(root: Path, catalog: Catalog, args: argparse.Namespace) -> int
         raise UsageError("name the workspace to build: openadkit build PATH")
     if not (workspace / "src").is_dir():
         raise OpenADKitError(f"{workspace} has no src/ to build")
+    if not holds_packages(workspace):
+        print(f"nothing to build: {workspace / 'src'} holds no packages")
+        return 0
     ros_distro = args.ros_distro or build_ros_distro(root, catalog)
     image = catalog.devel_image(ros_distro)
     if not image and catalog.images and ros_distro not in catalog.images:
