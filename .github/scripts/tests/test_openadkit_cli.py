@@ -1494,8 +1494,11 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
         calls.write_text("")
         result = run_cli(root, "restart", directory=tmp_path, **env)
         assert result.returncode == 0, result.stderr
-        up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
+        rows = [row["args"] for row in recorded(calls)]
+        up = next(args for args in rows if "up" in args)
         assert {"--no-deps", "--force-recreate", "--wait"} <= set(up)
+        # As run does, it creates the writable mounts the settings name before recreating.
+        assert any("config --format json" in " ".join(args) for args in rows[:rows.index(up)])
         return up[up.index("--force-recreate") + 1:], result.stdout
 
     # From any directory: the services that take config overrides, as run started them.
@@ -1727,7 +1730,7 @@ def test_clean_lists_what_it_deletes_and_needs_yes_without_a_terminal(tmp_path):
     assert "no data of custom is installed" in run_cli(root, "clean", "custom", directory=kit).stdout
 
 
-@pytest.mark.parametrize("unsafe", ["file", "symlink", "running"])
+@pytest.mark.parametrize("unsafe", ["file", "running"])
 def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     resources = [files_resource(tmp_path), files_resource(tmp_path, env="SECOND_PATH", name="second")]
     root, _ = runtime_tree(tmp_path, document=manifest(data=resources),
@@ -1740,18 +1743,32 @@ def test_clean_checks_all_targets_before_deleting_anything(tmp_path, unsafe):
     if unsafe == "file":
         shutil.rmtree(second)
         second.write_text("keep")
-    elif unsafe == "symlink":
-        second.rename(tmp_path / "outside")
-        second.symlink_to(tmp_path / "outside")
     fake_docker(tmp_path, projects=["openadkit-example"] if unsafe == "running" else [])
     result = run_cli(root, "clean", "example", "--yes")
     assert result.returncode != 0
-    message = "example is running" if unsafe == "running" else (
-        "refusing to remove symlinked data" if unsafe == "symlink" else "not installed by openadkit"
-    )
-    assert message in result.stderr
+    assert ("example is running" if unsafe == "running" else "not installed by openadkit") in result.stderr
     assert (first / "required.txt").read_text() == "keep"
     assert second.exists()
+
+
+def test_data_behind_the_users_own_link_is_their_own(tmp_path):
+    # Data moved to a bigger disk and linked back: used as it is, never replaced or removed.
+    root, _ = runtime_tree(tmp_path, document=manifest(data=[files_resource(tmp_path)]),
+                           config="MAP_PATH=$HOME/data/map\n")
+    moved = tmp_path / "ssd/map"
+    moved.mkdir(parents=True)
+    (moved / cli_data.MARKER).write_text("{}")
+    (moved / "required.txt").write_text("keep")
+    link = tmp_path / "home/data/map"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(moved)
+    fake_docker(tmp_path)
+    assert "data dataset: your own directory, not checked" in run_cli(root, "validate", "example", "--data").stdout
+    result = run_cli(root, "fetch", "example")
+    assert result.returncode == 0 and f"using your own data: {link}" in result.stdout, result.stderr
+    result = run_cli(root, "clean", "example", "--yes")
+    assert result.returncode == 0, result.stderr
+    assert link.is_symlink() and (moved / "required.txt").read_text() == "keep"
 
 
 @pytest.mark.parametrize("marker", ["none", "symlink"])
@@ -2043,8 +2060,12 @@ def test_build_builds_one_workspace_in_the_pinned_devel_image(tmp_path):
     assert len(builds) == 1 and devel in builds[0]
     assert f"{workspace}:/openadkit/overlay_ws" in builds[0]
     stamp = json.loads((workspace / "install/.openadkit-overlay.json").read_text())
-    assert stamp == {"image": devel, "rosDistro": "humble"}
+    assert stamp == {"image": devel, "rosDistro": "humble", "complete": True}
     assert "overlay workspace" not in run_cli(root, "validate", "custom", directory=kit).stderr
+    # A failed build leaves its stamp without "complete": the services may lack packages.
+    del stamp["complete"]
+    (workspace / "install/.openadkit-overlay.json").write_text(json.dumps(stamp))
+    assert "the last build of" in run_cli(root, "validate", "custom", directory=kit).stderr
 
     # After a base upgrade the install is stale: validate stops until it is rebuilt.
     edit_manifest(root, lambda doc: doc["images"]["humble"].update({"universe-common-devel": devel[:-1] + "e"}))
