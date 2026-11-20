@@ -1094,8 +1094,10 @@ def test_a_data_file_can_be_written_out_from_the_manifest(tmp_path, monkeypatch)
     # A short file, such as a map's projection, needs no download and no checksum.
     resource = files_resource(tmp_path)
     resource["files"].append({"path": "projector.yaml", "content": "projector_type: Local\n"})
-    resource["requiredFiles"].append("projector.yaml")
+    # Files data needs every file it lists unless it names fewer.
+    del resource["requiredFiles"]
     cli_manifest.validate_data([resource], {}, tmp_path)
+    assert resource["requiredFiles"] == ["required.txt", "projector.yaml"]
     target = tmp_path / "installed"
     monkeypatch.setattr(cli_data, "resolve_destination", lambda *_: target)
     cli_data.install_resource(resource, None, force=False)
