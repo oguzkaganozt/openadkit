@@ -192,7 +192,9 @@ services. To change a node parameter instead, use a
 
 Set `OPENADKIT_HOME` to an absolute path to keep everything Open AD Kit writes
 under that one directory, for example to keep a test run apart from your own
-files.
+files. Outside it stay the `openadkit` launcher in `~/.local/bin` and its Tab
+completion, which `install`, `upgrade` and `uninstall` change, and the system
+files `setup` changes.
 
 ## Downloaded Data
 
@@ -222,7 +224,8 @@ openadkit clean planning-simulation             # delete, after asking
 
 The CLI marks the data it installs with a `.openadkit-resource.json` file, and
 checks, updates and deletes only marked data. A directory that holds files and
-no marker is yours, such as your own map at `MAP_PATH`: the deployment uses it
+no marker is yours, such as your own map at `MAP_PATH`, and so is a link you
+made to a directory with files, such as data moved to another disk: the deployment uses it
 as it is, whatever its files are called, and `fetch`, `--force` and `clean`
 leave it alone. Name its files in the settings where the deployment has them,
 such as `LANELET2_MAP_FILE` and `POINTCLOUD_MAP_FILE`.

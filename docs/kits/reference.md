@@ -147,7 +147,7 @@ Each document carries `schemaVersion: 1`.
 | `version` | The release, or `null` in a source checkout. In a kit, the release it pins |
 | `commit` | The commit of a source checkout, also of the one a kit extends; else `null` |
 | `extends` | In a kit, what it pins, as its manifest says; else `null` |
-| `bom` | What the release runs: `autoware` (the pinned Autoware release: `version`, `ref`, `lockSha256`), `images` (the digest-pinned component images per ROS distro) and `externalImages` |
+| `bom` | What the release runs: `autoware` (the pinned Autoware release: `version`, `ref`, `lockSha256`, and `backports` when the release applies Autoware fixes: each with its `repository`, `subject` and `upstream` link), `images` (the digest-pinned component images per ROS distro) and `externalImages` |
 
 ### `validate --json`
 

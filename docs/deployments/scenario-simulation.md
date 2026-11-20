@@ -52,7 +52,8 @@ SCENARIO=/scenarios/my-scenario.yaml
 ```
 
 The default `./scenarios` lies inside the installed release: files placed there
-mark the deployment as modified and are lost on `upgrade` or `uninstall`.
+mark the deployment as modified, stay behind in the old version on `upgrade`
+and are deleted by `uninstall`.
 
 Scenarios must match the map, and the planning sample map does not work here.
 To use your own map, point `MAP_PATH` at a directory that holds the same files
