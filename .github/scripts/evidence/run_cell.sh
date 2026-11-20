@@ -336,6 +336,8 @@ if [ "${l1_ok}" = true ] && [ "${scenario}" = true ]; then
                      topics=$(timeout 20 ros2 topic list);
                      printf "%s\n" "$topics" | awk '\''/^\/api\// { n++ } END { print n+0 }'\''' 2>/dev/null || echo failed
             )
+            # Back up for the final check, which fails a stopped service.
+            docker start "${bridge}" >/dev/null 2>&1 || true
         else
             isolation=failed
         fi
@@ -372,7 +374,7 @@ fi
 # Under Quadlet, systemd restarts a unit, not Podman.
 container_health() {
     local name ids=()
-    local format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} {{.HostConfig.RestartPolicy.Name}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
+    local format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} {{with .HostConfig.RestartPolicy.Name}}{{.}}{{else}}no{{end}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
     if [ "${backend}" = quadlet ]; then
         format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} systemd {{.State.Health.Status}}'
         mapfile -t ids < <(sudo podman ps -aq --filter name=autoware-)
