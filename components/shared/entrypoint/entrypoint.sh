@@ -21,9 +21,9 @@
 set -eo pipefail
 
 user="${USERNAME:-aw}"
-# A root host user keeps the services root: aw moved to uid 0 would land here again.
-if [ "$(id -u)" = 0 ] && [ "${HOST_UID:-}" != 0 ]; then
-    if [ -n "${HOST_UID:-}" ] && [ -n "${HOST_GID:-}" ]; then
+if [ "$(id -u)" = 0 ]; then
+    # HOST_UID 0 leaves aw as it is: aw at uid 0 would come back to this branch.
+    if [ -n "${HOST_UID:-}" ] && [ -n "${HOST_GID:-}" ] && [ "${HOST_UID}" != 0 ]; then
         # -o: the host ids may already exist in the image, such as gid 100 (users).
         [ "$(id -g "${user}")" = "${HOST_GID}" ] || groupmod -o -g "${HOST_GID}" "${user}"
         [ "$(id -u "${user}")" = "${HOST_UID}" ] || usermod -o -u "${HOST_UID}" "${user}"
