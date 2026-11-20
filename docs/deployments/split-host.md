@@ -144,6 +144,8 @@ WAN and VPN links are best-effort and are not the supported setup.
   role from its Compose project, so you normally omit `--role`. When several
   roles of one deployment run on the same machine, `status` and `stop` act on
   all of them; pass `--role` to choose one for the other commands.
+- `record` and a bare `shell` use the `api` service, which only the Autoware
+  role runs. On the simulator host, name the service for `shell`.
 - Running a role that is already up updates it in place. Starting the
   single-host deployment while a role is running, or a role while the
   single-host deployment is running, is refused: stop it first.

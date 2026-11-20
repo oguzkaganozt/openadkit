@@ -410,10 +410,13 @@ def run_report(
     }
 
 
+def run_report_path(deployment: Deployment) -> Path:
+    return deployment.output_directory / "results" / "run.json"
+
+
 def write_run_report(deployment: Deployment, report: dict[str, Any]) -> Path:
-    results = deployment.output_directory / "results"
-    results.mkdir(parents=True, exist_ok=True)
-    path = results / "run.json"
+    path = run_report_path(deployment)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return path
 

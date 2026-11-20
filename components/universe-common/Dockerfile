@@ -65,7 +65,7 @@ RUN --mount=type=bind,source=autoware/ansible-galaxy-requirements.yaml,target=/t
       --tags acados \
       -e "rosdistro=${ROS_DISTRO}" && \
     sudo rm -rf /opt/acados/.git /opt/acados/examples /opt/acados/docs /opt/acados/test && \
-    sudo /opt/acados/.venv/bin/python -m pip uninstall -y pip && \
+    sudo /opt/acados/.venv/bin/python -m pip uninstall -y pip setuptools && \
     pipx uninstall-all && \
     rm -rf /home/aw/.local/pipx /home/aw/.local/share/pipx
 USER root

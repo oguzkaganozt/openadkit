@@ -43,7 +43,7 @@ openadkit setup
 
 Run setup as your normal user; it asks for `sudo` only for host changes:
 
-- missing base packages such as `git` and `curl`
+- missing packages such as `git` and `curl`
 - Docker, when the host has none; it never replaces an existing engine
 - your user's membership of the `docker` group
 - the kernel's UDP buffer limits, which DDS needs for sensor data

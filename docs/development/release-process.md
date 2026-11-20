@@ -76,7 +76,9 @@ flowchart LR
 4. **deploy-docs**: publishes the docs site from `main` when the latest
    aliases moved. If it fails after a publish, re-run only the failed job or
    dispatch `deploy-docs`: re-running all jobs stops at the draft step, since
-   the release is already published.
+   the release is already published. Dispatch it too when `publish` failed
+   after the release went public, for example waiting for it to turn
+   immutable: `deploy-docs` is then skipped.
 
 The release plan records the exact image digests, aliases and assets of the
 release for the jobs after it; it stays in the workflow run. The release itself

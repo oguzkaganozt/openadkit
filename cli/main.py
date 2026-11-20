@@ -761,6 +761,8 @@ def run_command(root: Path, catalog: Catalog, deployment: Deployment, args: argp
         "workspace": str(Path(args.ws).expanduser().resolve()) if args.ws else None,
         "skipped": sorted(skipped),
     })
+    # A run that fails to start leaves no report of the run before it.
+    compose.run_report_path(deployment).unlink(missing_ok=True)
     started = time.monotonic()
     compose.start(deployment, selection, services, skipped)
     run_report = compose.run_report(deployment, selection, catalog, model, started)

@@ -173,5 +173,5 @@ plain `validate` checks each of them.
 | `modelSha256` | The digest of the resolved Compose model |
 | `configSha256` | The content digest of each config override layer: `base`, `kit` and `deployment` |
 | `overlaySha256` | The content digest of the overlay workspace, without its `build` and `log` directories |
-| `readySeconds` | How long the services took to become ready |
+| `readySeconds` | How long `run` took to start the services, from pulling missing images until they settled |
 | `verify` | With `--verify`: the step's `service`, `seconds`, `exitCode` and `result`, `PASSED` or `FAILED` |

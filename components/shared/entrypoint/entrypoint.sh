@@ -21,7 +21,8 @@
 set -eo pipefail
 
 user="${USERNAME:-aw}"
-if [ "$(id -u)" = 0 ]; then
+# A root host user keeps the services root: aw moved to uid 0 would land here again.
+if [ "$(id -u)" = 0 ] && [ "${HOST_UID:-}" != 0 ]; then
     if [ -n "${HOST_UID:-}" ] && [ -n "${HOST_GID:-}" ]; then
         # -o: the host ids may already exist in the image, such as gid 100 (users).
         [ "$(id -g "${user}")" = "${HOST_GID}" ] || groupmod -o -g "${HOST_GID}" "${user}"

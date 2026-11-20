@@ -222,6 +222,8 @@ elif args[0] == "compose" and "exec" in args:
 elif args[0] == "run":
     sys.exit(int(os.environ.get("FAKE_RUN_EXIT", "0")))
 elif "up --detach" in text:
+    if os.environ.get("FAKE_UP_EXIT"):
+        sys.exit(1)
     project = args[args.index("--project-name") + 1]
     files = ",".join(args[index + 1] for index, arg in enumerate(args) if arg == "--file")
     rows = json.loads(live.read_text())
@@ -807,6 +809,9 @@ def test_every_run_records_what_it_started(tmp_path):
     assert changed["configSha256"]["deployment"] != record["configSha256"]["deployment"]
     assert changed["configSha256"]["base"] == record["configSha256"]["base"]
     assert changed["overlaySha256"] == record["overlaySha256"]
+    # A run that fails to start leaves no report of the run before it.
+    assert run_cli(root, "run", "example", FAKE_UP_EXIT="1").returncode != 0
+    assert not (root.parent / "home/openadkit-output/example/results/run.json").exists()
 
 
 def test_run_verify_needs_a_verify_step(tmp_path):
