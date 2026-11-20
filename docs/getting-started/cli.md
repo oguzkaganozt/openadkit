@@ -192,8 +192,9 @@ services. To change a node parameter instead, use a
 
 Set `OPENADKIT_HOME` to an absolute path to keep everything Open AD Kit writes
 under that one directory, for example to keep a test run apart from your own
-files. Only `install` and `upgrade` still write outside it: the `openadkit`
-launcher in `~/.local/bin`, and its Tab completion.
+files. Outside it stay the `openadkit` launcher in `~/.local/bin` and its Tab
+completion, which `install`, `upgrade` and `uninstall` change, and the system
+files `setup` changes.
 
 ## Downloaded Data
 

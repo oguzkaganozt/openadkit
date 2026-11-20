@@ -46,8 +46,8 @@ the pin and adapts the deployments to it.
 
 Run these before pushing. They cover most of what `.github/workflows/lint.yaml` runs; CI also validates every deployment cell from `validation_matrix.py` and checks the Bake file.
 
-Install the Python tools in a virtual environment, since Ubuntu's own Python
-refuses `pip install` (on Ubuntu, `sudo apt install python3-venv` first):
+Install the Python tools in a virtual environment, since Ubuntu 24.04's own
+Python refuses `pip install` (on Ubuntu, `sudo apt install python3-venv` first):
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
