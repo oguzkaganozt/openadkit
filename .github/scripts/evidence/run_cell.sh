@@ -373,16 +373,20 @@ fi
 # Each container as: name, restarts, state, exit code, restart policy, health.
 # Under Quadlet, systemd restarts a unit, not Podman.
 container_health() {
-    local name ids=()
+    local name filter listed filters=() ids=()
     local format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} {{with .HostConfig.RestartPolicy.Name}}{{.}}{{else}}no{{end}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
     if [ "${backend}" = quadlet ]; then
         format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} systemd {{.State.Health.Status}}'
-        mapfile -t ids < <(sudo podman ps -aq --filter name=autoware-)
+        filters=(name=autoware-)
     else
         for name in "${projects[@]}"; do
-            mapfile -t -O "${#ids[@]}" ids < <(docker ps -aq --filter "label=com.docker.compose.project=${name}")
+            filters+=("label=com.docker.compose.project=${name}")
         done
     fi
+    for filter in "${filters[@]}"; do
+        listed=$("${engine[@]}" ps -aq --filter "${filter}") || return 1
+        [ -z "${listed}" ] || mapfile -t -O "${#ids[@]}" ids <<<"${listed}"
+    done
     [ "${#ids[@]}" -eq 0 ] || "${engine[@]}" inspect -f "${format}" "${ids[@]}"
 }
 # A node died when its service turned unhealthy, failed, restarted (a restarted
@@ -398,8 +402,10 @@ map_state() {
 if [ "${l1_ok}" = true ]; then
     {
         echo "after the checks:"
-        container_health | tee "${out}/.health"
-        if died "${out}/.health" | grep -q .; then
+        if ! container_health | tee "${out}/.health"; then
+            echo "could not check container health"
+            l1_ok=false
+        elif died "${out}/.health" | grep -q .; then
             l1_ok=false
         fi
         rm -f "${out}/.health"

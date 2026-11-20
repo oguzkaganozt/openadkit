@@ -298,9 +298,12 @@ def test_publish_checks_scan_and_evidence_again_before_it_tags_anything(tmp_path
     # The release environment can hold publish for approval while a newer scan
     # or evidence run of the build fails.
     result = run_validator(tmp_path, 'validate_build_run() { echo build; }; '
-                           'select_latest_artifact() { echo "$1 $6"; }; recheck_gate')
-    assert result.stdout.split("\n")[:3] == [
-        "build", f"scan-metadata-{BUILD_TAG} gate/scan", f"evidence-summary-{BUILD_TAG} gate/evidence"]
+                           'select_latest_artifact() { echo "$1 $6"; }; '
+                           'validate_metadata() { echo "validate $1"; }; recheck_gate')
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "build", f"scan-metadata-{BUILD_TAG} gate/scan",
+        "validate gate/scan/scan-metadata.json", f"evidence-summary-{BUILD_TAG} gate/evidence"]
     steps = [step.get("name") for step in yaml.safe_load(
         (ROOT / ".github/workflows/release.yaml").read_text())["jobs"]["publish"]["steps"]]
     recheck = steps.index("Check scan and evidence again")

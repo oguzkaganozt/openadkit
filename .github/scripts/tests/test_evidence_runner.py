@@ -15,7 +15,9 @@ RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
 # as a service with a killed node, unhealthy and still running.
 DOCKER = '''#!/usr/bin/env bash
 if [ "$1" = inspect ] && [ "${!#}" = autoware-map ]; then echo "${MAP_STATE-running unhealthy}"; fi
+if [ "$1 $2" = "ps -aq" ] && [ "${HEALTH_ERROR:-}" = list ]; then echo "container listing failed" >&2; exit 1; fi
 if [ "$1" = ps ] && [ -n "${UNHEALTHY:-}" ]; then echo id; fi
+if [ "$1" = inspect ] && [ "${!#}" = id ] && [ "${HEALTH_ERROR:-}" = inspect ]; then echo "container inspection failed" >&2; exit 1; fi
 if [ "$1" = inspect ] && [ "${!#}" = id ]; then echo "/${UNHEALTHY} ${CONTAINER_STATE-0 running 0 on-failure unhealthy}"; fi
 exit 0
 '''
@@ -474,6 +476,8 @@ def test_allowlists_name_their_topics_and_a_rename_is_caught():
     # The map's healthcheck missed the death of its node, or the map stopped.
     ({"MAP_STATE": "running healthy"}, False, "after killing a node of the map: running healthy"),
     ({"MAP_STATE": "exited unhealthy"}, False, "after killing a node of the map: exited unhealthy"),
+    ({"HEALTH_ERROR": "list"}, False, "container listing failed"),
+    ({"HEALTH_ERROR": "inspect", "UNHEALTHY": "autoware-planning"}, False, "container inspection failed"),
     # A node of another service died during the checks.
     ({"UNHEALTHY": "autoware-planning"}, False, "/autoware-planning 0 running 0 on-failure unhealthy"),
     # Its launch failed and the service restarted, healthy again, or it exited cleanly and stays down.

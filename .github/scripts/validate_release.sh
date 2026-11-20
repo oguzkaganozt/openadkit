@@ -218,6 +218,7 @@ evidence_passed() { [ "$(jq -r '.result' "$1")" = PASSED ]; }
 check_scan() {
   select_latest_artifact "scan-metadata-${BUILD_TAG}" .github/workflows/scan-images.yaml \
     scan-metadata.json scan_is_full scan_passed "$1"
+  validate_metadata "$1/scan-metadata.json"
 }
 check_evidence() {
   select_latest_artifact "evidence-summary-${BUILD_TAG}" .github/workflows/evidence.yaml \
@@ -226,7 +227,7 @@ check_evidence() {
 
 validate_metadata() {
   # The same model is parsed again at packaging; this is not a bypass token.
-  python3 "${script_dir}/images.py" validate release-input/build release-input/scan/scan-metadata.json
+  python3 "${script_dir}/images.py" validate release-input/build "$1"
 }
 
 # A release is a build of the branch it is released from, on an Autoware
@@ -300,7 +301,6 @@ main() {
   validate_manifest_consistency
   download_build_metadata
   check_scan release-input/scan
-  validate_metadata
   validate_release_rules
   check_evidence release-input/evidence
   validate_git_tag
