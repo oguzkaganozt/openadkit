@@ -85,7 +85,7 @@ cannot add any.
 | `url`, `sha256` | `zip` only: the archive and its checksum |
 | `expectedRoot` | `zip` only: the archive's one top-level directory, whose contents become the resource |
 | `files` | `files` only: the files, each with a `path` in the resource and exactly one of `url` (to download), `source` (a file of the kit or the release, by its path from the manifest's directory) and `content` (the file's text). `url` and `source` need a `sha256` |
-| `requiredFiles` | Paths that must exist, and not be empty, in data the CLI installed |
+| `requiredFiles` | Paths that must exist, and not be empty, in data the CLI installed. For `files`, every listed file unless it names fewer |
 | `gpu` | `true`: only the GPU mode uses it |
 | `roles` | Catalog only: the split-host roles that use it |
 
