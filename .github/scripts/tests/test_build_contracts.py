@@ -204,10 +204,12 @@ def test_the_bridge_mounts_its_allowlist_without_creating_it(name):
 
 
 @pytest.mark.parametrize(("name", "role", "present", "absent"), [
-    ("scenario-simulation", None, {"scenario-simulator", "map", "mrm-state-relay", "visualizer"}, {"zenoh-bridge"}),
-    ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay"}, {"scenario-simulator", "visualizer"}),
+    ("scenario-simulation", None, {"scenario-simulator", "map", "mrm-state-relay", "traffic-light-relay", "visualizer"},
+     {"zenoh-bridge"}),
+    ("scenario-simulation", "autoware", {"map", "zenoh-bridge", "mrm-state-relay", "traffic-light-relay"},
+     {"scenario-simulator", "visualizer"}),
     ("scenario-simulation", "scenario", {"scenario-simulator", "zenoh-bridge", "visualizer"},
-     {"map", "vehicle", "mrm-state-relay"}),
+     {"map", "vehicle", "mrm-state-relay", "traffic-light-relay"}),
     ("carla-simulation", None, {"carla", "carla-interface", "map", "visualizer"}, {"zenoh-bridge"}),
     ("carla-simulation", "autoware", {"map", "zenoh-bridge"}, {"carla", "carla-interface", "visualizer"}),
     ("carla-simulation", "carla", {"carla", "carla-interface", "carla-map-loader", "zenoh-bridge", "visualizer"},
