@@ -368,17 +368,26 @@ fi
 # (components/shared/entrypoint/health). None may have during the checks above.
 # Then one node of the map is killed: the map must turn unhealthy and keep
 # running. One only: a launch whose processes are all gone exits.
+# Each container as: name, restarts, state, exit code, restart policy, health.
+# Under Quadlet, systemd restarts a unit, not Podman.
 container_health() {
-    local name ids=() format='{{.Name}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
+    local name ids=()
+    local format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} {{.HostConfig.RestartPolicy.Name}} {{with index .State "Health"}}{{.Status}}{{else}}none{{end}}'
     if [ "${backend}" = quadlet ]; then
-        format='{{.Name}} {{.State.Health.Status}}'
-        mapfile -t ids < <(sudo podman ps -q --filter name=autoware-)
+        format='{{.Name}} {{.RestartCount}} {{.State.Status}} {{.State.ExitCode}} systemd {{.State.Health.Status}}'
+        mapfile -t ids < <(sudo podman ps -aq --filter name=autoware-)
     else
         for name in "${projects[@]}"; do
-            mapfile -t -O "${#ids[@]}" ids < <(docker ps -q --filter "label=com.docker.compose.project=${name}")
+            mapfile -t -O "${#ids[@]}" ids < <(docker ps -aq --filter "label=com.docker.compose.project=${name}")
         done
     fi
     [ "${#ids[@]}" -eq 0 ] || "${engine[@]}" inspect -f "${format}" "${ids[@]}"
+}
+# A node died when its service turned unhealthy, failed, restarted (a restarted
+# container starts healthy again), or stopped although it runs until stop; a
+# one-shot service (restart: "no") may finish.
+died() {
+    awk '$2 > 0 || $4 != 0 || $6 == "unhealthy" || ($3 != "running" && $5 != "no" && $5 != "systemd")' "$1"
 }
 map_state() {
     "${engine[@]}" inspect -f '{{.State.Status}} {{.State.Health.Status}}' autoware-map 2>/dev/null
@@ -388,7 +397,7 @@ if [ "${l1_ok}" = true ]; then
     {
         echo "after the checks:"
         container_health | tee "${out}/.health"
-        if grep -q ' unhealthy$' "${out}/.health"; then
+        if died "${out}/.health" | grep -q .; then
             l1_ok=false
         fi
         rm -f "${out}/.health"

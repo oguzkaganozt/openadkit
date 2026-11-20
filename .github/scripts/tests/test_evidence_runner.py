@@ -16,7 +16,7 @@ RUNNER = ROOT / ".github/scripts/evidence/run_cell.sh"
 DOCKER = '''#!/usr/bin/env bash
 if [ "$1" = inspect ] && [ "${!#}" = autoware-map ]; then echo "${MAP_STATE-running unhealthy}"; fi
 if [ "$1" = ps ] && [ -n "${UNHEALTHY:-}" ]; then echo id; fi
-if [ "$1" = inspect ] && [ "${!#}" = id ]; then echo "/${UNHEALTHY} unhealthy"; fi
+if [ "$1" = inspect ] && [ "${!#}" = id ]; then echo "/${UNHEALTHY} ${CONTAINER_STATE-0 running 0 on-failure unhealthy}"; fi
 exit 0
 '''
 
@@ -475,7 +475,13 @@ def test_allowlists_name_their_topics_and_a_rename_is_caught():
     ({"MAP_STATE": "running healthy"}, False, "after killing a node of the map: running healthy"),
     ({"MAP_STATE": "exited unhealthy"}, False, "after killing a node of the map: exited unhealthy"),
     # A node of another service died during the checks.
-    ({"UNHEALTHY": "autoware-planning"}, False, "/autoware-planning unhealthy"),
+    ({"UNHEALTHY": "autoware-planning"}, False, "/autoware-planning 0 running 0 on-failure unhealthy"),
+    # Its launch failed and the service restarted, healthy again, or it exited cleanly and stays down.
+    ({"UNHEALTHY": "autoware-planning", "CONTAINER_STATE": "1 running 0 on-failure healthy"}, False, "/autoware-planning 1"),
+    ({"UNHEALTHY": "autoware-planning", "CONTAINER_STATE": "0 exited 0 on-failure none"}, False, "exited 0 on-failure"),
+    # A one-shot service may finish, but not fail.
+    ({"UNHEALTHY": "autoware-prepare", "CONTAINER_STATE": "0 exited 0 no none"}, True, "exited 0 no"),
+    ({"UNHEALTHY": "autoware-prepare", "CONTAINER_STATE": "0 exited 1 no none"}, False, "exited 1 no"),
 ])
 def test_a_cell_fails_l1_when_a_node_died_or_a_death_does_not_show(tmp_path, environment, ok, logged):
     cli = tmp_path / "bin/openadkit"
