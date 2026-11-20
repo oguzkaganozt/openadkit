@@ -887,8 +887,11 @@ def restart_command(args: argparse.Namespace) -> int:
     compose.check_overlay_build(deployment, selection, catalog.devel_image(selection.ros_distro))
     running = set(live.running_services(project))
     if args.all_services:
-        # As run started it: a service run skipped stays out until it was started.
-        services = compose.render(deployment, selection) - (set(state["skipped"]) - running)
+        # A service run skipped stays out until it has a container, even a stopped one.
+        skipped = set(state["skipped"]) - running
+        if skipped:
+            skipped -= {container["service"] for container in live.containers(project)}
+        services = compose.render(deployment, selection) - skipped
     elif args.services:
         # A service that is not up yet, such as a skipped visualizer, is still one to start.
         known = compose.render(deployment, selection)

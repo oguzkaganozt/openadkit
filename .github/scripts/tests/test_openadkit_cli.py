@@ -144,6 +144,8 @@ import json, os, sys
 from pathlib import Path
 args = sys.argv[1:]
 text = " ".join(args)
+missing = os.environ.get("FAKE_MISSING", "").split(",")
+exited = os.environ.get("FAKE_EXITED", "").split(",")
 # Reading what the env files set, in a clean environment, is not a call to check.
 if not ("config --environment" in text and "OPENADKIT_UID" not in os.environ):
     with open({str(calls)!r}, "a") as output:
@@ -174,12 +176,13 @@ elif text == "compose ls --all --format json":
 elif text == "ps -aq":
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
 elif args[0] == "compose" and "ps" in args and "--format" in args:
-    exited = os.environ.get("FAKE_EXITED", "").split(",")
     for name in {service_lines!r}.split():
+        if name in missing:
+            continue
         state, status = ("exited", "Exited (1) 5 seconds ago") if name in exited else ("running", "Up 1 minute")
         print(json.dumps({{"Service": name, "Name": "autoware-" + name, "State": state, "Status": status}}))
 elif args[0] == "compose" and "ps" in args and "--services" in args:
-    print({service_lines!r})
+    print("\\n".join(name for name in {service_lines!r}.split() if name not in missing and name not in exited))
 elif args[0] == "compose" and "ps" in args and "--quiet" in args:
     print("\\n".join(row['Id'] for row in {list(containers)!r}))
 elif args[0] == "inspect" and "--format" in args:
@@ -1528,6 +1531,22 @@ def test_restart_recreates_what_run_started_with_the_current_settings(tmp_path):
     # stop forgets how the stack was started.
     assert run_cli(root, "stop").returncode == 0
     assert not list((root.parent / "home/.local/state/openadkit/runs").iterdir())
+
+
+def test_restart_all_includes_a_stopped_visualizer_once_it_has_been_started(tmp_path):
+    root, _ = runtime_tree(tmp_path)
+    calls = fake_docker(tmp_path, services=("app", "visualizer"))
+    assert run_cli(root, "run", "example", "--no-visualizer", FAKE_MISSING="visualizer").returncode == 0
+    for args, state, expected in [
+        (("--all",), {"FAKE_MISSING": "visualizer"}, ["app"]),
+        (("visualizer",), {"FAKE_MISSING": "visualizer"}, ["visualizer"]),
+        (("--all",), {"FAKE_EXITED": "visualizer"}, ["app", "visualizer"]),
+    ]:
+        calls.write_text("")
+        result = run_cli(root, "restart", *args, **state)
+        assert result.returncode == 0, result.stderr
+        up = next(row["args"] for row in recorded(calls) if "up" in row["args"])
+        assert up[up.index("--force-recreate") + 1:] == expected
 
 
 def test_download_retries_cut_off_bodies_but_not_wrong_content(tmp_path, monkeypatch):
