@@ -2102,8 +2102,10 @@ fields, except <code>base</code>, in its <code>deployment.json</code>.</p>
 <span class="p">}</span>
 </code></pre></div>
 <p>A catalog deployment may also hold <code>roles</code>, the hosts of a
-<a href="../../deployments/split-host/">split-host</a> deployment (experimental), and
-<code>evidence.exempt</code>, the reason it has no hosted
+<a href="../../deployments/split-host/">split-host</a> deployment (experimental). Each
+role lists the Compose files it starts (<code>files</code>), its ROS domain
+(<code>rosDomainId</code>) and the settings it needs (<code>requiredEnv</code>). A catalog
+deployment may also hold <code>evidence.exempt</code>, the reason it has no hosted
 <a href="../../releases/evidence/#ci-exemptions">evidence cell</a>.</p>
 <h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
 <table>
@@ -2171,7 +2173,7 @@ cannot add any.</p>
 </tr>
 <tr>
 <td><code>requiredFiles</code></td>
-<td>Paths that must exist, and not be empty, in data the CLI installed</td>
+<td>Paths that must exist, and not be empty, in data the CLI installed. For <code>files</code>, every listed file unless it names fewer</td>
 </tr>
 <tr>
 <td><code>gpu</code></td>
@@ -2238,7 +2240,7 @@ image variables: <code>SENSING_PERCEPTION_IMAGE</code>, <code>LOCALIZATION_MAPPI
 and <code>VISUALIZER_IMAGE</code>, with <code>SENSING_PERCEPTION_GPU_IMAGE</code> and
 <code>PLANNING_GPU_IMAGE</code> for the GPU mode.</p>
 <h2 id="json-output">JSON Output<a class="headerlink" href="#json-output" title="Permanent link">#</a></h2>
-<p>Each document carries <code>schemaVersion</code>, now <code>1</code>.</p>
+<p>Each document carries <code>schemaVersion: 1</code>.</p>
 <h3 id="list-json"><code>list --json</code><a class="headerlink" href="#list-json" title="Permanent link">#</a></h3>
 <p><code>deployments</code> is a list of:</p>
 <table>
@@ -2294,7 +2296,7 @@ and <code>VISUALIZER_IMAGE</code>, with <code>SENSING_PERCEPTION_GPU_IMAGE</code
 </tr>
 <tr>
 <td><code>bom</code></td>
-<td>What the release runs: <code>autoware</code> (the pinned Autoware release: <code>version</code>, <code>ref</code>, <code>lockSha256</code>), <code>images</code> (the digest-pinned component images per ROS distro) and <code>externalImages</code></td>
+<td>What the release runs: <code>autoware</code> (the pinned Autoware release: <code>version</code>, <code>ref</code>, <code>lockSha256</code>, and <code>backports</code> when the release applies Autoware fixes: each with its <code>repository</code>, <code>subject</code> and <code>upstream</code> link), <code>images</code> (the digest-pinned component images per ROS distro) and <code>externalImages</code></td>
 </tr>
 </tbody>
 </table>
@@ -2370,7 +2372,7 @@ plain <code>validate</code> checks each of them.</p>
 </tr>
 <tr>
 <td><code>readySeconds</code></td>
-<td>How long the services took to become ready</td>
+<td>How long <code>run</code> took to start the services, from pulling missing images until they settled</td>
 </tr>
 <tr>
 <td><code>verify</code></td>

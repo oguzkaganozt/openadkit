@@ -1914,12 +1914,12 @@ the same file CI uses.</p>
     CORE --&gt; UCD["universe-common-devel&lt;br/&gt;(builds overlay workspaces)"]
     UC --&gt; COMP["sensing-perception&lt;br/&gt;localization-mapping&lt;br/&gt;planning, control&lt;br/&gt;vehicle-system&lt;br/&gt;visualizer, simulator"]
     CUDA["autoware:base-cuda-{devel,runtime}"] --&gt; GPU["sensing-perception-cuda&lt;br/&gt;planning-cuda"]
-    UC -.-&gt; GPU</code></pre>
+    UCD -.-&gt; GPU</code></pre>
 <p><code>universe-common</code> compiles the shared part of Autoware Universe on the upstream
 <code>core-devel</code> image and copies the result onto the lean upstream <code>base</code> image, so
 build tools never reach the runtime layers. Every component builds from it.
 The CUDA variants, <code>sensing-perception-cuda</code> and <code>planning-cuda</code>, build on the
-upstream CUDA images and add the <code>universe-common</code> install tree.</p>
+upstream CUDA images and copy in the Autoware tree of the devel image.</p>
 <p>The published images end with a per-build Ubuntu security refresh. Components
 compile on <code>universe-common-build</code>, the devel image without that refresh, which
 CI pushes only to its build cache. Its digest changes only with its inputs, so a

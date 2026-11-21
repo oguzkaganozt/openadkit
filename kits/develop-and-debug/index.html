@@ -1818,7 +1818,7 @@
 to look into a running deployment.</p>
 <h2 id="the-development-loop">The Development Loop<a class="headerlink" href="#the-development-loop" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build<span class="w">                 </span><span class="c1"># compiles what changed, in the release's devel image</span>
-openadkit<span class="w"> </span>restart<span class="w"> </span>my-node<span class="w">       </span><span class="c1"># recreates the service that runs it</span>
+openadkit<span class="w"> </span>restart<span class="w"> </span>&lt;service&gt;<span class="w">     </span><span class="c1"># recreates the service that runs it</span>
 </code></pre></div>
 <p><code>build</code> compiles only what changed, and <code>restart &lt;service&gt;</code> recreates only that
 service; <a href="../../getting-started/cli/#runtime-controls">CLI &amp; Maintenance</a> says what
@@ -1875,13 +1875,13 @@ service's process namespace; the service and its image stay as they are.</p>
 <li>
 <p>Build with debug symbols and restart the service:</p>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>build<span class="w"> </span>--<span class="w"> </span>--cmake-args<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo
-openadkit<span class="w"> </span>restart<span class="w"> </span>my-node
+openadkit<span class="w"> </span>restart<span class="w"> </span>&lt;service&gt;
 </code></pre></div>
 </li>
 <li>
-<p>Find the service's container with <code>docker ps</code>. An Autoware service is
-   <code>autoware-&lt;service&gt;</code>; a service of your kit is
-   <code>openadkit-&lt;deployment&gt;-&lt;service&gt;-1</code>.</p>
+<p>Find the service's container in the <code>CONTAINER</code> column of
+   <code>openadkit status</code>. An Autoware service is <code>autoware-&lt;service&gt;</code>; a service
+   of your kit is <code>openadkit-&lt;deployment&gt;-&lt;service&gt;-1</code>.</p>
 </li>
 <li>
 <p>Start gdb beside it. <code>my_node</code> is the name of the executable:</p>

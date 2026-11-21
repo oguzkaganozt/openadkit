@@ -1912,7 +1912,8 @@ This page lists what that promise covers. Within one major version:</p>
   know; the CLI rejects an unknown manifest field, which is why a kit's pinned
   release runs the kit's commands, whichever <code>openadkit</code> you called.</li>
 <li><strong>A major release</strong> (<code>v3.0.0</code>) is the only one that removes or changes an item
-  below. Its release notes list each change under <strong>Breaking changes</strong>.</li>
+  below. Its release notes list each change under <strong>Breaking changes</strong>. v2.0.0
+  is the <a href="../#before-v200">first release</a>, so its notes have no such list.</li>
 </ul>
 <p><a href="#experimental">Experimental</a> features and what is
 <a href="#not-covered">not covered</a> can change in any release.</p>
@@ -2022,8 +2023,8 @@ This page lists what that promise covers. Within one major version:</p>
 <p>These work and are tested where the docs say so, but may change in a minor
 release:</p>
 <ul>
-<li><strong>Split-host roles:</strong> <code>--role</code>, <code>roles</code> in <code>deployment.json</code>, the
-  <code>compose.&lt;role&gt;.yaml</code> files and the Zenoh bridge. See
+<li><strong>Split-host roles:</strong> <code>--role</code>, <code>roles</code> in <code>deployment.json</code>, the Compose
+  files a role lists and the Zenoh bridge. See
   <a href="../../deployments/split-host/">Split-host Simulation</a>.</li>
 <li><strong>AutoSD with Podman and Quadlet:</strong> <code>platforms/autosd/</code> and the units it
   generates. See <a href="../../platforms/autosd/">AutoSD</a>.</li>

@@ -1764,12 +1764,6 @@
 <li>A web browser: the visualizer runs in it, so no display server is needed</li>
 </ul>
 <h2 id="install">1. Install<a class="headerlink" href="#install" title="Permanent link">#</a></h2>
-<div class="admonition note">
-<p class="admonition-title">v2.0.0 is not published yet</p>
-<p>Until the first stable release there is no release bundle to install. A
-source checkout runs images you build yourself; see
-<a href="../development/build-from-source/">Build from Source</a>.</p>
-</div>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://github.com/autowarefoundation/openadkit/releases/latest/download/openadkit<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>install
 </code></pre></div>
@@ -1792,7 +1786,7 @@ pass the same version to <code>install</code>:</p>
 </code></pre></div>
 <p>Run setup as your normal user; it asks for <code>sudo</code> only for host changes:</p>
 <ul>
-<li>missing base packages such as <code>git</code> and <code>curl</code></li>
+<li>missing packages such as <code>git</code> and <code>curl</code></li>
 <li>Docker, when the host has none; it never replaces an existing engine</li>
 <li>your user's membership of the <code>docker</code> group</li>
 <li>the kernel's UDP buffer limits, which DDS needs for sensor data

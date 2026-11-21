@@ -1885,20 +1885,20 @@ number promises.</p>
   runners, never at a persistent self-hosted machine.</li>
 <li><strong>GHCR packages</strong> accept pushes from CI: <code>openadkit</code>, <code>openadkit-buildcache</code>
   and <code>openadkit-ci</code> under <code>ghcr.io/autowarefoundation/</code>.</li>
-<li><strong><code>secrets.RELEASE_TOKEN</code></strong> (Contents and Workflows write) is set when promoting
-  a build commit older than later workflow changes; otherwise <code>GITHUB_TOKEN</code> is
-  used.</li>
 <li><strong>The <code>release</code> environment</strong> exists in the repository settings: the publish
   job runs in it, so the reviewers required there approve each release.</li>
 <li><strong>Immutable releases</strong> are on in the repository settings: a published
   release and its tag cannot change. The publish step fails when a release it
   published is not immutable.</li>
-<li><strong>A successful build</strong> of <code>build-all-images</code> exists on that branch; stable
-  releases and pre-releases both come from it. The build summary shows its
+<li><strong>A successful build</strong> of <code>build-all-images</code> exists on that branch, of a
+  commit the branch contains; stable releases and pre-releases both come from
+  it. The build summary shows its
   <code>build_tag</code>. The release ships the CLI and deployments of that build's
   commit. A push that changes only the CLI or deployments starts no build, so
   dispatch <code>build-all-images</code> on the branch to release it; the release run
-  warns when the branch has such changes.</li>
+  warns when the branch has such changes. A change to <code>.github/workflows</code> after
+  the build needs a new build too: the release run's token can tag only a
+  commit with the run's own workflow files.</li>
 <li><strong>A passing scan</strong> of <code>scan-images</code> exists for that <code>build_tag</code> on the same
   branch; it runs after the build.</li>
 <li><strong>A successful <code>evidence</code> run</strong> on the same branch passed every cell for that
@@ -1906,11 +1906,10 @@ number promises.</p>
   <a href="../../releases/evidence/">Evidence Policy</a>.</li>
 <li><strong>Highlights</strong> for a minor or major release are in
   <code>.github/release-highlights/vX.Y.Z.md</code>. The notes of that release and of its
-  candidates open with them; the rest of the notes is generated.</li>
+  candidates open with a table of the Autoware release, ROS 2 distros and
+  architectures, then the highlights; the rest of the notes is generated.</li>
 <li><strong>The docs on <code>main</code></strong> describe the release: a stable release publishes the
-  site from <code>main</code> as it is then. For the first stable release, remove the
-  "not published yet" notes first, from <code>README.md</code> and
-  <code>docs/includes/first-release-note.md</code> with the two lines that include it.</li>
+  site from <code>main</code> as it is then.</li>
 </ul>
 <h2 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">#</a></h2>
 <p>Run <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/release.yaml"><code>release.yaml</code></a>
@@ -1924,10 +1923,10 @@ how an older line is validated. Its jobs run in order:</p>
    <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/scripts/validate_release.sh"><code>validate_release.sh</code></a>
    (version format, the build run and its age, scan results,
    metadata and file integrity, image coverage, passing evidence, registry
-   digests, Git tag). A build older than 90 days cannot be promoted. Nothing is
-   tagged if a gate fails.</li>
+   digests, Git tag and workflow files). A build older than 90 days cannot be
+   promoted. Nothing is tagged if a gate fails.</li>
 <li><strong>package-bundles</strong>: writes the immutable release plan and the runtime bundle
-   for both distros.</li>
+   for both distros, with the build commit's own packaging scripts.</li>
 <li><strong>publish</strong>: writes the notes and metadata from the validated plan, attests
    the bundle, installer and metadata, and creates the draft with its
    assets. It then creates the image release tags and, for stable releases, the
@@ -1938,7 +1937,9 @@ how an older line is validated. Its jobs run in order:</p>
 <li><strong>deploy-docs</strong>: publishes the docs site from <code>main</code> when the latest
    aliases moved. If it fails after a publish, re-run only the failed job or
    dispatch <code>deploy-docs</code>: re-running all jobs stops at the draft step, since
-   the release is already published.</li>
+   the release is already published. Dispatch it too when <code>publish</code> failed
+   after the release went public, for example waiting for it to turn
+   immutable: <code>deploy-docs</code> is then skipped.</li>
 </ol>
 <p>The release plan records the exact image digests, aliases and assets of the
 release for the jobs after it; it stays in the workflow run. The release itself
@@ -1959,11 +1960,9 @@ publishes <code>release-metadata.json</code>.</p>
 no release bypass input. The release also requires the latest full scan of the
 build to pass.</p>
 <h2 id="autoware-and-ros-distro-decisions">Autoware and ROS Distro Decisions<a class="headerlink" href="#autoware-and-ros-distro-decisions" title="Permanent link">#</a></h2>
-<p>Every release, stable or candidate, is a build of <code>main</code> (or of a
-<code>release/X.Y</code> branch that fixes an older line) on the Autoware release tag in
-<code>.github/autoware.ref</code>. The release records that Autoware version; the build's
-<code>autoware-lock.repos</code>, resolved SHA and upstream image digests record the
-input.</p>
+<p>The release records the Autoware version in <code>.github/autoware.ref</code>; the
+build's <code>autoware-lock.repos</code>, resolved SHA and upstream image digests record
+the input.</p>
 <ul>
 <li><strong>Autoware:</strong> pin the latest stable Autoware release at the release cut. If
   it has a blocking issue, keep the previous verified pin and explain the
@@ -1982,16 +1981,18 @@ input.</p>
 commit, run URL and cells) in its release plan before packaging.
 <code>release-metadata.json</code> publishes that same evidence, the BOM and the CI
 exemptions. The bundle, installer and metadata receive build provenance from
-the release workflow.</p>
-<p>The verification table in the release notes shows the passing-cell count,
+the release workflow. The installer and the bundle's launcher install and
+upgrade from the repository that released them, so a fork's release installs
+from the fork.</p>
+<p>The folded evidence table in the release notes shows the passing-cell count,
 readiness time, arrival time and peak memory of that build; it depends only on
 the release plan. The list of changes comes from GitHub's generated notes since
 the previous release.
 Missing metrics are shown as <code>-</code>, never replaced with zeroes.</p>
 <p>See <a href="../../releases/verification/">Verify a Release</a> to check a release yourself.</p>
 <h2 id="the-docs-site">The Docs Site<a class="headerlink" href="#the-docs-site" title="Permanent link">#</a></h2>
-<p>The site documents the latest stable release. A push to <code>main</code> does not
-publish it: a docs change reaches the site with the next stable release, and a
+<p>The site is built from <code>main</code> each time the newest stable release is
+published. A push to <code>main</code> does not publish it: a docs change reaches the site with the next stable release, and a
 pull request shows its own preview. To publish a fix in between, dispatch
 <a href="https://github.com/autowarefoundation/openadkit/blob/main/.github/workflows/deploy-docs.yaml"><code>deploy-docs.yaml</code></a>,
 which builds the site from <code>main</code>; do that only while <code>main</code> documents nothing
@@ -2013,9 +2014,9 @@ the pinned release as a patch instead of waiting for the next Autoware release:<
    the fix's own diff.</li>
 <li>Every build applies the patches in order right after <code>vcs import</code>; one that
    does not apply, or has no <code>Upstream:</code> line, fails the build. The release
-   lists them under <strong>Backported Autoware fixes</strong>, its bundle carries them as
-   <code>autoware.backports</code>, and <code>openadkit version</code> counts them. The Autoware
-   version stays that of the tag.</li>
+   notes list them under <strong>Fixes backported to Autoware X.Y.Z</strong>, its bundle
+   carries them as <code>autoware.backports</code>, and <code>openadkit version</code> counts them.
+   The Autoware version stays that of the tag.</li>
 <li>When the branch moves to an Autoware release that contains the fix, delete
    the patch.</li>
 </ol>

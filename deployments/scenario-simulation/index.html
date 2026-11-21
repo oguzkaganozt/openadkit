@@ -1762,15 +1762,21 @@
 <a href="https://github.com/tier4/scenario_simulator_v2">TIER IV Scenario Simulator</a>.
 The deployment runs a scenario automatically and writes the results to the host.
 No GPU is required.</p>
+<p><img alt="Scenario Simulation runs localization-mapping, planning, control, vehicle-system, simulator, Scenario Simulator and visualizer, which talk over ROS 2" src="../../assets/images/deployment-scenario-simulation-light.svg#only-light" />
+<img alt="Scenario Simulation runs localization-mapping, planning, control, vehicle-system, simulator, Scenario Simulator and visualizer, which talk over ROS 2" src="../../assets/images/deployment-scenario-simulation-dark.svg#only-dark" /></p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>scenario-simulation
-openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
+<div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>run<span class="w"> </span>scenario-simulation<span class="w"> </span>--verify
 </code></pre></div>
 <p>To run Autoware on one host and the scenario runner on another, see
 <a href="../split-host/">Split-host Simulation</a>.</p>
-<p><code>run</code> downloads the Kashiwanoha map. Autoware takes about 90 seconds to
-initialize; the runner then executes the scenario and writes the results to
+<p><code>run</code> downloads the Kashiwanoha map. Autoware takes about two minutes to be
+ready; the runner then executes the scenario, three runs of the bundled sample
+in seven to eight minutes on a 4-vCPU host, and writes the results to
 <code>~/openadkit-output/scenario-simulation/results</code> (<code>run</code> prints the path).</p>
+<p>With <code>--verify</code>, <code>run</code> waits for the runner and ends with <code>verify: passed</code>, or
+fails with the runner's exit code. The runner's log ends with
+<code>scenario: N of M passed</code>: see <code>openadkit logs scenario-simulator</code>. Without
+<code>--verify</code>, <code>openadkit status</code> shows the runner's exit code once it ends.</p>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">#</a></h2>
 <p>Set these in the host settings file,
 <code>~/.config/openadkit/scenario-simulation.env</code>:</p>
@@ -1804,6 +1810,11 @@ initialize; the runner then executes the scenario and writes the results to
 <td><code>600</code></td>
 </tr>
 <tr>
+<td><code>INITIALIZE_DURATION</code></td>
+<td>Seconds each scenario gives Autoware to reach driving</td>
+<td><code>300</code></td>
+</tr>
+<tr>
 <td><code>GLOBAL_REAL_TIME_FACTOR</code></td>
 <td>Simulated seconds per wall-clock second; below <code>1</code> on a host that cannot run Autoware in real time</td>
 <td><code>1.0</code></td>
@@ -1829,7 +1840,8 @@ the YAML there, and point the deployment at it in the host settings file:</p>
 <span class="nv">SCENARIO</span><span class="o">=</span>/scenarios/my-scenario.yaml
 </code></pre></div>
 <p>The default <code>./scenarios</code> lies inside the installed release: files placed there
-mark the deployment as modified and are lost on <code>upgrade</code> or <code>uninstall</code>.</p>
+mark the deployment as modified, stay behind in the old version on <code>upgrade</code>
+and are deleted by <code>uninstall</code>.</p>
 <p>Scenarios must match the map, and the planning sample map does not work here.
 To use your own map, point <code>MAP_PATH</code> at a directory that holds the same files
 as the bundled map: <code>lanelet2_map.osm</code>, <code>pointcloud_map.pcd</code>,

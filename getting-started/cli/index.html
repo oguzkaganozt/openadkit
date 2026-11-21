@@ -798,17 +798,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#your-own-kit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Your Own Kit
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#upgrading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1943,17 +1932,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#your-own-kit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Your Own Kit
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#upgrading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2050,7 +2028,7 @@ checkout, call its launcher by path: <code>./openadkit</code> in the checkout, o
 <td>Download or delete a deployment's data</td>
 </tr>
 <tr>
-<td><a href="#your-own-kit"><code>new</code>, <code>build</code></a></td>
+<td><a href="../../kits/create-a-kit/"><code>new</code>, <code>build</code></a></td>
 <td>Create a kit and build its overlay workspace</td>
 </tr>
 <tr>
@@ -2100,7 +2078,7 @@ result (<a href="../../kits/reference/#resultsrunjson">fields</a>).</p>
 or the deployment's first one when it does not run on that.</p>
 <h2 id="runtime-controls">Runtime Controls<a class="headerlink" href="#runtime-controls" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>status
-openadkit<span class="w"> </span>logs<span class="w"> </span>--follow
+openadkit<span class="w"> </span>logs<span class="w"> </span>--follow<span class="w">           </span><span class="c1"># stream, from each service's last 100 lines</span>
 openadkit<span class="w"> </span>logs<span class="w"> </span>map<span class="w"> </span>planning<span class="w">        </span><span class="c1"># only these services</span>
 openadkit<span class="w"> </span>restart<span class="w">                  </span><span class="c1"># apply changed settings, config overrides and overlay workspaces</span>
 openadkit<span class="w"> </span>restart<span class="w"> </span>--all<span class="w">            </span><span class="c1"># recreate the whole deployment</span>
@@ -2116,7 +2094,17 @@ host, see <a href="../../deployments/split-host/#lifecycle-notes">Lifecycle Note
 after a failed start or a restart of Docker. Its containers stay, with their
 logs, until <code>stop</code> removes them.</p>
 <h3 id="status">Status<a class="headerlink" href="#status" title="Permanent link">#</a></h3>
-<p>Below its services, <code>status</code> shows Autoware's state from the AD API and the
+<p><code>status</code> lists each service beside its container:</p>
+<div class="highlight"><pre><span></span><code>SERVICE   CONTAINER          STATUS
+map       autoware-map       Up 2 minutes (healthy)
+planning  autoware-planning  Up 2 minutes (healthy)
+</code></pre></div>
+<p>A service that stopped stays in the list with how it ended, such as
+<code>Exited (0)</code> for a one-shot service that finished.</p>
+<p><code>logs</code>, <code>restart</code> and <code>shell</code> take a service by either name: <code>planning</code>, as
+the Compose files call it, or <code>autoware-planning</code>, as <code>docker ps</code> and the log
+lines show it.</p>
+<p>Below the services, <code>status</code> shows Autoware's state from the AD API and the
 visualizer address:</p>
 <div class="highlight"><pre><span></span><code>localization initialized
 routing      set
@@ -2138,9 +2126,8 @@ config overrides and overlay workspace, and keeps to the same readiness checks.<
   without restarting a simulator such as CARLA; <code>restart</code> names the services it
   left running.</li>
 <li>A running service that shares the process namespace of a recreated one is
-  recreated with it, since it cannot outlive that namespace: CARLA Simulation's
-  <code>carla-interface</code>, a rosbag that is still playing or a scenario that is still
-  running, which then start over.</li>
+  recreated with it, since it cannot outlive that namespace: a rosbag that is
+  still playing or a scenario that is still running, which then start over.</li>
 <li><code>restart &lt;service&gt;...</code> recreates only those services.</li>
 <li><code>restart --all</code> recreates the whole deployment, one-shot services included.</li>
 </ul>
@@ -2225,7 +2212,9 @@ services. To change a node parameter instead, use a
 </table>
 <p>Set <code>OPENADKIT_HOME</code> to an absolute path to keep everything Open AD Kit writes
 under that one directory, for example to keep a test run apart from your own
-files.</p>
+files. Outside it stay the <code>openadkit</code> launcher in <code>~/.local/bin</code> and its Tab
+completion, which <code>install</code>, <code>upgrade</code> and <code>uninstall</code> change, and the system
+files <code>setup</code> changes.</p>
 <h2 id="downloaded-data">Downloaded Data<a class="headerlink" href="#downloaded-data" title="Permanent link">#</a></h2>
 <p>Maps, rosbags and models live under one data directory, <code>~/autoware_data</code> (see
 the table above): maps in <code>maps/</code>, rosbags in <code>rosbags/</code>, models and the Safety
@@ -2251,7 +2240,8 @@ openadkit<span class="w"> </span>clean<span class="w"> </span>planning-simulatio
 </ul>
 <p>The CLI marks the data it installs with a <code>.openadkit-resource.json</code> file, and
 checks, updates and deletes only marked data. A directory that holds files and
-no marker is yours, such as your own map at <code>MAP_PATH</code>: the deployment uses it
+no marker is yours, such as your own map at <code>MAP_PATH</code>, and so is a link you
+made to a directory with files, such as data moved to another disk: the deployment uses it
 as it is, whatever its files are called, and <code>fetch</code>, <code>--force</code> and <code>clean</code>
 leave it alone. Name its files in the settings where the deployment has them,
 such as <code>LANELET2_MAP_FILE</code> and <code>POINTCLOUD_MAP_FILE</code>.</p>
@@ -2262,11 +2252,6 @@ the path for a typo when you see that line.</p>
 <p><code>clean</code> and <code>fetch --force</code> refuse while that deployment is running, or while
 any live container mounts the data (including another kit or deployment). If
 data usage cannot be checked, they refuse as well.</p>
-<h2 id="your-own-kit">Your Own Kit<a class="headerlink" href="#your-own-kit" title="Permanent link">#</a></h2>
-<p><code>openadkit new my-kit [--base DEPLOYMENT]</code> makes <code>./my-kit</code>, a kit with one
-deployment on top of a catalog deployment (Planning Simulation by default), and
-<code>openadkit build</code> builds its overlay workspace. See
-<a href="../../kits/create-a-kit/">Create a Kit</a>.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>openadkit<span class="w"> </span>upgrade<span class="w"> </span>--check<span class="w">   </span><span class="c1"># report whether a newer stable version exists</span>
 openadkit<span class="w"> </span>upgrade<span class="w">           </span><span class="c1"># install it</span>
@@ -2293,8 +2278,12 @@ openadkit<span class="w"> </span>uninstall<span class="w"> </span>--all<span cla
 </code></pre></div>
 <p><code>uninstall</code> is for release installs; remove a source checkout with Git. It
 keeps your host settings, run records, results, recordings and downloaded data
-(see <a href="#settings">Settings</a> for where they are). The host changes <code>openadkit setup</code> made stay too: Docker and its
-apt source, your <code>docker</code> group membership and
+(see <a href="#settings">Settings</a> for where they are), and the Docker images, several
+GB each. To delete a deployment's data, run <code>openadkit clean &lt;deployment&gt;</code>
+before uninstalling, since it needs the CLI. Afterwards,
+<code>docker image ls ghcr.io/autowarefoundation/openadkit</code> lists the images and
+<code>docker image rm</code> removes them. The host changes <code>openadkit setup</code> made stay
+too: Docker and its apt source, your <code>docker</code> group membership and
 <code>/etc/sysctl.d/99-openadkit-dds.conf</code>.</p>
 <h2 id="names-directories-and-output">Names, Directories and Output<a class="headerlink" href="#names-directories-and-output" title="Permanent link">#</a></h2>
 <ul>
