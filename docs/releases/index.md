@@ -37,8 +37,8 @@ version keeps working.
 - **One Autoware release per release.** Releases come from `main`, which pins
   one Autoware release in `.github/autoware.ref`. The
   [GitHub Release](https://github.com/autowarefoundation/openadkit/releases)
-  notes open with it, and `openadkit install` and `openadkit version` pair the
-  two, `Open AD Kit v2.0.1 · Autoware 2.0.0`.
+  notes open with it, and `openadkit install` and `openadkit version` name
+  both, as in `Open AD Kit v2.0.1 · Autoware 2.0.0`.
 - **Pinned inputs.** A release also pins the ROS distros and every image
   digest, and its images carry the Autoware version they are built from in
   `org.autoware.openadkit.autoware-version`.

@@ -13,7 +13,7 @@ The commands you need after the first run. `openadkit --help` and
 | [`stop`](#runtime-controls) | Stop and remove the running deployment |
 | [`validate`, `config`](#validate-before-running) | Check a deployment, or print its Compose model, without starting it |
 | [`fetch`, `clean`](#downloaded-data) | Download or delete a deployment's data |
-| [`new`, `build`](#your-own-kit) | Create a kit and build its overlay workspace |
+| [`new`, `build`](../kits/create-a-kit.md) | Create a kit and build its overlay workspace |
 | [`setup`](index.md#set-up-the-host) | Install the host dependencies |
 | [`install`, `upgrade`](#upgrading), [`uninstall`](#uninstall) | Install, move between and remove releases |
 | [`version`](#names-directories-and-output) | Show the installed release and its Autoware release |
@@ -238,13 +238,6 @@ the path for a typo when you see that line.
 `clean` and `fetch --force` refuse while that deployment is running, or while
 any live container mounts the data (including another kit or deployment). If
 data usage cannot be checked, they refuse as well.
-
-## Your Own Kit
-
-`openadkit new my-kit [--base DEPLOYMENT]` makes `./my-kit`, a kit with one
-deployment on top of a catalog deployment (Planning Simulation by default), and
-`openadkit build` builds its overlay workspace. See
-[Create a Kit](../kits/create-a-kit.md).
 
 ## Upgrading
 
